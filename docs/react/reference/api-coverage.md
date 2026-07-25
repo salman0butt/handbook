@@ -7,7 +7,7 @@ sidebar_position: 1
 # Official React API coverage
 
 > **Reference line: React 19.2**  
-> **Latest stable package checked: 19.2.7**  
+> **Latest stable package checked: 19.2.8**  
 > **Audit date: 2026-07-26**
 
 This page prevents the handbook from accidentally becoming a collection of favorite topics while missing official React APIs.
@@ -237,4 +237,4 @@ Whenever the stable React minor changes:
 
 ## Next audit
 
-Re-run this audit whenever React publishes a new stable minor or major, or when an API changes stability status.
+Re-run this audit whenever React publishes a new stable minor or major, or when an API changes stability status. Also refresh the recorded stable npm patch when a newer patch is published.
