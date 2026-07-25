@@ -7,7 +7,7 @@ sidebar_position: 2
 # React version covered by this handbook
 
 > **Docs target: React 19.2**  
-> **Latest stable package verified: React 19.2.7**  
+> **Latest stable package verified: React 19.2.8**  
 > **Last verified: 2026-07-26**
 
 This handbook teaches the current stable React 19.2 documentation line and checks the latest stable `react` / `react-dom` package patch separately.
@@ -17,7 +17,7 @@ React's documentation is maintained at the major/minor level, while npm can publ
 ```text
 React documentation line: 19.2
              ↓
-Latest stable npm patch: 19.2.7
+Latest stable npm patch: 19.2.8
 ```
 
 A newer Canary or Experimental build is **not** treated as stable production React.
@@ -26,8 +26,9 @@ A newer Canary or Experimental build is **not** treated as stable production Rea
 
 | Item | Verified value | Meaning |
 | --- | --- | --- |
-| Official docs | React 19.2 | The current stable documentation line on react.dev |
-| `react` npm package | 19.2.7 | Latest stable package patch checked on 2026-07-26 |
+| Official docs | React 19.2 | Current stable documentation line on react.dev |
+| `react` npm package | 19.2.8 | Latest stable npm tag checked on 2026-07-26 |
+| `react-dom` npm package | 19.2.8 | Latest stable npm tag checked on 2026-07-26 |
 | React Compiler | 1.0 stable | Stable production release announced 2025-10-07 |
 | Next/Canary line | 19.3 Canary exists | Do not teach Canary APIs as stable |
 
@@ -41,7 +42,7 @@ It also removed a number of APIs that had already been deprecated for years.
 
 ### React 19.1 — 2025
 
-React 19.1 continued the React 19 release line with fixes and platform improvements. Patch releases for 19.1 continue to exist for supported backport scenarios, but this handbook targets the latest 19.2 line.
+React 19.1 continued the React 19 release line with fixes and platform improvements. Patch releases for 19.1 can exist for backport scenarios, but this handbook targets the latest 19.2 line.
 
 ### React 19.2 — October 2025
 
@@ -56,11 +57,13 @@ React 19.2 added important stable capabilities including:
 - Web Streams-related server rendering improvements;
 - newer `eslint-plugin-react-hooks` behavior and compiler-aware linting support.
 
-### React 19.2.7 — June 2026
+### React 19.2.8 — July 2026
 
-`19.2.7` is the latest stable package patch verified for this handbook on 2026-07-26.
+`19.2.8` is the latest stable `react` and `react-dom` package patch verified for this handbook on 2026-07-26.
 
-Patch releases should normally be preferred over older patches in the same stable minor because they contain fixes without intentionally introducing breaking API changes.
+A patch release does not create a new handbook curriculum line by itself. The handbook continues to target the stable **19.2 API/documentation line**, while recording the newest stable package patch for reproducibility and maintenance.
+
+Patch releases should normally be preferred over older patches in the same stable minor because they contain fixes without intentionally introducing a new public API minor line.
 
 ## Stable, Canary, Experimental, and Legacy
 
@@ -68,7 +71,7 @@ This handbook uses four labels.
 
 ### STABLE
 
-Safe to teach as part of the current public React contract, subject to normal semantic-versioning rules.
+Safe to teach as part of the current public React contract, subject to React's versioning policy.
 
 ### CANARY
 
@@ -132,6 +135,7 @@ Manual memoization is not obsolete, but it should not be taught as a ritual appl
 4. Removed APIs are documented only for migration and maintenance.
 5. Framework-specific behavior is separated from React core behavior.
 6. Implementation details are not presented as stable public contracts.
+7. Major/minor documentation targets and npm patch versions are tracked separately.
 
 ## Upgrade checklist
 
@@ -165,6 +169,7 @@ Build Docusaurus and repair links
 - https://react.dev/blog/2024/04/25/react-19-upgrade-guide
 - https://react.dev/community/versioning-policy
 - https://www.npmjs.com/package/react
+- https://www.npmjs.com/package/react-dom
 
 ## Next
 
