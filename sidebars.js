@@ -140,6 +140,24 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '18 · Suspense',
+          items: [
+            'react/suspense/suspense-boundaries',
+            'react/suspense/lazy-and-code-splitting',
+            'react/suspense/loading-and-navigation-architecture',
+          ],
+        },
+        {
+          type: 'category',
+          label: '19 · Concurrency',
+          items: [
+            'react/concurrency/use-transition-and-start-transition',
+            'react/concurrency/use-deferred-value',
+            'react/concurrency/concurrent-rendering-mental-model',
+          ],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },

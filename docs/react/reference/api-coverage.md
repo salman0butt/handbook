@@ -56,6 +56,12 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | state-preserving hidden UI | Activity | ✅ Covered — 19.2+ |
 | metadata + resource loading | Metadata and Resource Loading | ✅ Covered |
 | React 19 migration/removals | React 19 Migration and Removed APIs | ✅ Covered |
+| Suspense mental model and reveal behavior | Suspense Boundaries and Reveal Behavior | ✅ Covered |
+| lazy loading and code splitting | lazy and Code Splitting | ✅ Covered |
+| loading/navigation architecture | Suspense Loading and Navigation Architecture | ✅ Covered |
+| Transition scheduling and interruption | useTransition and startTransition Deep Dive | ✅ Covered |
+| stale/deferred rendering | useDeferredValue and Stale UI | ✅ Covered |
+| concurrent render/commit mental model | Concurrent Rendering Mental Model | ✅ Covered |
 
 ## React Hooks
 
@@ -65,7 +71,7 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | `useCallback` | Performance | Memoization | 🟡 Planned | Stable |
 | `useContext` | Context | Context and useContext | ✅ Covered | Stable |
 | `useDebugValue` | Debugging | Hook Reference | 🟡 Planned | Stable |
-| `useDeferredValue` | Concurrency | Transitions & Concurrency | 🟡 Planned | Stable |
+| `useDeferredValue` | Concurrency | useDeferredValue and Stale UI | ✅ Covered | Stable |
 | `useEffect` | Effect | Effects | ✅ Covered | Stable |
 | `useEffectEvent` | Effect Event | useEffectEvent | ✅ Covered | 19.2+ |
 | `useId` | Utility / accessibility | Accessibility / Hook Reference | 🟡 Planned | Stable |
@@ -78,7 +84,7 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | `useRef` | Ref | Refs section | ✅ Covered | Stable |
 | `useState` | State | useState + State chapters | ✅ Covered | Stable |
 | `useSyncExternalStore` | External stores | useSyncExternalStore | ✅ Covered | Stable |
-| `useTransition` | Concurrency / Actions | Actions and Async Transitions | 🟠 Foundation covered; deeper concurrency planned | Stable |
+| `useTransition` | Concurrency / Actions | useTransition and startTransition Deep Dive | ✅ Covered | Stable |
 
 ## Built-in React components
 
@@ -87,7 +93,7 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | `<Fragment>` | JSX | ✅ Covered | Stable |
 | `<Profiler>` | Performance | 🟡 Planned | Stable |
 | `<StrictMode>` | Strict Mode | ✅ Covered | Stable |
-| `<Suspense>` | use API + future Suspense section | 🟠 Foundation covered; deep coverage planned | Stable |
+| `<Suspense>` | Suspense section | ✅ Covered | Stable |
 | `<Activity>` | Activity in React 19.2 | ✅ Covered | 19.2+ |
 
 ## React APIs
@@ -95,11 +101,11 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | API | Category | Handbook page | Status |
 | --- | --- | --- | --- |
 | `createContext` | Context | Context and useContext | ✅ Covered |
-| `lazy` | Code splitting | Lazy Loading | 🟡 Planned |
+| `lazy` | Code splitting | lazy and Code Splitting | ✅ Covered |
 | `memo` | Performance | Memoization / Performance | 🟡 Planned |
-| `startTransition` | Concurrency / Actions | Actions and Async Transitions | 🟠 Foundation covered; deeper concurrency planned |
+| `startTransition` | Concurrency / Actions | useTransition and startTransition Deep Dive | ✅ Covered |
 | `act` | Testing | Testing | 🟡 Planned |
-| `use` | Resource API | use API and Suspense Resources | 🟠 Foundation covered; RSC/Suspense depth planned |
+| `use` | Resource API | use API and Suspense Resources | 🟠 Foundation covered; RSC depth planned |
 | `cache` | RSC | Server Components | 🟡 Planned |
 | `cacheSignal` | RSC | Server Components | 🟡 Planned — 19.2+ |
 | `captureOwnerStack` | Development / debugging | Debugging | 🟡 Planned |
@@ -204,9 +210,9 @@ React Compiler 1.0 is stable and receives first-class handbook coverage later in
 
 | Rule area | Status |
 | --- | --- |
-| components and Hooks must be pure | ✅ Foundation coverage; dedicated chapter planned |
-| idempotent rendering | ✅ Foundation coverage; dedicated chapter planned |
-| side effects outside render | ✅ Effects coverage; dedicated Rules chapter planned |
+| components and Hooks must be pure | ✅ Foundation + concurrency coverage; dedicated chapter planned |
+| idempotent rendering | ✅ Foundation + concurrency coverage; dedicated chapter planned |
+| side effects outside render | ✅ Effects + concurrency coverage; dedicated Rules chapter planned |
 | props/state immutability | ✅ Foundation/reducer coverage |
 | Rules of Hooks | ✅ Custom Hooks foundation coverage; dedicated chapter planned |
 | reducer purity | ✅ Reducer coverage |
@@ -249,18 +255,23 @@ The beginner-to-modern path now explicitly covers:
 - external store subscriptions;
 - React 19 Actions and async Transitions;
 - `useActionState`, form Actions, `useFormStatus`, `useOptimistic`;
-- `use` resource reading and Suspense foundations;
+- `use` resource reading foundations;
 - React 19.2 `<Activity>`;
 - document metadata and resource-loading primitives;
-- React 19 migration, removed APIs, ref changes, testing changes, and TypeScript migration concerns.
+- React 19 migration/removals;
+- deep Suspense boundary design and reveal behavior;
+- lazy code splitting;
+- production loading/navigation architecture;
+- Transition interruption and scheduling;
+- `useDeferredValue` and stale UI;
+- concurrent render/commit mental models.
 
 Still planned:
 
-- deep Suspense, transitions, `useDeferredValue`, interruption, lazy loading, and concurrency;
 - remaining stable Hooks (`useCallback`, `useMemo`, `useId`, `useDebugValue`, `useLayoutEffect`, `useInsertionEffect`);
 - portals and complete React DOM client coverage;
 - SSR, hydration, streaming, static rendering, partial pre-rendering, Server Components and Server Functions;
-- `cache`, `cacheSignal`, and RSC directives;
+- deeper RSC `use` coverage, `cache`, `cacheSignal`, and RSC directives;
 - React Compiler and dedicated Rules of React;
 - TypeScript, testing, accessibility, security;
 - performance, architecture, design systems, patterns;
@@ -286,6 +297,11 @@ Whenever the stable React minor changes:
 - https://react.dev/reference/react
 - https://react.dev/reference/react/hooks
 - https://react.dev/reference/react/apis
+- https://react.dev/reference/react/Suspense
+- https://react.dev/reference/react/lazy
+- https://react.dev/reference/react/useTransition
+- https://react.dev/reference/react/startTransition
+- https://react.dev/reference/react/useDeferredValue
 - https://react.dev/reference/react/useActionState
 - https://react.dev/reference/react/useOptimistic
 - https://react.dev/reference/react/use
