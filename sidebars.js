@@ -126,6 +126,20 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '17 · Modern React 19+',
+          items: [
+            'react/modern-react/actions-and-async-transitions',
+            'react/modern-react/use-action-state',
+            'react/modern-react/form-actions-and-use-form-status',
+            'react/modern-react/use-optimistic',
+            'react/modern-react/use-api-and-resources',
+            'react/modern-react/activity',
+            'react/modern-react/metadata-and-resources',
+            'react/modern-react/react-19-migration',
+          ],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },
