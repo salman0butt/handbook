@@ -1,4 +1,5 @@
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
+// The React curriculum is expanded in high-quality phases; keep document IDs build-verified.
 const sidebars = {
   handbookSidebar: [
     {
