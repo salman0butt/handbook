@@ -1,14 +1,14 @@
 ---
 title: useState
-description: Understand React state, updates, batching, derived values, and common useState mistakes.
+description: Understand React state, snapshots, queued updates, lazy initialization, immutable state, ownership, debugging, and production useState decisions.
 sidebar_position: 1
 ---
 
 # useState
 
-State is data that a component remembers between renders.
+State is information a component needs to remember between renders.
 
-`useState` lets a function component store that data and request a new render when it changes.
+`useState` gives a function component a state value and a setter that can request another render with a new value.
 
 ```jsx
 import {useState} from 'react';
@@ -24,31 +24,9 @@ function Counter() {
 }
 ```
 
-## The mental model
+## Why does state exist?
 
-Do not think of `setCount` as changing a normal JavaScript variable immediately.
-
-Think of it as asking React to render the component again with a new state value.
-
-```text
-render with count = 0
-        ↓
-user clicks
-        ↓
-setCount(1)
-        ↓
-React schedules update
-        ↓
-component renders again
-        ↓
-count = 1
-```
-
-Each render sees its own snapshot of state.
-
-## State vs ordinary variables
-
-This does not work as application state:
+Ordinary local variables do not provide React with persistent render state.
 
 ```jsx
 function Counter() {
@@ -62,39 +40,115 @@ function Counter() {
 }
 ```
 
-Changing `count` does not tell React to render again, and the variable is recreated on future renders.
+Two problems exist:
 
-State solves both problems:
+1. changing `count` does not schedule a React render;
+2. when the component renders again, the local variable is created again.
+
+State solves both:
+
+```text
+React remembers state value
+        +
+setter queues an update
+        ↓
+React can render again with new state
+```
+
+## Basic syntax
 
 ```jsx
 const [count, setCount] = useState(0);
 ```
 
-React remembers the value and schedules rendering when it changes.
+`useState(0)` returns an array with two positions:
+
+```text
+[count, setCount]
+  ↑       ↑
+value   setter
+```
+
+The square brackets are JavaScript array destructuring, not special React syntax.
+
+## The most important mental model: state is a snapshot
+
+Do not think of `setCount` as mutating the `count` variable in the current function call.
+
+Think of it as queuing state for a future render.
+
+```text
+render A
+count = 0
+   ↓
+click handler from render A runs
+   ↓
+setCount(1)
+   ↓
+React schedules/queues update
+   ↓
+render B
+count = 1
+```
+
+Each render receives its own snapshot of props and state.
+
+## Why the current handler still sees the old value
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  function handleClick() {
+    setCount(count + 1);
+    console.log(count);
+  }
+
+  return <button onClick={handleClick}>{count}</button>;
+}
+```
+
+If `count` is `0`, the log prints `0` in that handler.
+
+The setter requested another render. It did not rewrite the `count` constant captured by this render's handler.
+
+```text
+render creates count = 0
+        ↓
+render creates handleClick closure
+        ↓
+handler remembers that render's count
+        ↓
+setter queues future state
+        ↓
+current closure still has count = 0
+```
+
+This snapshot model explains many "stale state" bugs later.
 
 ## Choosing state
 
-State is useful for values that:
+A value usually belongs in state when it:
 
-1. change over time; and
-2. affect what the component renders.
+1. changes over time; and
+2. affects what the component renders.
 
 Examples:
 
 ```text
 selected tab
 form input
-open/closed modal
+open/closed dialog
 current page
 basket quantity
 expanded accordion item
 ```
 
-Not every value belongs in state.
+Not every variable belongs in state.
 
-## Do not store derived state unnecessarily
+## Store the minimum state necessary
 
-Consider:
+Suppose:
 
 ```jsx
 const [firstName, setFirstName] = useState('Salman');
@@ -102,21 +156,21 @@ const [lastName, setLastName] = useState('Butt');
 const [fullName, setFullName] = useState('Salman Butt');
 ```
 
-`fullName` can be calculated from existing state:
+`fullName` is derivable:
 
 ```jsx
 const fullName = `${firstName} ${lastName}`;
 ```
 
-Storing it separately creates another value that must remain synchronised.
+Storing the derived value creates another source that must stay synchronized.
 
-A strong rule is:
+A strong default is:
 
-> If a value can be calculated during rendering from current props and state, usually calculate it instead of storing it.
+> If a value can be calculated during render from current props and state, calculate it instead of storing another copy.
 
-## Updating from the previous state
+## Queued state updates
 
-This looks reasonable:
+This code does not necessarily produce `+3` from one click:
 
 ```jsx
 setCount(count + 1);
@@ -124,9 +178,21 @@ setCount(count + 1);
 setCount(count + 1);
 ```
 
-But all three calls can use the same `count` snapshot from the current render.
+All three calls use the same `count` snapshot from the current render.
 
-When the next value depends on the previous one, use the updater form:
+If `count` is `0`, each expression asks for `1`.
+
+```text
+current snapshot: count = 0
+
+setCount(0 + 1)
+setCount(0 + 1)
+setCount(0 + 1)
+```
+
+## Updater functions
+
+When the next state depends on the previous queued state, use an updater function:
 
 ```jsx
 setCount((current) => current + 1);
@@ -134,9 +200,39 @@ setCount((current) => current + 1);
 setCount((current) => current + 1);
 ```
 
-Each update receives the result of the previous update.
+Conceptually:
 
-## Objects in state
+```text
+queued 0
+ ↓ +1
+1
+ ↓ +1
+2
+ ↓ +1
+3
+```
+
+Updater functions are especially useful when multiple updates can occur in one event or when the update logic is naturally expressed from the previous state.
+
+## Batching
+
+React can batch state updates so several setter calls do not force separate immediate renders after every call.
+
+A useful mental model is:
+
+```text
+event / update source
+      ↓
+queue state updates
+      ↓
+React processes updates
+      ↓
+render with resulting state
+```
+
+Do not write code that depends on a setter synchronously changing the current state variable.
+
+## Replacing vs updating objects
 
 State should be treated as immutable.
 
@@ -147,7 +243,9 @@ user.name = 'Aisha';
 setUser(user);
 ```
 
-Create a new object instead:
+This mutates the existing object.
+
+Better:
 
 ```jsx
 setUser((currentUser) => ({
@@ -168,17 +266,17 @@ setUser((currentUser) => ({
 }));
 ```
 
-This makes state transitions explicit and gives React new references to work with.
+Spread is shallow, so every changed nested level needs a new object if you use this style.
 
 ## Arrays in state
 
-Add an item:
+Add:
 
 ```jsx
 setItems((currentItems) => [...currentItems, newItem]);
 ```
 
-Remove an item:
+Remove:
 
 ```jsx
 setItems((currentItems) =>
@@ -186,7 +284,7 @@ setItems((currentItems) =>
 );
 ```
 
-Update an item:
+Update:
 
 ```jsx
 setItems((currentItems) =>
@@ -196,11 +294,119 @@ setItems((currentItems) =>
 );
 ```
 
-Avoid mutating methods directly on state values when they change the existing array.
+Reorder using operations that produce a new array rather than mutating the state array in place.
 
-## State should have one clear owner
+## Why immutability matters
 
-Imagine two sibling components both need the selected product:
+Treating state as immutable helps preserve the snapshot model:
+
+```text
+previous state object
+        ↓ remains unchanged
+new state object
+        ↓ represents next snapshot
+```
+
+It also makes reference identity meaningful for React and surrounding tooling.
+
+Do not reduce this to "React cannot detect mutation." The deeper reason is that mutating old snapshots makes rendering and debugging much harder to reason about.
+
+## Lazy initialization
+
+For cheap initial values:
+
+```jsx
+const [count, setCount] = useState(0);
+```
+
+If creating the initial value is expensive, pass an initializer function:
+
+```jsx
+const [settings, setSettings] = useState(() => loadInitialSettings());
+```
+
+Compare:
+
+```jsx
+// Function is called while evaluating every render expression,
+// although React only uses the initial result as state initialization.
+const [settings] = useState(loadInitialSettings());
+```
+
+with:
+
+```jsx
+// React receives the initializer function itself.
+const [settings] = useState(loadInitialSettings);
+```
+
+The second form avoids recalculating the initial value on ordinary re-renders.
+
+### Initializers must be pure
+
+React may call initializer/updater functions more than once in development Strict Mode to help reveal impurity.
+
+Do not perform external side effects inside a state initializer.
+
+Bad:
+
+```jsx
+const [id] = useState(() => {
+  analytics.track('created');
+  return crypto.randomUUID();
+});
+```
+
+The initializer should calculate initial state, not perform external work.
+
+## Passing a function as state
+
+Because passing a function to `useState` means "initializer function," storing a function value requires wrapping it:
+
+```jsx
+const [formatter, setFormatter] = useState(() => defaultFormatter);
+```
+
+And when replacing it with another function:
+
+```jsx
+setFormatter(() => nextFormatter);
+```
+
+Otherwise React may interpret the function as an updater.
+
+## State structure
+
+Avoid one giant object merely because values are used in the same component:
+
+```jsx
+const [state, setState] = useState({
+  email: '',
+  password: '',
+  modalOpen: false,
+  selectedTab: 'profile',
+  notifications: [],
+});
+```
+
+Unrelated values often deserve separate state:
+
+```jsx
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [modalOpen, setModalOpen] = useState(false);
+const [selectedTab, setSelectedTab] = useState('profile');
+```
+
+Group values when they represent one cohesive transition or domain concept, not just because they share a component.
+
+If many state transitions are tightly related and update logic becomes difficult to follow, `useReducer` may eventually be clearer.
+
+## State ownership
+
+Every state value should have a clear owner.
+
+Suppose siblings need the same selected variant:
 
 ```text
 ProductPage
@@ -208,7 +414,7 @@ ProductPage
 └── ProductDetails
 ```
 
-If both need the same changing value, the state usually belongs in their closest common owner:
+If both need one coordinated value, move ownership to their closest common parent:
 
 ```jsx
 function ProductPage() {
@@ -226,56 +432,40 @@ function ProductPage() {
 }
 ```
 
-This idea is often called **lifting state up**.
+This is often called **lifting state up**.
 
-The deeper principle is more useful than the phrase:
+The deeper rule is:
 
-> Put state in the lowest component that can correctly own all consumers of that state.
+> Put state in the lowest component that can correctly own every consumer that must coordinate around it.
 
-## Avoid one giant state object by default
+Do not move all state to the application root "for consistency."
 
-You could write:
+## Controlled vs uncontrolled state
 
-```jsx
-const [state, setState] = useState({
-  email: '',
-  password: '',
-  modalOpen: false,
-  selectedTab: 'profile',
-  notifications: [],
-});
-```
-
-But unrelated values changing for unrelated reasons often deserve separate state.
+A component is **controlled** for a value when the caller owns that value and passes it in.
 
 ```jsx
-const [email, setEmail] = useState('');
-const [password, setPassword] = useState('');
-const [modalOpen, setModalOpen] = useState(false);
-const [selectedTab, setSelectedTab] = useState('profile');
+<Tabs selectedId={selectedId} onSelect={setSelectedId} />
 ```
 
-Group values when they represent one cohesive state transition, not merely because they are used by the same component.
-
-## Initialisation
-
-For cheap initial values:
+A component is **uncontrolled** for a value when it owns its own state:
 
 ```jsx
-const [count, setCount] = useState(0);
+function Tabs({defaultSelectedId}) {
+  const [selectedId, setSelectedId] = useState(defaultSelectedId);
+  // ...
+}
 ```
 
-If calculating the initial value is expensive, pass an initializer function:
+Neither is always better.
 
-```jsx
-const [settings, setSettings] = useState(() => loadInitialSettings());
-```
+Controlled APIs improve coordination from outside. Uncontrolled APIs can reduce parent state for self-contained behavior.
 
-This communicates that the function is used to produce the initial state rather than being the state value itself.
+Later chapters will design reusable component APIs that intentionally support one or both models.
 
-## Common mistakes
+## Copying props into state
 
-### Copying props into state without a reason
+This can be a bug:
 
 ```jsx
 function Profile({user}) {
@@ -283,11 +473,65 @@ function Profile({user}) {
 }
 ```
 
-Now there are two sources of truth: `user.name` and local `name`.
+The initial prop is used only to create the initial state. If `user.name` later changes, React does not automatically reinitialize `name`.
 
-This can be correct for an editable draft, but it should be intentional.
+Now there may be two sources of truth:
 
-### Using state for values that can be calculated
+```text
+user.name from parent
+        vs
+name local state
+```
+
+This can be correct for an editable draft:
+
+```text
+server/current profile value
+        ↓ initialize draft
+local editable draft
+        ↓ save/cancel
+explicit synchronization decision
+```
+
+But it should be intentional.
+
+## Resetting state
+
+Sometimes you want new data to produce a fresh component state rather than manually synchronizing many fields.
+
+React ties state to a component's identity and position in the tree. A different `key` can intentionally reset that state.
+
+```jsx
+<ProfileEditor key={user.id} user={user} />
+```
+
+Do not use keys randomly. The rendering/identity chapter will explain why this works and when it is appropriate.
+
+## `useState` vs a ref
+
+State:
+
+```text
+persists between renders
++
+updates can trigger rendering
+```
+
+Ref:
+
+```text
+persists between renders
++
+changing ref.current does not request rendering
+```
+
+If a changing value affects the rendered UI, state is usually the right primitive.
+
+If a value is only needed by imperative logic and should not trigger rendering, a ref may be more appropriate.
+
+## `useState` vs derived value
+
+Bad:
 
 ```jsx
 const [items, setItems] = useState([]);
@@ -300,54 +544,272 @@ Usually:
 const itemCount = items.length;
 ```
 
-### Mutating state
+Derived values reduce synchronization bugs.
 
-Create new objects and arrays rather than changing existing state references.
+## `useState` vs reducer
+
+`useState` is excellent when state updates are simple and local.
+
+A reducer can become clearer when:
+
+- many fields change together;
+- transitions are event/action driven;
+- update rules are complex;
+- you want transitions centralized and independently testable.
+
+Do not introduce a reducer merely because the component has more than one state variable.
+
+## `useState` vs global/store state
+
+Do not install a global state library because props exist.
+
+Start with ownership:
+
+```text
+local component state
+      ↓ if siblings coordinate
+lift state
+      ↓ if distant subtree needs stable shared value
+Context / reducer
+      ↓ if external-store requirements exist
+external store
+```
+
+The right choice depends on consumers, update frequency, domain boundaries, persistence, and server/client state distinction.
+
+## Common mistakes
 
 ### Expecting the variable to change immediately
 
-After:
-
 ```jsx
 setCount(count + 1);
+console.log(count);
 ```
 
-the current event handler still sees the `count` value from the render that created that handler.
+The current render's `count` snapshot does not change.
 
-That behaviour becomes much easier to understand once we study renders as snapshots.
+### Using direct values when updates depend on previous queued state
+
+Use the updater form when the next value depends on previous state.
+
+### Mutating objects or arrays
+
+Create next-state values rather than modifying old snapshots.
+
+### Storing derived data
+
+Calculate from existing props/state where possible.
+
+### Copying props into state without defining synchronization behavior
+
+Ask which value is the source of truth and what should happen when the prop changes.
+
+### Initializing from an expensive function call every render
+
+Use a lazy initializer when initial calculation is genuinely expensive.
+
+### Putting server data into local state automatically
+
+Remote/server state introduces caching, invalidation, refetching, race conditions, and mutation concerns. Local `useState` is not automatically the correct abstraction for those problems.
+
+## Debugging
+
+### "State didn't update"
+
+Ask:
+
+1. Did the setter run?
+2. What value did this render's closure capture?
+3. Did the next state equal the current state by React's comparison semantics?
+4. Was the state mutated before setting?
+5. Is the UI actually derived from a different source?
+6. Did component identity change and reset the state?
+
+### "My three increments only added one"
+
+Use updater functions when the next value depends on previous queued state.
+
+### "Changing a prop doesn't update local state"
+
+`useState(prop)` uses the prop to initialize state; it does not create ongoing synchronization.
+
+### "My object changed elsewhere too"
+
+You may have mutated a shared object reference instead of creating the next state immutably.
+
+### "State resets unexpectedly"
+
+Check component position and `key` identity. A component mounted as a different identity receives fresh state.
+
+## When should I use `useState`?
+
+Use it for component-local information that:
+
+- must persist between renders;
+- can change over time;
+- affects rendered output or child inputs;
+- has relatively straightforward update rules.
+
+Examples:
+
+- selected filter;
+- open dialog;
+- form field draft;
+- quantity selector;
+- active accordion panel;
+- local pagination state.
+
+## When should I NOT use `useState`?
+
+Avoid it for:
+
+- values derivable during render;
+- constants;
+- values that do not need rendering when changed (consider refs);
+- complex remote/server cache state where a dedicated server-state architecture is more appropriate;
+- duplicated state with no clear source of truth;
+- values better represented by the URL/router state;
+- values already owned by a parent and only needed as props.
+
+## Trade-offs
+
+Local state has strong advantages:
+
+- simple;
+- colocated with its owner;
+- minimal architecture;
+- easy to understand for small interactions.
+
+But too much local state can create:
+
+- duplicated sources of truth;
+- difficult sibling coordination;
+- long prop chains when ownership is wrong;
+- complex transition logic;
+- accidental mixing of client UI state and server state.
+
+Senior-level state management starts with **classification and ownership**, not library choice.
+
+## Production example: quantity selector
+
+```jsx
+import {useState} from 'react';
+
+function QuantitySelector({max = 10, onChange}) {
+  const [quantity, setQuantity] = useState(1);
+
+  function increment() {
+    setQuantity((current) => {
+      const next = Math.min(current + 1, max);
+      onChange?.(next);
+      return next;
+    });
+  }
+
+  function decrement() {
+    setQuantity((current) => {
+      const next = Math.max(current - 1, 1);
+      onChange?.(next);
+      return next;
+    });
+  }
+
+  return (
+    <div aria-label="Quantity">
+      <button
+        type="button"
+        onClick={decrement}
+        disabled={quantity === 1}
+        aria-label="Decrease quantity"
+      >
+        −
+      </button>
+
+      <output aria-live="polite">{quantity}</output>
+
+      <button
+        type="button"
+        onClick={increment}
+        disabled={quantity === max}
+        aria-label="Increase quantity"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+```
+
+This is intentionally local state because the selector owns the draft quantity.
+
+In a real cart, the canonical quantity might instead belong to cart/domain state or server state. The important question is ownership, not whether `useState` can technically store it.
 
 ## Exercise
 
-Build a quantity selector with these requirements:
+Build a quantity selector with:
 
 ```text
 [-]  1  [+]
 ```
 
-Rules:
+Requirements:
 
 - initial quantity is `1`;
 - quantity cannot go below `1`;
-- `+` increases the quantity;
-- `-` decreases the quantity;
-- disable `-` when quantity is already `1`.
+- maximum quantity is passed as a prop;
+- `+` and `-` buttons disable at their limits;
+- add a Reset button;
+- display the subtotal using `price * quantity`;
+- **do not store subtotal in state**.
 
-Then extend it with a `Reset` button.
+Then answer:
 
-Ask yourself whether any additional state is actually necessary.
+1. Which value is state?
+2. Which value is derived?
+3. Why is an updater function useful?
+4. Where should quantity live if the whole cart needs to coordinate it?
+
+## Interview questions
+
+### Junior
+
+Why does logging state immediately after calling its setter often show the previous value?
+
+### Mid-level
+
+When should you use the updater form of a state setter, and how does React process queued updater functions?
+
+### Senior
+
+How do you decide whether a value belongs in local state, a parent, a reducer, Context, an external store, the URL, or a server-state cache?
 
 ## Summary
 
-Use state for changing information that affects rendering.
-
-Keep these principles in mind:
+Keep these rules:
 
 ```text
+State belongs to renders, not mutable variables.
+Each render sees a snapshot.
+Setters queue future state.
+Use updater functions for previous-state transitions.
 Store the minimum state necessary.
 Derive what you can.
 Treat state as immutable.
-Use updater functions when the next value depends on the previous value.
-Give each piece of state a clear owner.
+Give each state value one clear owner.
+Choose a different abstraction when the problem is not local UI state.
 ```
 
-Later chapters will build on this model with reducers, context, server state, and more complex state architecture.
+## References
+
+- https://react.dev/reference/react/useState
+- https://react.dev/learn/state-a-components-memory
+- https://react.dev/learn/state-as-a-snapshot
+- https://react.dev/learn/queueing-a-series-of-state-updates
+- https://react.dev/learn/updating-objects-in-state
+- https://react.dev/learn/updating-arrays-in-state
+- https://react.dev/learn/choosing-the-state-structure
+- https://react.dev/learn/sharing-state-between-components
+
+## Next
+
+The next curriculum batch separates the state mental model from the Hook API and then adds **events, render/commit behavior, lists and keys, and forms** before introducing Effects.
