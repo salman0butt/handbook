@@ -1,5 +1,5 @@
 ---
-title: Rendering: Trigger, Render, Commit, Paint
+title: "Rendering: Trigger, Render, Commit, Paint"
 description: Understand what a React render actually is, what triggers it, and how render, reconciliation, commit, and browser paint differ.
 sidebar_position: 1
 ---
