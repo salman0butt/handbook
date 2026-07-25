@@ -102,6 +102,30 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '14 · Context',
+          items: [
+            'react/context/context-and-use-context',
+            'react/context/context-architecture-and-performance',
+          ],
+        },
+        {
+          type: 'category',
+          label: '15 · Reducers',
+          items: [
+            'react/reducers/use-reducer-and-reducer-design',
+            'react/reducers/reducer-with-context',
+          ],
+        },
+        {
+          type: 'category',
+          label: '16 · State Architecture',
+          items: [
+            'react/state-architecture/state-categories',
+            'react/state-architecture/use-sync-external-store',
+          ],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },
