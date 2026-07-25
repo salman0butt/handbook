@@ -9,7 +9,7 @@ sidebar_position: 1
 # React Handbook
 
 > **Docs target: React 19.2**  
-> **Latest stable package verified: React 19.2.7**  
+> **Latest stable package verified: React 19.2.8**  
 > **Last verified: 2026-07-26**
 
 A practical React handbook built to move from **zero React knowledge → real applications → modern React → advanced engineering → senior-level decision making**.
