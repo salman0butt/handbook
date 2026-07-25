@@ -10,22 +10,22 @@ const sidebars = {
         {
           type: 'category',
           label: '01 · Getting Started',
-          items: ['react/01-getting-started/what-is-react'],
+          items: ['react/getting-started/what-is-react'],
         },
         {
           type: 'category',
           label: '02 · Fundamentals',
-          items: ['react/02-fundamentals/jsx'],
+          items: ['react/fundamentals/jsx'],
         },
         {
           type: 'category',
           label: '03 · Components',
-          items: ['react/03-components/components-and-props'],
+          items: ['react/components/components-and-props'],
         },
         {
           type: 'category',
           label: '04 · Hooks',
-          items: ['react/04-hooks/use-state'],
+          items: ['react/hooks/use-state'],
         },
       ],
     },
