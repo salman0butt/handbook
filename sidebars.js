@@ -44,8 +44,38 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: '05 · State & Hooks',
-          items: ['react/hooks/use-state'],
+          label: '05 · Rendering',
+          items: ['react/rendering/render-cycle'],
+        },
+        {
+          type: 'category',
+          label: '06 · Events',
+          items: ['react/events/responding-to-events'],
+        },
+        {
+          type: 'category',
+          label: '07 · State',
+          items: [
+            'react/hooks/use-state',
+            'react/state/state-snapshots-and-queues',
+            'react/state/choosing-and-sharing-state',
+            'react/state/preserving-and-resetting-state',
+          ],
+        },
+        {
+          type: 'category',
+          label: '08 · Conditional Rendering',
+          items: ['react/conditional-rendering/conditional-rendering'],
+        },
+        {
+          type: 'category',
+          label: '09 · Lists & Keys',
+          items: ['react/lists/lists-and-keys'],
+        },
+        {
+          type: 'category',
+          label: '10 · Forms',
+          items: ['react/forms/forms'],
         },
         {
           type: 'category',
