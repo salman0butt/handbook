@@ -1,25 +1,56 @@
 # Developer Handbook
 
-A personal software engineering handbook covering frontend, backend, system design, DevOps, WordPress, and AI engineering — from fundamentals to advanced concepts.
+A personal software engineering knowledge base covering frontend, backend, system design, DevOps, WordPress, and AI engineering — from fundamentals to advanced concepts.
 
-## Live site
+**Live site:** https://salman0butt.github.io/handbook/
 
-GitHub Pages deployment is configured from this repository.
+## Current focus: React
 
-## Handbooks
+The React handbook is being built from first principles through production architecture and senior engineering topics.
 
-- React — in progress
-- JavaScript — coming soon
-- TypeScript — coming soon
-- Next.js — coming soon
-- Node.js — coming soon
-- Databases — coming soon
-- System Design — coming soon
-- DevOps — coming soon
-- WordPress — coming soon
-- AI Engineering — coming soon
+Current chapters include:
+
+- React mental model and what problem React solves
+- JSX
+- Components and props
+- `useState`
+
+Planned React sections include hooks, forms, routing, state management, data fetching, TypeScript, testing, accessibility, performance, architecture, design patterns, security, React internals, and interview preparation.
+
+## Handbook library
+
+| Handbook | Status |
+| --- | --- |
+| React | In progress |
+| JavaScript | Coming soon |
+| TypeScript | Coming soon |
+| Next.js | Coming soon |
+| Node.js | Coming soon |
+| Databases | Coming soon |
+| System Design | Coming soon |
+| DevOps | Coming soon |
+| WordPress | Coming soon |
+| AI Engineering | Coming soon |
+
+## Philosophy
+
+```text
+Learn → Understand → Build → Debug → Design → Master
+```
+
+The goal is not to collect syntax. Each handbook should explain mental models, real-world examples, common mistakes, trade-offs, exercises, and production engineering decisions.
+
+## Tech
+
+- React
+- Docusaurus
+- MDX / Markdown
+- GitHub Actions
+- GitHub Pages
 
 ## Local development
+
+Requires Node.js 20 or newer.
 
 ```bash
 npm install
@@ -31,3 +62,7 @@ Production build:
 ```bash
 npm run build
 ```
+
+## Deployment
+
+Pushes to `main` are configured to build the Docusaurus site and deploy the generated `build` directory through GitHub Pages Actions.
