@@ -1,0 +1,232 @@
+.hero {
+  padding: 7rem 0 5rem;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(97, 218, 251, 0.14), transparent 34%),
+    radial-gradient(circle at 80% 20%, rgba(124, 58, 237, 0.12), transparent 28%),
+    var(--ifm-background-color);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.eyebrow,
+.kicker {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+}
+
+.heroTitle {
+  max-width: 900px;
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+}
+
+.heroSubtitle {
+  max-width: 760px;
+  margin: 2rem 0 0;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  line-height: 1.7;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 2rem;
+}
+
+.learningPath {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+  margin-top: 3rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.learningPath b {
+  color: var(--ifm-color-primary);
+}
+
+.library,
+.philosophy {
+  padding: 5.5rem 0;
+}
+
+.sectionHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.sectionHeading h2,
+.philosophy h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  letter-spacing: -0.035em;
+}
+
+.sectionHeading p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  display: flex;
+  min-height: 290px;
+  flex-direction: column;
+  padding: 1.5rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 20px;
+  background: var(--ifm-card-background-color);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.08);
+  color: inherit;
+  text-decoration: none;
+}
+
+.featured {
+  grid-column: span 2;
+  background:
+    linear-gradient(135deg, rgba(97, 218, 251, 0.12), transparent 60%),
+    var(--ifm-card-background-color);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--ifm-color-emphasis-100);
+  font-weight: 900;
+  font-family: var(--ifm-font-family-monospace);
+}
+
+.status {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.card h3 {
+  margin: 2rem 0 0.7rem;
+  font-size: 1.45rem;
+}
+
+.card p {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.cardLink {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  font-weight: 700;
+  color: var(--ifm-color-primary);
+}
+
+.philosophy {
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.principles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.principles > div {
+  padding: 1.5rem 0;
+  border-top: 2px solid var(--ifm-color-emphasis-300);
+}
+
+.principles strong {
+  font-family: var(--ifm-font-family-monospace);
+  color: var(--ifm-color-primary);
+}
+
+.principles h3 {
+  margin: 1rem 0 0.5rem;
+}
+
+.principles p {
+  margin: 0;
+  color: var(--ifm-color-emphasis-700);
+}
+
+@media (max-width: 996px) {
+  .hero {
+    padding-top: 5rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .featured {
+    grid-column: span 2;
+  }
+
+  .principles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .sectionHeading {
+    display: block;
+  }
+
+  .sectionHeading p {
+    margin-top: 1rem;
+  }
+
+  .grid,
+  .principles {
+    grid-template-columns: 1fr;
+  }
+
+  .featured {
+    grid-column: auto;
+  }
+
+  .card {
+    min-height: 250px;
+  }
+}
