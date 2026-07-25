@@ -36,6 +36,14 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | conditional rendering | Conditional Rendering | ✅ Covered |
 | lists, keys, identity | Lists and Keys | ✅ Covered |
 | form fundamentals | Forms | ✅ Covered |
+| Effects as synchronization | useEffect and Synchronizing with External Systems | ✅ Covered |
+| removing unnecessary Effects | You Might Not Need an Effect | ✅ Covered |
+| Effect lifecycle and dependencies | Effect Lifecycle and Dependencies | ✅ Covered |
+| Effect Events | useEffectEvent | ✅ Covered — 19.2+ |
+| refs vs state | useRef | ✅ Covered |
+| DOM refs and ref callbacks | DOM Refs and Imperative Handles | ✅ Covered |
+| ref as a prop | DOM Refs and Imperative Handles | ✅ Covered — 19+ |
+| custom Hooks | Custom Hooks | ✅ Covered |
 
 ## React Hooks
 
@@ -46,16 +54,16 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | `useContext` | Context Hook | Context | 🟡 Planned | Stable |
 | `useDebugValue` | Debugging Hook | Hook Reference | 🟡 Planned | Stable |
 | `useDeferredValue` | Concurrency Hook | Transitions & Concurrency | 🟡 Planned | Stable |
-| `useEffect` | Effect Hook | Effects | 🟡 Planned | Stable |
-| `useEffectEvent` | Effect Hook | Effect Events | 🟡 Planned | 19.2+ |
+| `useEffect` | Effect Hook | useEffect and Synchronizing with External Systems | ✅ Covered | Stable |
+| `useEffectEvent` | Effect Hook | useEffectEvent | ✅ Covered | 19.2+ |
 | `useId` | Utility Hook | Accessibility / Hook Reference | 🟡 Planned | Stable |
-| `useImperativeHandle` | Ref Hook | Refs | 🟡 Planned | Stable |
+| `useImperativeHandle` | Ref Hook | DOM Refs and Imperative Handles | ✅ Covered | Stable |
 | `useInsertionEffect` | Effect Hook | Layout & Insertion Effects | 🟡 Planned | Stable |
 | `useLayoutEffect` | Effect Hook | Layout & Insertion Effects | 🟡 Planned | Stable |
 | `useMemo` | Performance Hook | Memoization | 🟡 Planned | Stable |
 | `useOptimistic` | Action Hook | Modern React Forms | 🟡 Planned | 19+ |
 | `useReducer` | State Hook | Reducers | 🟡 Planned | Stable |
-| `useRef` | Ref Hook | Refs | 🟡 Planned | Stable |
+| `useRef` | Ref Hook | useRef + DOM Refs | ✅ Covered | Stable |
 | `useState` | State Hook | useState + State chapters | ✅ Covered | Stable |
 | `useSyncExternalStore` | External Store Hook | External Stores | 🟡 Planned | Stable |
 | `useTransition` | Concurrency Hook | Transitions & Concurrency | 🟡 Planned | Stable |
@@ -114,6 +122,7 @@ React supports browser built-in HTML and SVG components. The handbook will cover
 | `<select>` and `<option>` behavior | Forms | ✅ Covered |
 | `<textarea>` behavior | Forms | ✅ Covered |
 | file inputs | Forms | ✅ Covered |
+| DOM `ref` attachment and callback refs | DOM Refs and Imperative Handles | ✅ Covered |
 | `<form action={function}>` overview | Forms | ✅ Foundation overview |
 | Actions + pending/error/optimistic form flow | Modern React Forms | 🟡 Planned |
 | SVG components | React DOM Components | 🟡 Planned |
@@ -186,11 +195,11 @@ Compiler directives are control mechanisms, not syntax every component should co
 | --- | --- |
 | components and Hooks must be pure | ✅ Foundation coverage; dedicated chapter planned |
 | idempotent rendering | ✅ Foundation coverage; dedicated chapter planned |
-| side effects outside render | ✅ Foundation coverage; dedicated chapter planned |
+| side effects outside render | ✅ Effects coverage; dedicated Rules chapter planned |
 | props/state immutability | ✅ Foundation coverage; dedicated chapter planned |
-| Rules of Hooks | 🟡 Planned |
+| Rules of Hooks | ✅ Custom Hooks foundation coverage; dedicated chapter planned |
 | React calls Components and Hooks | ✅ Foundation coverage; dedicated chapter planned |
-| eslint-plugin-react-hooks rules | 🟡 Planned |
+| eslint-plugin-react-hooks dependency rules | ✅ Effects foundation coverage; dedicated Rules chapter planned |
 
 ## Removed React 19 APIs and legacy coverage
 
@@ -207,11 +216,11 @@ Compiler directives are control mechanisms, not syntax every component should co
 | function component `propTypes` checks in React | ⚠️ Removed behavior | TypeScript / deliberate runtime validation |
 | `react-test-renderer` | ⚠️ Deprecated | user-focused testing tools |
 | class components | ⚠️ Legacy for new teaching | function components + Hooks |
-| `forwardRef` as default new-code pattern | ⚠️ Historical in React 19+ | ref as a prop where appropriate |
+| `forwardRef` as default new-code pattern | ⚠️ Historical in React 19+; covered in Refs | ref as a prop where appropriate |
 
 ## Beginner curriculum cross-check
 
-The beginner path now explicitly covers:
+The beginner/intermediate path now explicitly covers:
 
 - JavaScript prerequisites;
 - first app and rendering;
@@ -224,19 +233,25 @@ The beginner path now explicitly covers:
 - state preservation/reset and identity;
 - conditional rendering;
 - lists and keys;
-- forms and native form controls.
+- forms and native form controls;
+- Effects as synchronization with external systems;
+- unnecessary Effects and better data flow;
+- Effect lifecycle, cleanup, dependencies, stale closures, and Strict Mode behavior;
+- React 19.2 Effect Events;
+- refs versus state;
+- DOM refs, callback refs, ref cleanup, ref-as-prop, and imperative handles;
+- custom Hook design and composition.
 
-Still planned after this foundation sequence:
+Still planned after this sequence:
 
-- Effects and effect architecture;
-- refs and imperative escape hatches;
 - Context and reducers;
-- custom Hooks and every stable built-in Hook;
+- complete coverage for every remaining stable built-in Hook;
 - React 19 Actions and modern forms;
+- layout/insertion Effects;
 - Activity, Suspense, transitions, concurrency;
 - portals and complete React DOM coverage;
 - SSR, hydration, streaming, static rendering, Server Components;
-- React Compiler and Rules of React;
+- React Compiler and a dedicated Rules of React section;
 - TypeScript, testing, accessibility, security;
 - performance, architecture, design systems, patterns;
 - debugging, internals, legacy React, production engineering;
