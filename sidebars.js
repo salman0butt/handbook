@@ -79,6 +79,29 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '11 · Effects',
+          items: [
+            'react/effects/use-effect',
+            'react/effects/you-might-not-need-an-effect',
+            'react/effects/effect-lifecycle-and-dependencies',
+            'react/effects/use-effect-event',
+          ],
+        },
+        {
+          type: 'category',
+          label: '12 · Refs',
+          items: [
+            'react/refs/use-ref',
+            'react/refs/dom-refs-and-imperative-handles',
+          ],
+        },
+        {
+          type: 'category',
+          label: '13 · Custom Hooks',
+          items: ['react/custom-hooks/custom-hooks'],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },
