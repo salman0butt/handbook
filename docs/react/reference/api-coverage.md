@@ -44,6 +44,13 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | DOM refs and ref callbacks | DOM Refs and Imperative Handles | ✅ Covered |
 | ref as a prop | DOM Refs and Imperative Handles | ✅ Covered — 19+ |
 | custom Hooks | Custom Hooks | ✅ Covered |
+| Context mental model and provider lookup | Context and useContext | ✅ Covered |
+| React 19 Context provider syntax | Context and useContext | ✅ Covered — 19+ |
+| Context architecture and performance | Context Architecture and Performance | ✅ Covered |
+| reducer state transitions and action design | useReducer and Reducer Design | ✅ Covered |
+| reducer + Context feature architecture | Reducer + Context Architecture | ✅ Covered |
+| local/shared/server/URL/external state classification | State Architecture — Local, Shared, Server, and External State | ✅ Covered |
+| external store subscriptions and snapshots | useSyncExternalStore and External Subscriptions | ✅ Covered |
 
 ## React Hooks
 
@@ -51,7 +58,7 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | --- | --- | --- | --- | --- |
 | `useActionState` | Form / Action Hook | Modern React Forms | 🟡 Planned | 19+ |
 | `useCallback` | Performance Hook | Memoization | 🟡 Planned | Stable |
-| `useContext` | Context Hook | Context | 🟡 Planned | Stable |
+| `useContext` | Context Hook | Context and useContext | ✅ Covered | Stable |
 | `useDebugValue` | Debugging Hook | Hook Reference | 🟡 Planned | Stable |
 | `useDeferredValue` | Concurrency Hook | Transitions & Concurrency | 🟡 Planned | Stable |
 | `useEffect` | Effect Hook | useEffect and Synchronizing with External Systems | ✅ Covered | Stable |
@@ -62,10 +69,10 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | `useLayoutEffect` | Effect Hook | Layout & Insertion Effects | 🟡 Planned | Stable |
 | `useMemo` | Performance Hook | Memoization | 🟡 Planned | Stable |
 | `useOptimistic` | Action Hook | Modern React Forms | 🟡 Planned | 19+ |
-| `useReducer` | State Hook | Reducers | 🟡 Planned | Stable |
+| `useReducer` | State Hook | useReducer and Reducer Design | ✅ Covered | Stable |
 | `useRef` | Ref Hook | useRef + DOM Refs | ✅ Covered | Stable |
 | `useState` | State Hook | useState + State chapters | ✅ Covered | Stable |
-| `useSyncExternalStore` | External Store Hook | External Stores | 🟡 Planned | Stable |
+| `useSyncExternalStore` | External Store Hook | useSyncExternalStore and External Subscriptions | ✅ Covered | Stable |
 | `useTransition` | Concurrency Hook | Transitions & Concurrency | 🟡 Planned | Stable |
 
 ## Built-in React components
@@ -82,7 +89,7 @@ The official React documentation is authoritative. Secondary tutorials are used 
 
 | API | Category | Handbook page | Status |
 | --- | --- | --- | --- |
-| `createContext` | Context API | Context | 🟡 Planned |
+| `createContext` | Context API | Context and useContext | ✅ Covered |
 | `lazy` | Code splitting API | Lazy Loading | 🟡 Planned |
 | `memo` | Performance API | Memoization / Performance | 🟡 Planned |
 | `startTransition` | Concurrency API | Transitions & Concurrency | 🟡 Planned |
@@ -196,8 +203,9 @@ Compiler directives are control mechanisms, not syntax every component should co
 | components and Hooks must be pure | ✅ Foundation coverage; dedicated chapter planned |
 | idempotent rendering | ✅ Foundation coverage; dedicated chapter planned |
 | side effects outside render | ✅ Effects coverage; dedicated Rules chapter planned |
-| props/state immutability | ✅ Foundation coverage; dedicated chapter planned |
+| props/state immutability | ✅ Foundation/reducer coverage; dedicated chapter planned |
 | Rules of Hooks | ✅ Custom Hooks foundation coverage; dedicated chapter planned |
+| reducer purity | ✅ Reducer coverage |
 | React calls Components and Hooks | ✅ Foundation coverage; dedicated chapter planned |
 | eslint-plugin-react-hooks dependency rules | ✅ Effects foundation coverage; dedicated Rules chapter planned |
 
@@ -210,7 +218,7 @@ Compiler directives are control mechanisms, not syntax every component should co
 | `ReactDOM.unmountComponentAtNode` | ⚠️ Removed | `root.unmount()` |
 | `ReactDOM.findDOMNode` | ⚠️ Removed | refs |
 | string refs | ⚠️ Removed | callback/object refs |
-| legacy Context | ⚠️ Removed | modern Context |
+| legacy Context | ⚠️ Removed | modern Context (`createContext`, `useContext`, React 19 provider syntax) |
 | `React.createFactory` | ⚠️ Removed | JSX |
 | function component `defaultProps` | ⚠️ Removed behavior | JavaScript default parameters |
 | function component `propTypes` checks in React | ⚠️ Removed behavior | TypeScript / deliberate runtime validation |
@@ -218,9 +226,9 @@ Compiler directives are control mechanisms, not syntax every component should co
 | class components | ⚠️ Legacy for new teaching | function components + Hooks |
 | `forwardRef` as default new-code pattern | ⚠️ Historical in React 19+; covered in Refs | ref as a prop where appropriate |
 
-## Beginner curriculum cross-check
+## Beginner/intermediate curriculum cross-check
 
-The beginner/intermediate path now explicitly covers:
+The path now explicitly covers:
 
 - JavaScript prerequisites;
 - first app and rendering;
@@ -240,15 +248,20 @@ The beginner/intermediate path now explicitly covers:
 - React 19.2 Effect Events;
 - refs versus state;
 - DOM refs, callback refs, ref cleanup, ref-as-prop, and imperative handles;
-- custom Hook design and composition.
+- custom Hook design and composition;
+- Context, provider lookup, defaults, scope, and React 19 provider syntax;
+- Context performance and provider architecture;
+- reducer actions, purity, immutability, and state transition design;
+- reducer + Context feature architecture;
+- local/shared/server/URL/external state classification;
+- `useSyncExternalStore`, snapshot identity, subscriptions, and SSR snapshots.
 
 Still planned after this sequence:
 
-- Context and reducers;
-- complete coverage for every remaining stable built-in Hook;
+- remaining stable built-in Hooks (`useCallback`, `useMemo`, `useDeferredValue`, `useTransition`, `useId`, `useDebugValue`, `useLayoutEffect`, `useInsertionEffect`);
 - React 19 Actions and modern forms;
-- layout/insertion Effects;
-- Activity, Suspense, transitions, concurrency;
+- `use` and resource/Suspense integration;
+- `<Activity>`, Suspense, transitions, and concurrency;
 - portals and complete React DOM coverage;
 - SSR, hydration, streaming, static rendering, Server Components;
 - React Compiler and a dedicated Rules of React section;
@@ -275,6 +288,9 @@ Whenever the stable React minor changes:
 - https://react.dev/reference/react
 - https://react.dev/reference/react/hooks
 - https://react.dev/reference/react/apis
+- https://react.dev/reference/react/useContext
+- https://react.dev/reference/react/useReducer
+- https://react.dev/reference/react/useSyncExternalStore
 - https://react.dev/reference/react-dom
 - https://react.dev/reference/react-dom/components
 - https://react.dev/blog/2025/10/01/react-19-2
