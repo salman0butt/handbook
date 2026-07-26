@@ -122,4 +122,4 @@ React is a JavaScript library. Before memorising React APIs, build the JavaScrip
   </DiagramStack>
 </VisualDiagram>
 
-Continue with **[JavaScript for React](../prerequisites/javascript-for-react.md)** for the complete examples, edge cases, closures, promises, modules, and event-loop explanation.
+Continue with the detailed **JavaScript for React** chapter for the complete examples, edge cases, closures, promises, modules, and event-loop explanation.
