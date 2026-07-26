@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–2 are implemented; Phase 3 Navigation & URL State is next.**
+> **Status: NOT COMPLETE — Phases 1–3 are implemented; Phase 4 Server & Client Components is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -23,11 +23,13 @@ This page is the final release gate for the handbook. It must not be marked comp
 - [x] Phase 00 · Start Here
 - [x] Phase 01 · Foundations
 - [x] Phase 02 · App Router & Layouts
-- [ ] Phase 03 · Navigation & URL State
+- [x] Phase 03 · Navigation & URL State
 - [ ] Phase 04 · Server & Client Components
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, pages and nested layouts, templates, dynamic/catch-all/optional catch-all segments, Promise-based params, `generateStaticParams`, route groups, private folders, multiple root layouts, loading/error/not-found/default conventions, parallel routes, intercepting routes, route-driven modals, debugging, architecture review, and production-design trade-offs.
+
+Phase 03 includes `<Link>` and current 16.2 prefetch behavior, `useRouter`, server redirects, pathname/param/selected-layout hooks, Promise-based page `searchParams`, URL-driven filtering and pagination, `useLinkStatus`, route-change observation, native History API integration, Back/Forward, scroll/focus/accessibility, safe redirect policy, navigation performance debugging, and senior navigation design review.
 
 ## Final audit gates
 
