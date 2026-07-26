@@ -1,6 +1,6 @@
 ---
 title: Official React API Coverage
-description: React 19.2 coverage checklist for the handbook across React, React DOM, Compiler, Server Components, and legacy APIs.
+description: React 19.2 coverage checklist for the handbook across React, React DOM, Compiler, Server Components, TypeScript, testing, accessibility, and legacy APIs.
 sidebar_position: 1
 ---
 
@@ -24,16 +24,19 @@ The official React documentation is authoritative. Stable npm package versions a
 
 ## Curriculum coverage so far
 
-The handbook now covers the complete path from React fundamentals through modern rendering architecture, Server Components, and React Compiler:
+The handbook now covers the path from JavaScript prerequisites through React 19.2 application architecture, Compiler 1.0, TypeScript, testing, and accessibility:
 
-- React rendering, JSX, components, props, events, state, lists, forms, and keys;
+- rendering, JSX, components, props, events, state, lists, forms, and keys;
 - Effects, refs, custom Hooks, Context, reducers, and state architecture;
 - React 19 Actions, `useActionState`, `useFormStatus`, `useOptimistic`, `use`, and `<Activity>`;
 - Suspense, code splitting, Transitions, deferred rendering, and concurrent rendering;
 - React DOM escape hatches, hydration, streaming SSR, static rendering, resume/PPR architecture;
 - Server Components, Server Functions, `'use client'`, `'use server'`, `cache`, and `cacheSignal`;
-- React Compiler 1.0, automatic memoization, adoption modes, directives, library compilation, diagnostics, and production rollout;
-- dedicated Rules of React coverage for purity, immutability, render safety, Hook ordering, static component identity, refs, and compiler-aware ESLint.
+- React Compiler 1.0, automatic memoization, adoption modes, directives, diagnostics, libraries, and rollout;
+- Rules of React: purity, immutability, Hook ordering, refs, static identities, and compiler-aware ESLint;
+- React + TypeScript component contracts, Hooks, reducers, context, refs, forms, generics, library APIs, and runtime trust boundaries;
+- user-oriented React testing, async `act`, Suspense/Transitions/Actions testing, and production testing strategy;
+- semantic accessibility, accessible names, `useId`, keyboard/focus models, forms, dialogs, dynamic announcements, and navigation orientation.
 
 ## React Hooks
 
@@ -41,22 +44,22 @@ The handbook now covers the complete path from React fundamentals through modern
 | --- | --- | --- | --- |
 | `useActionState` | Modern React 19+ | ✅ Covered | 19+ |
 | `useCallback` | Compiler automatic/manual memoization | 🟠 Foundation covered; performance deep dive planned | Stable |
-| `useContext` | Context section | ✅ Covered | Stable |
+| `useContext` | Context + TypeScript | ✅ Covered | Stable |
 | `useDebugValue` | Hook debugging | 🟡 Planned | Stable |
-| `useDeferredValue` | Concurrency section | ✅ Covered | Stable |
-| `useEffect` | Effects section | ✅ Covered | Stable |
+| `useDeferredValue` | Concurrency + async testing | ✅ Covered | Stable |
+| `useEffect` | Effects + testing | ✅ Covered | Stable |
 | `useEffectEvent` | useEffectEvent | ✅ Covered | 19.2+ |
-| `useId` | Accessibility / Hook reference | 🟡 Planned | Stable |
-| `useImperativeHandle` | Refs section | ✅ Covered | Stable |
+| `useId` | Accessibility foundations | ✅ Covered | Stable |
+| `useImperativeHandle` | Refs + TypeScript | ✅ Covered | Stable |
 | `useInsertionEffect` | Layout & insertion effects | 🟡 Planned | Stable |
 | `useLayoutEffect` | Layout & insertion effects | 🟡 Planned | Stable |
 | `useMemo` | Compiler automatic/manual memoization | 🟠 Foundation covered; performance deep dive planned | Stable |
-| `useOptimistic` | Modern React 19+ | ✅ Covered | 19+ |
-| `useReducer` | Reducers | ✅ Covered | Stable |
-| `useRef` | Refs section | ✅ Covered | Stable |
-| `useState` | State section | ✅ Covered | Stable |
-| `useSyncExternalStore` | State Architecture | ✅ Covered | Stable |
-| `useTransition` | Concurrency section | ✅ Covered | Stable |
+| `useOptimistic` | Modern React + async testing | ✅ Covered | 19+ |
+| `useReducer` | Reducers + TypeScript | ✅ Covered | Stable |
+| `useRef` | Refs + TypeScript + accessibility focus | ✅ Covered | Stable |
+| `useState` | State + TypeScript | ✅ Covered | Stable |
+| `useSyncExternalStore` | State Architecture + TypeScript | ✅ Covered | Stable |
+| `useTransition` | Concurrency + async testing | ✅ Covered | Stable |
 
 ## Built-in React components
 
@@ -64,19 +67,19 @@ The handbook now covers the complete path from React fundamentals through modern
 | --- | --- | --- |
 | `<Fragment>` | JSX | ✅ Covered |
 | `<Profiler>` | Performance | 🟡 Planned |
-| `<StrictMode>` | Getting Started / Rules | ✅ Covered |
-| `<Suspense>` | Suspense section | ✅ Covered |
+| `<StrictMode>` | Getting Started / Rules / Testing | ✅ Covered |
+| `<Suspense>` | Suspense + async testing | ✅ Covered |
 | `<Activity>` | Modern React 19+ | ✅ Covered — 19.2+ |
 
 ## React APIs
 
 | API | Handbook coverage | Status |
 | --- | --- | --- |
-| `createContext` | Context | ✅ Covered |
+| `createContext` | Context + TypeScript | ✅ Covered |
 | `lazy` | Suspense / code splitting | ✅ Covered |
 | `memo` | Compiler automatic/manual memoization | 🟠 Foundation covered; performance deep dive planned |
 | `startTransition` | Concurrency | ✅ Covered |
-| `act` | Testing | 🟡 Planned |
+| `act` | Async React Testing | ✅ Covered |
 | `use` | Modern React + Suspense + Server Components | ✅ Covered |
 | `cache` | Server Components | ✅ Covered |
 | `cacheSignal` | Server Components | ✅ Covered — 19.2+ |
@@ -95,16 +98,16 @@ These directives require an RSC-compatible framework/bundler environment. A norm
 
 | API | Handbook coverage | Status |
 | --- | --- | --- |
-| `useFormStatus` | Modern React forms | ✅ Covered — 19+ |
+| `useFormStatus` | Modern React forms + async testing | ✅ Covered — 19+ |
 
 ## React DOM components
 
 | Area | Handbook coverage | Status |
 | --- | --- | --- |
-| HTML components in JSX | JSX / Forms / React DOM | ✅ Covered |
-| event props and propagation | Events | ✅ Covered |
-| native forms and controls | Forms | ✅ Covered |
-| DOM refs / callback refs | Refs | ✅ Covered |
+| HTML components in JSX | JSX / Forms / React DOM / Accessibility | ✅ Covered |
+| event props and propagation | Events / TypeScript | ✅ Covered |
+| native forms and controls | Forms / TypeScript / Accessibility | ✅ Covered |
+| DOM refs / callback refs | Refs / TypeScript | ✅ Covered |
 | `<title>` / `<meta>` / `<link>` | Metadata and Resource Loading | ✅ Covered |
 | `<style>` / `<script>` special behavior | Metadata and Resource Loading | ✅ Covered |
 | SVG behavior and accessibility | React DOM Components | ✅ Covered |
@@ -112,12 +115,14 @@ These directives require an RSC-compatible framework/bundler environment. A norm
 | `dangerouslySetInnerHTML` | React DOM Components | ✅ Covered |
 | `contentEditable` ownership caveats | React DOM Components | ✅ Covered |
 | `suppressHydrationWarning` | Hydration / React DOM | ✅ Covered |
+| semantic names / labels / ARIA relationships | Accessibility | ✅ Covered |
+| keyboard / focus behavior for custom widgets | Accessibility | ✅ Covered |
 
 ## React DOM APIs
 
 | API | Handbook coverage | Status |
 | --- | --- | --- |
-| `createPortal` | React DOM escape hatches | ✅ Covered |
+| `createPortal` | React DOM escape hatches + dialog accessibility | ✅ Covered |
 | `flushSync` | React DOM escape hatches | ✅ Covered |
 | `prefetchDNS` | Metadata and Resource Loading | ✅ Covered |
 | `preconnect` | Metadata and Resource Loading | ✅ Covered |
@@ -133,7 +138,7 @@ These directives require an RSC-compatible framework/bundler environment. A norm
 | `createRoot` | Rendering a React Application | ✅ Covered |
 | `root.render()` | Rendering a React Application | ✅ Covered |
 | `root.unmount()` | Rendering / Hydration | ✅ Covered |
-| `hydrateRoot` | Hydration and hydrateRoot | ✅ Covered |
+| `hydrateRoot` | Hydration and hydrateRoot + testing strategy | ✅ Covered |
 
 ## React DOM server APIs
 
@@ -162,10 +167,11 @@ These directives require an RSC-compatible framework/bundler environment. A norm
 | Server Components mental model | Server Components and Client Boundaries | ✅ Covered |
 | RSC vs SSR | Server Components and Client Boundaries | ✅ Covered |
 | async Server Components | Server Components and Client Boundaries | ✅ Covered |
-| serializable client-boundary props | Server Components and Client Boundaries | ✅ Covered |
+| serializable client-boundary props | Server Components + TypeScript caveats | ✅ Covered |
 | Promise handoff to Client Components | Server Components and Client Boundaries | ✅ Covered |
 | Server Functions | Server Functions and Mutation Boundaries | ✅ Covered |
-| mutation security / authorization | Server Functions and Mutation Boundaries | ✅ Covered |
+| mutation security / authorization | Server Functions + testing strategy | ✅ Covered |
+| runtime input validation | Server Functions + TypeScript trust boundaries | ✅ Covered |
 | RSC request memoization | cache and cacheSignal | ✅ Covered |
 | RSC cancellation lifetime | cache and cacheSignal | ✅ Covered |
 
@@ -173,7 +179,7 @@ The application-facing Server Component model is stable in React 19, but framewo
 
 ## React Compiler
 
-React Compiler 1.0 is stable. The handbook now treats it as a first-class modern React tool rather than future material.
+React Compiler 1.0 is stable and first-class handbook material.
 
 | Topic | Handbook coverage | Status |
 | --- | --- | --- |
@@ -207,13 +213,61 @@ React Compiler 1.0 is stable. The handbook now treats it as a first-class modern
 | Rules of Hooks | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
 | conditional/loop exception for `use` | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
 | `eslint-plugin-react-hooks` | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
-| `rules-of-hooks` | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
-| `exhaustive-deps` | Effects + Rules of Hooks/ESLint | ✅ Covered |
 | compiler-aware lint diagnostics | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
-| `purity` / `immutability` / `globals` | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
-| `refs` / set-state lint rules | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
-| `static-components` / component factories | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
-| `unsupported-syntax` / incompatible libraries | Rules of Hooks and Compiler-Aware ESLint | ✅ Covered |
+
+## TypeScript
+
+| Area | Handbook coverage | Status |
+| --- | --- | --- |
+| setup / `.tsx` / React type packages | Components, Props, Children, and Events | ✅ Covered |
+| prop contracts and inference | Components, Props, Children, and Events | ✅ Covered |
+| children / events / native DOM prop reuse | Components, Props, Children, and Events | ✅ Covered |
+| React 19 ref-as-prop typing | Components, Props, Children, and Events | ✅ Covered |
+| `useState` / async state unions | Typing Hooks, Context, Reducers, Forms, and Refs | ✅ Covered |
+| reducer actions / exhaustiveness | Typing Hooks, Context, Reducers, Forms, and Refs | ✅ Covered |
+| context nullability / provider guards | Typing Hooks, Context, Reducers, Forms, and Refs | ✅ Covered |
+| DOM refs / imperative handles | Typing Hooks, Context, Reducers, Forms, and Refs | ✅ Covered |
+| FormData / runtime trust boundaries | TypeScript section | ✅ Covered |
+| generic Hooks / reusable APIs | TypeScript section | ✅ Covered |
+| polymorphic and design-system API trade-offs | Advanced Component API Design | ✅ Covered |
+| RSC serialization vs compile-time typing | Advanced Component API Design | ✅ Covered |
+
+## Testing
+
+| Area | Handbook coverage | Status |
+| --- | --- | --- |
+| React Testing Library philosophy | Testing React Through User Behavior | ✅ Covered |
+| semantic query selection | Testing React Through User Behavior | ✅ Covered |
+| user interactions | Testing React Through User Behavior | ✅ Covered |
+| provider / reducer / network boundary strategy | Testing React Through User Behavior | ✅ Covered |
+| async `act` | Async React Testing | ✅ Covered |
+| `findBy` / `waitFor` / disappearance | Async React Testing | ✅ Covered |
+| Suspense / Transitions / deferred UI | Async React Testing | ✅ Covered |
+| Actions / `useActionState` / `useFormStatus` | Async React Testing | ✅ Covered |
+| optimistic success + rollback | Async React Testing | ✅ Covered |
+| unit/component/integration/E2E portfolio | Production React Testing Strategy | ✅ Covered |
+| SSR/hydration/RSC testing boundaries | Production React Testing Strategy | ✅ Covered |
+| Server Function backend tests | Production React Testing Strategy | ✅ Covered |
+| type tests vs runtime tests | Production React Testing Strategy | ✅ Covered |
+
+## Accessibility
+
+| Area | Handbook coverage | Status |
+| --- | --- | --- |
+| native semantics first | Accessibility Foundations | ✅ Covered |
+| accessible names / descriptions | Accessibility Foundations | ✅ Covered |
+| visible labels / form relationships | Accessibility Foundations | ✅ Covered |
+| `useId` | Accessibility Foundations | ✅ Covered |
+| landmarks / headings / image alternatives | Accessibility Foundations | ✅ Covered |
+| ARIA state synchronization | Accessibility Foundations | ✅ Covered |
+| keyboard accessibility | Keyboard, Focus, Forms, Dialogs, and Dynamic UI | ✅ Covered |
+| roving `tabIndex` / `aria-activedescendant` | Keyboard, Focus, Forms, Dialogs, and Dynamic UI | ✅ Covered |
+| focus management / restoration | Keyboard, Focus, Forms, Dialogs, and Dynamic UI | ✅ Covered |
+| dialogs | Keyboard, Focus, Forms, Dialogs, and Dynamic UI | ✅ Covered |
+| validation summaries / live regions | Keyboard, Focus, Forms, Dialogs, and Dynamic UI | ✅ Covered |
+| Suspense/Transition orientation | Keyboard, Focus, Forms, Dialogs, and Dynamic UI | ✅ Covered |
+| client-side navigation accessibility | Keyboard, Focus, Forms, Dialogs, and Dynamic UI | ✅ Covered |
+| semantic/keyboard/focus tests | Accessibility + Testing | ✅ Covered |
 
 ## React 19 removed/deprecated/legacy coverage
 
@@ -239,16 +293,15 @@ React Compiler 1.0 is stable. The handbook now treats it as a first-class modern
 
 ## Still planned
 
-The remaining handbook depth is now concentrated in specialist/production topics rather than missing core React architecture:
+The remaining handbook depth is concentrated in specialist and production topics:
 
-- remaining stable Hooks: `useId`, `useDebugValue`, `useLayoutEffect`, `useInsertionEffect`;
+- stable Hooks still needing dedicated reference depth: `useDebugValue`, `useLayoutEffect`, `useInsertionEffect`;
 - dedicated `memo`, `useMemo`, and `useCallback` performance/reference depth;
 - `<Profiler>` and production performance tooling;
-- `act` and modern testing;
 - `captureOwnerStack` and advanced debugging;
-- TypeScript, accessibility, security, and testing;
-- performance architecture, design systems, advanced patterns;
-- internals, legacy React maintenance, and production engineering;
+- application security beyond the Server Function/raw HTML foundations already covered;
+- performance architecture, design systems, and advanced patterns;
+- internals, reconciliation depth, legacy React maintenance, and production engineering;
 - projects and interview preparation.
 
 ## Audit rules
@@ -261,9 +314,10 @@ Whenever the stable React minor changes:
 4. compare the latest stable npm patch;
 5. inspect release notes for additions, removals, and changed recommendations;
 6. re-check React Compiler configuration/directives and `eslint-plugin-react-hooks` recommended rules;
-7. update this checklist before claiming complete coverage;
-8. clearly label Stable, Canary, Experimental, and Legacy material;
-9. run the Docusaurus production build and verify sidebar IDs and links.
+7. re-check the official TypeScript guide and relevant React 19 type migration notes;
+8. update this checklist before claiming complete coverage;
+9. clearly label Stable, Canary, Experimental, and Legacy material;
+10. run the Docusaurus production build and verify sidebar IDs and links.
 
 ## References
 
@@ -271,6 +325,9 @@ Whenever the stable React minor changes:
 - https://react.dev/reference/react
 - https://react.dev/reference/react/hooks
 - https://react.dev/reference/react/apis
+- https://react.dev/learn/typescript
+- https://react.dev/reference/react/act
+- https://react.dev/reference/react/useId
 - https://react.dev/reference/react-dom
 - https://react.dev/reference/react-dom/client
 - https://react.dev/reference/react-dom/server
@@ -278,9 +335,11 @@ Whenever the stable React minor changes:
 - https://react.dev/reference/rsc/server-components
 - https://react.dev/reference/rsc/server-functions
 - https://react.dev/learn/react-compiler
-- https://react.dev/reference/react-compiler/configuration
-- https://react.dev/reference/react-compiler/directives
 - https://react.dev/reference/eslint-plugin-react-hooks
 - https://react.dev/reference/rules
-- https://react.dev/blog/2025/10/07/react-compiler-1
-- https://react.dev/blog/2025/10/01/react-19-2
+- https://testing-library.com/docs/react-testing-library/intro/
+- https://testing-library.com/docs/queries/about/
+- https://testing-library.com/docs/dom-testing-library/api-async/
+- https://www.w3.org/WAI/ARIA/apg/
+- https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/
+- https://www.w3.org/WAI/ARIA/apg/practices/names-and-descriptions/
