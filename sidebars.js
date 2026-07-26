@@ -71,6 +71,7 @@ const reactItems = [
     'react/interview-question-bank/state-events-forms',
     'react/interview-question-bank/hooks-effects-refs-custom-hooks',
     'react/interview-question-bank/context-reducers-state-architecture',
+    'react/interview-question-bank/state-management-ecosystem-interview-map',
     'react/interview-question-bank/redux-toolkit-and-rtk-query-interview',
     'react/interview-question-bank/zustand-interview',
     'react/interview-question-bank/tanstack-query-interview',
