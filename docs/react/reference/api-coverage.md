@@ -1,281 +1,287 @@
 ---
 title: Official React API Coverage
-description: React 19.2 coverage checklist across React, React DOM, Compiler, Server Components, TypeScript, testing, accessibility, performance, architecture, internals, debugging, and production engineering.
+description: Final React 19.2 coverage contract across React, React DOM, Compiler, RSC, TypeScript, testing, accessibility, performance, architecture, internals, production engineering, projects, and interview mastery.
 sidebar_position: 1
 ---
 
 # Official React API coverage
 
-> **Reference line: React 19.2**  
-> **Latest stable package checked: 19.2.8**  
-> **Audit date: 2026-07-26**
+> **Documentation line:** React 19.2  
+> **Stable npm packages checked:** `react@19.2.8`, `react-dom@19.2.8`  
+> **Audit date:** 2026-07-26
 
-This page is the handbook's coverage contract. It prevents the curriculum from becoming a collection of favorite topics while silently missing stable React APIs or important production concepts.
+This page is the handbook's ongoing coverage contract.
+
+The original 12-phase roadmap is now complete against the stable React 19.2 line. Future work is maintenance and expansion when React stable changes, not unfinished foundational coverage.
+
+For the long-form audit, see **[Final React Handbook Completeness Audit](./final-completeness-audit.md)**.
 
 Statuses:
 
 - ✅ **Covered** — dedicated or substantial handbook coverage exists;
-- 🟠 **Foundation covered** — correct working model exists, but more specialist depth may be added later;
-- 🟡 **Planned** — not yet written to the handbook quality bar;
-- ⚠️ **Legacy** — maintenance/migration knowledge, not a recommendation for new code;
-- 🧪 **Experimental/Canary** — not treated as stable production React.
+- ⚠️ **Legacy** — maintenance/migration knowledge, not a modern recommendation;
+- 🧪 **Experimental/Canary** — clearly labeled and not treated as stable production React;
+- 🔒 **Private implementation** — useful conceptual context, never an application contract.
 
-The official React documentation is authoritative. Stable npm package versions are checked independently because patch releases can appear before the React versions page is refreshed.
+## Stable React Hooks
 
-## Curriculum coverage so far
-
-The handbook now covers the path from JavaScript prerequisites through senior React production engineering:
-
-- rendering, JSX, components, props, events, state, lists, forms, and identity;
-- Effects, refs, custom Hooks, Context, reducers, and state architecture;
-- React 19 Actions, modern forms, optimistic UI, `use`, and `<Activity>`;
-- Suspense, code splitting, Transitions, deferred rendering, and concurrent rendering;
-- React DOM, hydration, streaming SSR, static rendering, resume/PPR architecture;
-- Server Components, Server Functions, directives, `cache`, and `cacheSignal`;
-- React Compiler 1.0 and compiler-aware Rules/ESLint;
-- React + TypeScript, testing, accessibility, performance, design systems, and advanced composition;
-- reconciliation identity, Fiber/render-work mental models, scheduling and commit semantics;
-- Error Boundaries, component stacks, Owner Stacks, root error callbacks, hydration diagnostics, and incident triage;
-- application security, legacy React maintenance, large-team ownership, and senior architectural decision-making.
-
-## React Hooks
-
-| API | Handbook coverage | Status | Version |
-| --- | --- | --- | --- |
-| `useActionState` | Modern React 19+ | ✅ Covered | 19+ |
-| `useCallback` | Performance / Compiler | ✅ Covered | Stable |
-| `useContext` | Context + TypeScript + architecture | ✅ Covered | Stable |
-| `useDebugValue` | Performance / specialized Hooks | ✅ Covered | Stable |
-| `useDeferredValue` | Concurrency + performance | ✅ Covered | Stable |
-| `useEffect` | Effects + testing + production | ✅ Covered | Stable |
-| `useEffectEvent` | useEffectEvent | ✅ Covered | 19.2+ |
-| `useId` | Accessibility | ✅ Covered | Stable |
-| `useImperativeHandle` | Refs + TypeScript | ✅ Covered | Stable |
-| `useInsertionEffect` | Performance / specialized Hooks | ✅ Covered | Stable |
-| `useLayoutEffect` | Performance / specialized Hooks | ✅ Covered | Stable |
-| `useMemo` | Performance / Compiler | ✅ Covered | Stable |
-| `useOptimistic` | Modern React + async testing | ✅ Covered | 19+ |
-| `useReducer` | Reducers + TypeScript + architecture | ✅ Covered | Stable |
-| `useRef` | Refs + TypeScript + accessibility | ✅ Covered | Stable |
-| `useState` | State + TypeScript | ✅ Covered | Stable |
-| `useSyncExternalStore` | State architecture + legacy adapters | ✅ Covered | Stable |
-| `useTransition` | Concurrency + scheduling internals | ✅ Covered | Stable |
+| API | Coverage | Status |
+| --- | --- | --- |
+| `useActionState` | Modern React forms/actions | ✅ |
+| `useCallback` | Performance / Compiler | ✅ |
+| `useContext` | Context / architecture / TypeScript | ✅ |
+| `useDebugValue` | Performance / custom-Hook debugging | ✅ |
+| `useDeferredValue` | Concurrency / performance | ✅ |
+| `useEffect` | Effects / production debugging | ✅ |
+| `useEffectEvent` | Effects | ✅ 19.2+ |
+| `useId` | Accessibility | ✅ |
+| `useImperativeHandle` | Refs / TypeScript | ✅ |
+| `useInsertionEffect` | Performance / CSS-in-JS infrastructure | ✅ |
+| `useLayoutEffect` | Layout measurement / performance | ✅ |
+| `useMemo` | Performance / Compiler | ✅ |
+| `useOptimistic` | Modern React / mutation workflows | ✅ |
+| `useReducer` | Reducers / architecture | ✅ |
+| `useRef` | Refs / focus / integration | ✅ |
+| `useState` | State fundamentals / TypeScript | ✅ |
+| `useSyncExternalStore` | External stores / live state | ✅ |
+| `useTransition` | Concurrency / scheduling | ✅ |
 
 ## Built-in React components
 
-| API | Handbook coverage | Status |
+| API | Coverage | Status |
 | --- | --- | --- |
-| `<Fragment>` | JSX | ✅ Covered |
-| `<Profiler>` | Profiler and React Performance Tracks | ✅ Covered |
-| `<StrictMode>` | Getting Started / Rules / debugging | ✅ Covered |
-| `<Suspense>` | Suspense + testing + scheduling | ✅ Covered |
-| `<Activity>` | Modern React 19+ / Performance Tracks | ✅ Covered — 19.2+ |
+| `<Fragment>` | JSX | ✅ |
+| `<Profiler>` | Performance | ✅ |
+| `<StrictMode>` | Getting Started / Rules / debugging | ✅ |
+| `<Suspense>` | Suspense / testing / streaming | ✅ |
+| `<Activity>` | Modern React / performance | ✅ 19.2+ |
 
-## React APIs
+## Stable React APIs
 
-| API | Handbook coverage | Status |
+| API | Coverage | Status |
 | --- | --- | --- |
-| `createContext` | Context + architecture | ✅ Covered |
-| `lazy` | Suspense / code splitting | ✅ Covered |
-| `memo` | Performance | ✅ Covered |
-| `startTransition` | Concurrency / scheduling internals | ✅ Covered |
-| `act` | Async React Testing | ✅ Covered |
-| `use` | Modern React + Suspense + RSC | ✅ Covered |
-| `cache` | Server Components | ✅ Covered |
-| `cacheSignal` | Server Components | ✅ Covered — 19.2+ |
-| `captureOwnerStack` | Error Boundaries, Owner Stacks, and Root Error Handling | ✅ Covered — development only |
+| `createContext` | Context / architecture | ✅ |
+| `lazy` | Suspense / code splitting | ✅ |
+| `memo` | Performance / Compiler | ✅ |
+| `startTransition` | Concurrency / scheduling | ✅ |
+| `act` | Async testing | ✅ |
+| `use` | Modern React / Suspense / RSC | ✅ |
+| `cache` | Server Components | ✅ |
+| `cacheSignal` | Server Components | ✅ 19.2+ |
+| `captureOwnerStack` | Debugging / Owner Stacks | ✅ development diagnostic |
 
 ## React Server Component directives
 
-| Directive | Handbook coverage | Status |
+| Directive | Coverage | Status |
 | --- | --- | --- |
-| `'use client'` | Server Components and Client Boundaries | ✅ Covered |
-| `'use server'` | Server Functions + Security | ✅ Covered |
+| `'use client'` | Server/Client boundaries | ✅ |
+| `'use server'` | Server Functions / security | ✅ |
 
-RSC directives require a compatible framework/bundler environment. A normal client-only Vite application does not provide complete RSC infrastructure.
+The handbook explicitly distinguishes Server Components from SSR and `'use server'` from a Server Component marker.
 
 ## React DOM Hook
 
-| API | Handbook coverage | Status |
+| API | Coverage | Status |
 | --- | --- | --- |
-| `useFormStatus` | Modern React forms + async testing | ✅ Covered — 19+ |
+| `useFormStatus` | Modern forms / actions / testing | ✅ |
 
-## React DOM components
+## React DOM behavior
 
-| Area | Handbook coverage | Status |
-| --- | --- | --- |
-| HTML components in JSX | JSX / Forms / React DOM / Accessibility | ✅ Covered |
-| event props and propagation | Events / TypeScript | ✅ Covered |
-| native forms and controls | Forms / TypeScript / Accessibility | ✅ Covered |
-| DOM refs / callback refs | Refs / TypeScript / architecture | ✅ Covered |
-| metadata/resource components | Metadata and Resource Loading | ✅ Covered |
-| SVG behavior and accessibility | React DOM Components | ✅ Covered |
-| custom elements / Web Components | React DOM Components | ✅ Covered |
-| `dangerouslySetInnerHTML` | React DOM + Security | ✅ Covered |
-| `contentEditable` ownership caveats | React DOM Components | ✅ Covered |
-| `suppressHydrationWarning` | Hydration / React DOM | ✅ Covered |
-| semantic names / labels / ARIA relationships | Accessibility / Design Systems | ✅ Covered |
-| keyboard / focus behavior | Accessibility / Design Systems | ✅ Covered |
+| Area | Status |
+| --- | --- |
+| HTML elements in JSX | ✅ |
+| event props / propagation | ✅ |
+| native forms and controls | ✅ |
+| DOM refs / callback refs | ✅ |
+| metadata/resource elements | ✅ |
+| SVG | ✅ |
+| custom elements / Web Components | ✅ |
+| `dangerouslySetInnerHTML` | ✅ + security coverage |
+| `contentEditable` ownership caveats | ✅ |
+| `suppressHydrationWarning` | ✅ narrow-use guidance |
+| accessible names / labels / ARIA relationships | ✅ |
+| keyboard / focus contracts | ✅ |
 
-## React DOM APIs
+## Stable React DOM APIs
 
-| API | Handbook coverage | Status |
-| --- | --- | --- |
-| `createPortal` | React DOM escape hatches + dialogs | ✅ Covered |
-| `flushSync` | React DOM escape hatches | ✅ Covered |
-| `prefetchDNS` | Metadata and Resource Loading | ✅ Covered |
-| `preconnect` | Metadata and Resource Loading | ✅ Covered |
-| `preload` | Metadata and Resource Loading | ✅ Covered |
-| `preloadModule` | Metadata and Resource Loading | ✅ Covered |
-| `preinit` | Metadata and Resource Loading | ✅ Covered |
-| `preinitModule` | Metadata and Resource Loading | ✅ Covered |
+| API | Status |
+| --- | --- |
+| `createPortal` | ✅ |
+| `flushSync` | ✅ |
+| `prefetchDNS` | ✅ |
+| `preconnect` | ✅ |
+| `preload` | ✅ |
+| `preloadModule` | ✅ |
+| `preinit` | ✅ |
+| `preinitModule` | ✅ |
 
 ## React DOM client APIs
 
-| API | Handbook coverage | Status |
-| --- | --- | --- |
-| `createRoot` | Rendering + root error handling | ✅ Covered |
-| `root.render()` | Rendering a React Application | ✅ Covered |
-| `root.unmount()` | Rendering / Hydration | ✅ Covered |
-| `hydrateRoot` | Hydration + root error handling | ✅ Covered |
-| `onCaughtError` | Root error handling / observability | ✅ Covered |
-| `onUncaughtError` | Root error handling / observability | ✅ Covered |
-| `onRecoverableError` | Hydration + observability | ✅ Covered |
+| API | Status |
+| --- | --- |
+| `createRoot` | ✅ |
+| `root.render()` | ✅ |
+| `root.unmount()` | ✅ |
+| `hydrateRoot` | ✅ |
+| `onCaughtError` root option | ✅ |
+| `onUncaughtError` root option | ✅ |
+| `onRecoverableError` root option | ✅ |
 
 ## React DOM server APIs
 
-| API | Handbook coverage | Status |
-| --- | --- | --- |
-| `renderToReadableStream` | Streaming SSR | ✅ Covered |
-| `renderToPipeableStream` | Streaming SSR | ✅ Covered |
-| `resume` | Static Rendering / PPR | ✅ Covered |
-| `resumeToPipeableStream` | Static Rendering / PPR | ✅ Covered |
-| `renderToString` | Static Rendering / limitations | ✅ Covered — limited path |
-| `renderToStaticMarkup` | Static Rendering | ✅ Covered — non-interactive output |
+| API | Status |
+| --- | --- |
+| `renderToReadableStream` | ✅ |
+| `renderToPipeableStream` | ✅ |
+| `resume` | ✅ |
+| `resumeToPipeableStream` | ✅ |
+| `renderToString` | ✅ limitations covered |
+| `renderToStaticMarkup` | ✅ non-hydratable output covered |
 
 ## React DOM static APIs
 
-| API | Handbook coverage | Status |
-| --- | --- | --- |
-| `prerender` | Static Rendering / PPR | ✅ Covered |
-| `prerenderToNodeStream` | Static Rendering / PPR | ✅ Covered |
-| `resumeAndPrerender` | PPR architecture | 🧪 Experimental — architecture covered |
-| `resumeAndPrerenderToNodeStream` | PPR architecture | 🧪 Experimental — architecture covered |
+| API | Status |
+| --- | --- |
+| `prerender` | ✅ |
+| `prerenderToNodeStream` | ✅ |
+| `resumeAndPrerender` | 🧪 Experimental; architecture discussed |
+| `resumeAndPrerenderToNodeStream` | 🧪 Experimental; architecture discussed |
 
-## Server Components / Server Functions
+## Modern React 19 / 19.2
 
-| Area | Handbook coverage | Status |
-| --- | --- | --- |
-| Server Components mental model | Server Components and Client Boundaries | ✅ Covered |
-| RSC vs SSR | Server Components and Client Boundaries | ✅ Covered |
-| async Server Components | Server Components and Client Boundaries | ✅ Covered |
-| serializable client-boundary props | Server Components + TypeScript | ✅ Covered |
-| Promise handoff | Server Components | ✅ Covered |
-| Server Functions | Server Functions and Mutation Boundaries | ✅ Covered |
-| untrusted Server Function arguments | Security and Trust Boundaries | ✅ Covered |
-| authentication / resource authorization | Security and Trust Boundaries | ✅ Covered |
-| runtime input validation | Security + TypeScript trust boundaries | ✅ Covered |
-| RSC request memoization | `cache` and `cacheSignal` | ✅ Covered |
-| RSC cancellation lifetime | `cache` and `cacheSignal` | ✅ Covered |
+Covered:
 
-The application-facing Server Component model is stable in React 19, but framework/bundler implementation APIs beneath RSC do not share the same minor-version compatibility guarantee. Prefer framework-supported integrations.
+- Actions and async transitions;
+- form action functions;
+- `useActionState`;
+- `useFormStatus`;
+- `useOptimistic`;
+- `use`;
+- ref as a prop;
+- modern Context provider syntax;
+- metadata/resource APIs;
+- `<Activity>`;
+- `useEffectEvent`;
+- `cacheSignal`;
+- React Performance Tracks;
+- Partial Pre-rendering/resume architecture;
+- React 19 removals and migration knowledge.
 
-## React Compiler
+## React Compiler 1.0
 
-React Compiler 1.0 is stable and first-class handbook material.
-
-| Topic | Handbook coverage | Status |
-| --- | --- | --- |
-| mental model / setup | Compiler Mental Model and Setup | ✅ Covered |
-| React version targets | Compiler Mental Model and Setup | ✅ Covered |
-| automatic memoization | Compiler + Performance | ✅ Covered |
-| Compiler vs manual memoization | Compiler + Performance | ✅ Covered |
-| configuration / incremental adoption | Adoption, Configuration, and Directives | ✅ Covered |
-| `compilationMode` / gating | Adoption, Configuration, and Directives | ✅ Covered |
-| `"use memo"` / `"use no memo"` | Adoption, Configuration, and Directives | ✅ Covered |
-| diagnostics / skipped components | Libraries, Debugging, and Production Rollout | ✅ Covered |
-| compiling libraries | Libraries, Debugging, and Production Rollout | ✅ Covered |
-| production rollout / measurement | Compiler + Performance | ✅ Covered |
+| Area | Status |
+| --- | --- |
+| mental model / setup | ✅ |
+| automatic memoization | ✅ |
+| Compiler vs `memo` / `useMemo` / `useCallback` | ✅ |
+| configuration / `compilationMode` | ✅ |
+| gating / incremental adoption | ✅ |
+| `"use memo"` / `"use no memo"` | ✅ |
+| diagnostics / skipped components | ✅ |
+| library compilation | ✅ |
+| production rollout / measurement | ✅ |
 
 ## Rules of React
 
-| Area | Handbook coverage | Status |
-| --- | --- | --- |
-| render purity / idempotence | Rules + Fiber internals | ✅ Covered |
-| side effects outside render | Rules + Effects | ✅ Covered |
-| props/state immutability | Rules + Reducers | ✅ Covered |
-| Hook argument/return immutability | Rules of React | ✅ Covered |
-| safe local mutation | Rules of React | ✅ Covered |
-| ref render safety | Rules of React | ✅ Covered |
-| static component identity | Rules + Reconciliation | ✅ Covered |
-| Rules of Hooks | Compiler-Aware ESLint | ✅ Covered |
-| conditional/loop exception for `use` | Compiler-Aware ESLint | ✅ Covered |
-| compiler-aware lint diagnostics | Compiler-Aware ESLint | ✅ Covered |
+| Area | Status |
+| --- | --- |
+| render purity / idempotence | ✅ |
+| side effects outside render | ✅ |
+| props/state immutability | ✅ |
+| Hook argument/return immutability | ✅ |
+| safe local mutation | ✅ |
+| ref render safety | ✅ |
+| static component identity | ✅ |
+| Rules of Hooks | ✅ |
+| conditional/loop exception for `use` | ✅ |
+| compiler-aware ESLint diagnostics | ✅ |
+
+## Rendering, identity, and concurrency
+
+Covered:
+
+- render triggers;
+- render vs commit;
+- browser paint relationship;
+- state snapshots and queued updates;
+- keys and identity;
+- state preservation/reset;
+- reconciliation;
+- Fiber as a work structure;
+- interruptible/restartable/abandoned render work;
+- scheduling priorities;
+- urgent vs non-urgent updates;
+- Suspense reveal boundaries;
+- transitions;
+- deferred values;
+- request ordering/cancellation as separate concerns.
+
+Private Fiber fields and lane bitmasks remain 🔒 private implementation detail.
 
 ## TypeScript, testing, and accessibility
 
 | Area | Status |
 | --- | --- |
-| component / prop / event typing | ✅ Covered |
-| React 19 ref-as-prop typing | ✅ Covered |
-| Hook / Context / reducer / ref typing | ✅ Covered |
-| generics / polymorphic APIs / trust boundaries | ✅ Covered |
-| Testing Library user-oriented testing | ✅ Covered |
-| async `act`, Suspense, Actions, optimistic testing | ✅ Covered |
-| SSR/hydration/RSC testing strategy | ✅ Covered |
-| semantic HTML / accessible names / `useId` | ✅ Covered |
-| keyboard, focus, dialogs, forms, live regions | ✅ Covered |
+| component/prop/event typing | ✅ |
+| React 19 ref-as-prop typing | ✅ |
+| Hooks / Context / reducer / ref typing | ✅ |
+| discriminated unions / generics / polymorphic APIs | ✅ |
+| runtime trust-boundary validation | ✅ |
+| Testing Library / semantic user testing | ✅ |
+| async `act` / `findBy` / `waitFor` | ✅ |
+| Suspense / Transition / Action testing | ✅ |
+| SSR / hydration / RSC test strategy | ✅ |
+| semantic HTML / accessible names / `useId` | ✅ |
+| keyboard / focus / dialogs / forms / live regions | ✅ |
 
-## Performance, architecture, and design systems
+## Performance and architecture
 
 | Area | Status |
 | --- | --- |
-| measurement-first optimization | ✅ Covered |
-| `memo` / `useMemo` / `useCallback` | ✅ Covered |
-| `<Profiler>` / React 19.2 Performance Tracks | ✅ Covered |
-| `useLayoutEffect` / `useInsertionEffect` / `useDebugValue` | ✅ Covered |
-| state placement / update scope / scheduling | ✅ Covered |
-| feature-oriented component/state architecture | ✅ Covered |
-| Server/Client / async / Error boundaries | ✅ Covered |
-| design-system primitives and API contracts | ✅ Covered |
-| compound / controlled / slot / render-prop / HOC patterns | ✅ Covered |
+| profile-before-optimizing workflow | ✅ |
+| `<Profiler>` / Performance Tracks | ✅ |
+| `memo` / `useMemo` / `useCallback` | ✅ |
+| state placement / update scope | ✅ |
+| Context update-frequency architecture | ✅ |
+| external-store subscription strategy | ✅ |
+| list scaling / virtualization direction | ✅ |
+| bundle / network / hydration cost categories | ✅ |
+| feature-oriented architecture | ✅ |
+| design-system contracts | ✅ |
+| compound / controlled / slot / render-prop / HOC patterns | ✅ |
+| Server/Client / async / Error boundary architecture | ✅ |
 
-## Internals and senior debugging
+## Debugging and production engineering
 
-| Area | Handbook coverage | Status |
-| --- | --- | --- |
-| reconciliation mental model | Reconciliation, Identity, and State Preservation | ✅ Covered |
-| type + position + key identity | Reconciliation, Identity, and State Preservation | ✅ Covered |
-| state preservation/reset | Reconciliation, Identity, and State Preservation | ✅ Covered |
-| Fiber as internal unit/work architecture | Fiber, Render Work, and Scheduling | ✅ Covered — implementation-aware, not API |
-| render vs commit | Fiber, Render Work, and Scheduling | ✅ Covered |
-| interruption / restart / abandoned work | Fiber, Render Work, and Scheduling | ✅ Covered |
-| scheduling priorities / Transition intent | Fiber, Render Work, and Scheduling | ✅ Covered |
-| lane internals | Fiber, Render Work, and Scheduling | ✅ Conceptual only — private implementation |
-| Error Boundary behavior/granularity | Error Boundaries, Owner Stacks, and Root Error Handling | ✅ Covered |
-| component stack vs Owner Stack | Error Boundaries, Owner Stacks, and Root Error Handling | ✅ Covered |
-| `captureOwnerStack` | Error Boundaries, Owner Stacks, and Root Error Handling | ✅ Covered |
-| root caught/uncaught/recoverable callbacks | Error Boundaries, Owner Stacks, and Root Error Handling | ✅ Covered |
-| hydration/error/release triage | Production Observability and Failure Triage | ✅ Covered |
-| source maps / release correlation / traces | Production Observability and Failure Triage | ✅ Covered |
+| Area | Status |
+| --- | --- |
+| Error Boundary behavior / granularity | ✅ |
+| Component Stack vs Owner Stack | ✅ |
+| `captureOwnerStack` | ✅ |
+| root caught/uncaught/recoverable error callbacks | ✅ |
+| hydration / release / source-map triage | ✅ |
+| observability / traces / incident response | ✅ |
+| raw HTML / XSS trust boundary | ✅ |
+| Server Function validation / authn / authz | ✅ |
+| tenant / secret / telemetry boundaries | ✅ |
+| legacy class/lifecycle maintenance | ✅ |
+| removed/deprecated API migration | ✅ |
+| incremental/strangler migration | ✅ |
+| large-team ownership / governance | ✅ |
+| senior trade-offs / reversibility / rollout | ✅ |
 
-## Production engineering
+## Projects and interview mastery
 
-| Area | Handbook coverage | Status |
-| --- | --- | --- |
-| raw HTML / XSS trust boundary | Security and Trust Boundaries | ✅ Covered |
-| Server Function validation/authentication/authorization | Security and Trust Boundaries | ✅ Covered |
-| secrets / client boundaries / telemetry redaction | Security and Trust Boundaries | ✅ Covered |
-| URL / third-party / dependency trust | Security and Trust Boundaries | ✅ Covered |
-| class-heavy legacy maintenance | Legacy React Maintenance and Migration | ✅ Covered |
-| lifecycle-to-Effect migration | Legacy React Maintenance and Migration | ✅ Covered |
-| removed/deprecated API migration | React 19 Migration + Legacy Maintenance | ✅ Covered |
-| strangler/incremental migration | Legacy React Maintenance and Migration | ✅ Covered |
-| feature/module/team ownership | Large-Team React Engineering | ✅ Covered |
-| design-system/package governance | Large-Team React Engineering | ✅ Covered |
-| ADR/RFC/deprecation/change management | Large-Team React Engineering | ✅ Covered |
-| senior state/render/effect/boundary decisions | Senior React Architectural Decision-Making | ✅ Covered |
-| reversibility / rollout / architecture trade-offs | Senior React Architectural Decision-Making | ✅ Covered |
+Phase 12 closes the learning loop with:
+
+- progressive projects from fundamentals to production architecture;
+- real-time operations dashboard capstone;
+- commerce/action/optimistic workflow capstone;
+- multi-team SaaS platform architecture capstone;
+- junior→senior React interview mastery;
+- debugging/performance/security scenario drills;
+- React system-design and trade-off exercises;
+- staff-level architecture and leadership scenarios.
 
 ## React 19 removed/deprecated/legacy coverage
 
@@ -284,45 +290,42 @@ React Compiler 1.0 is stable and first-class handbook material.
 | `ReactDOM.render` | ⚠️ Removed — covered | `createRoot` |
 | `ReactDOM.hydrate` | ⚠️ Removed — covered | `hydrateRoot` |
 | `ReactDOM.unmountComponentAtNode` | ⚠️ Removed — covered | `root.unmount()` |
-| `ReactDOM.findDOMNode` | ⚠️ Removed — covered | explicit refs |
+| `ReactDOM.findDOMNode` | ⚠️ Removed — covered | refs |
 | string refs | ⚠️ Removed — covered | callback/object refs |
 | legacy Context | ⚠️ Removed — covered | modern Context |
-| `React.createFactory` | ⚠️ Removed | JSX |
-| function component `defaultProps` | ⚠️ Removed behavior — covered | JavaScript default parameters |
-| function component `propTypes` checks | ⚠️ Removed behavior — covered | TypeScript / runtime validation |
-| `react-test-renderer` | ⚠️ Deprecated — covered | user-focused testing tools |
-| `react-test-renderer/shallow` | ⚠️ Removed path — covered | avoid shallow rendering |
+| `React.createFactory` | ⚠️ Removed — covered | JSX |
+| function component `defaultProps` behavior | ⚠️ Removed behavior — covered | default parameters |
+| function component `propTypes` checks | ⚠️ Removed behavior — covered | TypeScript + runtime validation |
+| `react-test-renderer` | ⚠️ Deprecated — covered | user-focused testing |
+| shallow renderer path | ⚠️ Removed/deprecated direction — covered | behavior testing |
 | `react-dom/test-utils` helpers | ⚠️ Removed/deprecated direction — covered | `act` from `react` + modern tools |
 | `element.ref` access | ⚠️ Deprecated — covered | `element.props.ref` if unavoidable |
 | `forwardRef` as default new-code pattern | ⚠️ Historical in React 19+ | ref as a prop |
-| class components | ⚠️ Legacy for new teaching, still supported | functions + Hooks for most new code |
-| `renderToNodeStream` | ⚠️ Removed in React 19 | modern server streaming APIs |
-| `renderToStaticNodeStream` | ⚠️ Removed in React 19 | modern server/static APIs |
+| class components | ⚠️ supported legacy/new teaching is function-first | functions + Hooks for most new code |
+| `renderToNodeStream` | ⚠️ Removed | modern streaming APIs |
+| `renderToStaticNodeStream` | ⚠️ Removed | modern static/server APIs |
 
-## Still planned
+## Completion status
 
-The remaining curriculum is now concentrated in **Phase 12 capstones and interview preparation**, rather than missing stable React API coverage:
+**No original roadmap phase remains planned.**
 
-- progressive projects from fundamentals to senior production architecture;
-- debugging/performance/security capstone scenarios;
-- React interview questions from junior through staff-level reasoning;
-- architecture exercises and trade-off drills;
-- final stable-API audit and handbook completion pass.
+The handbook is complete for the audited React 19.2 stable line. Future changes should follow the maintenance process below.
 
-## Audit rules
+## Maintenance rules
 
-Whenever the stable React minor changes:
+Whenever stable React changes:
 
 1. re-check `react.dev/versions`;
-2. re-check React Hooks, Components, APIs, Directives, DOM client/server/static APIs;
-3. compare the latest stable npm patch;
-4. inspect release notes for additions/removals/recommendation changes;
-5. re-check React Compiler configuration/directives and `eslint-plugin-react-hooks` rules;
-6. re-check React Performance Tracks and profiling guidance;
-7. re-check Owner Stack / error-handling APIs;
-8. update this checklist before claiming complete coverage;
-9. clearly label Stable, Canary, Experimental, Legacy, and private implementation details;
-10. run the Docusaurus production build and verify sidebar IDs and links.
+2. re-check stable npm `react` and `react-dom` tags;
+3. audit Hooks, built-in components, React APIs, and RSC directives;
+4. audit React DOM Hook/components/client/server/static APIs;
+5. inspect release notes for additions, removals, and changed recommendations;
+6. re-check React Compiler configuration/directives;
+7. re-check `eslint-plugin-react-hooks` recommended rules;
+8. re-check Performance Tracks and debugging/error APIs;
+9. clearly separate Stable, Canary, Experimental, Legacy, and private implementation material;
+10. update this page and the final completeness audit;
+11. run the Docusaurus production build before merging.
 
 ## References
 
@@ -330,23 +333,15 @@ Whenever the stable React minor changes:
 - https://react.dev/reference/react
 - https://react.dev/reference/react/hooks
 - https://react.dev/reference/react/apis
-- https://react.dev/learn/preserving-and-resetting-state
-- https://react.dev/learn/render-and-commit
-- https://react.dev/reference/react/Component
-- https://react.dev/reference/react/captureOwnerStack
 - https://react.dev/reference/react-dom
-- https://react.dev/reference/react-dom/client/createRoot
-- https://react.dev/reference/react-dom/client/hydrateRoot
+- https://react.dev/reference/react-dom/client
 - https://react.dev/reference/react-dom/server
 - https://react.dev/reference/react-dom/static
 - https://react.dev/reference/rsc/server-components
 - https://react.dev/reference/rsc/server-functions
-- https://react.dev/reference/rsc/use-server
-- https://react.dev/reference/react-dom/components/common
-- https://react.dev/reference/dev-tools/react-performance-tracks
 - https://react.dev/learn/react-compiler
 - https://react.dev/reference/eslint-plugin-react-hooks
 - https://react.dev/reference/rules
-- https://react.dev/blog/2024/04/25/react-19-upgrade-guide
-- https://react.dev/blog/2025/10/01/react-19-2
-- https://github.com/acdlite/react-fiber-architecture
+- https://react.dev/reference/dev-tools/react-performance-tracks
+- https://www.npmjs.com/package/react
+- https://www.npmjs.com/package/react-dom
