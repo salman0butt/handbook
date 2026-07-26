@@ -51,9 +51,9 @@ const reactItems = [
   ]),
   category('36 · Mock Interview Practice', [
     'react/mock-interview-practice/overview-scoring-and-how-to-practice',
-    'react/mock-interview-practice/30-minute-react-screen',
-    'react/mock-interview-practice/60-minute-senior-react-round',
-    'react/mock-interview-practice/90-minute-frontend-deep-dive',
+    'react/mock-interview-practice/minute-react-screen',
+    'react/mock-interview-practice/minute-senior-react-round',
+    'react/mock-interview-practice/minute-frontend-deep-dive',
     'react/mock-interview-practice/full-stack-react-node-round',
     'react/mock-interview-practice/lead-staff-architecture-round',
     'react/mock-interview-practice/live-coding-round',
