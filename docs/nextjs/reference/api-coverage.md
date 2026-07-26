@@ -28,7 +28,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | --- | --- | --- |
 | App Router | ✅ | Primary and only router taught |
 | Pages Router | ⛔ | Intentionally excluded by handbook scope |
-| Next.js 16.2 stable behavior | 🟠 | Baseline + routing verified; phase-by-phase verification continues |
+| Next.js 16.2 stable behavior | 🟠 | Baseline + routing/navigation verified; phase-by-phase verification continues |
 | Next.js 16.3 preview/canary | 🧪 | Track but do not teach as stable until promoted to npm `latest` |
 | React 19.2 stable APIs | 🟠 | React handbook owns React depth; Next.js explains framework integration |
 | React Canary exposed by App Router | 🟡 | Cover only when stable Next.js docs establish a supported contract |
@@ -41,7 +41,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | 00 · Start Here | ✅ |
 | 01 · Foundations | ✅ |
 | 02 · App Router & Layouts | ✅ |
-| 03 · Navigation & URL State | 🟡 |
+| 03 · Navigation & URL State | ✅ |
 | 04 · Server & Client Components | 🟡 |
 | 05 · Data Fetching | 🟡 |
 | 06 · Caching, Rendering & Revalidation | 🟡 |
@@ -68,7 +68,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Installation | ✅ | `01-foundations/creating-and-running-a-nextjs-app` |
 | Project Structure | ✅ | `01-foundations/project-structure-and-file-conventions` |
 | Layouts and Pages | ✅ | `02-app-router-and-layouts/*` |
-| Linking and Navigating | 🟡 | Phase 03 |
+| Linking and Navigating | ✅ | `03-navigation-and-url-state/*` |
 | Server and Client Components | 🟠 | Foundation mental model; deep Phase 04 |
 | Cache Components | 🟡 | Phase 06; preserve opt-in 16.2 semantics |
 | Fetching Data | 🟡 | Phase 05 |
@@ -112,7 +112,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Parallel Routes `@slot` | ✅ | Phase 02 |
 | `children` implicit slot | ✅ | Phase 02 |
 | Intercepting Routes `(.)`, `(..)`, `(...)` | ✅ | Phase 02 |
-| route-driven modal pattern | ✅ | Phase 02 |
+| route-driven modal pattern | ✅ | Phase 02; history/accessibility integration Phase 03 |
 | `src/` | ✅ | Phase 01 |
 | `public/` | 🟠 | Structure covered Phase 01; asset behavior Phase 12 |
 | `proxy.js/ts` | 🟠 | Phase 09 |
@@ -124,18 +124,32 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 
 ## Navigation Components & Hooks
 
-| API | Status | Planned phase |
+| API / behavior | Status | Handbook location / plan |
 | --- | --- | --- |
-| `<Link>` | 🟡 | 03 |
-| `useRouter` | 🟡 | 03 |
-| `usePathname` | 🟡 | 03 |
-| `useSearchParams` | 🟡 | 03 |
-| `useParams` | 🟡 | 03 |
-| `useSelectedLayoutSegment` | 🟠 | Slot use introduced Phase 02; API depth Phase 03 |
-| `useSelectedLayoutSegments` | 🟠 | Slot use introduced Phase 02; API depth Phase 03 |
-| `useLinkStatus` | 🟡 | 03 |
-| redirects / navigation from server code | 🟡 | 03 |
-| browser history / scroll / focus | 🟡 | 03 |
+| `<Link>` | ✅ | Phase 03 |
+| `href`, `replace`, `scroll`, `prefetch` | ✅ | Phase 03 |
+| `<Link onNavigate>` | ✅ | Phase 03 |
+| `<Link transitionTypes>` | ✅ | Stable 16.2 prop; broader View Transition integration remains experimental |
+| `useRouter` | ✅ | Phase 03 |
+| `router.push` / `replace` / `back` / `forward` | ✅ | Phase 03 |
+| `router.refresh` | 🟠 | Navigation contract Phase 03; cache/mutation depth Phases 06–07 |
+| `router.prefetch` / `onInvalidate` | ✅ | Navigation use Phase 03 |
+| `usePathname` | ✅ | Phase 03 |
+| `useSearchParams` | ✅ | Phase 03, including static/Suspense behavior |
+| `useParams` | ✅ | Phase 03 |
+| `useSelectedLayoutSegment` | ✅ | Phase 03 |
+| `useSelectedLayoutSegments` | ✅ | Phase 03 |
+| parallel-route key for selected segments | ✅ | Phases 02–03 |
+| `useLinkStatus` | ✅ | Phase 03 |
+| `redirect` | ✅ | Navigation semantics Phase 03; mutation/HTTP contexts later |
+| `permanentRedirect` | ✅ | Phase 03 |
+| safe redirect destinations | ✅ | Phase 03 baseline; auth/security depth Phase 13 |
+| native `history.pushState` / `replaceState` | ✅ | Phase 03 |
+| Back / Forward semantics | ✅ | Phase 03 |
+| hash navigation | ✅ | Phase 03 |
+| scroll behavior / `scroll={false}` | ✅ | Phase 03 |
+| focus and route-navigation accessibility | ✅ | Phase 03 |
+| route-change observation via pathname/search params | ✅ | Phase 03 |
 
 ## Server & Client Component Boundaries
 
@@ -197,7 +211,7 @@ This section is deliberately version-sensitive.
 | `cookies()` | 🟡 | 06 / 09 / 13 |
 | `headers()` | 🟡 | 06 / 09 |
 | route `params` | ✅ | 02; current async behavior |
-| page `searchParams` | 🟡 | 03; current async behavior |
+| page `searchParams` | ✅ | Phase 03; Promise-based plain-object contract and dynamic-rendering implication |
 | `connection()` | 🟡 | 06 / rendering |
 | Draft/preview mode APIs | 🟡 | Content architecture / request handling |
 
@@ -214,7 +228,7 @@ This section is deliberately version-sensitive.
 | `useActionState` | 🟡 | 07 |
 | `useFormStatus` | 🟡 | 07 |
 | `useOptimistic` | 🟡 | 07 |
-| redirect after mutation | 🟡 | 07 |
+| redirect after mutation | 🟠 | Redirect semantics Phase 03; mutation sequence Phase 07 |
 | revalidation after mutation | 🟡 | 06–07 |
 | idempotency / duplicate submissions | 🟡 | 07 |
 
@@ -226,7 +240,7 @@ This section is deliberately version-sensitive.
 | Web `Request` / `Response` | 🟡 | 08 |
 | `NextRequest` / `NextResponse` | 🟡 | 08–09 |
 | cookies / headers | 🟡 | 08–09 |
-| redirects | 🟡 | 03 / 08–09 |
+| redirects | 🟠 | Navigation redirect semantics Phase 03; Route Handler/request-pipeline depth 08–09 |
 | streaming/file responses | 🟡 | 08 |
 | webhooks | 🟡 | 08 / 13 |
 | CORS | 🟡 | 08 |
@@ -257,12 +271,15 @@ This section is deliberately version-sensitive.
 | HTML generation | 🟠 | 10 |
 | hydration | 🟠 | 10 |
 | streaming | 🟠 | Route behavior covered; deep 05 / 10 |
-| Suspense | 🟠 | Route-level convention covered; deep 05 / 10 |
-| `loading.tsx` | ✅ | Route semantics 02; deeper streaming 10 |
-| soft vs hard App Router navigation | 🟠 | Routing behavior covered 02; mechanics 03 / 10 |
-| prefetching | 🟡 | 03 / 10 |
-| partial route navigation | 🟠 | Layout/slot behavior covered; mechanics 03 / 10 |
+| Suspense | 🟠 | Route/query boundaries covered; deep 05 / 10 |
+| `loading.tsx` | ✅ | Route semantics 02; navigation use 03; deeper streaming 10 |
+| soft vs hard App Router navigation | ✅ | Phases 02–03 |
+| production `<Link>` prefetching | ✅ | Phase 03; cache internals later |
+| dynamic-route partial prefetch to loading boundary | ✅ | Phase 03 stable 16.2 navigation behavior |
+| partial route navigation / preserved layouts | ✅ | Phases 02–03; RSC mechanics later |
+| navigation pending feedback | ✅ | `loading.tsx` + `useLinkStatus` Phase 03 |
 | Cache Components partial prerendering | 🟡 | 06 / 10 |
+| Next.js 16.3 Instant Navigations | 🧪 | Preview-only at July 26, 2026 baseline; not taught as stable |
 
 ## Metadata & Assets
 
@@ -287,13 +304,15 @@ This section is deliberately version-sensitive.
 | --- | --- | --- |
 | authentication vs authorization | 🟠 | 13 |
 | dynamic route params as untrusted input | ✅ | Phase 02 |
+| query/search params as untrusted input | ✅ | Phase 03 |
+| navigation destinations / return URLs as untrusted input | ✅ | Phase 03 |
 | tenant/resource scoping | 🟠 | Phase 02 routing examples; deep 13 / 18 |
 | untrusted Server Function arguments | 🟠 | 07 / 13 |
 | runtime validation | 🟠 | 07 / 08 / 13 |
 | CSRF | 🟡 | 13 |
-| XSS / output safety | 🟡 | 13 |
+| XSS / output safety | 🟠 | Navigation-scheme risk covered Phase 03; broad XSS depth Phase 13 |
 | secrets and `NEXT_PUBLIC_` | 🟠 | 01 / 13 |
-| safe redirects | 🟡 | 03 / 13 |
+| safe redirects | ✅ | Phase 03 baseline; auth/identity depth Phase 13 |
 | CSP / security headers | 🟡 | 09 / 13 |
 | uploads / webhooks | 🟡 | 08 / 13 |
 | log redaction | 🟡 | 13 / 14 |
@@ -308,39 +327,43 @@ This section is deliberately version-sensitive.
 | `global-error.tsx` | 🟠 | 02 / 14 |
 | missing-resource vs unexpected-error distinction | ✅ | 02 |
 | error digest / production detail protection | 🟠 | 02 / 14 |
+| route-change observation | ✅ | Phase 03 pathname + search-param composition |
+| navigation timing decomposition | ✅ | Phase 03 design/debugging workflow |
+| rewrite/pathname hydration mismatch | ✅ | Phase 03 navigation-specific debugging |
 | structured logs | 🟡 | 14 |
 | correlation IDs | 🟡 | 14 |
 | OpenTelemetry | 🟡 | 14 |
 | instrumentation | 🟡 | 14 |
 | source maps / release correlation | 🟡 | 14 |
-| hydration/cache/build incident triage | 🟡 | 14 / 19 |
+| broad hydration/cache/build incident triage | 🟠 | Navigation cases Phase 03; deep 14 / 19 |
 
 ## Performance
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| client JS / hydration cost | 🟠 | 04 / 15 |
-| route-level streaming boundaries | 🟠 | 02 / 10 / 15 |
+| client JS / hydration cost | 🟠 | Navigation impact introduced Phase 03; deep 04 / 15 |
+| route-level streaming boundaries | 🟠 | 02 / 03 / 10 / 15 |
 | independent slot loading/error containment | ✅ | Routing semantics Phase 02 |
-| server render latency | 🟡 | 15 |
+| server render latency | 🟠 | Navigation waterfall introduced Phase 03; deep Phase 15 |
 | data/database waterfalls | 🟡 | 05 / 15 |
 | images/fonts/scripts | 🟡 | 12 / 15 |
-| code splitting / dynamic imports | 🟡 | 15 |
-| prefetching | 🟡 | 03 / 15 |
+| code splitting / dynamic imports | 🟠 | Navigation mental model Phase 03; deep 15 |
+| prefetching | 🟠 | Navigation policy/trade-offs Phase 03; measurement depth Phase 15 |
 | caching | 🟡 | 06 / 15 |
-| performance budgets / measurement | 🟡 | 15 |
+| performance budgets / measurement | 🟠 | Navigation metrics introduced Phase 03; broad performance Phase 15 |
 
 ## Testing & Production
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| production build as route validation | ✅ | Phase 02 engineering workflow |
+| production build as route validation | ✅ | Phases 02–03 engineering workflow |
 | unit/component tests | 🟡 | 16 |
 | Server/Client Component strategy | 🟡 | 16 |
 | Route Handler / Server Function tests | 🟡 | 16 |
 | Playwright E2E | 🟡 | 16 |
-| accessibility tests | 🟡 | 16 |
-| hard vs soft route navigation E2E | 🟠 | Test cases specified Phase 02; implementation Phase 16 |
+| accessibility tests | 🟠 | Manual navigation matrix Phase 03; automation Phase 16 |
+| hard vs soft route navigation E2E | 🟠 | Test cases specified Phases 02–03; implementation Phase 16 |
+| Back/Forward / deep-link E2E | 🟠 | Test matrix Phase 03; automation Phase 16 |
 | deployment smoke tests | 🟡 | 16 / 17 |
 
 ## Deployment & Operations
@@ -367,8 +390,12 @@ This section is deliberately version-sensitive.
 | route groups vs public URL hierarchy | ✅ | Phase 02 |
 | layout persistence vs template reset | ✅ | Phase 02 |
 | multiple-root document boundary | ✅ | Phase 02 |
-| route-driven modal architecture | ✅ | Phase 02 |
-| feature/vertical-slice architecture | 🟠 | Phase 02 examples; deep 18 |
+| route-driven modal architecture | ✅ | Phase 02; history/accessibility integration Phase 03 |
+| URL path vs query vs local-state decision model | ✅ | Phase 03 |
+| navigation API ownership (`Link` / router / redirect / History API) | ✅ | Phase 03 |
+| history policy and shareable URL state | ✅ | Phase 03 |
+| navigation trust boundaries | ✅ | Phase 03 |
+| feature/vertical-slice architecture | 🟠 | Phase 02–03 examples; deep 18 |
 | monorepos/shared packages | 🟡 | 18 |
 | design systems | 🟡 | 18 |
 | BFF decisions | 🟡 | 18 |
@@ -384,6 +411,8 @@ This section is deliberately version-sensitive.
 | current App Router upgrade workflow | 🟠 | 01 / 20 |
 | codemods / `next upgrade` | 🟠 | 01 / 20 |
 | async `params` migration | ✅ | Current contract taught Phase 02; migration detail Phase 20 |
+| async page `searchParams` migration | ✅ | Current contract taught Phase 03; migration detail Phase 20 |
+| `next/router` → App Router navigation APIs | 🟠 | Current App Router contract Phase 03; migration detail Phase 20 |
 | Proxy migration from `middleware.ts` | ⚠️ | 20 |
 | caching-model migrations | 🟡 | 06 / 20 |
 | Turbopack compatibility | 🟡 | 20 |
@@ -391,24 +420,32 @@ This section is deliberately version-sensitive.
 
 ## Phase 02 completion note
 
-Phase 02 is considered complete for routing semantics because it now teaches:
+Phase 02 is considered complete for routing semantics because it teaches route-tree composition; pages, layouts, templates, and state preservation; dynamic route shapes and Promise-based params; static-param routing purpose; route groups/private folders; special route files; parallel/intercepting routes; route-driven modal architecture; route-level trust boundaries; and routing design review.
 
-- route tree composition
-- pages, nested layouts, root layouts, and templates
-- state preservation vs remounting
-- dynamic/catch-all/optional catch-all segments
-- Promise-based `params`
-- `generateStaticParams` and `dynamicParams` routing purpose
-- route groups and private folders
-- multiple root-layout full-load boundary
-- loading/error/not-found/default special files
-- Parallel Route slots and hard-load recovery
-- soft vs hard slot behavior
-- Intercepting Routes and route-driven modal architecture
-- route-level security/trust implications
-- debugging, testing scenarios, and design-review checklists
+Deeper streaming, rendering, caching, observability, and automated testing mechanics remain assigned to their later phases.
 
-Deeper streaming, rendering, caching, navigation hooks, observability, and testing mechanics remain deliberately assigned to their later phases.
+## Phase 03 completion note
+
+Phase 03 is considered complete for stable App Router navigation and URL-state semantics because it now teaches:
+
+- `<Link>` as the primary navigation primitive
+- current 16.2 production prefetch behavior for static/dynamic routes
+- `replace`, scroll policy, `onNavigate`, and stable `transitionTypes`
+- `useRouter` push/replace/back/forward/refresh/prefetch behavior at navigation depth
+- server-side `redirect` and `permanentRedirect`
+- safe programmatic destinations and return URLs
+- `usePathname`, `useParams`, `useSelectedLayoutSegment(s)`
+- Promise-based page `searchParams` and client `useSearchParams`
+- validated URL-driven search, filtering, sorting, and pagination
+- Suspense requirements for statically rendered query-reading client islands
+- `useLinkStatus` and route-level pending UX
+- route-change observation without Pages Router `router.events`
+- native History API integration
+- Back/Forward, hash, scroll, focus, and accessibility behavior
+- navigation performance decomposition, debugging, analytics, and design review
+- explicit separation of stable 16.2 behavior from 16.3 preview Instant Navigations
+
+Deeper RSC delivery, Cache Components, rendering internals, auth, observability, performance measurement, and testing automation remain deliberately assigned to later phases.
 
 ## Completion rule
 
