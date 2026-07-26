@@ -161,6 +161,16 @@ const nextjsItems = [
     'nextjs/caching-rendering-and-revalidation/partial-prerendering-and-client-router-cache',
     'nextjs/caching-rendering-and-revalidation/cache-security-debugging-and-production-incidents',
     'nextjs/caching-rendering-and-revalidation/caching-rendering-architecture-and-design-review',
+  ], { collapsed: true }),
+  category('07 · Mutations, Forms & Server Functions', [
+    'nextjs/mutations-forms-and-server-functions/server-functions-actions-and-use-server',
+    'nextjs/mutations-forms-and-server-functions/forms-formdata-and-progressive-enhancement',
+    'nextjs/mutations-forms-and-server-functions/validation-authorization-and-action-security',
+    'nextjs/mutations-forms-and-server-functions/action-state-pending-errors-and-form-status',
+    'nextjs/mutations-forms-and-server-functions/optimistic-ui-and-mutation-concurrency',
+    'nextjs/mutations-forms-and-server-functions/revalidation-refresh-redirects-and-cookies',
+    'nextjs/mutations-forms-and-server-functions/idempotency-transactions-and-side-effects',
+    'nextjs/mutations-forms-and-server-functions/mutation-architecture-debugging-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',

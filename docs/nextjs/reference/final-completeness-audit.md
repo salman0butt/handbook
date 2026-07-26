@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–6 are implemented; Phase 7 Mutations, Forms & Server Functions is next.**
+> **Status: NOT COMPLETE — Phases 1–7 are implemented; Phase 8 Route Handlers is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -27,7 +27,8 @@ This page is the final release gate for the handbook. It must not be marked comp
 - [x] Phase 04 · Server & Client Components
 - [x] Phase 05 · Data Fetching
 - [x] Phase 06 · Caching, Rendering & Revalidation
-- [ ] Phase 07 · Mutations, Forms & Server Functions
+- [x] Phase 07 · Mutations, Forms & Server Functions
+- [ ] Phase 08 · Route Handlers
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, pages and nested layouts, templates, dynamic/catch-all/optional catch-all segments, Promise-based params, `generateStaticParams`, route groups, private folders, multiple root layouts, loading/error/not-found/default conventions, parallel routes, intercepting routes, route-driven modals, debugging, architecture review, and production-design trade-offs.
@@ -39,6 +40,8 @@ Phase 04 includes Server Components by default, the `'use client'` module-graph 
 Phase 05 includes async Server Component data ownership, server `fetch`, direct database/ORM/SDK reads, parallel vs sequential fetching, dependency waterfalls, N+1/batching/fan-out analysis, preload/start-early patterns, request-scoped React `cache`, Promise sharing, Suspense and streaming-data boundaries, React `use()`, client-side fetching/SWR patterns, live-client refresh, timeout/retry/security/error handling, dev-vs-production fetch debugging, and senior data-architecture review.
 
 Phase 06 includes the modern Next.js 16.2 cache/rendering decision model, current server `fetch` cache semantics, the previous non-Cache-Components model, `cacheComponents`, `'use cache'`, `cacheLife`, `cacheTag`, `revalidateTag`, `updateTag`, `revalidatePath`, `connection()`, request-time dynamic boundaries, remote/distributed caching, experimental private caching, Cache Components partial prerendering, Client Router Cache interactions, cache isolation/security, production incident debugging, and senior cache/rendering architecture review.
+
+Phase 07 includes current Server Function/Server Action terminology, `'use server'`, form actions, `FormData`, `bind`, `formAction`, progressive enhancement, `next/form` distinctions, runtime validation, authentication and resource authorization, action CSRF/origin/body-size considerations, `useActionState`, `useFormStatus`, `useOptimistic`, mutation concurrency, post-write revalidation/refresh/redirect/cookie sequencing, idempotency, transactions, side-effect reliability, action debugging, and senior mutation architecture review.
 
 ## Final audit gates
 
