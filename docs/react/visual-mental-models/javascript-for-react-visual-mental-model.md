@@ -1,6 +1,6 @@
 ---
-title: JavaScript for React — Visual Mental Model
-description: Visualize the JavaScript concepts React relies on: values and references, immutable updates, array transforms, callbacks, closures, async work, and modules.
+title: "JavaScript for React — Visual Mental Model"
+description: "Visualize the JavaScript concepts React relies on: values and references, immutable updates, array transforms, callbacks, closures, async work, and modules."
 ---
 
 import {
