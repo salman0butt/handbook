@@ -300,7 +300,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | robots crawl guidance vs authorization/noindex distinction | ✅ | Phase 11 |
 | `sitemap.xml` / `sitemap.ts` / `MetadataRoute.Sitemap` | ✅ | Phase 11 |
 | localized sitemap alternates | ✅ | Phase 11 |
-| `generateSitemaps` | ✅ | Phase 11; Next 16 Promise<string> ID contract covered |
+| `generateSitemaps` | ✅ | Phase 11; Next 16 Promise&lt;string&gt; ID contract covered |
 | sitemap partition/publication/freshness strategy | ✅ | Phase 11 baseline; performance/ops depth 15/17 |
 | JSON-LD rendering | ✅ | Phase 11 |
 | JSON-LD script-context XSS-safe serialization | ✅ | Phase 11 baseline; full XSS/security Phase 13 |
@@ -404,7 +404,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | old GET Route Handler cached-by-default assumptions | ⚠️ | Phase 08 teaches current behavior |
 | `middleware.ts` → `proxy.ts` | ⚠️ | Semantics Phase 09; migration playbook 20 |
 | `metadata.viewport` → viewport export / `generateViewport` | ⚠️ | Phase 11 current API; migration depth Phase 20 |
-| older synchronous `generateSitemaps` ID assumptions | ⚠️ | Phase 11 teaches Next 16 Promise<string> ID |
+| older synchronous `generateSitemaps` ID assumptions | ⚠️ | Phase 11 teaches Next 16 Promise&lt;string&gt; ID |
 | Pages API Routes / Pages Router migration | ⛔ | Outside scope |
 
 ## Phase 10 completion note
