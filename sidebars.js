@@ -181,6 +181,16 @@ const nextjsItems = [
     'nextjs/route-handlers/security-cors-webhooks-and-rate-limiting',
     'nextjs/route-handlers/server-actions-vs-route-handlers-and-bff-architecture',
     'nextjs/route-handlers/production-debugging-and-design-review',
+  ], { collapsed: true }),
+  category('09 · Request Pipeline & Proxy', [
+    'nextjs/request-pipeline-and-proxy/proxy-model-file-convention-and-execution-order',
+    'nextjs/request-pipeline-and-proxy/matchers-conditions-and-prefetch-filtering',
+    'nextjs/request-pipeline-and-proxy/nextrequest-nextresponse-headers-cookies-and-continuation',
+    'nextjs/request-pipeline-and-proxy/redirects-rewrites-localization-and-tenancy',
+    'nextjs/request-pipeline-and-proxy/auth-gating-security-cors-and-csp',
+    'nextjs/request-pipeline-and-proxy/waituntil-runtime-deployment-and-performance',
+    'nextjs/request-pipeline-and-proxy/testing-debugging-and-migration-from-middleware',
+    'nextjs/request-pipeline-and-proxy/request-pipeline-architecture-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',
