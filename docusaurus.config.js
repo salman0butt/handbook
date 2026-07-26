@@ -38,7 +38,7 @@ const config = {
     metadata: [
       {
         name: 'keywords',
-        content: 'React, JavaScript, TypeScript, Node.js, system design, DevOps, AI engineering, developer handbook',
+        content: 'React, Next.js, App Router, JavaScript, TypeScript, Node.js, system design, DevOps, AI engineering, developer handbook',
       },
     ],
     navbar: {
@@ -47,6 +47,11 @@ const config = {
         {
           to: '/docs/react/intro',
           label: 'React',
+          position: 'left',
+        },
+        {
+          to: '/docs/nextjs/intro',
+          label: 'Next.js',
           position: 'left',
         },
         {
@@ -68,6 +73,7 @@ const config = {
           title: 'Handbooks',
           items: [
             {label: 'React', to: '/docs/react/intro'},
+            {label: 'Next.js', to: '/docs/nextjs/intro'},
             {label: 'JavaScript', to: '/docs/javascript/intro'},
             {label: 'TypeScript', to: '/docs/typescript/intro'},
           ],
