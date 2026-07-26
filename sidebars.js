@@ -68,6 +68,17 @@ const nextjsItems = [
     'nextjs/rendering-suspense-and-streaming/initial-load-client-navigation-and-route-reconciliation',
     'nextjs/rendering-suspense-and-streaming/streaming-errors-retries-and-recovery',
     'nextjs/rendering-suspense-and-streaming/rendering-performance-debugging-and-design-review',
+  ], { collapsed: true }),
+  category('11 · Metadata & SEO', [
+    'nextjs/metadata-and-seo/metadata-model-static-generated-and-inheritance',
+    'nextjs/metadata-and-seo/titles-descriptions-canonicals-alternates-and-metadata-base',
+    'nextjs/metadata-and-seo/open-graph-twitter-and-generated-social-images',
+    'nextjs/metadata-and-seo/icons-manifest-and-file-based-metadata',
+    'nextjs/metadata-and-seo/robots-sitemaps-crawling-and-indexing-policy',
+    'nextjs/metadata-and-seo/json-ld-structured-data-and-xss-safety',
+    'nextjs/metadata-and-seo/metadata-fields-viewport-verification-and-resource-hints',
+    'nextjs/metadata-and-seo/streaming-metadata-cache-components-and-seo-performance',
+    'nextjs/metadata-and-seo/seo-architecture-debugging-and-production-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
