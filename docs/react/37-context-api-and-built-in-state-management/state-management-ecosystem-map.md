@@ -4,6 +4,16 @@ description: Classify React state before choosing Context, Redux Toolkit, Zustan
 sidebar_position: 1
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramRow,
+  DiagramStack,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # State management ecosystem map
 
 React applications do not have one kind of state.
@@ -36,30 +46,37 @@ Always re-check package releases before copying version-sensitive APIs into prod
 
 ## The state taxonomy
 
-```text
-React application
-│
-├── Local UI state
-│   └── useState / useReducer
-│
-├── Shared React-owned state
-│   ├── lifted state
-│   ├── Context
-│   └── reducer + Context
-│
-├── Shared external client state
-│   ├── Redux Toolkit
-│   └── Zustand
-│
-├── Server state
-│   └── TanStack Query
-│
-├── Form state
-│   └── React Hook Form
-│
-└── Navigation/shareable state
-    └── URL / router
-```
+<VisualDiagram
+  title="React state taxonomy"
+  subtitle="Classify ownership before choosing a library."
+>
+  <DiagramStack align="center">
+    <DiagramNode title="React application" tone="purple" wide>
+      Different categories can coexist without competing for ownership.
+    </DiagramNode>
+    <DiagramArrow label="classify by source of truth + lifetime" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Local UI state" tone="blue" eyebrow="React-owned">
+        `useState` / `useReducer`
+      </DiagramNode>
+      <DiagramNode title="Shared React-owned state" tone="cyan" eyebrow="Tree-scoped">
+        lifted state / Context / reducer + Context
+      </DiagramNode>
+      <DiagramNode title="Shared client state" tone="green" eyebrow="External store">
+        Redux Toolkit / Zustand
+      </DiagramNode>
+      <DiagramNode title="Server state" tone="orange" eyebrow="Remote authority">
+        TanStack Query
+      </DiagramNode>
+      <DiagramNode title="Form state" tone="red" eyebrow="Workflow draft">
+        React Hook Form
+      </DiagramNode>
+      <DiagramNode title="Navigation state" tone="slate" eyebrow="Shareable">
+        URL / router
+      </DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 These categories can work together in the same application.
 
@@ -95,32 +112,42 @@ Do not move state into a global store only because two descendants may eventuall
 
 Context is best understood as a **tree-scoped distribution mechanism**.
 
-```text
-CartProvider
-│
-├── Header
-│   └── CartCount
-│
-└── Shop
-    └── CartDrawer
-```
+<VisualDiagram title="Context follows the provider tree">
+  <DiagramStack align="center">
+    <DiagramNode title="CartProvider" tone="cyan" wide>
+      Makes cart state available only to the subtree that needs it.
+    </DiagramNode>
+    <DiagramArrow label="provides value" />
+    <DiagramRow>
+      <DiagramNode title="Header → CartCount" tone="blue">
+        Reads cart information without prop drilling.
+      </DiagramNode>
+      <DiagramNode title="Shop → CartDrawer" tone="blue">
+        Reads the same provider value deeper in the tree.
+      </DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 The provider makes a value available to descendants without forwarding that value through every intermediate component.
 
 Context does not itself create state.
 
-```text
-useState / useReducer
-        │
-        ▼
-     OWNS STATE
-        │
-        ▼
-      Context
-        │
-        ▼
-DISTRIBUTES ACCESS
-```
+<VisualDiagram title="Ownership vs distribution" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="useState / useReducer" tone="green">
+      **Owns the state** and defines how it changes.
+    </DiagramNode>
+    <DiagramArrow label="provider publishes current value" />
+    <DiagramNode title="Context" tone="cyan">
+      **Distributes access** to descendants.
+    </DiagramNode>
+    <DiagramArrow label="consumers read" />
+    <DiagramNode title="Component subtree" tone="blue">
+      Uses the value without prop drilling.
+    </DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Use Context when the value represents a subtree-wide environment or feature dependency such as:
 
@@ -135,25 +162,17 @@ Use Context when the value represents a subtree-wide environment or feature depe
 
 Redux Toolkit is appropriate when state transitions, traceability, tooling, middleware, normalized state, and predictable cross-feature ownership matter.
 
-```text
-Component
-   │
-   │ dispatch(action)
-   ▼
-Redux Toolkit Store
-   │
-   ▼
-Slice reducers
-   │
-   ▼
-New state
-   │
-   ▼
-Selectors
-   │
-   ▼
-Subscribed components
-```
+<VisualDiagram title="Redux Toolkit event flow">
+  <DiagramStack align="center">
+    <DiagramNode title="UI event" tone="blue">A user or system event triggers an action.</DiagramNode>
+    <DiagramArrow label="dispatch(action)" />
+    <DiagramNode title="Redux Toolkit store" tone="purple">Central external store receives the event.</DiagramNode>
+    <DiagramArrow label="slice reducers calculate next state" />
+    <DiagramNode title="New store state" tone="green">Immutable next state becomes authoritative.</DiagramNode>
+    <DiagramArrow label="selectors read focused slices" />
+    <DiagramNode title="Subscribed components" tone="orange">Only selector consumers whose result changed need to update.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Redux is not automatically the right place for:
 
@@ -166,15 +185,18 @@ Redux is not automatically the right place for:
 
 Zustand provides a store outside React with selector-based subscriptions.
 
-```text
-Zustand store
-├── cart
-├── userPreferences
-└── actions
-      │
-      ├── selector → CartBadge
-      └── selector → SettingsPanel
-```
+<VisualDiagram title="Zustand selector subscriptions">
+  <DiagramStack align="center">
+    <DiagramNode title="Zustand store" tone="green" wide>
+      cart + userPreferences + named actions
+    </DiagramNode>
+    <DiagramArrow label="components subscribe to selected results" />
+    <DiagramRow>
+      <DiagramNode title="CartBadge" tone="blue">Selects only cart-derived state.</DiagramNode>
+      <DiagramNode title="SettingsPanel" tone="cyan">Selects only preferences.</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 Use it when you want:
 
@@ -191,19 +213,17 @@ A small API does not remove the need for architecture.
 
 Server state is different because the client is not authoritative.
 
-```text
-Database / API
-      │
-      ▼
- Query Client
-      │
-      ├── ['products']
-      ├── ['user', 42]
-      └── ['orders', filters]
-      │
-      ▼
- React observers
-```
+<VisualDiagram title="Server state cache ownership">
+  <DiagramStack align="center">
+    <DiagramNode title="Database / API" tone="orange">Authoritative remote data source.</DiagramNode>
+    <DiagramArrow label="fetch / mutate" />
+    <DiagramNode title="QueryClient cache" tone="purple" wide>
+      `['products']` · `['user', 42]` · `['orders', filters]`
+    </DiagramNode>
+    <DiagramArrow label="query observers subscribe" />
+    <DiagramNode title="React UI" tone="blue">Receives pending, error, fresh, stale, and updated data states.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Server state involves concerns such as:
 
@@ -223,17 +243,20 @@ TanStack Query is not just another Redux replacement. It solves a different life
 
 A complex form has its own state model:
 
-```text
-useForm()
-│
-├── field values
-├── validation
-├── errors
-├── dirty state
-├── touched state
-├── pending/submission state
-└── dynamic fields
-```
+<VisualDiagram title="React Hook Form owns the form workflow">
+  <DiagramStack align="center">
+    <DiagramNode title="useForm()" tone="red" wide>Creates the form control and subscription model.</DiagramNode>
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Field values" tone="blue">Current local draft values.</DiagramNode>
+      <DiagramNode title="Validation + errors" tone="red">Field and form validation results.</DiagramNode>
+      <DiagramNode title="Dirty + touched" tone="orange">Interaction and change metadata.</DiagramNode>
+      <DiagramNode title="Submission state" tone="purple">Pending / submitted / success lifecycle.</DiagramNode>
+      <DiagramNode title="Dynamic fields" tone="green">Arrays and conditional form structure.</DiagramNode>
+      <DiagramNode title="Subscriptions" tone="cyan">Components observe only what they need.</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 React Hook Form focuses on forms rather than general application state.
 
@@ -262,30 +285,24 @@ Duplicating URL state into a client store creates synchronization work and can p
 
 A mature application might intentionally use all of these:
 
-```text
-E-commerce application
-│
-├── useState
-│   └── open cart drawer
-│
-├── Context
-│   └── currency / locale
-│
-├── Redux Toolkit
-│   └── long-lived checkout workflow
-│
-├── Zustand
-│   └── design/editor interaction state
-│
-├── TanStack Query
-│   └── products / inventory / orders
-│
-├── React Hook Form
-│   └── shipping and billing form
-│
-└── URL
-    └── search / filters / pagination
-```
+<VisualDiagram
+  title="One application, multiple owners"
+  subtitle="The architecture is healthy when each tool owns a distinct category."
+>
+  <DiagramStack align="center">
+    <DiagramNode title="E-commerce application" tone="purple" wide>Different lifecycles are intentionally separated.</DiagramNode>
+    <DiagramArrow label="assign state to its natural owner" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="useState" tone="blue">Open cart drawer.</DiagramNode>
+      <DiagramNode title="Context" tone="cyan">Currency / locale.</DiagramNode>
+      <DiagramNode title="Redux Toolkit" tone="purple">Long-lived checkout workflow.</DiagramNode>
+      <DiagramNode title="Zustand" tone="green">Design/editor interaction state.</DiagramNode>
+      <DiagramNode title="TanStack Query" tone="orange">Products / inventory / orders.</DiagramNode>
+      <DiagramNode title="React Hook Form" tone="red">Shipping and billing form.</DiagramNode>
+      <DiagramNode title="URL" tone="slate">Search / filters / pagination.</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 This is not duplication when each tool owns a distinct category.
 
@@ -306,32 +323,45 @@ For each value, ask:
 
 ## Common architecture mistake: one global bucket
 
-Bad:
-
-```text
-GlobalStore
-├── server responses
-├── dialog state
-├── user form drafts
-├── search URL params
-├── theme
-├── notifications
-└── every other value
-```
+<VisualDiagram title="Anti-pattern: one universal global bucket">
+  <DiagramStack align="center">
+    <DiagramNode title="GlobalStore" tone="red" wide>
+      Server responses + dialog state + form drafts + URL params + theme + notifications + everything else.
+    </DiagramNode>
+    <DiagramArrow label="creates competing lifecycles and ownership" />
+    <DiagramNode title="Symptoms" tone="orange" wide>
+      Synchronization bugs, broad updates, hard migrations, unclear persistence, and accidental coupling.
+    </DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Better:
 
-```text
-classify state
-    ↓
-choose source of truth
-    ↓
-choose scope/lifetime
-    ↓
-choose subscription model
-    ↓
-choose the smallest appropriate tool
-```
+<VisualDiagram title="Better decision flow" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="1 · Classify state" tone="blue" />
+    <DiagramArrow />
+    <DiagramNode title="2 · Choose source of truth" tone="cyan" />
+    <DiagramArrow />
+    <DiagramNode title="3 · Define scope + lifetime" tone="green" />
+    <DiagramArrow />
+    <DiagramNode title="4 · Define subscription model" tone="purple" />
+    <DiagramArrow />
+    <DiagramNode title="5 · Choose the smallest fitting tool" tone="orange" />
+  </DiagramStack>
+</VisualDiagram>
+
+<DecisionTree
+  question="Fast first-pass state decision"
+  items={[
+    { label: 'Only local UI interaction?', value: 'useState / useReducer' },
+    { label: 'Shared subtree dependency?', value: 'Context' },
+    { label: 'Structured shared client state?', value: 'Redux Toolkit / Zustand' },
+    { label: 'Remote authoritative data?', value: 'TanStack Query' },
+    { label: 'Complex form lifecycle?', value: 'React Hook Form' },
+    { label: 'Bookmarkable/shareable navigation state?', value: 'URL / router' },
+  ]}
+/>
 
 ## Interview questions
 
