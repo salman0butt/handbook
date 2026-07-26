@@ -4,6 +4,16 @@ description: Learn TanStack Query 5 query clients, query keys, query functions, 
 sidebar_position: 1
 ---
 
+import {
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramRow,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # TanStack Query fundamentals and cache
 
 This handbook targets **TanStack Query 5.101.4**.
@@ -12,19 +22,20 @@ TanStack Query is a server-state library: it helps React applications fetch, cac
 
 ## Server state is different from client state
 
-```text
-Client state
-├── dialog open
-├── selected tab
-├── editor tool
-└── unsaved draft
+<VisualDiagram title="Client state vs server state">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Client state" tone="blue">
+      Dialog open · selected tab · editor tool · unsaved draft.
 
-Server state
-├── products
-├── orders
-├── account profile
-└── inventory
-```
+      The client owns the authoritative value.
+    </DiagramNode>
+    <DiagramNode title="Server state" tone="orange">
+      Products · orders · account profile · inventory.
+
+      The server remains authoritative.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 The client does not own the authoritative version of server state.
 
@@ -65,16 +76,21 @@ root.render(
 
 Mental model:
 
-```text
-QueryClient
-│
-├── query cache
-├── mutation cache
-└── defaults/policies
-      │
-      ▼
-React query observers
-```
+<VisualDiagram title="QueryClient architecture" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="QueryClient" tone="purple" wide>
+      Owns cache state and policies.
+    </DiagramNode>
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Query cache" tone="orange" />
+      <DiagramNode title="Mutation cache" tone="red" />
+      <DiagramNode title="Defaults / policies" tone="slate" />
+    </DiagramGrid>
+    <DiagramArrow label="observed by" />
+    <DiagramNode title="React query observers" tone="blue" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 ## Basic query
 
@@ -125,15 +141,15 @@ Current TanStack Query v5 query keys are arrays at the top level.
 ['orders', { status, page }]
 ```
 
-```text
-queryKey
-   │
-   ▼
-identifies cached resource + parameters
-   │
-   ▼
-observers with same key share cache entry
-```
+<VisualDiagram title="Query key defines cache identity" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="queryKey" tone="purple">Resource + every parameter used by the query.</DiagramNode>
+    <DiagramArrow label="identifies" />
+    <DiagramNode title="One cache entry" tone="orange">Stable identity for that remote resource snapshot.</DiagramNode>
+    <DiagramArrow label="shared by" />
+    <DiagramNode title="Observers using the same key" tone="blue">Components observe the same cached query identity.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 If the query function depends on a variable, include that variable in the key.
 
@@ -165,17 +181,14 @@ This reduces accidental cache-key drift.
 
 One of the most important TanStack Query concepts is **freshness**.
 
-```text
-query fetched
-    │
-    ▼
-fresh for staleTime
-    │
-    ▼
-stale
-    │
-    └── eligible for background refetch under configured triggers
-```
+<LifecycleBar
+  items={[
+    { label: 'query fetched', tone: 'blue' },
+    { label: 'fresh during staleTime', tone: 'green' },
+    { label: 'becomes stale', tone: 'orange' },
+    { label: 'eligible for background refetch', tone: 'purple' },
+  ]}
+/>
 
 By default, query data is considered stale immediately unless you configure `staleTime`.
 
@@ -193,15 +206,20 @@ Fresh does not mean "permanently correct." It means TanStack Query should not co
 
 ## Cache lifetime is separate from freshness
 
-Two different questions:
+<VisualDiagram title="staleTime and gcTime answer different questions">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="staleTime" tone="green">
+      **When should cached data be considered stale?**
 
-```text
-staleTime
-= when should cached data be considered stale?
+      This is a freshness policy.
+    </DiagramNode>
+    <DiagramNode title="gcTime" tone="slate">
+      **How long should an unused cache entry remain before garbage collection?**
 
-gcTime
-= how long should an unused cache entry remain before garbage collection?
-```
+      This is a retention policy.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not confuse freshness with cache retention.
 
@@ -222,16 +240,16 @@ Know the defaults before diagnosing "unexpected extra requests."
 
 Two components using the same query key are observing the same cached query identity.
 
-```text
-Header
-  └── ['user', 42]
-
-ProfilePage
-  └── ['user', 42]
-
-          ↓
-      same cache entry
-```
+<VisualDiagram title="Two observers, one cache identity">
+  <DiagramRow>
+    <DiagramNode title="Header" tone="blue">Uses `['user', 42]`.</DiagramNode>
+    <DiagramNode title="ProfilePage" tone="cyan">Uses `['user', 42]`.</DiagramNode>
+  </DiagramRow>
+  <DiagramArrow label="same query key" />
+  <DiagramNode title="Shared cache entry" tone="orange" wide>
+    Both observers read the same query identity instead of independently rebuilding fetch state.
+  </DiagramNode>
+</VisualDiagram>
 
 This is fundamentally different from both components independently using `useEffect(fetch...)`.
 
@@ -279,17 +297,11 @@ If requests can run in parallel, prefer parallel architecture.
 
 Manual effect fetching often becomes:
 
-```text
-useEffect
-├── loading state
-├── error state
-├── race handling
-├── cleanup
-├── retry
-├── caching
-├── refetch
-└── invalidation
-```
+<VisualDiagram title="Manual Effect fetching can grow into a cache system">
+  <DiagramNode title="useEffect(fetch...)" tone="red" wide>
+    Loading + error + race handling + cleanup + retry + caching + refetch + invalidation.
+  </DiagramNode>
+</VisualDiagram>
 
 TanStack Query centralizes that server-state lifecycle.
 
@@ -297,13 +309,12 @@ Effects still have valid synchronization uses. The point is not "never fetch in 
 
 ## TanStack Query vs Redux/Zustand
 
-```text
-Redux / Zustand
-→ client-owned shared state
-
-TanStack Query
-→ remote/server-owned state lifecycle
-```
+<VisualDiagram title="Different ownership categories">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Redux / Zustand" tone="green">Client-owned shared state.</DiagramNode>
+    <DiagramNode title="TanStack Query" tone="orange">Remote/server-owned state lifecycle.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 A real application may use both.
 

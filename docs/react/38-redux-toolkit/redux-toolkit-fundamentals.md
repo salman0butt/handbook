@@ -4,6 +4,16 @@ description: Learn the modern Redux model with configureStore, createSlice, Prov
 sidebar_position: 1
 ---
 
+import {
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramRow,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Redux Toolkit fundamentals
 
 Redux Toolkit is the recommended modern way to write Redux applications.
@@ -16,24 +26,17 @@ Do not start new code by hand-writing legacy `createStore`, string action consta
 
 Redux gives a shared external store a predictable event-driven update model.
 
-```text
-UI event
-   │
-   ▼
-dispatch(action)
-   │
-   ▼
-Redux store
-   │
-   ▼
-reducers calculate next state
-   │
-   ▼
-selectors read state
-   │
-   ▼
-subscribed components update
-```
+<VisualDiagram title="Redux Toolkit data flow">
+  <DiagramStack align="center">
+    <DiagramNode title="UI event" tone="blue">A click, form event, or system event occurs.</DiagramNode>
+    <DiagramArrow label="dispatch(action)" />
+    <DiagramNode title="Redux store" tone="purple">The external store receives the action.</DiagramNode>
+    <DiagramArrow label="reducers calculate next state" />
+    <DiagramNode title="Next state" tone="green">State changes through reducer logic.</DiagramNode>
+    <DiagramArrow label="selectors read focused values" />
+    <DiagramNode title="Subscribed components" tone="orange">React-Redux updates consumers whose selected result changed.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Redux is useful when state coordination, traceability, tooling, middleware, and cross-feature ownership matter.
 
@@ -102,17 +105,16 @@ Redux Toolkit uses Immer internally, so reducer code may look mutative while sti
 
 ## Slice mental model
 
-```text
-createSlice({
-  name,
-  initialState,
-  reducers
-})
-        │
-        ├── generates reducer
-        │
-        └── generates action creators
-```
+<VisualDiagram title="What createSlice gives you" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="createSlice({ name, initialState, reducers })" tone="purple" wide />
+    <DiagramArrow label="generates" />
+    <DiagramRow>
+      <DiagramNode title="Slice reducer" tone="green">Understands the generated slice actions.</DiagramNode>
+      <DiagramNode title="Action creators" tone="blue">Create correctly typed action objects.</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 `increment()` creates an action object.
 
@@ -131,13 +133,16 @@ root.render(
 )
 ```
 
-```text
-Provider
-   │
-   └── React tree
-       ├── useSelector(...)
-       └── useDispatch()
-```
+<VisualDiagram title="React-Redux connection" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Provider store={store}" tone="purple" wide />
+    <DiagramArrow label="makes the external store available" />
+    <DiagramRow>
+      <DiagramNode title="useSelector(...)" tone="blue">Subscribes to selected state.</DiagramNode>
+      <DiagramNode title="useDispatch()" tone="green">Sends actions to the store.</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 React-Redux manages the subscription between React components and the external Redux store.
 
@@ -187,17 +192,15 @@ function CounterControls() {
 
 The component does not directly mutate store state.
 
-```text
-button click
-    ↓
-dispatch(increment())
-    ↓
-{ type: 'counter/increment' }
-    ↓
-slice reducer
-    ↓
-new store state
-```
+<LifecycleBar
+  items={[
+    { label: 'button click', tone: 'blue' },
+    { label: 'dispatch(increment())', tone: 'purple' },
+    { label: "{ type: 'counter/increment' }", tone: 'orange' },
+    { label: 'slice reducer', tone: 'green' },
+    { label: 'new store state', tone: 'cyan' },
+  ]}
+/>
 
 ## Payload actions
 
@@ -230,13 +233,14 @@ const count = useAppSelector(selectCounterValue)
 
 For feature architecture:
 
-```text
-feature/
-├── slice state
-├── actions
-├── selectors
-└── components
-```
+<VisualDiagram title="Feature boundary around Redux state">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="Slice state" tone="purple">Domain-owned writable state.</DiagramNode>
+    <DiagramNode title="Actions" tone="blue">Public event vocabulary.</DiagramNode>
+    <DiagramNode title="Selectors" tone="green">Public read API.</DiagramNode>
+    <DiagramNode title="Components" tone="orange">Consume domain state without knowing the whole root shape.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Components should not need to understand every detail of the root state shape.
 
@@ -266,14 +270,18 @@ export const store = configureStore({
 
 Architecture:
 
-```text
-Redux Store
-│
-├── auth
-├── cart
-├── editor
-└── notifications
-```
+<VisualDiagram title="Domain slices inside one Redux store">
+  <DiagramStack align="center">
+    <DiagramNode title="Redux Store" tone="purple" wide />
+    <DiagramArrow label="organized by domain ownership" />
+    <DiagramGrid columns={4}>
+      <DiagramNode title="auth" tone="blue" />
+      <DiagramNode title="cart" tone="green" />
+      <DiagramNode title="editor" tone="orange" />
+      <DiagramNode title="notifications" tone="cyan" />
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 Slice boundaries should follow domains, not arbitrary file size.
 
@@ -298,19 +306,16 @@ Poor default candidates:
 
 ## Redux vs Context
 
-```text
-Context
-├── tree-scoped dependency distribution
-├── provider boundaries
-└── no built-in selector/event/middleware model
-
-Redux Toolkit
-├── external store
-├── action-driven transitions
-├── selector subscriptions
-├── middleware
-└── DevTools/event trace
-```
+<VisualDiagram title="Context and Redux solve different architecture problems">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Context" tone="cyan">
+      Tree-scoped dependency distribution · provider boundaries · no built-in selector/event/middleware model.
+    </DiagramNode>
+    <DiagramNode title="Redux Toolkit" tone="purple">
+      External store · action-driven transitions · selector subscriptions · middleware · DevTools event trace.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Neither is automatically better.
 
@@ -351,15 +356,14 @@ For server cache lifecycles, consider RTK Query or TanStack Query instead of man
 
 Use Redux DevTools to inspect:
 
-```text
-action
-  ↓
-previous state
-  ↓
-reducer transition
-  ↓
-next state
-```
+<LifecycleBar
+  items={[
+    { label: 'action', tone: 'blue' },
+    { label: 'previous state', tone: 'slate' },
+    { label: 'reducer transition', tone: 'purple' },
+    { label: 'next state', tone: 'green' },
+  ]}
+/>
 
 If a component does not update, inspect:
 

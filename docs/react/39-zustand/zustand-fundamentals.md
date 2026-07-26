@@ -4,6 +4,15 @@ description: Learn Zustand 5 store creation, actions, selectors, state updates, 
 sidebar_position: 1
 ---
 
+import {
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramRow,
+  DiagramStack,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Zustand fundamentals
 
 This handbook targets **Zustand 5.0.14**.
@@ -12,21 +21,18 @@ Zustand is a lightweight external store with a hook-oriented React API.
 
 ## Mental model
 
-```text
-Zustand store
-├── state
-├── actions
-├── getState
-├── setState
-└── subscribe
-      │
-      ▼
-selector subscriptions
-      │
-   ┌──┴───────────────┐
-   ▼                  ▼
-CartBadge        PreferencesPanel
-```
+<VisualDiagram title="Zustand external-store model">
+  <DiagramStack align="center">
+    <DiagramNode title="Zustand store" tone="green" wide>
+      State + actions + `getState` + `setState` + `subscribe`
+    </DiagramNode>
+    <DiagramArrow label="selector subscriptions" />
+    <DiagramRow>
+      <DiagramNode title="CartBadge" tone="blue">Reads only the selected cart result.</DiagramNode>
+      <DiagramNode title="PreferencesPanel" tone="cyan">Reads only the selected preferences result.</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 The store exists outside React. Components subscribe to selected results from that store.
 
@@ -65,18 +71,15 @@ function CounterValue() {
 }
 ```
 
-```text
-whole store
-   │
-   ▼
-selector(state)
-   │
-   ▼
-selected result
-   │
-   ▼
-component subscription
-```
+<VisualDiagram title="Selector subscription flow" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Whole store" tone="green" />
+    <DiagramArrow label="selector(state)" />
+    <DiagramNode title="Selected result" tone="blue" />
+    <DiagramArrow label="subscription tracks this result" />
+    <DiagramNode title="Component" tone="cyan" />
+  </DiagramStack>
+</VisualDiagram>
 
 Prefer selecting the smallest state a component needs.
 
@@ -152,28 +155,28 @@ This external access is one reason Zustand can fit state that must be shared wit
 
 Do not default to one giant global store.
 
-```text
-stores/
-├── cartStore
-├── editorStore
-└── preferencesStore
-```
+<VisualDiagram title="Multiple focused stores preserve domain ownership">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="cartStore" tone="green">Cart-specific state and actions.</DiagramNode>
+    <DiagramNode title="editorStore" tone="purple">Editor interaction state.</DiagramNode>
+    <DiagramNode title="preferencesStore" tone="cyan">User interface preferences.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Multiple stores can preserve domain ownership.
 
 ## Zustand vs Context
 
-```text
-Context
-├── value follows provider tree
-├── provider scope is explicit
-└── consumers read Context value
-
-Zustand
-├── external store lifetime
-├── selector subscriptions
-└── usable from non-React code
-```
+<VisualDiagram title="Context vs Zustand">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Context" tone="cyan">
+      Value follows provider tree · provider scope is explicit · consumers read the Context value.
+    </DiagramNode>
+    <DiagramNode title="Zustand" tone="green">
+      External store lifetime · selector subscriptions · usable from non-React code.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Use Context when provider scope naturally expresses ownership. Consider Zustand when independent selector subscriptions or external access matter.
 

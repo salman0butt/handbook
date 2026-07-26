@@ -4,6 +4,15 @@ description: Apply Context deliberately with reducers, read/write boundaries, pr
 sidebar_position: 2
 ---
 
+import {
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramRow,
+  DiagramStack,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Context API production patterns
 
 The React handbook already covers `createContext`, `useContext`, provider lookup, value identity, provider architecture, and reducer + Context in depth.
@@ -12,19 +21,15 @@ This chapter connects those core chapters directly to the state-management ecosy
 
 ## The model to keep
 
-```text
-State owner
-useState / useReducer
-        │
-        ▼
-Provider
-        │
-        ▼
-Context channel
-        │
-        ▼
-Consumers
-```
+<VisualDiagram title="Context separates ownership from distribution" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="State owner" tone="green">`useState` / `useReducer` owns the value.</DiagramNode>
+    <DiagramArrow label="provider publishes" />
+    <DiagramNode title="Provider" tone="cyan">Chooses the subtree scope.</DiagramNode>
+    <DiagramArrow label="Context channel" />
+    <DiagramNode title="Consumers" tone="blue">Descendants read the published value.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Context is not a store by itself. A provider may own state, but the Context object is the distribution channel.
 
@@ -74,29 +79,20 @@ Do not add `useMemo` automatically. Use it when provider renders unrelated to th
 
 ## Provider scope is state scope
 
-Bad default:
+<VisualDiagram title="Provider placement expresses ownership">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Bad default" tone="red">
+      `App → GiantAppProvider → everything`
 
-```text
-App
-└── GiantAppProvider
-    └── everything
-```
+      One broad provider couples unrelated features and lifetimes.
+    </DiagramNode>
+    <DiagramNode title="Better" tone="green">
+      Auth wraps routing, Cart wraps storefront/checkout, Admin preferences wrap only Admin.
 
-Better:
-
-```text
-App
-├── AuthProvider
-│   └── Router
-│
-├── Storefront
-│   └── CartProvider
-│       ├── Products
-│       └── Checkout
-│
-└── Admin
-    └── AdminPreferencesProvider
-```
+      Each provider surrounds the smallest subtree that shares the dependency.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Place the provider around the smallest subtree that genuinely shares the dependency.
 
@@ -120,17 +116,14 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
   switch (action.type) {
     case 'itemAdded':
       return [...state, { ...action.item, quantity: 1 }]
-
     case 'itemRemoved':
       return state.filter((item) => item.id !== action.id)
-
     case 'quantityChanged':
       return state.map((item) =>
         item.id === action.id
           ? { ...item, quantity: action.quantity }
           : item,
       )
-
     default:
       return state
   }
@@ -139,24 +132,17 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
 
 Architecture:
 
-```text
-UI event
-   │
-   ▼
-dispatch(action)
-   │
-   ▼
-reducer(currentState, action)
-   │
-   ▼
-next state
-   │
-   ▼
-provider publishes value
-   │
-   ▼
-consumers update
-```
+<VisualDiagram title="Reducer + Context update flow">
+  <DiagramStack align="center">
+    <DiagramNode title="UI event" tone="blue" />
+    <DiagramArrow label="dispatch(action)" />
+    <DiagramNode title="Reducer" tone="purple">`reducer(currentState, action)`</DiagramNode>
+    <DiagramArrow label="calculates" />
+    <DiagramNode title="Next state" tone="green" />
+    <DiagramArrow label="provider publishes new value" />
+    <DiagramNode title="Consumers update" tone="cyan" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## Split read and write contexts
 
@@ -167,14 +153,16 @@ const CartStateContext = createContext<CartItem[] | null>(null)
 const CartDispatchContext = createContext<React.Dispatch<CartAction> | null>(null)
 ```
 
-```text
-CartProvider
-├── CartStateContext
-│   └── components that read cart state
-│
-└── CartDispatchContext
-    └── components that only send commands
-```
+<VisualDiagram title="Separate read and write channels">
+  <DiagramStack align="center">
+    <DiagramNode title="CartProvider" tone="cyan" wide />
+    <DiagramArrow />
+    <DiagramRow>
+      <DiagramNode title="CartStateContext" tone="blue">Components that read cart state.</DiagramNode>
+      <DiagramNode title="CartDispatchContext" tone="green">Components that only send commands.</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 This does not automatically solve all rendering concerns, but it avoids forcing dispatch-only consumers to depend on the full state value.
 
@@ -204,16 +192,11 @@ If fine-grained subscriptions matter, consider:
 
 Bad architecture:
 
-```text
-ProductsProvider
-├── fetch products
-├── retry requests
-├── cache results
-├── track stale time
-├── refetch on focus
-├── invalidate after mutations
-└── manage pagination
-```
+<VisualDiagram title="When Context is rebuilding a server-state system">
+  <DiagramNode title="ProductsProvider" tone="red" wide>
+    Fetch + retry + cache + stale-time tracking + focus refetch + invalidation + pagination.
+  </DiagramNode>
+</VisualDiagram>
 
 At this point you are rebuilding a server-state system.
 
@@ -298,19 +281,24 @@ Do not migrate from Context to Redux or Zustand because the code "looks big."
 
 Migrate because a concrete requirement appears:
 
-```text
-Context architecture
-      │
-      ├── independent slices needed
-      ├── high-frequency updates
-      ├── cross-root access
-      ├── non-React subscribers
-      ├── event/middleware requirements
-      └── tooling/traceability requirements
-             │
-             ▼
-      external store may fit better
-```
+<VisualDiagram title="When an external store becomes justified">
+  <DiagramStack align="center">
+    <DiagramNode title="Context architecture" tone="cyan" wide>
+      Working baseline with tree-scoped ownership.
+    </DiagramNode>
+    <DiagramArrow label="new requirements appear" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Independent slices" tone="blue" />
+      <DiagramNode title="High-frequency updates" tone="orange" />
+      <DiagramNode title="Cross-root access" tone="purple" />
+      <DiagramNode title="Non-React subscribers" tone="green" />
+      <DiagramNode title="Middleware / events" tone="red" />
+      <DiagramNode title="Traceability / tooling" tone="slate" />
+    </DiagramGrid>
+    <DiagramArrow label="evidence supports migration" />
+    <DiagramNode title="External store may fit better" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 ## Interview questions
 

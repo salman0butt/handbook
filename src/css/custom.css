@@ -11,6 +11,10 @@
   --ifm-heading-font-weight: 760;
   --ifm-navbar-height: 4.25rem;
   --docusaurus-highlighted-code-line-bg: rgba(8, 126, 164, 0.1);
+  --hb-diagram-surface: #ffffff;
+  --hb-diagram-surface-soft: #f7faff;
+  --hb-diagram-border: #dce6f2;
+  --hb-diagram-shadow: 0 18px 45px rgba(28, 49, 78, 0.09);
 }
 
 [data-theme='dark'] {
@@ -22,6 +26,10 @@
   --ifm-color-primary-lighter: #9ae7fd;
   --ifm-color-primary-lightest: #d3f5fe;
   --docusaurus-highlighted-code-line-bg: rgba(97, 218, 251, 0.12);
+  --hb-diagram-surface: #161b22;
+  --hb-diagram-surface-soft: #11161d;
+  --hb-diagram-border: #303946;
+  --hb-diagram-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
 }
 
 html {
@@ -56,4 +64,360 @@ html {
 
 .theme-code-block {
   border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+/* Handbook visual learning diagrams */
+.hb-diagram {
+  margin: 1.6rem 0 2rem;
+  border: 1px solid var(--hb-diagram-border);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--hb-diagram-surface);
+  box-shadow: var(--hb-diagram-shadow);
+}
+
+.hb-diagram--compact {
+  max-width: 760px;
+}
+
+.hb-diagram__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.2rem;
+  margin: 0;
+  border-bottom: 1px solid var(--hb-diagram-border);
+  background: linear-gradient(135deg, rgba(8, 126, 164, 0.11), rgba(99, 102, 241, 0.08));
+}
+
+.hb-diagram__title {
+  color: var(--ifm-font-color-base);
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.hb-diagram__subtitle {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.84rem;
+}
+
+.hb-diagram__canvas {
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(8, 126, 164, 0.08), transparent 30%),
+    radial-gradient(circle at 85% 80%, rgba(139, 92, 246, 0.07), transparent 28%),
+    var(--hb-diagram-surface-soft);
+}
+
+.hb-diagram__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hb-diagram__stack[data-align='center'] {
+  align-items: center;
+}
+
+.hb-diagram__row {
+  display: flex;
+  gap: 0.85rem;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.hb-diagram__row[data-wrap='true'] {
+  flex-wrap: wrap;
+}
+
+.hb-diagram__row[data-wrap='false'] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.hb-diagram__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--hb-grid-columns), minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.hb-diagram__node {
+  min-width: 170px;
+  flex: 1 1 190px;
+  padding: 0.9rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(30, 41, 59, 0.07);
+}
+
+.hb-diagram__node--wide {
+  width: 100%;
+}
+
+.hb-diagram__nodeTitle {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.hb-diagram__nodeBody {
+  color: inherit;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.hb-diagram__nodeBody > :last-child {
+  margin-bottom: 0;
+}
+
+.hb-diagram__eyebrow {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.hb-diagram__node--blue {
+  color: #123d74;
+  border-color: #b7d6ff;
+  background: linear-gradient(145deg, #eaf4ff, #f7fbff);
+}
+
+.hb-diagram__node--cyan {
+  color: #075b68;
+  border-color: #a5e6eb;
+  background: linear-gradient(145deg, #e8fbfd, #f7feff);
+}
+
+.hb-diagram__node--green {
+  color: #14532d;
+  border-color: #afe3c2;
+  background: linear-gradient(145deg, #eafbf0, #f7fff9);
+}
+
+.hb-diagram__node--purple {
+  color: #4c2b8a;
+  border-color: #d0bcff;
+  background: linear-gradient(145deg, #f2edff, #fbf9ff);
+}
+
+.hb-diagram__node--orange {
+  color: #814600;
+  border-color: #ffd09b;
+  background: linear-gradient(145deg, #fff3e3, #fffaf4);
+}
+
+.hb-diagram__node--red {
+  color: #842029;
+  border-color: #ffc0c5;
+  background: linear-gradient(145deg, #fff0f1, #fffafa);
+}
+
+.hb-diagram__node--slate {
+  color: #334155;
+  border-color: #cbd5e1;
+  background: linear-gradient(145deg, #f1f5f9, #ffffff);
+}
+
+[data-theme='dark'] .hb-diagram__node--blue {
+  color: #cfe5ff;
+  border-color: #335b86;
+  background: linear-gradient(145deg, #17283d, #122033);
+}
+
+[data-theme='dark'] .hb-diagram__node--cyan {
+  color: #c9f7fb;
+  border-color: #276773;
+  background: linear-gradient(145deg, #12343a, #10272c);
+}
+
+[data-theme='dark'] .hb-diagram__node--green {
+  color: #d3f9df;
+  border-color: #376b49;
+  background: linear-gradient(145deg, #173622, #142b1d);
+}
+
+[data-theme='dark'] .hb-diagram__node--purple {
+  color: #e7ddff;
+  border-color: #5e4a86;
+  background: linear-gradient(145deg, #2b2140, #211a32);
+}
+
+[data-theme='dark'] .hb-diagram__node--orange {
+  color: #ffe3bd;
+  border-color: #79572d;
+  background: linear-gradient(145deg, #3b2a17, #2f2317);
+}
+
+[data-theme='dark'] .hb-diagram__node--red {
+  color: #ffd4d8;
+  border-color: #7a3d44;
+  background: linear-gradient(145deg, #3d2024, #321b1e);
+}
+
+[data-theme='dark'] .hb-diagram__node--slate {
+  color: #dde5ef;
+  border-color: #465466;
+  background: linear-gradient(145deg, #202832, #1a212a);
+}
+
+.hb-diagram__arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+}
+
+.hb-diagram__arrow--right {
+  flex-direction: row;
+  gap: 0.4rem;
+}
+
+.hb-diagram__arrowLabel {
+  max-width: 230px;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.hb-diagram__arrowLine {
+  stroke: var(--ifm-color-primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.hb-diagram__arrowHead {
+  fill: none;
+  stroke: var(--ifm-color-primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hb-diagram__branch {
+  padding: 0.85rem;
+  border: 1px dashed var(--hb-diagram-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--hb-diagram-surface) 94%, var(--ifm-color-primary) 6%);
+}
+
+.hb-diagram__branchTitle {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.88rem;
+}
+
+.hb-diagram__branchBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.hb-decision {
+  overflow: hidden;
+  margin: 1.4rem 0;
+  border: 1px solid var(--hb-diagram-border);
+  border-radius: 18px;
+  box-shadow: var(--hb-diagram-shadow);
+  background: var(--hb-diagram-surface);
+}
+
+.hb-decision__question {
+  padding: 1rem 1.1rem;
+  color: var(--ifm-font-color-base);
+  font-weight: 780;
+  background: linear-gradient(120deg, rgba(8, 126, 164, 0.13), rgba(139, 92, 246, 0.1));
+}
+
+.hb-decision__list {
+  display: grid;
+  gap: 1px;
+  background: var(--hb-diagram-border);
+}
+
+.hb-decision__item {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto minmax(170px, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: var(--hb-diagram-surface);
+}
+
+.hb-decision__label {
+  color: var(--ifm-color-emphasis-800);
+}
+
+.hb-decision__connector {
+  color: var(--ifm-color-primary);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.hb-decision__value {
+  color: var(--ifm-font-color-base);
+}
+
+.hb-lifecycle {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  overflow-x: auto;
+  padding: 0.25rem 0.1rem 0.5rem;
+}
+
+.hb-lifecycle__step {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  min-width: max-content;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--hb-diagram-border);
+  border-radius: 999px;
+  background: var(--hb-diagram-surface);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hb-lifecycle__index {
+  display: inline-grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: var(--ifm-color-primary);
+  font-size: 0.72rem;
+}
+
+.hb-lifecycle__connector {
+  color: var(--ifm-color-primary);
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .hb-diagram__canvas {
+    padding: 1rem;
+  }
+
+  .hb-diagram__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hb-decision__item {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .hb-decision__connector {
+    transform: rotate(90deg);
+    justify-self: start;
+  }
 }

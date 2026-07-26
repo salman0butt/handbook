@@ -4,6 +4,15 @@ description: Compare local state, Context, Redux Toolkit, Zustand, TanStack Quer
 sidebar_position: 1
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramStack,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Choosing the right state tool
 
 The right state tool depends on the state category.
@@ -14,28 +23,17 @@ Begin by identifying ownership.
 
 ## The decision tree
 
-```text
-What kind of state is this?
-          │
-          ├── local interaction/UI?
-          │       └── useState / useReducer
-          │
-          ├── shared subtree environment/feature state?
-          │       └── Context (+ reducer when useful)
-          │
-          ├── structured shared client state?
-          │       ├── Redux Toolkit
-          │       └── Zustand
-          │
-          ├── remote/server-owned data?
-          │       └── TanStack Query / framework server cache
-          │
-          ├── complex form lifecycle?
-          │       └── React Hook Form
-          │
-          └── shareable navigation state?
-                  └── URL/router
-```
+<DecisionTree
+  question="What kind of state is this?"
+  items={[
+    { label: 'Local interaction / UI?', value: 'useState / useReducer' },
+    { label: 'Shared subtree environment or feature state?', value: 'Context (+ reducer when useful)' },
+    { label: 'Structured shared client state?', value: 'Redux Toolkit / Zustand' },
+    { label: 'Remote or server-owned data?', value: 'TanStack Query / framework server cache' },
+    { label: 'Complex form lifecycle?', value: 'React Hook Form' },
+    { label: 'Shareable navigation state?', value: 'URL / router' },
+  ]}
+/>
 
 ## Comparison matrix
 
@@ -54,27 +52,31 @@ What kind of state is this?
 
 Examples:
 
-```text
-modal open        → component
-cart draft        → client feature/store
-product inventory → server
-search page       → URL
-checkout fields   → form draft
-```
+<VisualDiagram title="Name the source of truth first">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Modal open" tone="blue">Component.</DiagramNode>
+    <DiagramNode title="Cart draft" tone="green">Client feature/store.</DiagramNode>
+    <DiagramNode title="Product inventory" tone="orange">Server.</DiagramNode>
+    <DiagramNode title="Search page" tone="slate">URL.</DiagramNode>
+    <DiagramNode title="Checkout fields" tone="red">Form draft.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 If you cannot name the authoritative owner, adding a library usually makes the ambiguity worse.
 
 ## Question 2: How long should it live?
 
-```text
-render/component lifetime
-route lifetime
-feature lifetime
-application lifetime
-browser session
-persisted local lifetime
-server/cache lifetime
-```
+<VisualDiagram title="State lifetime spectrum">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="Component lifetime" tone="blue" />
+    <DiagramNode title="Route lifetime" tone="cyan" />
+    <DiagramNode title="Feature lifetime" tone="green" />
+    <DiagramNode title="Application lifetime" tone="purple" />
+    <DiagramNode title="Browser session" tone="orange" />
+    <DiagramNode title="Persisted local" tone="slate" />
+    <DiagramNode title="Server/cache lifetime" tone="red" />
+  </DiagramGrid>
+</VisualDiagram>
 
 A tooltip should not accidentally live for the whole application.
 
@@ -82,25 +84,29 @@ A multi-route checkout draft may intentionally outlive one screen.
 
 ## Question 3: Who needs it?
 
-```text
-one component
-siblings
-one feature subtree
-many distant features
-multiple React roots
-React + non-React code
-```
+<VisualDiagram title="Consumer scope changes the architecture">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="One component" tone="blue" />
+    <DiagramNode title="Siblings" tone="cyan" />
+    <DiagramNode title="Feature subtree" tone="green" />
+    <DiagramNode title="Distant features" tone="purple" />
+    <DiagramNode title="Multiple React roots" tone="orange" />
+    <DiagramNode title="React + non-React" tone="slate" />
+  </DiagramGrid>
+</VisualDiagram>
 
 Scope strongly influences the architecture.
 
 ## Question 4: How often does it change?
 
-```text
-theme: rarely
-form input: every keystroke
-pointer position: many times per second
-server inventory: whenever backend changes
-```
+<VisualDiagram title="Update frequency affects subscription needs">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="Theme" tone="cyan">Rarely.</DiagramNode>
+    <DiagramNode title="Form input" tone="red">Every keystroke.</DiagramNode>
+    <DiagramNode title="Pointer position" tone="orange">Many times per second.</DiagramNode>
+    <DiagramNode title="Server inventory" tone="green">Whenever backend state changes.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 High-frequency shared data makes subscription granularity more important.
 
@@ -168,13 +174,16 @@ Choose Zustand when:
 
 ## Redux Toolkit vs Zustand
 
-```text
-Redux Toolkit
-→ stronger conventions + event/reducer model + middleware/tooling
-
-Zustand
-→ lighter store API + actions + selector subscriptions
-```
+<VisualDiagram title="Redux Toolkit vs Zustand">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Redux Toolkit" tone="purple">
+      Stronger conventions · event/reducer model · middleware · DevTools · public selector APIs.
+    </DiagramNode>
+    <DiagramNode title="Zustand" tone="green">
+      Lighter store API · actions · selector subscriptions · lower ceremony.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 A team that needs strict shared conventions may value Redux's structure.
 
@@ -196,12 +205,16 @@ Do not ask "which is better?"
 
 Ask:
 
-```text
-Who owns the data?
-
-client → Zustand may fit
-server → TanStack Query may fit
-```
+<VisualDiagram title="Ownership decides the category" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Who owns the data?" tone="purple" />
+    <DiagramArrow />
+    <DiagramGrid columns={2}>
+      <DiagramNode title="Client" tone="green">Zustand may fit.</DiagramNode>
+      <DiagramNode title="Server" tone="orange">TanStack Query may fit.</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 A UI can use both.
 
@@ -209,61 +222,40 @@ A UI can use both.
 
 Form input values are usually a local workflow draft.
 
-```text
-React Hook Form
-→ values + validation + dirty/touched + dynamic fields
-```
+<VisualDiagram title="Form-specific ownership" compact>
+  <DiagramNode title="React Hook Form" tone="red" wide>
+    Values + validation + dirty/touched + dynamic fields.
+  </DiagramNode>
+</VisualDiagram>
 
 Do not mirror every keystroke into Redux/Zustand unless another part of the product genuinely requires live shared ownership.
 
 ## Example: SaaS dashboard
 
-```text
-URL
-├── selected workspace ID
-├── date range
-└── filters
-
-TanStack Query
-├── workspace
-├── analytics
-└── users
-
-Context
-└── locale / feature environment
-
-Zustand
-└── dashboard editor layout interactions
-
-React Hook Form
-└── report configuration form
-
-useState
-└── local popover open/closed
-```
+<VisualDiagram title="SaaS dashboard state ownership">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="URL" tone="slate">Workspace ID · date range · filters.</DiagramNode>
+    <DiagramNode title="TanStack Query" tone="orange">Workspace · analytics · users.</DiagramNode>
+    <DiagramNode title="Context" tone="cyan">Locale / feature environment.</DiagramNode>
+    <DiagramNode title="Zustand" tone="green">Dashboard editor layout interactions.</DiagramNode>
+    <DiagramNode title="React Hook Form" tone="red">Report configuration form.</DiagramNode>
+    <DiagramNode title="useState" tone="blue">Local popover open/closed.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 No single store owns everything.
 
 ## Example: ecommerce
 
-```text
-TanStack Query
-├── catalogue
-├── inventory
-└── account orders
-
-Redux Toolkit or Zustand
-└── client-owned cart/checkout workflow if requirements justify it
-
-React Hook Form
-└── shipping + billing draft
-
-URL
-└── search filters / category / page
-
-Context
-└── currency / locale
-```
+<VisualDiagram title="E-commerce state ownership">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="TanStack Query" tone="orange">Catalogue · inventory · account orders.</DiagramNode>
+    <DiagramNode title="Redux Toolkit / Zustand" tone="green">Client-owned cart / checkout workflow when justified.</DiagramNode>
+    <DiagramNode title="React Hook Form" tone="red">Shipping + billing draft.</DiagramNode>
+    <DiagramNode title="URL" tone="slate">Search filters · category · page.</DiagramNode>
+    <DiagramNode title="Context" tone="cyan">Currency / locale.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Red flags
 
@@ -283,14 +275,21 @@ When asked "Which state library would you use?", do not answer with a brand firs
 
 A senior answer sounds like:
 
-```text
-1. classify the state
-2. identify source of truth
-3. define lifetime and scope
-4. inspect update frequency/subscriptions
-5. identify persistence/navigation/server requirements
-6. then choose the smallest tool that fits
-```
+<VisualDiagram title="Senior state-tool answer framework" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="1 · Classify the state" tone="blue" />
+    <DiagramArrow />
+    <DiagramNode title="2 · Identify source of truth" tone="cyan" />
+    <DiagramArrow />
+    <DiagramNode title="3 · Define lifetime + scope" tone="green" />
+    <DiagramArrow />
+    <DiagramNode title="4 · Inspect update frequency + subscriptions" tone="purple" />
+    <DiagramArrow />
+    <DiagramNode title="5 · Check persistence / URL / server requirements" tone="orange" />
+    <DiagramArrow />
+    <DiagramNode title="6 · Choose the smallest tool that fits" tone="red" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## Interview questions
 
