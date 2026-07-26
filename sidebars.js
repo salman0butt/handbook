@@ -19,6 +19,34 @@ const reactItems = [
   category('14 · Context', ['react/context/context-and-use-context', 'react/context/context-architecture-and-performance']),
   category('15 · Reducers', ['react/reducers/use-reducer-and-reducer-design', 'react/reducers/reducer-with-context']),
   category('16 · State Architecture', ['react/state-architecture/state-categories', 'react/state-architecture/use-sync-external-store']),
+  category('16A · Context API — Production State Patterns', [
+    'react/context-api-and-built-in-state-management/state-management-ecosystem-map',
+    'react/context-api-and-built-in-state-management/context-api-production-patterns',
+  ]),
+  category('16B · Redux Toolkit', [
+    'react/redux-toolkit/redux-toolkit-fundamentals',
+    'react/redux-toolkit/redux-toolkit-async-and-rtk-query',
+    'react/redux-toolkit/redux-toolkit-typescript-testing-performance',
+  ]),
+  category('16C · Zustand', [
+    'react/zustand/zustand-fundamentals',
+    'react/zustand/zustand-selectors-middleware-and-persistence',
+    'react/zustand/zustand-ssr-typescript-testing',
+  ]),
+  category('16D · TanStack Query', [
+    'react/tanstack-query/tanstack-query-fundamentals-and-cache',
+    'react/tanstack-query/tanstack-query-mutations-invalidation-optimistic',
+    'react/tanstack-query/tanstack-query-pagination-prefetching-ssr-testing',
+  ]),
+  category('16E · React Hook Form', [
+    'react/react-hook-form/react-hook-form-fundamentals-validation',
+    'react/react-hook-form/react-hook-form-controller-field-arrays',
+    'react/react-hook-form/react-hook-form-typescript-performance-testing-react19',
+  ]),
+  category('16F · State Management Decision Guide', [
+    'react/state-management-decision-guide/choosing-the-right-state-tool',
+    'react/state-management-decision-guide/combining-tools-without-duplicating-state',
+  ]),
   category('17 · Modern React 19+', ['react/modern-react/actions-and-async-transitions', 'react/modern-react/use-action-state', 'react/modern-react/form-actions-and-use-form-status', 'react/modern-react/use-optimistic', 'react/modern-react/use-api-and-resources', 'react/modern-react/activity', 'react/modern-react/metadata-and-resources', 'react/modern-react/react-19-migration']),
   category('18 · Suspense', ['react/suspense/suspense-boundaries', 'react/suspense/lazy-and-code-splitting', 'react/suspense/loading-and-navigation-architecture']),
   category('19 · Concurrency', ['react/concurrency/use-transition-and-start-transition', 'react/concurrency/use-deferred-value', 'react/concurrency/concurrent-rendering-mental-model']),
@@ -58,34 +86,6 @@ const reactItems = [
     'react/mock-interview-practice/lead-staff-architecture-round',
     'react/mock-interview-practice/live-coding-round',
     'react/mock-interview-practice/behavioral-and-experience-round',
-  ]),
-  category('37 · Context API & Built-in State', [
-    'react/context-api-and-built-in-state-management/state-management-ecosystem-map',
-    'react/context-api-and-built-in-state-management/context-api-production-patterns',
-  ]),
-  category('38 · Redux Toolkit', [
-    'react/redux-toolkit/redux-toolkit-fundamentals',
-    'react/redux-toolkit/redux-toolkit-async-and-rtk-query',
-    'react/redux-toolkit/redux-toolkit-typescript-testing-performance',
-  ]),
-  category('39 · Zustand', [
-    'react/zustand/zustand-fundamentals',
-    'react/zustand/zustand-selectors-middleware-and-persistence',
-    'react/zustand/zustand-ssr-typescript-testing',
-  ]),
-  category('40 · TanStack Query', [
-    'react/tanstack-query/tanstack-query-fundamentals-and-cache',
-    'react/tanstack-query/tanstack-query-mutations-invalidation-optimistic',
-    'react/tanstack-query/tanstack-query-pagination-prefetching-ssr-testing',
-  ]),
-  category('41 · React Hook Form', [
-    'react/react-hook-form/react-hook-form-fundamentals-validation',
-    'react/react-hook-form/react-hook-form-controller-field-arrays',
-    'react/react-hook-form/react-hook-form-typescript-performance-testing-react19',
-  ]),
-  category('42 · State Management Decision Guide', [
-    'react/state-management-decision-guide/choosing-the-right-state-tool',
-    'react/state-management-decision-guide/combining-tools-without-duplicating-state',
   ]),
   category('📋 Reference & Coverage', [
     'react/reference/api-coverage',
