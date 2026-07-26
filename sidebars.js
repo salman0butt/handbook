@@ -62,10 +62,29 @@ const reactItems = [
   category('📋 Reference & Coverage', ['react/reference/api-coverage', 'react/reference/final-completeness-audit']),
 ];
 
+const nextjsItems = [
+  category('00 · Start Here', [
+    'nextjs/intro',
+    'nextjs/start-here/version-and-platform-support',
+    'nextjs/start-here/learning-roadmap',
+  ], { collapsed: false }),
+  category('01 · Foundations', [
+    'nextjs/foundations/what-is-nextjs',
+    'nextjs/foundations/creating-and-running-a-nextjs-app',
+    'nextjs/foundations/project-structure-and-file-conventions',
+    'nextjs/foundations/server-browser-and-build-time-mental-model',
+  ], { collapsed: false }),
+  category('📋 Reference & Coverage', [
+    'nextjs/reference/api-coverage',
+    'nextjs/reference/final-completeness-audit',
+  ]),
+];
+
 const sidebars = {
   handbookSidebar: [
-    category('⚛️ React Handbook', reactItems, { collapsed: false }),
-    category('📚 More Handbooks', ['javascript/intro', 'typescript/intro', 'nextjs/intro', 'nodejs/intro', 'databases/intro', 'system-design/intro', 'devops/intro', 'wordpress/intro', 'ai-engineering/intro']),
+    category('⚛️ React Handbook', reactItems, { collapsed: true }),
+    category('▲ Next.js Handbook', nextjsItems, { collapsed: false }),
+    category('📚 More Handbooks', ['javascript/intro', 'typescript/intro', 'nodejs/intro', 'databases/intro', 'system-design/intro', 'devops/intro', 'wordpress/intro', 'ai-engineering/intro']),
   ],
 };
 
