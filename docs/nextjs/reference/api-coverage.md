@@ -28,7 +28,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | --- | --- | --- |
 | App Router | ✅ | Primary and only router taught |
 | Pages Router | ⛔ | Intentionally excluded by handbook scope |
-| Next.js 16.2 stable behavior | 🟠 | Baseline + routing/navigation verified; phase-by-phase verification continues |
+| Next.js 16.2 stable behavior | 🟠 | Baseline + routing/navigation + Server/Client boundaries verified; phase-by-phase verification continues |
 | Next.js 16.3 preview/canary | 🧪 | Track but do not teach as stable until promoted to npm `latest` |
 | React 19.2 stable APIs | 🟠 | React handbook owns React depth; Next.js explains framework integration |
 | React Canary exposed by App Router | 🟡 | Cover only when stable Next.js docs establish a supported contract |
@@ -42,7 +42,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | 01 · Foundations | ✅ |
 | 02 · App Router & Layouts | ✅ |
 | 03 · Navigation & URL State | ✅ |
-| 04 · Server & Client Components | 🟡 |
+| 04 · Server & Client Components | ✅ |
 | 05 · Data Fetching | 🟡 |
 | 06 · Caching, Rendering & Revalidation | 🟡 |
 | 07 · Mutations, Forms & Server Functions | 🟡 |
@@ -69,7 +69,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Project Structure | ✅ | `01-foundations/project-structure-and-file-conventions` |
 | Layouts and Pages | ✅ | `02-app-router-and-layouts/*` |
 | Linking and Navigating | ✅ | `03-navigation-and-url-state/*` |
-| Server and Client Components | 🟠 | Foundation mental model; deep Phase 04 |
+| Server and Client Components | ✅ | `04-server-and-client-components/*` |
 | Cache Components | 🟡 | Phase 06; preserve opt-in 16.2 semantics |
 | Fetching Data | 🟡 | Phase 05 |
 | Updating Data / Server Functions | 🟡 | Phase 07 |
@@ -153,30 +153,47 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 
 ## Server & Client Component Boundaries
 
-| Concept / API | Status | Planned phase |
+| Concept / API | Status | Handbook location / plan |
 | --- | --- | --- |
-| Server Components default | 🟠 | 04 |
-| `'use client'` | 🟠 | 04 |
-| Client module graph boundary | 🟠 | 04 |
-| Serialization across RSC boundary | 🟡 | 04 |
-| Server-only modules / environment poisoning | 🟠 | 04 / 13 |
-| Context/provider placement | 🟠 | Layout architecture introduced; deep Phase 04 |
-| RSC payload mental model | 🟠 | 10 / 19 |
-| Hydration | 🟠 | 10 / 19 |
+| Server Components default | ✅ | Phase 04 |
+| Server Component vs Server Function distinction | ✅ | Phase 04; Server Function depth Phase 07 |
+| `'use client'` | ✅ | Phase 04 |
+| Client module graph boundary | ✅ | Phase 04 |
+| reducing JS by placing client boundaries lower | ✅ | Phase 04; broad measurement Phase 15 |
+| Server Component rendering Client Component | ✅ | Phase 04 |
+| interleaving Server Components through `children` / ReactNode slots | ✅ | Phase 04 |
+| Serialization across RSC boundary | ✅ | Phase 04 |
+| minimal public DTOs across server/client boundary | ✅ | Phase 04 |
+| Promise passed server → client and resolved with React `use()` | ✅ | Phase 04 pattern; streaming/data depth Phase 05/10 |
+| Context/provider placement | ✅ | Phase 04 |
+| providers rendered as deep as practical | ✅ | Phase 04 |
+| third-party client component wrappers | ✅ | Phase 04 |
+| library-author `'use client'` entry-point guidance | ✅ | Phase 04 |
+| browser-only `next/dynamic(..., { ssr: false })` | ✅ | Phase 04; broader lazy-loading/perf depth Phase 15 |
+| `ssr: false` not supported directly in Server Components | ✅ | Phase 04 current contract |
+| `server-only` | ✅ | Phase 04 |
+| `client-only` | ✅ | Phase 04 |
+| environment poisoning prevention | ✅ | Phase 04; broader security review Phase 13 |
+| environment-specific package/barrel boundaries | ✅ | Phase 04 |
+| RSC payload mental model | 🟠 | Delivery model introduced Phase 04; deep Phase 10 / 19 |
+| initial Client Component prerendering | ✅ | Phase 04 |
+| hydration | 🟠 | Client-boundary model introduced Phase 04; deep Phase 10 / 19 |
+| subsequent-navigation Client Component delivery | 🟠 | Phase 04 model; route/RSC internals Phase 10 / 19 |
 
 ## Data Fetching
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| Async Server Components | 🟠 | 05 |
+| Async Server Components | 🟠 | Used throughout; deep Phase 05 |
 | Server-side `fetch` | 🟡 | 05–06 |
-| Direct database/ORM access | 🟠 | Foundations + routing examples; deep 05 |
+| Direct database/ORM access | 🟠 | Server ownership established Phase 04; deep 05 |
+| avoid internal Route Handler hop from Server Component | ✅ | Phase 04 architecture baseline; Route Handler depth Phase 08 |
 | Parallel fetching | 🟡 | 05 |
 | Sequential fetching / waterfalls | 🟡 | 05 / 15 |
 | Preloading patterns | 🟡 | 05 |
-| Promise sharing / React `cache` where applicable | 🟡 | 05–06 |
+| Promise sharing / React `cache` where applicable | 🟠 | Request-scoped use introduced Phase 04; deep 05–06 |
 | Client-side fetching | 🟡 | 05 |
-| Streaming data with Suspense | 🟠 | Route boundary introduced; deep 05 / 10 |
+| Streaming data with Suspense | 🟠 | Promise/use pattern introduced; deep 05 / 10 |
 
 ## Caching, Rendering & Revalidation
 
@@ -187,7 +204,7 @@ This section is deliberately version-sensitive.
 | Current default `fetch` caching behavior | 🟡 | Phase 06; do not copy Next.js 13/14 defaults |
 | Static vs dynamic server rendering | 🟠 | Mental model introduced; deep 06 / 10 |
 | Request memoization / deduplication | 🟡 | Verify exact current scope |
-| React `cache` | 🟡 | Separate React behavior from Next.js cache behavior |
+| React `cache` | 🟠 | Request-scoped role introduced Phase 04; separate from persistent Next.js caches in Phase 06 |
 | `revalidatePath` | 🟡 | 06–07 |
 | `revalidateTag` | 🟡 | 06–07; document current 16.x semantics |
 | `updateTag` | 🟡 | 06–07 |
@@ -221,10 +238,10 @@ This section is deliberately version-sensitive.
 | --- | --- | --- |
 | Server Functions | 🟡 | 07 |
 | Server Actions terminology/history | 🟡 | 07; current terminology first |
-| `'use server'` | 🟠 | Foundation mental model; deep 07 |
+| `'use server'` | 🟠 | Phase 04 explicitly separates it from Server Components; deep 07 |
 | form `action` | 🟡 | 07 |
 | runtime validation | 🟠 | Security rule introduced; deep 07 / 13 |
-| authorization | 🟠 | Dynamic-route trust boundary introduced; deep 07 / 13 |
+| authorization | 🟠 | Dynamic-route + boundary trust models introduced; deep 07 / 13 |
 | `useActionState` | 🟡 | 07 |
 | `useFormStatus` | 🟡 | 07 |
 | `useOptimistic` | 🟡 | 07 |
@@ -246,7 +263,7 @@ This section is deliberately version-sensitive.
 | CORS | 🟡 | 08 |
 | rate-limiting architecture | 🟡 | 08 / 13 |
 | Server Function vs Route Handler | 🟡 | 07–08 |
-| direct server data access vs internal HTTP hop | 🟠 | Foundation + Phase 02 examples; deep 05 / 08 |
+| direct server data access vs internal HTTP hop | 🟠 | Phase 04 establishes server-direct preference; deep 05 / 08 |
 
 ## Proxy & Request Pipeline
 
@@ -266,12 +283,14 @@ This section is deliberately version-sensitive.
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| server rendering pipeline | 🟠 | 10 |
-| RSC payload | 🟠 | 10 / 19 |
-| HTML generation | 🟠 | 10 |
-| hydration | 🟠 | 10 |
-| streaming | 🟠 | Route behavior covered; deep 05 / 10 |
-| Suspense | 🟠 | Route/query boundaries covered; deep 05 / 10 |
+| server rendering pipeline | 🟠 | Server/Client delivery model Phase 04; deep Phase 10 |
+| RSC payload | 🟠 | Structure/purpose introduced Phase 04; deep 10 / 19 |
+| HTML generation | 🟠 | Initial delivery model Phase 04; deep 10 |
+| hydration | 🟠 | Client boundary/hydration model Phase 04; deep 10 |
+| Client Component initial prerendering | ✅ | Phase 04 |
+| subsequent Client Component navigation rendering | 🟠 | Phase 04 model; deep 10 / 19 |
+| streaming | 🟠 | Route + Promise patterns covered; deep 05 / 10 |
+| Suspense | 🟠 | Route/query/provider boundaries covered; deep 05 / 10 |
 | `loading.tsx` | ✅ | Route semantics 02; navigation use 03; deeper streaming 10 |
 | soft vs hard App Router navigation | ✅ | Phases 02–03 |
 | production `<Link>` prefetching | ✅ | Phase 03; cache internals later |
@@ -306,12 +325,16 @@ This section is deliberately version-sensitive.
 | dynamic route params as untrusted input | ✅ | Phase 02 |
 | query/search params as untrusted input | ✅ | Phase 03 |
 | navigation destinations / return URLs as untrusted input | ✅ | Phase 03 |
-| tenant/resource scoping | 🟠 | Phase 02 routing examples; deep 13 / 18 |
+| server/client data minimisation and public DTOs | ✅ | Phase 04 |
+| `server-only` / `client-only` environment isolation | ✅ | Phase 04 |
+| environment poisoning prevention | ✅ | Phase 04 |
+| client visibility / context not treated as authorization | ✅ | Phase 04 baseline; deep Phase 13 |
+| tenant/resource scoping | 🟠 | Phase 02/04 examples; deep 13 / 18 |
 | untrusted Server Function arguments | 🟠 | 07 / 13 |
 | runtime validation | 🟠 | 07 / 08 / 13 |
 | CSRF | 🟡 | 13 |
 | XSS / output safety | 🟠 | Navigation-scheme risk covered Phase 03; broad XSS depth Phase 13 |
-| secrets and `NEXT_PUBLIC_` | 🟠 | 01 / 13 |
+| secrets and `NEXT_PUBLIC_` | 🟠 | Exposure model reinforced Phase 04; broad secret handling Phase 13 |
 | safe redirects | ✅ | Phase 03 baseline; auth/identity depth Phase 13 |
 | CSP / security headers | 🟡 | 09 / 13 |
 | uploads / webhooks | 🟡 | 08 / 13 |
@@ -330,35 +353,36 @@ This section is deliberately version-sensitive.
 | route-change observation | ✅ | Phase 03 pathname + search-param composition |
 | navigation timing decomposition | ✅ | Phase 03 design/debugging workflow |
 | rewrite/pathname hydration mismatch | ✅ | Phase 03 navigation-specific debugging |
+| server/client boundary debugging | ✅ | Phase 04 environment/serialization/hydration workflow |
 | structured logs | 🟡 | 14 |
 | correlation IDs | 🟡 | 14 |
 | OpenTelemetry | 🟡 | 14 |
 | instrumentation | 🟡 | 14 |
 | source maps / release correlation | 🟡 | 14 |
-| broad hydration/cache/build incident triage | 🟠 | Navigation cases Phase 03; deep 14 / 19 |
+| broad hydration/cache/build incident triage | 🟠 | Navigation + component boundary cases covered; deep 14 / 19 |
 
 ## Performance
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| client JS / hydration cost | 🟠 | Navigation impact introduced Phase 03; deep 04 / 15 |
+| client JS / hydration cost | 🟠 | Boundary cost model Phase 04; broad measurement Phase 15 |
 | route-level streaming boundaries | 🟠 | 02 / 03 / 10 / 15 |
 | independent slot loading/error containment | ✅ | Routing semantics Phase 02 |
-| server render latency | 🟠 | Navigation waterfall introduced Phase 03; deep Phase 15 |
+| server render latency | 🟠 | Boundary/server cost model Phase 04; deep Phase 15 |
 | data/database waterfalls | 🟡 | 05 / 15 |
 | images/fonts/scripts | 🟡 | 12 / 15 |
-| code splitting / dynamic imports | 🟠 | Navigation mental model Phase 03; deep 15 |
+| code splitting / dynamic imports | 🟠 | Client lazy/browser-only patterns Phase 04; deep 15 |
 | prefetching | 🟠 | Navigation policy/trade-offs Phase 03; measurement depth Phase 15 |
 | caching | 🟡 | 06 / 15 |
-| performance budgets / measurement | 🟠 | Navigation metrics introduced Phase 03; broad performance Phase 15 |
+| performance budgets / measurement | 🟠 | Navigation + boundary metrics introduced; broad performance Phase 15 |
 
 ## Testing & Production
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| production build as route validation | ✅ | Phases 02–03 engineering workflow |
+| production build as route/boundary validation | ✅ | Phases 02–04 engineering workflow |
 | unit/component tests | 🟡 | 16 |
-| Server/Client Component strategy | 🟡 | 16 |
+| Server/Client Component strategy | 🟠 | Architecture/testing scenarios Phase 04; automation Phase 16 |
 | Route Handler / Server Function tests | 🟡 | 16 |
 | Playwright E2E | 🟡 | 16 |
 | accessibility tests | 🟠 | Manual navigation matrix Phase 03; automation Phase 16 |
@@ -395,12 +419,18 @@ This section is deliberately version-sensitive.
 | navigation API ownership (`Link` / router / redirect / History API) | ✅ | Phase 03 |
 | history policy and shareable URL state | ✅ | Phase 03 |
 | navigation trust boundaries | ✅ | Phase 03 |
-| feature/vertical-slice architecture | 🟠 | Phase 02–03 examples; deep 18 |
-| monorepos/shared packages | 🟡 | 18 |
+| server/client module-graph ownership | ✅ | Phase 04 |
+| server shell + client islands pattern | ✅ | Phase 04 |
+| Client shell + Server ReactNode slot pattern | ✅ | Phase 04 |
+| feature-scoped provider architecture | ✅ | Phase 04 |
+| server/client/shared module and package boundaries | ✅ | Phase 04 |
+| browser-only adapter pattern | ✅ | Phase 04 |
+| feature/vertical-slice architecture | 🟠 | Phase 02–04 examples; deep 18 |
+| monorepos/shared packages | 🟠 | Runtime-boundary guidance Phase 04; deep 18 |
 | design systems | 🟡 | 18 |
 | BFF decisions | 🟡 | 18 |
-| multi-tenancy/permissions | 🟠 | Routing trust model introduced; deep 13 / 18 |
-| RSC build/delivery internals | 🟡 | 19 |
+| multi-tenancy/permissions | 🟠 | Routing + component trust model introduced; deep 13 / 18 |
+| RSC build/delivery internals | 🟠 | Mental model Phase 04; deep 19 |
 | Turbopack internals mental model | 🟡 | 19 |
 | public contract vs implementation detail | 🟡 | 19 |
 
@@ -413,6 +443,7 @@ This section is deliberately version-sensitive.
 | async `params` migration | ✅ | Current contract taught Phase 02; migration detail Phase 20 |
 | async page `searchParams` migration | ✅ | Current contract taught Phase 03; migration detail Phase 20 |
 | `next/router` → App Router navigation APIs | 🟠 | Current App Router contract Phase 03; migration detail Phase 20 |
+| client-heavy SPA → server-first boundary migration | 🟠 | Architecture method Phase 04; migration depth Phase 20 |
 | Proxy migration from `middleware.ts` | ⚠️ | 20 |
 | caching-model migrations | 🟡 | 06 / 20 |
 | Turbopack compatibility | 🟡 | 20 |
@@ -426,26 +457,32 @@ Deeper streaming, rendering, caching, observability, and automated testing mecha
 
 ## Phase 03 completion note
 
-Phase 03 is considered complete for stable App Router navigation and URL-state semantics because it now teaches:
-
-- `<Link>` as the primary navigation primitive
-- current 16.2 production prefetch behavior for static/dynamic routes
-- `replace`, scroll policy, `onNavigate`, and stable `transitionTypes`
-- `useRouter` push/replace/back/forward/refresh/prefetch behavior at navigation depth
-- server-side `redirect` and `permanentRedirect`
-- safe programmatic destinations and return URLs
-- `usePathname`, `useParams`, `useSelectedLayoutSegment(s)`
-- Promise-based page `searchParams` and client `useSearchParams`
-- validated URL-driven search, filtering, sorting, and pagination
-- Suspense requirements for statically rendered query-reading client islands
-- `useLinkStatus` and route-level pending UX
-- route-change observation without Pages Router `router.events`
-- native History API integration
-- Back/Forward, hash, scroll, focus, and accessibility behavior
-- navigation performance decomposition, debugging, analytics, and design review
-- explicit separation of stable 16.2 behavior from 16.3 preview Instant Navigations
+Phase 03 is considered complete for stable App Router navigation and URL-state semantics because it teaches `<Link>` and current 16.2 prefetching; programmatic/server navigation; pathname/params/selected-segment hooks; Promise-based page `searchParams`; URL-driven filtering/pagination; navigation pending state; native History API; Back/Forward, scroll, focus and accessibility; safe redirect policy; performance debugging; and explicit separation of stable 16.2 behavior from 16.3 preview Instant Navigations.
 
 Deeper RSC delivery, Cache Components, rendering internals, auth, observability, performance measurement, and testing automation remain deliberately assigned to later phases.
+
+## Phase 04 completion note
+
+Phase 04 is considered complete for stable Server/Client Component boundary semantics because it now teaches:
+
+- pages/layouts as Server Components by default
+- Server Component vs Server Function distinction
+- `'use client'` as a client module-graph boundary
+- keeping client boundaries close to real interaction ownership
+- initial Client Component prerendering and hydration mental model
+- Server Component → Client Component composition
+- Client shells containing server-rendered `children` / ReactNode slots
+- React-serializable server-to-client props and minimal public DTOs
+- server-started Promises consumed with `use()`
+- Client Context/provider placement and request-scoped React `cache` context pattern
+- third-party client wrappers and library-author entry-point guidance
+- browser-only integrations and `ssr: false` constraints
+- `server-only`, `client-only`, and environment poisoning prevention
+- secret exposure and `NEXT_PUBLIC_` boundary implications
+- bundle/hydration/server-cost measurement model
+- component-boundary debugging, security review, architecture smells, and senior design review
+
+Deeper data fetching, persistent caching, RSC transport/rendering internals, auth, full performance measurement, and automated testing remain deliberately assigned to their later phases.
 
 ## Completion rule
 
