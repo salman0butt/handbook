@@ -4,27 +4,31 @@ description: Understand what a React render actually is, what triggers it, and h
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Rendering: trigger, render, commit, paint
 
 React becomes much easier once **rendering** stops meaning “the browser changed the screen.” Rendering is only one part of the update process.
 
-```text
-Something changes
-      ↓
-React schedules work
-      ↓
-Render phase
-calculate the next UI
-      ↓
-Reconciliation
-compare identity and structure
-      ↓
-Commit phase
-apply required DOM changes
-      ↓
-Browser layout / paint
-pixels become visible
-```
+<VisualDiagram title="React update pipeline" subtitle="Rendering is computation; DOM mutation and browser paint happen later.">
+  <LifecycleBar
+    items={[
+      { label: 'Something changes', tone: 'orange' },
+      { label: 'React schedules work', tone: 'blue' },
+      { label: 'Render: calculate next UI', tone: 'purple' },
+      { label: 'Reconcile identity + structure', tone: 'cyan' },
+      { label: 'Commit required DOM changes', tone: 'green' },
+      { label: 'Browser layout + paint', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 ## What is a render?
 
@@ -52,13 +56,15 @@ Typical triggers include:
 
 A useful beginner model is:
 
-```text
-render is requested
-      ↓
-component function executes
-      ↓
-new element tree is produced
-```
+<VisualDiagram title="What happens when render is requested?" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Render requested" tone="orange" wide />
+    <DiagramArrow />
+    <DiagramNode title="Component function executes" tone="purple" wide />
+    <DiagramArrow />
+    <DiagramNode title="New element tree is produced" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 Do not think of React as continuously watching JavaScript variables. React renders when its update system tells it to render.
 
@@ -68,11 +74,13 @@ During the render phase React calculates the next UI tree.
 
 Render code should be **pure**:
 
-```text
-same inputs
-   ↓
-same output description
-```
+<VisualDiagram title="Pure render model" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Same relevant inputs" tone="blue" wide />
+    <DiagramArrow label="pure calculation" />
+    <DiagramNode title="Same output description" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 Good render logic:
 
@@ -100,16 +108,17 @@ After React has a new UI description, it must relate that description to the pre
 
 Conceptually:
 
-```text
-previous tree
-      +
-next tree
-      ↓
-compare type + position + key
-      ↓
-work out what can be preserved
-and what must change
-```
+<VisualDiagram title="Reconciliation" subtitle="React compares identity signals to decide what can be preserved and what must change.">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Previous tree" tone="slate">existing types · positions · keys</DiagramNode>
+    <DiagramNode title="Next tree" tone="blue">new types · positions · keys</DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="compare type + position + key" />
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Preserve" tone="green">same identity can keep state and host nodes</DiagramNode>
+    <DiagramNode title="Replace / update" tone="orange">changed identity or output requires different work</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 This comparison process is commonly called **reconciliation**.
 
@@ -127,13 +136,14 @@ The commit phase is where React applies the necessary effects of the render to t
 
 Example:
 
-```text
-previous UI: <button>Save</button>
-next UI:     <button disabled>Saving…</button>
-
-React does not rebuild the whole page.
-It commits the required changes to that button.
-```
+<VisualDiagram title="Commit only what changed" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Previous UI" tone="slate">&lt;button&gt;Save&lt;/button&gt;</DiagramNode>
+    <DiagramNode title="Next UI" tone="blue">&lt;button disabled&gt;Saving…&lt;/button&gt;</DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="commit" />
+  <DiagramNode title="Update that button" tone="green" wide>React does not rebuild the whole page.</DiagramNode>
+</VisualDiagram>
 
 The render phase calculates. The commit phase applies.
 
@@ -141,11 +151,13 @@ The render phase calculates. The commit phase applies.
 
 After DOM changes, the browser may need to recalculate layout and paint pixels.
 
-```text
-React render
-  ≠ DOM mutation
-  ≠ browser paint
-```
+<VisualDiagram title="These stages are not synonyms" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="React render" tone="purple">calculate UI</DiagramNode>
+    <DiagramNode title="DOM mutation" tone="green">apply host changes</DiagramNode>
+    <DiagramNode title="Browser paint" tone="blue">display pixels</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Those are related stages, not synonyms.
 
@@ -191,10 +203,13 @@ If the component renders twice with `online === true`, React may call the functi
 
 React associates state with a component's position and identity in the rendered tree.
 
-```text
-App
-└── Counter   ← position + type identify this state
-```
+<VisualDiagram title="State follows component identity" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="App" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramNode title="Counter" tone="purple" eyebrow="same type + same position">React can preserve this state identity.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 If React sees the same component type in the same conceptual position, it can preserve the state. If identity changes, React can reset it.
 
@@ -255,17 +270,17 @@ Use components through JSX so React controls their rendering identity:
 
 Ask in this order:
 
-```text
-What triggered the update?
-      ↓
-Which parent rendered?
-      ↓
-Which props/context/state changed?
-      ↓
-Did the output actually change?
-      ↓
-Was DOM work expensive?
-```
+<VisualDiagram title="Unexpected render debugging flow">
+  <LifecycleBar
+    items={[
+      { label: 'What triggered the update?', tone: 'orange' },
+      { label: 'Which parent rendered?', tone: 'blue' },
+      { label: 'Which props/context/state changed?', tone: 'purple' },
+      { label: 'Did output actually change?', tone: 'cyan' },
+      { label: 'Was DOM work expensive?', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Do not jump immediately to `memo`, `useMemo`, or `useCallback`.
 
@@ -273,14 +288,17 @@ Do not jump immediately to `memo`, `useMemo`, or `useCallback`.
 
 For a data-heavy dashboard, keep frequently changing state close to the smallest subtree that needs it.
 
-```text
-Dashboard
-├── Header
-├── Filters        ← filter state can live here/near here
-└── Results
-    ├── Chart
-    └── Table
-```
+<VisualDiagram title="State locality reduces unrelated work">
+  <DiagramStack align="center">
+    <DiagramNode title="Dashboard" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Header" tone="slate" />
+      <DiagramNode title="Filters" tone="orange">frequently changing filter state lives here / nearby</DiagramNode>
+      <DiagramNode title="Results" tone="purple">Chart + Table</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 State locality can reduce unrelated rendering without adding memoization complexity.
 
@@ -304,19 +322,17 @@ Then click several times and explain the order without saying “React changes t
 
 ## Summary
 
-Remember:
-
-```text
-Trigger
-  ↓
-Render: calculate
-  ↓
-Reconcile: compare identity
-  ↓
-Commit: apply host changes
-  ↓
-Browser: layout / paint
-```
+<VisualDiagram title="Rendering summary">
+  <LifecycleBar
+    items={[
+      { label: 'Trigger', tone: 'orange' },
+      { label: 'Render: calculate', tone: 'purple' },
+      { label: 'Reconcile: compare identity', tone: 'cyan' },
+      { label: 'Commit: apply host changes', tone: 'green' },
+      { label: 'Browser: layout + paint', tone: 'blue' },
+    ]}
+  />
+</VisualDiagram>
 
 React rendering is computation. DOM mutation and browser paint are later stages.
 
