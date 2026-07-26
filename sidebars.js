@@ -124,6 +124,16 @@ const nextjsItems = [
     'nextjs/navigation-and-url-state/navigation-pending-state-and-user-feedback',
     'nextjs/navigation-and-url-state/history-scroll-focus-and-accessibility',
     'nextjs/navigation-and-url-state/navigation-architecture-debugging-and-design-review',
+  ], { collapsed: true }),
+  category('04 · Server & Client Components', [
+    'nextjs/server-and-client-components/server-components-default-and-rendering-model',
+    'nextjs/server-and-client-components/use-client-and-client-module-graph',
+    'nextjs/server-and-client-components/composition-children-and-serialization',
+    'nextjs/server-and-client-components/providers-context-and-shared-state',
+    'nextjs/server-and-client-components/third-party-libraries-and-browser-only-code',
+    'nextjs/server-and-client-components/server-only-client-only-and-environment-poisoning',
+    'nextjs/server-and-client-components/boundary-performance-security-and-debugging',
+    'nextjs/server-and-client-components/server-client-architecture-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',
