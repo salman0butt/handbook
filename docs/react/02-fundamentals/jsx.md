@@ -4,6 +4,16 @@ description: Learn JSX mental models, expressions, attributes, escaping, conditi
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # JSX
 
 JSX is a syntax extension that lets you describe React UI using markup-like syntax inside JavaScript.
@@ -37,15 +47,18 @@ Without JSX, the same UI could be expressed using lower-level element-creation A
 
 Think of JSX as syntax for creating **descriptions of UI**, not as strings of HTML.
 
-```text
-JSX source
-   ↓ transform
-JavaScript
-   ↓ execute
-React element descriptions
-   ↓ React rendering
-host UI / DOM work
-```
+<VisualDiagram title="What happens to JSX?" subtitle="The browser never executes JSX directly.">
+  <LifecycleBar
+    items={[
+      { label: 'JSX source', tone: 'blue' },
+      { label: 'Tooling transforms it', tone: 'cyan' },
+      { label: 'JavaScript executes', tone: 'purple' },
+      { label: 'React element descriptions', tone: 'orange' },
+      { label: 'React rendering', tone: 'green' },
+      { label: 'Host UI / DOM work', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 This:
 
@@ -489,17 +502,13 @@ If raw HTML must be rendered, sanitize it using a security-reviewed strategy app
 
 Decision model:
 
-```text
-Can normal JSX express the UI?
-      ↓ yes
-Use normal JSX
-
-Must render external HTML?
-      ↓ yes
-Understand source + sanitize at trust boundary
-      ↓
-Use raw HTML escape hatch deliberately
-```
+<DecisionTree
+  question="How should this content be rendered?"
+  items={[
+    { label: 'Normal JSX can express the UI', value: 'Use normal JSX and keep React escaping' },
+    { label: 'External HTML is genuinely required', value: 'Establish the source + trust boundary, sanitize appropriately, then use the raw-HTML escape hatch deliberately' },
+  ]}
+/>
 
 ## JSX and accessibility
 
@@ -519,7 +528,7 @@ rather than making a non-interactive element imitate a button:
 
 The native button already has keyboard, focus, form, and accessibility behavior that you would otherwise need to recreate correctly.
 
-## Keep render logic pure
+## Render purity
 
 JSX is created while your component renders. Do not mutate external systems while calculating it.
 
@@ -671,17 +680,16 @@ function ProductCard({product, onAdd}) {
 
 Notice the separation:
 
-```text
-data calculation
-- formattedPrice
-- canBuy
-
-JSX
-- semantic structure
-- simple conditions
-- props
-- event callback wiring
-```
+<VisualDiagram title="Keep data calculation separate from JSX structure">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Before JSX" tone="blue" eyebrow="CALCULATE">
+      `formattedPrice` · `canBuy` · domain decisions
+    </DiagramNode>
+    <DiagramNode title="Inside JSX" tone="green" eyebrow="DESCRIBE UI">
+      semantic structure · simple conditions · props · event callback wiring
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Exercise
 
@@ -725,17 +733,16 @@ What security boundary does `dangerouslySetInnerHTML` cross, and what should be 
 
 ## Summary
 
-Keep this model:
-
-```text
-JSX describes UI structure.
-JavaScript expressions provide values and decisions.
-JSX becomes React element descriptions.
-Normal interpolation escapes text.
-Raw HTML is an explicit security-sensitive escape hatch.
-Semantic HTML still matters.
-Render logic should remain pure.
-```
+<VisualDiagram title="JSX summary">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Structure" tone="blue">JSX describes UI structure.</DiagramNode>
+    <DiagramNode title="JavaScript" tone="purple">Expressions provide values and decisions.</DiagramNode>
+    <DiagramNode title="React elements" tone="cyan">JSX becomes React element descriptions.</DiagramNode>
+    <DiagramNode title="Escaping" tone="green">Normal interpolation escapes text.</DiagramNode>
+    <DiagramNode title="Raw HTML" tone="red">An explicit, security-sensitive escape hatch.</DiagramNode>
+    <DiagramNode title="Semantics + purity" tone="orange">HTML semantics still matter and render logic stays pure.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## References
 
