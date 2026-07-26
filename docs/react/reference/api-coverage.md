@@ -36,32 +36,33 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | state identity, preserve/reset | Preserving and Resetting State | ✅ Covered |
 | conditional rendering | Conditional Rendering | ✅ Covered |
 | lists, keys, identity | Lists and Keys | ✅ Covered |
-| form fundamentals | Forms | ✅ Covered |
+| forms | Forms + Modern React Forms | ✅ Covered |
 | Effects and synchronization | Effects section | ✅ Covered |
-| unnecessary Effects | You Might Not Need an Effect | ✅ Covered |
-| Effect lifecycle/dependencies | Effect Lifecycle and Dependencies | ✅ Covered |
 | Effect Events | useEffectEvent | ✅ Covered — 19.2+ |
 | refs and imperative access | Refs section | ✅ Covered |
 | custom Hooks | Custom Hooks | ✅ Covered |
 | Context | Context section | ✅ Covered |
 | reducers | Reducers section | ✅ Covered |
-| reducer + Context architecture | Reducer + Context Architecture | ✅ Covered |
-| client/server/URL/external state categories | State Architecture | ✅ Covered |
-| external store subscriptions | useSyncExternalStore | ✅ Covered |
-| Actions and async Transitions | Actions and Async Transitions | ✅ Covered |
-| Action result state | useActionState | ✅ Covered — 19+ |
-| form Actions and form pending status | Form Actions and useFormStatus | ✅ Covered — 19+ |
+| external stores | useSyncExternalStore | ✅ Covered |
+| Actions and async Transitions | Modern React 19+ | ✅ Covered |
 | optimistic UI | useOptimistic | ✅ Covered — 19+ |
-| Promise/context resource reads | use API and Suspense Resources | 🟠 Foundation covered — 19+ |
+| Promise/context resource reads | use API and Suspense Resources | ✅ Covered — 19+ |
 | state-preserving hidden UI | Activity | ✅ Covered — 19.2+ |
 | metadata + resource loading | Metadata and Resource Loading | ✅ Covered |
 | React 19 migration/removals | React 19 Migration and Removed APIs | ✅ Covered |
-| Suspense mental model and reveal behavior | Suspense Boundaries and Reveal Behavior | ✅ Covered |
-| lazy loading and code splitting | lazy and Code Splitting | ✅ Covered |
-| loading/navigation architecture | Suspense Loading and Navigation Architecture | ✅ Covered |
-| Transition scheduling and interruption | useTransition and startTransition Deep Dive | ✅ Covered |
-| stale/deferred rendering | useDeferredValue and Stale UI | ✅ Covered |
-| concurrent render/commit mental model | Concurrent Rendering Mental Model | ✅ Covered |
+| Suspense reveal architecture | Suspense section | ✅ Covered |
+| lazy/code splitting | lazy and Code Splitting | ✅ Covered |
+| Transition scheduling | Concurrency section | ✅ Covered |
+| deferred/stale rendering | useDeferredValue and Stale UI | ✅ Covered |
+| concurrent render/commit model | Concurrent Rendering Mental Model | ✅ Covered |
+| portals + synchronous DOM escape hatch | Portals, flushSync, and React DOM Escape Hatches | ✅ Covered |
+| DOM components, custom elements, SVG | React DOM Components, Custom Elements, and SVG | ✅ Covered |
+| hydration | Hydration and hydrateRoot | ✅ Covered |
+| streaming SSR | Streaming SSR with React DOM Server APIs | ✅ Covered |
+| static generation and PPR | Static Rendering, Resume APIs, and Partial Pre-rendering | ✅ Covered |
+| Server Components and client boundaries | Server Components and Client Boundaries | ✅ Covered |
+| Server Functions and `'use server'` | Server Functions, use server, and Mutation Boundaries | ✅ Covered |
+| RSC memoization/cancellation | cache, cacheSignal, and Server Render Lifetimes | ✅ Covered |
 
 ## React Hooks
 
@@ -105,17 +106,17 @@ The official React documentation is authoritative. Secondary tutorials are used 
 | `memo` | Performance | Memoization / Performance | 🟡 Planned |
 | `startTransition` | Concurrency / Actions | useTransition and startTransition Deep Dive | ✅ Covered |
 | `act` | Testing | Testing | 🟡 Planned |
-| `use` | Resource API | use API and Suspense Resources | 🟠 Foundation covered; RSC depth planned |
-| `cache` | RSC | Server Components | 🟡 Planned |
-| `cacheSignal` | RSC | Server Components | 🟡 Planned — 19.2+ |
+| `use` | Resource API | use API + Server Components | ✅ Covered |
+| `cache` | RSC | cache, cacheSignal, and Server Render Lifetimes | ✅ Covered |
+| `cacheSignal` | RSC | cache, cacheSignal, and Server Render Lifetimes | ✅ Covered — 19.2+ |
 | `captureOwnerStack` | Development / debugging | Debugging | 🟡 Planned |
 
 ## React Server Component directives
 
 | Directive | Handbook page | Status |
 | --- | --- | --- |
-| `'use client'` | Server Components | 🟡 Planned |
-| `'use server'` | Server Components / Server Functions | 🟡 Planned |
+| `'use client'` | Server Components and Client Boundaries | ✅ Covered |
+| `'use server'` | Server Functions, use server, and Mutation Boundaries | ✅ Covered |
 
 These directives require an RSC-compatible framework/bundler environment. A normal client-only Vite app does not provide complete React Server Components infrastructure.
 
@@ -131,30 +132,24 @@ React supports browser built-in HTML and SVG components. The handbook covers DOM
 
 | Area / component | Handbook page | Status |
 | --- | --- | --- |
-| standard HTML components in JSX | JSX / Forms | ✅ Foundation coverage |
+| standard HTML components in JSX | JSX / Forms / React DOM Components | ✅ Covered |
 | event props and propagation | Responding to Events | ✅ Covered |
-| `<form>` traditional `onSubmit` | Forms | ✅ Covered |
-| `<form action={function}>` | Form Actions and useFormStatus | ✅ Covered |
-| `<input>` controlled/uncontrolled | Forms | ✅ Covered |
-| checkbox/radio behavior | Forms | ✅ Covered |
-| `<select>` / `<option>` | Forms | ✅ Covered |
-| `<textarea>` | Forms | ✅ Covered |
-| file inputs | Forms | ✅ Covered |
-| DOM `ref` attachment and callback refs | DOM Refs and Imperative Handles | ✅ Covered |
-| `<title>` | Metadata and Resource Loading | ✅ Covered |
-| `<meta>` | Metadata and Resource Loading | ✅ Covered |
-| `<link>` | Metadata and Resource Loading | ✅ Covered |
-| `<style>` special behavior | Metadata and Resource Loading | ✅ Covered |
-| `<script>` special behavior | Metadata and Resource Loading | ✅ Covered |
-| SVG-specific React behavior | React DOM Components | 🟡 Planned |
-| custom elements | React DOM Components | 🟡 Planned |
+| forms and native controls | Forms + Modern React Forms | ✅ Covered |
+| DOM refs / callback refs | DOM Refs and Imperative Handles | ✅ Covered |
+| `<title>` / `<meta>` / `<link>` | Metadata and Resource Loading | ✅ Covered |
+| `<style>` / `<script>` special behavior | Metadata and Resource Loading | ✅ Covered |
+| SVG behavior and accessibility | React DOM Components, Custom Elements, and SVG | ✅ Covered |
+| custom elements / Web Components | React DOM Components, Custom Elements, and SVG | ✅ Covered |
+| `dangerouslySetInnerHTML` | React DOM Components, Custom Elements, and SVG | ✅ Covered |
+| `contentEditable` ownership caveats | React DOM Components, Custom Elements, and SVG | ✅ Covered |
+| `suppressHydrationWarning` | Hydration + React DOM Components | ✅ Covered |
 
 ## React DOM APIs
 
 | API | Handbook page | Status |
 | --- | --- | --- |
-| `createPortal` | Portals | 🟡 Planned |
-| `flushSync` | React DOM Escape Hatches | 🟡 Planned |
+| `createPortal` | Portals, flushSync, and React DOM Escape Hatches | ✅ Covered |
+| `flushSync` | Portals, flushSync, and React DOM Escape Hatches | ✅ Covered |
 | `prefetchDNS` | Metadata and Resource Loading | ✅ Covered |
 | `preconnect` | Metadata and Resource Loading | ✅ Covered |
 | `preload` | Metadata and Resource Loading | ✅ Covered |
@@ -168,32 +163,48 @@ React supports browser built-in HTML and SVG components. The handbook covers DOM
 | --- | --- | --- |
 | `createRoot` | Rendering a React Application | ✅ Covered |
 | `root.render()` | Rendering a React Application | ✅ Covered |
-| `root.unmount()` | Rendering a React Application | ✅ Covered |
-| `hydrateRoot` | Server Rendering / Hydration | 🟡 Planned |
+| `root.unmount()` | Rendering a React Application + Hydration | ✅ Covered |
+| `hydrateRoot` | Hydration and hydrateRoot | ✅ Covered |
 
 ## React DOM server APIs
 
 | API | Handbook page | Status |
 | --- | --- | --- |
-| `renderToReadableStream` | Server Rendering | 🟡 Planned |
-| `resume` | Server Rendering / PPR | 🟡 Planned |
-| `renderToPipeableStream` | Server Rendering | 🟡 Planned |
-| `resumeToPipeableStream` | Server Rendering / PPR | 🟡 Planned |
-| `renderToString` | Server Rendering | 🟡 Planned — teach limitations |
-| `renderToStaticMarkup` | Server Rendering | 🟡 Planned — non-interactive output |
+| `renderToReadableStream` | Streaming SSR with React DOM Server APIs | ✅ Covered |
+| `renderToPipeableStream` | Streaming SSR with React DOM Server APIs | ✅ Covered |
+| `resume` | Static Rendering, Resume APIs, and Partial Pre-rendering | ✅ Covered |
+| `resumeToPipeableStream` | Static Rendering, Resume APIs, and Partial Pre-rendering | ✅ Covered |
+| `renderToString` | Static Rendering, Resume APIs, and Partial Pre-rendering | ✅ Covered — legacy/limited path |
+| `renderToStaticMarkup` | Static Rendering, Resume APIs, and Partial Pre-rendering | ✅ Covered — non-interactive output |
 
 ## React DOM static APIs
 
 | API | Handbook page | Status |
 | --- | --- | --- |
-| `prerender` | Static Rendering | 🟡 Planned |
-| `prerenderToNodeStream` | Static Rendering | 🟡 Planned |
-| `resumeAndPrerender` | PPR | 🧪 Experimental/Canary |
-| `resumeAndPrerenderToNodeStream` | PPR | 🧪 Experimental/Canary |
+| `prerender` | Static Rendering, Resume APIs, and Partial Pre-rendering | ✅ Covered |
+| `prerenderToNodeStream` | Static Rendering, Resume APIs, and Partial Pre-rendering | ✅ Covered |
+| `resumeAndPrerender` | Static Rendering, Resume APIs, and Partial Pre-rendering | 🧪 Experimental — architecture covered |
+| `resumeAndPrerenderToNodeStream` | Static Rendering, Resume APIs, and Partial Pre-rendering | 🧪 Experimental — architecture covered |
+
+## Server Components / Server Functions
+
+| Area | Handbook page | Status |
+| --- | --- | --- |
+| Server Components mental model | Server Components and Client Boundaries | ✅ Covered |
+| RSC vs SSR | Server Components and Client Boundaries | ✅ Covered |
+| async Server Components | Server Components and Client Boundaries | ✅ Covered |
+| serializable client-boundary props | Server Components and Client Boundaries | ✅ Covered |
+| Promise handoff to Client Components | Server Components and Client Boundaries | ✅ Covered |
+| Server Functions | Server Functions, use server, and Mutation Boundaries | ✅ Covered |
+| mutation security / authorization | Server Functions, use server, and Mutation Boundaries | ✅ Covered |
+| RSC request memoization | cache, cacheSignal, and Server Render Lifetimes | ✅ Covered |
+| RSC cancellation lifetime | cache, cacheSignal, and Server Render Lifetimes | ✅ Covered |
+
+The Server Component model is stable for React 19 application use, but framework/bundler implementation APIs beneath RSC do not follow the same minor-version stability guarantee. Use framework-supported integration rather than treating internal RSC transport APIs as portable application APIs.
 
 ## React Compiler
 
-React Compiler 1.0 is stable and receives first-class handbook coverage later in the roadmap.
+React Compiler 1.0 is stable and receives first-class handbook coverage next in the roadmap.
 
 | Topic | Status |
 | --- | --- |
@@ -238,40 +249,25 @@ React Compiler 1.0 is stable and receives first-class handbook coverage later in
 | `element.ref` access | ⚠️ Deprecated — covered in migration | `element.props.ref` if introspection is unavoidable |
 | `forwardRef` as default new-code pattern | ⚠️ Historical in React 19+ | ref as a prop for function components |
 | class components | ⚠️ Legacy for new teaching, still supported | function components + Hooks for new code |
+| `renderToNodeStream` | ⚠️ Removed in React 19 | modern server streaming APIs |
+| `renderToStaticNodeStream` | ⚠️ Removed in React 19 | modern server/static APIs |
 
 ## Current learning path coverage
 
 The beginner-to-modern path now explicitly covers:
 
-- JavaScript prerequisites;
-- React rendering and JSX;
-- components and composition;
-- events;
-- state snapshots, batching, ownership, identity, and reset;
-- conditionals, lists, keys, forms;
-- Effects, Effect Events, refs, custom Hooks;
-- Context, reducers, reducer + Context architecture;
-- local/shared/server/URL/external state categories;
-- external store subscriptions;
-- React 19 Actions and async Transitions;
-- `useActionState`, form Actions, `useFormStatus`, `useOptimistic`;
-- `use` resource reading foundations;
-- React 19.2 `<Activity>`;
-- document metadata and resource-loading primitives;
-- React 19 migration/removals;
-- deep Suspense boundary design and reveal behavior;
-- lazy code splitting;
-- production loading/navigation architecture;
-- Transition interruption and scheduling;
-- `useDeferredValue` and stale UI;
-- concurrent render/commit mental models.
+- JavaScript prerequisites and React fundamentals;
+- rendering, JSX, composition, events, state, forms, Effects, refs, Context, reducers, and custom Hooks;
+- external stores and deliberate state architecture;
+- React 19 Actions, modern forms, optimistic UI, `use`, `<Activity>`, metadata/resources, and migration;
+- deep Suspense, code splitting, Transitions, deferred rendering, and concurrency;
+- React DOM escape hatches, DOM components, custom elements, SVG, and raw HTML safety;
+- hydration, streaming SSR, static rendering, resume APIs, and partial pre-rendering;
+- Server Components, client boundaries, Server Functions, `'use client'`, `'use server'`, `cache`, and `cacheSignal`.
 
 Still planned:
 
 - remaining stable Hooks (`useCallback`, `useMemo`, `useId`, `useDebugValue`, `useLayoutEffect`, `useInsertionEffect`);
-- portals and complete React DOM client coverage;
-- SSR, hydration, streaming, static rendering, partial pre-rendering, Server Components and Server Functions;
-- deeper RSC `use` coverage, `cache`, `cacheSignal`, and RSC directives;
 - React Compiler and dedicated Rules of React;
 - TypeScript, testing, accessibility, security;
 - performance, architecture, design systems, patterns;
@@ -297,18 +293,16 @@ Whenever the stable React minor changes:
 - https://react.dev/reference/react
 - https://react.dev/reference/react/hooks
 - https://react.dev/reference/react/apis
-- https://react.dev/reference/react/Suspense
-- https://react.dev/reference/react/lazy
-- https://react.dev/reference/react/useTransition
-- https://react.dev/reference/react/startTransition
-- https://react.dev/reference/react/useDeferredValue
-- https://react.dev/reference/react/useActionState
-- https://react.dev/reference/react/useOptimistic
-- https://react.dev/reference/react/use
-- https://react.dev/reference/react/Activity
 - https://react.dev/reference/react-dom
-- https://react.dev/reference/react-dom/hooks/useFormStatus
 - https://react.dev/reference/react-dom/components
+- https://react.dev/reference/react-dom/client
+- https://react.dev/reference/react-dom/server
+- https://react.dev/reference/react-dom/static
+- https://react.dev/reference/rsc/server-components
+- https://react.dev/reference/rsc/server-functions
+- https://react.dev/reference/rsc/directives
+- https://react.dev/reference/react/cache
+- https://react.dev/reference/react/cacheSignal
 - https://react.dev/blog/2024/04/25/react-19-upgrade-guide
 - https://react.dev/blog/2024/12/05/react-19
 - https://react.dev/blog/2025/10/01/react-19-2
