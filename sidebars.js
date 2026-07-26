@@ -150,6 +150,17 @@ const nextjsItems = [
     'nextjs/data-fetching/client-side-data-fetching',
     'nextjs/data-fetching/errors-security-and-debugging',
     'nextjs/data-fetching/data-fetching-architecture-and-design-review',
+  ], { collapsed: true }),
+  category('06 · Caching, Rendering & Revalidation', [
+    'nextjs/caching-rendering-and-revalidation/cache-model-and-rendering-decision-tree',
+    'nextjs/caching-rendering-and-revalidation/fetch-data-cache-and-previous-model',
+    'nextjs/caching-rendering-and-revalidation/cache-components-and-use-cache',
+    'nextjs/caching-rendering-and-revalidation/cache-life-tags-and-revalidation',
+    'nextjs/caching-rendering-and-revalidation/dynamic-request-apis-and-connection',
+    'nextjs/caching-rendering-and-revalidation/private-remote-and-distributed-caching',
+    'nextjs/caching-rendering-and-revalidation/partial-prerendering-and-client-router-cache',
+    'nextjs/caching-rendering-and-revalidation/cache-security-debugging-and-production-incidents',
+    'nextjs/caching-rendering-and-revalidation/caching-rendering-architecture-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',
