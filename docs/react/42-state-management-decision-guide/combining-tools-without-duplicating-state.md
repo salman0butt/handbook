@@ -4,6 +4,16 @@ description: Compose React state tools by ownership boundaries, avoid duplicate 
 sidebar_position: 2
 ---
 
+import {
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramRow,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Combining state tools without duplicating state
 
 Large React applications often use more than one state tool.
@@ -16,77 +26,56 @@ It becomes dangerous when the same value is copied into several stores.
 
 For every value, choose one authoritative owner.
 
-```text
-server record
-   │
-   └── authoritative on server / server-state cache snapshot
-
-form draft
-   │
-   └── authoritative in form control while editing
-
-URL filter
-   │
-   └── authoritative in URL
-
-local dialog
-   │
-   └── authoritative in component state
-```
+<VisualDiagram title="One value, one authoritative owner">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Server record" tone="orange">Authoritative on the server; the query cache holds a snapshot.</DiagramNode>
+    <DiagramNode title="Form draft" tone="red">Authoritative in the form control while the user is editing.</DiagramNode>
+    <DiagramNode title="URL filter" tone="slate">Authoritative in the URL when navigation/shareability matters.</DiagramNode>
+    <DiagramNode title="Local dialog" tone="blue">Authoritative in component state.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Other layers may derive or display the value, but they should not silently become competing owners.
 
 ## Good composition
 
-```text
-Product edit page
-│
-├── URL
-│   └── productId
-│
-├── TanStack Query
-│   └── saved Product from server
-│
-├── React Hook Form
-│   └── unsaved product draft
-│
-├── Context
-│   └── locale / permissions environment
-│
-└── useState
-    └── delete-confirmation dialog
-```
+<VisualDiagram title="Product edit page: clear ownership by lifecycle">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="URL" tone="slate">Owns `productId`.</DiagramNode>
+    <DiagramNode title="TanStack Query" tone="orange">Owns the saved Product snapshot from the server.</DiagramNode>
+    <DiagramNode title="React Hook Form" tone="red">Owns the unsaved product draft.</DiagramNode>
+    <DiagramNode title="Context" tone="cyan">Provides locale / permissions environment.</DiagramNode>
+    <DiagramNode title="useState" tone="blue">Owns delete-confirmation dialog state.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Each layer has a distinct responsibility.
 
 ## Bad composition: copying server data everywhere
 
-```text
-TanStack Query cache
-       │
-       ▼
-copy into Redux
-       │
-       ▼
-copy into component state
-       │
-       ▼
-copy into form
-```
+<VisualDiagram title="Anti-pattern: serially copying one value into multiple owners">
+  <DiagramStack align="center">
+    <DiagramNode title="TanStack Query cache" tone="orange" />
+    <DiagramArrow label="copy" />
+    <DiagramNode title="Redux" tone="purple" />
+    <DiagramArrow label="copy" />
+    <DiagramNode title="Component state" tone="blue" />
+    <DiagramArrow label="copy" />
+    <DiagramNode title="Form" tone="red" />
+  </DiagramStack>
+</VisualDiagram>
 
 Now four versions may disagree.
 
 Better:
 
-```text
-TanStack Query cache
-       │
-       ├── read directly for display
-       └── initialize form draft when edit begins
-                    │
-                    ▼
-             React Hook Form draft
-```
+<VisualDiagram title="Better: derive for display, fork only when lifecycle changes">
+  <DiagramStack align="center">
+    <DiagramNode title="TanStack Query cache" tone="orange" wide>Saved server snapshot remains the authoritative remote value.</DiagramNode>
+    <DiagramArrow label="read directly for display OR initialize an edit draft" />
+    <DiagramNode title="React Hook Form draft" tone="red" wide>Unsaved edits are intentionally separate because they have a different lifecycle.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 The form draft is intentionally separate because unsaved edits are a different lifecycle.
 
@@ -103,15 +92,13 @@ const profileQuery = useQuery({
 
 When the edit workflow starts, initialize the form from the saved record.
 
-```text
-saved profile snapshot
-       │
-       ▼
-form default values
-       │
-       ▼
-user edits independent draft
-```
+<LifecycleBar
+  items={[
+    { label: 'saved profile snapshot', tone: 'orange' },
+    { label: 'form default values', tone: 'red' },
+    { label: 'user edits independent draft', tone: 'blue' },
+  ]}
+/>
 
 Do not automatically reset the form every time the query background-refetches while the user is typing.
 
@@ -119,24 +106,18 @@ You need a product rule for reconciling remote changes with local unsaved edits.
 
 ## React Hook Form + TanStack Query mutation
 
-```text
-form validates
-    │
-    ▼
-submit values
-    │
-    ▼
-TanStack mutation
-    │
-    ▼
-server validates + persists
-    │
-    ├── error → map to form/server error UI
-    └── success
-          │
-          ├── update/invalidate query cache
-          └── reset form to saved values
-```
+<VisualDiagram title="Clean form + server mutation hand-off">
+  <DiagramStack align="center">
+    <DiagramNode title="React Hook Form validates" tone="red" />
+    <DiagramArrow label="submit values" />
+    <DiagramNode title="TanStack mutation" tone="purple" />
+    <DiagramArrow label="server validates + persists" />
+    <DiagramRow>
+      <DiagramNode title="Error" tone="red">Map domain/server errors back to the form UI.</DiagramNode>
+      <DiagramNode title="Success" tone="green">Update/invalidate query cache and reset the form to saved values.</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 This is a common and clean separation.
 
@@ -144,17 +125,16 @@ This is a common and clean separation.
 
 If Redux owns shared client workflow state and TanStack Query owns server state:
 
-```text
-Redux Toolkit
-├── checkout step
-├── client-side workflow flags
-└── unsaved cross-route decisions
-
-TanStack Query
-├── products
-├── inventory
-└── orders
-```
+<VisualDiagram title="Redux + TanStack Query without duplication">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Redux Toolkit" tone="purple">
+      Checkout step · client-side workflow flags · unsaved cross-route decisions.
+    </DiagramNode>
+    <DiagramNode title="TanStack Query" tone="orange">
+      Products · inventory · orders.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Avoid copying every query result into Redux.
 
@@ -164,19 +144,16 @@ If the application already uses Redux extensively, evaluate RTK Query as an alte
 
 A diagram/editor application might use:
 
-```text
-Zustand
-├── selected nodes
-├── zoom
-├── active tool
-├── drag state
-└── unsaved local interaction state
-
-TanStack Query
-├── document record
-├── collaborators
-└── server history
-```
+<VisualDiagram title="Zustand + TanStack Query in an editor">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Zustand" tone="green">
+      Selected nodes · zoom · active tool · drag state · unsaved interaction state.
+    </DiagramNode>
+    <DiagramNode title="TanStack Query" tone="orange">
+      Document record · collaborators · server history.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 The UI can combine both without one replacing the other.
 
@@ -184,18 +161,17 @@ The UI can combine both without one replacing the other.
 
 Context can inject a specific store instance into a subtree.
 
-```text
-Store factory
-    │
-    ▼
-Provider chooses instance
-    │
-    ▼
-feature subtree
-    │
-    ▼
-components subscribe to store
-```
+<VisualDiagram title="Provider-scoped external store instance" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Store factory" tone="green" />
+    <DiagramArrow label="creates instance" />
+    <DiagramNode title="Provider chooses instance" tone="cyan" />
+    <DiagramArrow label="scopes instance" />
+    <DiagramNode title="Feature subtree" tone="blue" />
+    <DiagramArrow label="components subscribe" />
+    <DiagramNode title="External store selectors" tone="purple" />
+  </DiagramStack>
+</VisualDiagram>
 
 This is useful when you want external-store selector semantics but still need provider-scoped instances, testing isolation, or SSR request isolation.
 
@@ -205,11 +181,13 @@ Do not keep two synchronized copies of a filter unless necessary.
 
 Bad:
 
-```text
-URL page=2
-   ↕ Effect sync
-Redux page=2
-```
+<VisualDiagram title="Anti-pattern: URL/store synchronization bridge" compact>
+  <DiagramRow>
+    <DiagramNode title="URL page=2" tone="slate" />
+    <DiagramNode title="Effect sync ↔" tone="red">Every bridge creates another failure mode.</DiagramNode>
+    <DiagramNode title="Redux page=2" tone="purple" />
+  </DiagramRow>
+</VisualDiagram>
 
 Every synchronization bridge introduces failure modes.
 
@@ -221,13 +199,12 @@ A client store may still own temporary UI that does not belong in navigation his
 
 Persisting a query result or global store does not make it authoritative.
 
-```text
-localStorage
-→ client-controlled cached/persisted snapshot
-
-server
-→ authoritative domain record
-```
+<VisualDiagram title="Persistence does not change authority">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="localStorage" tone="slate">Client-controlled cached/persisted snapshot.</DiagramNode>
+    <DiagramNode title="Server" tone="orange">Authoritative domain record.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 When restoring persisted state:
 
@@ -240,18 +217,15 @@ When restoring persisted state:
 
 A safe migration can use an adapter period.
 
-```text
-old Context consumers
-        │
-        ▼
-compatibility provider reads Zustand store
-        │
-        ▼
-Zustand becomes new owner
-        │
-        ▼
-consumers migrate gradually
-```
+<VisualDiagram title="Context → Zustand migration without dual ownership">
+  <DiagramStack align="center">
+    <DiagramNode title="Old Context consumers" tone="cyan" />
+    <DiagramArrow label="temporary compatibility provider" />
+    <DiagramNode title="Provider reads the Zustand store" tone="purple" />
+    <DiagramArrow label="Zustand is the only new owner" />
+    <DiagramNode title="Consumers migrate gradually" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 Important: do not let Context and Zustand independently mutate separate copies.
 
@@ -259,14 +233,16 @@ One owner; temporary adapters only.
 
 ## Migration: Context → Redux Toolkit
 
-```text
-1. define target Redux domain slice
-2. migrate transition logic
-3. expose selectors/actions
-4. make old provider read/write the Redux source temporarily
-5. migrate consumers
-6. delete adapter/provider state
-```
+<LifecycleBar
+  items={[
+    { label: 'define target Redux domain slice', tone: 'purple' },
+    { label: 'migrate transition logic', tone: 'blue' },
+    { label: 'expose selectors/actions', tone: 'green' },
+    { label: 'old provider adapts to Redux', tone: 'cyan' },
+    { label: 'migrate consumers', tone: 'orange' },
+    { label: 'delete adapter state', tone: 'red' },
+  ]}
+/>
 
 Avoid a dual-write period where both stores pretend to be authoritative.
 
@@ -278,13 +254,14 @@ First classify state again.
 
 You may discover:
 
-```text
-old Redux slice
-├── server records       → TanStack Query
-├── URL filters          → router
-├── form draft           → React Hook Form
-└── actual shared client state → Zustand
-```
+<VisualDiagram title="Reclassify before migrating Redux">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="Server records" tone="orange">→ TanStack Query</DiagramNode>
+    <DiagramNode title="URL filters" tone="slate">→ router</DiagramNode>
+    <DiagramNode title="Form draft" tone="red">→ React Hook Form</DiagramNode>
+    <DiagramNode title="Shared client state" tone="green">→ Zustand</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 A migration is an opportunity to fix ownership, not merely change syntax.
 
@@ -292,25 +269,23 @@ A migration is an opportunity to fix ownership, not merely change syntax.
 
 Legacy architecture:
 
-```text
-useEffect
-├── request
-├── loading
-├── error
-├── retry
-├── stale flag
-└── refresh function
-```
+<VisualDiagram title="Legacy manual API lifecycle">
+  <DiagramNode title="useEffect" tone="red" wide>
+    Request + loading + error + retry + stale flag + refresh function.
+  </DiagramNode>
+</VisualDiagram>
 
 Migration:
 
-```text
-1. define query key
-2. define query function
-3. move freshness/cache policy to query options
-4. migrate mutation/invalidation paths
-5. delete duplicated loading/cache state
-```
+<LifecycleBar
+  items={[
+    { label: 'define query key', tone: 'purple' },
+    { label: 'define query function', tone: 'blue' },
+    { label: 'move cache/freshness policy', tone: 'orange' },
+    { label: 'migrate mutation/invalidation', tone: 'green' },
+    { label: 'delete duplicated loading/cache state', tone: 'red' },
+  ]}
+/>
 
 Do one domain at a time.
 
@@ -318,13 +293,15 @@ Do one domain at a time.
 
 If Redux/Zustand currently owns every field:
 
-```text
-1. identify why form data was global
-2. keep only state that must outlive the form
-3. move active form draft into RHF
-4. initialize from authoritative workflow state
-5. write back only at explicit save/step boundaries
-```
+<LifecycleBar
+  items={[
+    { label: 'identify why form data was global', tone: 'slate' },
+    { label: 'keep only state that must outlive form', tone: 'purple' },
+    { label: 'move active draft into RHF', tone: 'red' },
+    { label: 'initialize from authoritative workflow state', tone: 'blue' },
+    { label: 'write back only at explicit save boundaries', tone: 'green' },
+  ]}
+/>
 
 This often reduces update volume and coupling.
 
@@ -346,13 +323,15 @@ This is more useful than a generic rule saying "we use Redux for state."
 
 For every bridge between tools, ask:
 
-```text
-What if owner A changes but B does not?
-What if hydration restores stale B?
-What if background refetch arrives during local editing?
-What if navigation changes the URL?
-What if server rejects optimistic client state?
-```
+<VisualDiagram title="Review every synchronization edge">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Owner A changes, B does not" tone="red" />
+    <DiagramNode title="Hydration restores stale B" tone="orange" />
+    <DiagramNode title="Background refetch arrives during editing" tone="purple" />
+    <DiagramNode title="Navigation changes the URL" tone="slate" />
+    <DiagramNode title="Server rejects optimistic client state" tone="red" />
+  </DiagramGrid>
+</VisualDiagram>
 
 If the answer requires many synchronization Effects, reconsider ownership.
 
@@ -360,15 +339,17 @@ If the answer requires many synchronization Effects, reconsider ownership.
 
 A strong architecture minimizes synchronization edges.
 
-```text
-fewer sources of truth
-        ↓
-fewer synchronization bridges
-        ↓
-fewer race conditions
-        ↓
-easier debugging
-```
+<VisualDiagram title="Why fewer sources of truth are easier to operate" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Fewer sources of truth" tone="green" />
+    <DiagramArrow />
+    <DiagramNode title="Fewer synchronization bridges" tone="cyan" />
+    <DiagramArrow />
+    <DiagramNode title="Fewer race conditions" tone="purple" />
+    <DiagramArrow />
+    <DiagramNode title="Easier debugging" tone="blue" />
+  </DiagramStack>
+</VisualDiagram>
 
 The goal is not to minimize the number of libraries at all costs.
 
@@ -386,17 +367,19 @@ The goal is to make ownership obvious.
 
 ## Summary
 
-```text
-classify state
-    ↓
-choose one owner
-    ↓
-allow other tools to derive/observe
-    ↓
-make synchronization explicit only where necessary
-    ↓
-avoid dual writes
-```
+<VisualDiagram title="State composition summary" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Classify state" tone="blue" />
+    <DiagramArrow />
+    <DiagramNode title="Choose one owner" tone="green" />
+    <DiagramArrow />
+    <DiagramNode title="Other tools derive or observe" tone="cyan" />
+    <DiagramArrow />
+    <DiagramNode title="Synchronize only where necessary" tone="orange" />
+    <DiagramArrow />
+    <DiagramNode title="Avoid dual writes" tone="red" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## References
 
