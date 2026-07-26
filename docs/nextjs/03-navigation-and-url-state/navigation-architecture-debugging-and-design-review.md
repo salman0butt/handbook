@@ -1,6 +1,6 @@
 ---
 title: Navigation Architecture, Debugging & Design Review
-description: Review App Router navigation as a system: route ownership, URL contracts, performance, security, observability, debugging, and senior design trade-offs.
+description: "Review App Router navigation as a system: route ownership, URL contracts, performance, security, observability, debugging, and senior design trade-offs."
 ---
 
 # Navigation Architecture, Debugging & Design Review
