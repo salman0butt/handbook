@@ -37,6 +37,18 @@ const reactItems = [
   category('32 · Production Engineering', ['react/production-engineering/security-and-trust-boundaries', 'react/production-engineering/legacy-react-maintenance-and-migration', 'react/production-engineering/large-team-react-engineering', 'react/production-engineering/senior-architectural-decision-making']),
   category('33 · Projects', ['react/projects/project-ladder-and-delivery-standards', 'react/projects/capstone-realtime-operations-dashboard', 'react/projects/capstone-commerce-and-mutation-workflows', 'react/projects/capstone-saas-architecture-and-platform']),
   category('34 · Interview Mastery', ['react/interview-mastery/fundamentals-to-senior-react-interview', 'react/interview-mastery/debugging-performance-and-security-scenarios', 'react/interview-mastery/react-system-design-and-tradeoff-drills', 'react/interview-mastery/staff-level-architecture-and-leadership']),
+  category('35 · Interview Question Bank', [
+    'react/interview-question-bank/overview-and-study-plan',
+    'react/interview-question-bank/fundamentals-jsx-components-rendering',
+    'react/interview-question-bank/state-events-forms',
+    'react/interview-question-bank/hooks-effects-refs-custom-hooks',
+    'react/interview-question-bank/context-reducers-state-architecture',
+    'react/interview-question-bank/performance-compiler-suspense-concurrency',
+    'react/interview-question-bank/react-dom-ssr-rsc-react19',
+    'react/interview-question-bank/typescript-testing-accessibility',
+    'react/interview-question-bank/debugging-security-production-system-design',
+    'react/interview-question-bank/coding-output-and-trick-questions',
+  ]),
   category('📋 Reference & Coverage', ['react/reference/api-coverage', 'react/reference/final-completeness-audit']),
 ];
 
