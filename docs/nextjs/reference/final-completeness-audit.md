@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–7 are implemented; Phase 8 Route Handlers is next.**
+> **Status: NOT COMPLETE — Phases 1–8 are implemented; Phase 9 Request Pipeline & Proxy is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -28,7 +28,8 @@ This page is the final release gate for the handbook. It must not be marked comp
 - [x] Phase 05 · Data Fetching
 - [x] Phase 06 · Caching, Rendering & Revalidation
 - [x] Phase 07 · Mutations, Forms & Server Functions
-- [ ] Phase 08 · Route Handlers
+- [x] Phase 08 · Route Handlers
+- [ ] Phase 09 · Request Pipeline & Proxy
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, pages and nested layouts, templates, dynamic/catch-all/optional catch-all segments, Promise-based params, `generateStaticParams`, route groups, private folders, multiple root layouts, loading/error/not-found/default conventions, parallel routes, intercepting routes, route-driven modals, debugging, architecture review, and production-design trade-offs.
@@ -42,6 +43,8 @@ Phase 05 includes async Server Component data ownership, server `fetch`, direct 
 Phase 06 includes the modern Next.js 16.2 cache/rendering decision model, current server `fetch` cache semantics, the previous non-Cache-Components model, `cacheComponents`, `'use cache'`, `cacheLife`, `cacheTag`, `revalidateTag`, `updateTag`, `revalidatePath`, `connection()`, request-time dynamic boundaries, remote/distributed caching, experimental private caching, Cache Components partial prerendering, Client Router Cache interactions, cache isolation/security, production incident debugging, and senior cache/rendering architecture review.
 
 Phase 07 includes current Server Function/Server Action terminology, `'use server'`, form actions, `FormData`, `bind`, `formAction`, progressive enhancement, `next/form` distinctions, runtime validation, authentication and resource authorization, action CSRF/origin/body-size considerations, `useActionState`, `useFormStatus`, `useOptimistic`, mutation concurrency, post-write revalidation/refresh/redirect/cookie sequencing, idempotency, transactions, side-effect reliability, action debugging, and senior mutation architecture review.
+
+Phase 08 includes `route.ts` ownership and method semantics; native `Request` / `Response`; `NextRequest` / `NextResponse`; async params and `RouteContext`; JSON/form/text/binary parsing; validation, mass-assignment and SSRF protections; files, downloads, streaming and cancellation; current GET caching and Cache Components behavior; HTTP caching; CORS; CSRF considerations; authentication and resource authorization; webhooks, replay protection and callback safety; rate limiting; Server Action vs Route Handler vs BFF decisions; serverless/runtime constraints; production debugging; and senior HTTP/API design review.
 
 ## Final audit gates
 
@@ -78,4 +81,4 @@ The handbook is complete only when the official documentation audit and the educ
 
 A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, trade-offs, and production patterns at the depth appropriate to each topic.
 
-See [API Coverage Contract](./api-coverage.md) for the live topic-by-topic map.
+See [API Coverage Contract](./api-coverage.md) for the release gate.

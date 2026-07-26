@@ -28,11 +28,11 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | --- | --- | --- |
 | App Router | ✅ | Primary and only router taught |
 | Pages Router | ⛔ | Intentionally excluded |
-| Next.js 16.2 stable behavior | 🟠 | Routing, navigation, RSC boundaries, data, cache, and mutation semantics verified; later phases cover remaining APIs/operations |
+| Next.js 16.2 stable behavior | 🟠 | Routing, navigation, RSC boundaries, data, cache, mutations, and Route Handlers verified; later phases cover remaining request/render/ops APIs |
 | Next.js 16.3 preview/canary | 🧪 | Track but do not teach as stable until promoted to npm `latest` |
 | React 19.2 stable APIs | 🟠 | React handbook owns React depth; Next.js explains framework integration |
-| React Canary exposed by App Router | 🟠 | Covered only where stable Next.js docs define a supported contract |
-| Vercel platform behavior | 🟡 | Must remain clearly platform-specific |
+| React Canary exposed by App Router | 🟠 | Covered only where stable Next.js docs define a supported framework contract |
+| Vercel/platform-specific behavior | 🟡 | Must remain clearly labeled and separated from Next.js core |
 
 ## Curriculum progress
 
@@ -46,7 +46,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | 05 · Data Fetching | ✅ |
 | 06 · Caching, Rendering & Revalidation | ✅ |
 | 07 · Mutations, Forms & Server Functions | ✅ |
-| 08 · Route Handlers | 🟡 |
+| 08 · Route Handlers | ✅ |
 | 09 · Request Pipeline & Proxy | 🟡 |
 | 10 · Rendering, Suspense & Streaming | 🟡 |
 | 11 · Metadata & SEO | 🟡 |
@@ -73,15 +73,15 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Fetching Data | ✅ | `05-data-fetching/*` |
 | Cache Components | ✅ | `06-caching-rendering-and-revalidation/*` |
 | Caching and Revalidating | ✅ | `06-caching-rendering-and-revalidation/*` |
-| Mutating/Updating Data / Server Functions | ✅ | `07-mutations-forms-and-server-functions/*` |
-| Error Handling | 🟠 | Route/data/cache/action expected-error models covered; deep Phase 14 |
+| Mutating Data / Server Functions | ✅ | `07-mutations-forms-and-server-functions/*` |
+| Route Handlers | ✅ | `08-route-handlers/*` |
+| Error Handling | 🟠 | Route/data/cache/action/API failure models covered; deep Phase 14 |
 | CSS / styling integration | 🟡 | Framework behavior only |
 | Image Optimization | 🟡 | Phase 12 |
 | Font Optimization | 🟡 | Phase 12 |
 | Metadata and OG Images | 🟡 | Phase 11 |
-| Route Handlers | 🟡 | Phase 08 |
 | Proxy | 🟠 | Current Next.js 16 terminology introduced; deep Phase 09 |
-| Deploying | 🟡 | Phase 17 |
+| Deploying | 🟠 | Runtime/serverless implications introduced through Phase 08; full Phase 17 |
 | Upgrading | 🟠 | Baseline workflow introduced; deep Phase 20 |
 
 ## Routing & File Conventions
@@ -89,17 +89,19 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | API / convention | Status | Handbook location / plan |
 | --- | --- | --- |
 | `app/` route tree | ✅ | Phases 01–02 |
-| `page.js/tsx`, `layout.js/tsx`, root/multiple root layouts | ✅ | Phase 02 |
+| `page.js/tsx`, `layout.js/tsx`, root/multiple roots | ✅ | Phase 02 |
 | `template.js/tsx` | ✅ | Phase 02 |
-| `loading.js/tsx` | ✅ | Phases 02–06; transport depth Phase 10 |
+| `loading.js/tsx` | ✅ | Phases 02–06; transport depth 10 |
 | `error.js/tsx`, `global-error.js/tsx` | 🟠 | Boundary semantics covered; deep Phase 14 |
 | `not-found.js/tsx` | ✅ | Phase 02 |
 | `global-not-found.js/tsx` | 🧪 | Experimental |
 | `default.js/tsx` | ✅ | Phase 02 |
-| `route.js/ts` | 🟡 | Phase 08 |
+| `route.js/ts` | ✅ | Phase 08 |
+| route/page same-segment conflict | ✅ | Phase 08 |
 | Dynamic/catch-all/optional catch-all segments | ✅ | Phase 02 |
-| async `params` | ✅ | Phase 02 |
-| `generateStaticParams`, `dynamicParams` | ✅ | Routing 02; rendering/cache interaction 06 |
+| async `params` | ✅ | Phase 02; Route Handler params Phase 08 |
+| `RouteContext<'/...'>` | ✅ | Phase 08 |
+| `generateStaticParams`, `dynamicParams` | ✅ | Routing 02; cache/rendering 06; Route Handler use 08 |
 | Route Groups / Private Folders | ✅ | Phase 02 |
 | Parallel / Intercepting Routes | ✅ | Phase 02 |
 | `src/` | ✅ | Phase 01 |
@@ -113,16 +115,15 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 
 | API / behavior | Status | Handbook location / plan |
 | --- | --- | --- |
-| `<Link>` + `href`, `replace`, `scroll`, `prefetch` | ✅ | Phase 03 |
-| `<Link onNavigate>` | ✅ | Phase 03 |
-| `<Link transitionTypes>` | ✅ | Stable 16.2 prop; broader integration experimental |
+| `<Link>` + navigation props | ✅ | Phase 03 |
+| `<Link onNavigate>` / `transitionTypes` | ✅ | Phase 03; broader View Transition integration remains experimental |
 | `useRouter` + push/replace/back/forward | ✅ | Phase 03 |
-| `router.refresh` | ✅ | Navigation 03; refresh-vs-invalidation mutation semantics 07 |
+| `router.refresh` | ✅ | Navigation 03; mutation refresh semantics 07 |
 | `router.prefetch` / `onInvalidate` | ✅ | Phase 03 |
 | `usePathname`, `useSearchParams`, `useParams` | ✅ | Phase 03 |
 | `useSelectedLayoutSegment(s)` | ✅ | Phase 03 |
 | `useLinkStatus` | ✅ | Phase 03 |
-| `redirect`, `permanentRedirect` | ✅ | Navigation 03; redirect-after-mutation ordering 07 |
+| `redirect`, `permanentRedirect` | ✅ | Navigation 03; mutation 07; HTTP context 08 |
 | History API / Back / Forward / hash / scroll / focus | ✅ | Phase 03 |
 | Client Router Cache / prefetch freshness interaction | ✅ | Phase 06 |
 
@@ -140,17 +141,16 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Context/provider placement | ✅ | Phase 04 |
 | third-party/browser-only integration | ✅ | Phase 04 |
 | `server-only`, `client-only`, environment poisoning | ✅ | Phase 04 |
-| RSC payload / hydration / subsequent-navigation internals | 🟠 | Mental models 04–07; deep 10 / 19 |
+| RSC payload / hydration / subsequent-navigation internals | 🟠 | Mental models 04–08; deep 10 / 19 |
 
 ## Data Fetching
 
 | Area | Status | Handbook location / plan |
 | --- | --- | --- |
-| Async Server Components | ✅ | Phase 05 |
-| server data ownership | ✅ | Phase 05 |
+| Async Server Components / server data ownership | ✅ | Phase 05 |
 | Server-side `fetch` | ✅ | Fetching 05; cache semantics 06 |
 | Direct database / ORM / SDK access | ✅ | Phase 05 |
-| avoid internal Route Handler hop | ✅ | Phases 04–05; Route Handler depth 08 |
+| avoid own Route Handler hop from Server Component | ✅ | Phases 05 / 08; build-time and extra-HTTP-hop rationale complete |
 | HTTP status / external response validation | ✅ | Phase 05 |
 | data minimisation / DTO projection | ✅ | Phases 04–05 |
 | Parallel/sequential fetching / waterfalls | ✅ | Phase 05 |
@@ -168,19 +168,16 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 | current default server `fetch` auto behavior | ✅ | Phase 06 |
 | `cache: 'no-store'`, `cache: 'force-cache'` | ✅ | Phase 06 |
 | `next.revalidate`, `next.tags` | ✅ | Phase 06 |
-| development Server Components HMR fetch cache | ✅ | Phases 05–06 |
 | static vs dynamic server rendering | ✅ | Phase 06; delivery internals 10 |
 | React `cache` vs persistent Next.js caching | ✅ | Phases 05–06 |
-| Cache Components (`cacheComponents: true`) | ✅ | Phase 06; opt-in in stable 16.2 |
-| `'use cache'` | ✅ | Phase 06 |
-| cache-key / closed-over-value behavior | ✅ | Phase 06 |
+| Cache Components (`cacheComponents: true`) | ✅ | Phase 06 |
+| `'use cache'`, cache keys, runtime API restrictions | ✅ | Phase 06 |
 | `cacheLife`, `cacheTag` | ✅ | Phase 06 |
 | `revalidateTag(tag, profile)` | ✅ | Phase 06; mutation use 07 |
 | single-argument `revalidateTag(tag)` | ⚠️ | Deprecated |
-| `updateTag` | ✅ | Cache semantics 06; read-your-own-write action workflow 07 |
-| `revalidatePath` | ✅ | Cache semantics 06; mutation ordering 07 |
+| `updateTag`, `revalidatePath` | ✅ | Phase 06; mutation workflow 07 |
 | `refresh` from `next/cache` | ✅ | Phase 07; Server Action only |
-| previous-model route `revalidate` / `fetchCache` / `dynamic` | ✅ | Phase 06; disabled under Cache Components |
+| previous-model `revalidate` / `fetchCache` / `dynamic` | ✅ | Phase 06; Route Handler previous-model use 08 |
 | `unstable_cache` | ⚠️ | Migration/history context |
 | `connection()` | ✅ | Phase 06 |
 | `unstable_noStore` | ⚠️ | Modern replacement is `connection()` |
@@ -195,10 +192,11 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 
 | API | Status | Planned phase |
 | --- | --- | --- |
-| `cookies()` read semantics | 🟠 | Request/cache boundary 06; request pipeline/auth depth 09 / 13 |
-| `cookies()` set/delete in Server Actions | ✅ | Phase 07 mutation/UI rerender semantics |
-| `headers()` | 🟠 | Request/cache boundary 06; request pipeline depth 09 |
-| route `params` | ✅ | Phase 02 |
+| `cookies()` read semantics | 🟠 | Used across 06–08; request pipeline/auth depth 09 / 13 |
+| `cookies()` set/delete in Server Actions | ✅ | Phase 07 |
+| `cookies()` set/delete in Route Handlers | ✅ | Phase 08 |
+| `headers()` | 🟠 | Route Handler request use 08; pipeline/proxy depth 09 |
+| route `params` | ✅ | Phase 02; Route Handler async params Phase 08 |
 | page `searchParams` | ✅ | Phase 03 |
 | `connection()` | ✅ | Phase 06 |
 | Draft/preview mode APIs | 🟡 | Later content/request handling |
@@ -208,56 +206,81 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 | API / area | Status | Handbook location / plan |
 | --- | --- | --- |
 | Server Functions / Server Actions terminology | ✅ | Phase 07 |
-| Server Function vs Server Component distinction | ✅ | Phases 04 / 07 |
-| `'use server'` inline | ✅ | Phase 07 |
-| module-level `'use server'` | ✅ | Phase 07 |
-| importing Server Functions into Client Components | ✅ | Phase 07 |
-| passing Server Functions as props | ✅ | Phase 07 |
+| `'use server'` inline/module level | ✅ | Phase 07 |
+| Client imports / Server Function props | ✅ | Phase 07 |
 | Server Actions use POST | ✅ | Phase 07 |
-| form `action` | ✅ | Phase 07 |
-| submitter `formAction` | ✅ | Phase 07 |
-| `FormData` parsing / `Object.fromEntries` caveat | ✅ | Phase 07 |
-| extra arguments with `bind` | ✅ | Phase 07 |
-| progressive enhancement | ✅ | Phase 07 |
+| form `action`, submitter `formAction` | ✅ | Phase 07 |
+| `FormData`, `bind`, `requestSubmit`, progressive enhancement | ✅ | Phase 07 |
 | `next/form` mutation-vs-navigation distinction | ✅ | Phase 07 |
-| nested/multiple action form intents | ✅ | Phase 07 |
-| programmatic `requestSubmit()` | ✅ | Phase 07 |
-| runtime validation | ✅ | Phase 07; broader security Phase 13 |
-| authentication inside action | ✅ | Phase 07 baseline; auth architecture 13 |
-| resource/tenant authorization inside action | ✅ | Phase 07 baseline; deep 13 |
-| untrusted Server Function arguments | ✅ | Phase 07 |
-| mass-assignment / field whitelisting | ✅ | Phase 07 |
-| `serverActions.allowedOrigins` / same-origin model | ✅ | Phase 07 baseline; CSRF depth 13 |
-| default Server Action body size limit / `bodySizeLimit` | ✅ | Phase 07 |
-| file input / action upload architecture | ✅ | Phase 07 baseline; upload/HTTP/security depth 08 / 13 |
-| `useActionState` | ✅ | Phase 07 |
-| `useFormStatus` | ✅ | Phase 07 |
-| `useOptimistic` | ✅ | Phase 07 |
-| pending-state / expected-error modeling | ✅ | Phase 07 |
-| optimistic rollback/reconciliation | ✅ | Phase 07 |
+| runtime validation / mass assignment | ✅ | Phase 07; HTTP equivalent 08 |
+| authentication/resource authorization | ✅ | Phase 07 baseline; full architecture 13 |
+| same-origin / `serverActions.allowedOrigins` | ✅ | Phase 07 baseline; CSRF depth 13 |
+| `bodySizeLimit` / action upload architecture | ✅ | Phase 07; HTTP/upload depth 08 |
+| `useActionState`, `useFormStatus`, `useOptimistic` | ✅ | Phase 07 |
 | mutation concurrency / lost updates | ✅ | Phase 07 |
-| `refresh()` after mutation | ✅ | Phase 07 |
-| redirect after mutation / control-flow ordering | ✅ | Phase 07 |
-| cookie writes after mutation | ✅ | Phase 07 |
-| tag/path invalidation after mutation | ✅ | Phase 07 |
-| idempotency / duplicate submissions | ✅ | Phase 07 |
-| DB transactions / unique constraints / state-machine guards | ✅ | Phase 07 |
-| external side effects / outbox / retries | ✅ | Phase 07 architecture |
-| Server Function vs Route Handler decision | 🟠 | Server Function side complete 07; HTTP side Phase 08 |
+| refresh / redirect / cookie / invalidation sequencing | ✅ | Phase 07 |
+| idempotency / unique constraints / transactions / outbox | ✅ | Phase 07 |
+| Server Function vs Route Handler decision | ✅ | Both sides complete Phases 07–08 |
 | Server Function testing automation | 🟡 | Phase 16 |
 
 ## Route Handlers & HTTP
 
-| Area | Status | Planned phase |
+| Area / API | Status | Handbook location / plan |
 | --- | --- | --- |
-| HTTP methods in `route.ts` | 🟡 | 08 |
-| Web `Request` / `Response`, `NextRequest` / `NextResponse` | 🟡 | 08–09 |
-| cookies / headers / redirects | 🟡 | 08–09 |
-| streaming/file responses | 🟡 | 08 |
-| webhooks | 🟠 | Invalidation/action boundary concepts exist; full 08 / 13 |
-| CORS / HTTP rate limiting | 🟡 | 08 / 13 |
-| Server Function vs Route Handler | 🟠 | Action side 07; HTTP side 08 |
-| direct server data access vs internal HTTP hop | ✅ | Phase 05 |
+| `route.ts` App Router endpoint convention | ✅ | Phase 08 |
+| public HTTP boundary / arbitrary client model | ✅ | Phase 08 |
+| `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS` | ✅ | Phase 08 |
+| unsupported method → 405 | ✅ | Phase 08 |
+| automatic `OPTIONS` / `Allow` behavior | ✅ | Phase 08 |
+| route/page same-segment conflict | ✅ | Phase 08 |
+| Route Handlers do not participate in layout/client navigation rendering | ✅ | Phase 08 |
+| native Web `Request` | ✅ | Phase 08 |
+| native Web `Response` / `Response.json()` | ✅ | Phase 08 |
+| `NextRequest` | ✅ | Phase 08; Proxy integration depth 09 |
+| `NextRequest.nextUrl` / cookies | ✅ | Phase 08 |
+| `NextResponse` / json / cookies / redirect / rewrite | ✅ | Phase 08; `next()` Proxy depth 09 |
+| async Route Handler params | ✅ | Phase 08 |
+| global `RouteContext` helper | ✅ | Phase 08 |
+| URL query params | ✅ | Phase 08 |
+| request headers / safe allow-listing | ✅ | Phase 08 baseline; Proxy forwarding depth 09 |
+| request body one-read stream semantics / `clone()` | ✅ | Phase 08 |
+| `request.json()` | ✅ | Phase 08 |
+| `request.formData()` | ✅ | Phase 08 |
+| `request.text()` / raw webhook body | ✅ | Phase 08 |
+| `arrayBuffer()` / `blob()` binary payloads | ✅ | Phase 08 |
+| content-type / malformed-body handling | ✅ | Phase 08 |
+| request schema validation / unknown-field projection | ✅ | Phase 08; security depth 13 |
+| mass-assignment prevention | ✅ | Phases 07–08 |
+| SSRF-safe server-side URL construction | ✅ | Phase 08 baseline; security depth 13 |
+| JSON/text/XML/CSV responses | ✅ | Phase 08 |
+| files / downloads / `Content-Disposition` | ✅ | Phase 08 |
+| Web `ReadableStream` response model | ✅ | Phase 08; React/RSC streaming internals 10 |
+| upstream stream pass-through / header allow-listing | ✅ | Phase 08 |
+| stream cancellation/backpressure/late-error model | ✅ | Phase 08 baseline; performance/ops depth 15–17 |
+| large file object-storage / signed-URL architecture | ✅ | Phase 08 baseline; ops depth 17 |
+| GET Route Handlers not cached by default | ✅ | Phase 08 current 16.2 behavior |
+| non-GET methods not cached | ✅ | Phase 08 |
+| previous-model `dynamic = 'force-static'` GET caching | ✅ | Phase 08 with Phase 06 model context |
+| Cache Components GET prerender/request-time model | ✅ | Phase 08 |
+| `use cache` helper inside Route Handler workflow | ✅ | Phase 08; directive remains in extracted helper, not handler body |
+| HTTP `Cache-Control` vs Next.js server cache | ✅ | Phase 08 |
+| Route Handler `generateStaticParams` interaction | ✅ | Phase 08 |
+| runtime/serverless/process-local state constraints | ✅ | Phase 08 baseline; deployment depth 17 |
+| static export Route Handler limits | ✅ | Phase 08 baseline; deployment depth 17 |
+| CORS / custom `OPTIONS` preflight | ✅ | Phase 08 baseline; broad policy depth 09 / 13 |
+| CORS is not auth | ✅ | Phase 08 |
+| authentication vs resource authorization | ✅ | Phase 08 baseline; full Phase 13 |
+| HTTP CSRF considerations | 🟠 | Cookie-auth endpoint baseline Phase 08; full CSRF architecture 13 |
+| application/platform rate limiting | ✅ | Phase 08 baseline; security/ops depth 13 / 17 |
+| webhook raw signature verification | ✅ | Phase 08 |
+| webhook replay / dedupe / idempotency | ✅ | Phase 08 |
+| callback URL / open redirect protection | ✅ | Phase 08 baseline; auth depth 13 |
+| safe API error/log-redaction contract | ✅ | Phase 08 baseline; observability depth 14 |
+| Server Action vs Route Handler vs direct server helper | ✅ | Phases 05 / 07 / 08 |
+| Backend-for-Frontend decision model | ✅ | Phase 08 baseline; large-app depth 18 |
+| upstream proxy adapter / open-proxy avoidance | ✅ | Phase 08 baseline; Proxy phase 09 covers request-pipeline rewrites |
+| API versioning / mobile-external compatibility | ✅ | Phase 08 architecture baseline |
+| Route Handler production incident/debug review | ✅ | Phase 08 baseline; deep observability 14 |
 
 ## Proxy & Request Pipeline
 
@@ -265,9 +288,10 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 | --- | --- | --- |
 | `proxy.ts` naming | 🟠 | Phase 09 |
 | Proxy function / matchers / request order | 🟡 | 09 |
-| redirects / rewrites / headers | 🟡 | 09 |
+| redirects / rewrites / request/response headers | 🟠 | Route Handler-side concepts 08; Proxy mechanics 09 |
+| `NextResponse.next()` / upstream request-header forwarding | 🟠 | API introduced 08; deep 09 |
 | auth gating | 🟡 | 09 / 13 |
-| authoritative authorization outside Proxy | ✅ | Trust/action models established |
+| authoritative authorization outside Proxy | ✅ | Trust/action/API models established 05–08 |
 | localization / tenancy | 🟡 | 09 / 18 |
 | old `middleware.ts` convention | ⚠️ | Migration-only in Next.js 16 |
 
@@ -275,35 +299,40 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| server rendering pipeline / RSC payload / HTML / hydration | 🟠 | Mental models 04–07; deep 10 |
-| streaming / Suspense | 🟠 | Data/cache/action boundaries covered; transport depth 10 |
+| server rendering pipeline / RSC payload / HTML / hydration | 🟠 | Mental models 04–08; deep 10 |
+| React/RSC streaming / Suspense | 🟠 | Data/cache boundaries covered; deep 10 |
+| HTTP response streaming | ✅ | Phase 08; distinct from RSC streaming |
 | `loading.tsx` | ✅ | Phases 02–06 |
 | soft vs hard navigation | ✅ | Phases 02–03 |
 | production `<Link>` prefetching | ✅ | Phase 03 |
 | Cache Components partial prerendering | ✅ | Phase 06; mechanics 10 |
-| action response can carry updated RSC UI/data | ✅ | Phase 07 framework mutation model |
+| action response can carry updated RSC UI/data | ✅ | Phase 07 |
 | Next.js 16.3 Instant Navigations | 🧪 | Preview-only at baseline |
 
 ## Security
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| authentication vs authorization distinction | ✅ | Phase 07 mutation boundary baseline; full architecture Phase 13 |
-| route/query/navigation inputs untrusted | ✅ | Phases 02–03 |
+| authentication vs authorization distinction | ✅ | Mutation/API baselines 07–08; full architecture 13 |
+| route/query/navigation/request body inputs untrusted | ✅ | Phases 02–03 / 08 |
 | Server Function arguments/FormData untrusted | ✅ | Phase 07 |
+| public Route Handler trust boundary | ✅ | Phase 08 |
 | server/client DTO minimisation | ✅ | Phases 04–05 |
 | `server-only` / environment poisoning | ✅ | Phase 04 |
-| scoped tenant/resource data queries | ✅ | Phases 05 / 07 baseline; deep 13 / 18 |
-| cache key isolation / shared-cache auth caveats | ✅ | Phase 06 baseline; deep 13 |
-| action resource authorization | ✅ | Phase 07 baseline; policy architecture 13 |
-| action same-origin / `allowedOrigins` CSRF mitigation | ✅ | Phase 07 baseline; CSRF depth 13 |
-| mass assignment / overposting | ✅ | Phase 07 |
-| safe action error serialization / log redaction | ✅ | Phase 07 baseline; deep 13–14 |
-| action abuse/rate-limit architecture | 🟠 | Phase 07 high-risk baseline; HTTP/security depth 08 / 13 |
+| scoped tenant/resource data queries | ✅ | Phases 05 / 07–08 baseline; deep 13 / 18 |
+| cache isolation / shared-cache auth caveats | ✅ | Phase 06 baseline; deep 13 |
+| mass assignment / overposting | ✅ | Phases 07–08 |
+| same-origin action protections | ✅ | Phase 07 baseline |
+| CORS / origin allow-list | ✅ | Phase 08 baseline; full request security 13 |
+| CSRF | 🟠 | Action and cookie-auth HTTP baselines 07–08; deep 13 |
+| webhook signatures / replay protection | ✅ | Phase 08 baseline; broader secret/security depth 13 |
+| SSRF | ✅ | Route Handler prevention baseline 08; broader threat model 13 |
+| uploads / file validation / direct storage | ✅ | Phase 08 baseline; deep 13 / 17 |
+| HTTP rate limiting / abuse control | ✅ | Phase 08 baseline; deep 13 / 17 |
 | CSP / security headers | 🟡 | 09 / 13 |
-| XSS / output safety | 🟠 | Navigation baseline; broad 13 |
+| XSS / output safety | 🟠 | Navigation/API baselines; broad 13 |
 | secrets / `NEXT_PUBLIC_` | 🟠 | Boundary exposure covered; deep 13 |
-| uploads / webhooks | 🟠 | Action upload baseline 07; full 08 / 13 |
+| safe errors / log redaction | ✅ | Phases 07–08 baseline; deep 13–14 |
 
 ## Errors, Observability & Debugging
 
@@ -311,12 +340,14 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 | --- | --- | --- |
 | route error boundary placement | ✅ | Phase 02 |
 | expected mutation errors vs exceptions | ✅ | Phase 07 |
-| action pending/error UX | ✅ | Phase 07 |
-| redirect swallowed by `try/catch` debugging | ✅ | Phase 07 |
-| stale UI after mutation diagnosis | ✅ | Phases 06–07 |
-| duplicate action / idempotency incident model | ✅ | Phase 07 |
-| mutation latency decomposition | ✅ | Phase 07 baseline; perf/observability depth 14–15 |
-| structured logs / correlation IDs / OpenTelemetry / instrumentation | 🟠 | Baselines 05–07; full 14 |
+| stale UI / duplicate mutation diagnosis | ✅ | Phases 06–07 |
+| Route Handler routing/auth/validation/rate-limit/timeout/stream failure taxonomy | ✅ | Phase 08 |
+| raw HTTP and preflight reproduction | ✅ | Phase 08 |
+| API correlation/request ID model | ✅ | Phase 08 baseline; deep 14 |
+| route-template metrics / cardinality awareness | ✅ | Phase 08 baseline; deep 14–15 |
+| webhook incident metadata / replay debugging | ✅ | Phase 08 baseline |
+| dependency timeline / upstream latency decomposition | ✅ | Phases 05 / 08 baseline; deep 14–15 |
+| structured logs / OpenTelemetry / instrumentation | 🟠 | Baselines 05–08; full 14 |
 | source maps / release correlation | 🟡 | 14 |
 
 ## Performance
@@ -325,9 +356,11 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 | --- | --- | --- |
 | client JS / hydration cost | 🟠 | Phase 04; deep 15 |
 | server render/data/cache latency | 🟠 | Phases 04–06; deep 15 |
-| mutation latency stages | ✅ | Phase 07 baseline; broad performance 15 |
-| mutation waterfalls | ✅ | Phase 07 architecture |
-| durable side effects outside critical request | ✅ | Phase 07 architecture; ops depth 17 |
+| data waterfalls / N+1 / bounded concurrency | ✅ | Phase 05 |
+| mutation latency / side-effect critical path | ✅ | Phase 07 baseline |
+| Route Handler critical path / upstream latency | ✅ | Phase 08 baseline; deep 15 |
+| HTTP streaming / cancellation / large transfer architecture | ✅ | Phase 08 baseline; deep 15 / 17 |
+| API rate-limit/load-test metric model | ✅ | Phase 08 baseline; deep 15 / 17 |
 | caching architecture / stampede avoidance | ✅ | Phase 06 |
 | performance budgets / measurement | 🟠 | Multiple baselines; deep 15 |
 
@@ -335,29 +368,33 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| production build validation | ✅ | Phases 02–07 workflow |
+| production build validation | ✅ | Phases 02–08 workflow |
 | unit/component tests | 🟡 | 16 |
 | Server/Client Component strategy | 🟠 | Architecture scenarios covered; automation 16 |
 | data/cache tests | 🟠 | Failure/isolation scenarios defined; automation 16 |
-| Server Function tests | 🟠 | Test matrix/failure modes Phase 07; automation 16 |
-| Route Handler tests | 🟡 | 16 |
+| Server Function tests | 🟠 | Matrix/failure modes Phase 07; automation 16 |
+| Route Handler test matrix | ✅ | Failure/security/HTTP cases specified Phase 08; automation 16 |
+| Route Handler automated tests | 🟡 | 16 |
 | Playwright E2E / accessibility automation | 🟡 | 16 |
-| action progressive-enhancement E2E | 🟠 | Behaviour specified Phase 07; automation 16 |
-| duplicate/idempotency/concurrency tests | 🟠 | Cases specified Phase 07; automation 16 |
-| deployment smoke tests | 🟡 | 16 / 17 |
+| action progressive-enhancement E2E | 🟠 | Behaviour specified 07; automation 16 |
+| duplicate/idempotency/concurrency tests | 🟠 | Cases specified 07–08; automation 16 |
+| deployment smoke tests | 🟠 | HTTP production cases defined 08; automation 16 / ops 17 |
 
 ## Deployment & Operations
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
 | `next build` / `next start` | 🟠 | 01 / 17 |
-| Node hosting / standalone / Docker / reverse proxy | 🟡 | 17 |
+| Node hosting / standalone / Docker / reverse proxy | 🟠 | HTTP/runtime implications 08; full 17 |
 | environment configuration | 🟠 | 01 / 17 |
-| adapters / serverless / Vercel / self-hosting | 🟠 | Cache/action implications introduced; full 17 |
+| adapters / serverless / Vercel / self-hosting | 🟠 | Cache/action/Route Handler implications introduced; full 17 |
 | local vs remote cache handlers | ✅ | Phase 06 architecture; ops depth 17 |
 | multi-instance cache/revalidation | 🟠 | Phase 06; ops depth 17 |
-| Server Action origin/proxy configuration | 🟠 | Phase 07 baseline; deployment/security depth 17 / 13 |
-| queues / outbox / durable side effects | 🟠 | Mutation architecture Phase 07; production ops 17 |
+| Server Action origin/proxy configuration | 🟠 | Phase 07 baseline; deployment/security depth 13 / 17 |
+| Route Handler ephemeral process / filesystem / timeout model | ✅ | Phase 08 baseline; full ops 17 |
+| DB connection pooling/serverless constraints | ✅ | Phase 08 baseline; full ops 17 |
+| queues/outbox/durable side effects | 🟠 | Phases 07–08 architecture; production ops 17 |
+| object storage / signed downloads | 🟠 | Phase 08 architecture; implementation/ops 17 |
 | rollback / health / graceful shutdown | 🟡 | 17 |
 | CI/CD / preview environments | 🟡 | 17 |
 
@@ -370,14 +407,17 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 | server data/dependency ownership | ✅ | Phase 05 |
 | cache freshness/invalidation ownership | ✅ | Phase 06 |
 | mutation/action boundary ownership | ✅ | Phase 07 |
+| HTTP endpoint ownership / transport boundary | ✅ | Phase 08 |
 | thin action + server-only domain command pattern | ✅ | Phase 07 |
-| explicit domain actions vs generic update APIs | ✅ | Phase 07 |
-| transaction/idempotency/side-effect architecture | ✅ | Phase 07 |
-| feature/vertical-slice architecture | 🟠 | Examples 02–07; deep 18 |
+| Server Action + Route Handler shared domain-command pattern | ✅ | Phase 08 |
+| Server Component direct source vs internal HTTP decision | ✅ | Phases 05 / 08 |
+| BFF aggregation/adaptation decision model | ✅ | Phase 08 baseline; deep 18 |
+| public API versioning / client rollout compatibility | ✅ | Phase 08 baseline; deep 18 |
+| transport-specific error/auth mapping | ✅ | Phase 08 |
+| feature/vertical-slice architecture | 🟠 | Examples 02–08; deep 18 |
 | monorepos/shared packages | 🟠 | Runtime boundaries 04; deep 18 |
-| design systems / BFF decisions | 🟠 | Deep 18 |
 | multi-tenancy/permissions | 🟠 | Strong trust model established; deep 13 / 18 |
-| RSC build/delivery internals | 🟠 | Mental models 04–07; deep 19 |
+| RSC build/delivery internals | 🟠 | Mental models 04–08; deep 19 |
 | Turbopack internals / public contract vs implementation detail | 🟡 | 19 |
 
 ## Upgrades & Migration
@@ -385,15 +425,16 @@ This section remains explicitly version-sensitive and follows stable Next.js 16.
 | Area | Status | Planned phase |
 | --- | --- | --- |
 | current App Router upgrade workflow / codemods | 🟠 | 01 / 20 |
-| async `params` / `searchParams` current contract | ✅ | Phases 02–03 |
+| async `params` / `searchParams` current contract | ✅ | Phases 02–03; Route Handler params 08 |
 | `next/router` → App Router navigation APIs | 🟠 | Phase 03; migration 20 |
-| client-heavy SPA → server-first data/action migration | 🟠 | Phases 04–07; migration depth 20 |
+| client-heavy SPA → server-first data/action/API migration | 🟠 | Phases 04–08; migration depth 20 |
 | previous cache model → Cache Components | 🟠 | Phase 06; full upgrade playbook 20 |
 | `unstable_cache` / old PPR / dynamicIO migration | ⚠️ | Migration-only |
-| Server Actions stable-by-default historical enable flag | ⚠️ | Historical only; stable since Next.js 14 |
-| Proxy migration from `middleware.ts` | ⚠️ | 20 |
+| Server Actions historical experimental enable flag | ⚠️ | Historical only; stable-by-default in modern Next.js |
+| older GET Route Handler cached-by-default assumptions | ⚠️ | Phase 08 explicitly teaches current not-cached-by-default behavior |
+| Pages API Routes | ⛔ | Pages Router excluded; Route Handlers are the App Router HTTP primitive |
+| Proxy migration from `middleware.ts` | ⚠️ | Phase 20 |
 | Turbopack compatibility | 🟡 | 20 |
-| Pages Router → App Router migration | ⛔ | Outside scope |
 
 ## Phase 02 completion note
 
@@ -417,21 +458,23 @@ Phase 06 is complete for stable Next.js 16.2 cache/rendering/revalidation semant
 
 ## Phase 07 completion note
 
-Phase 07 is complete for stable mutation/form/Server Function semantics because it teaches:
+Phase 07 is complete for stable mutation/form/Server Function semantics: Server Function/Action terminology, `use server`, forms, validation/authorization, action state/status/optimistic UI, post-write cache/redirect/cookie sequencing, concurrency, idempotency, transactions, durable side effects, and mutation architecture.
 
-- Server Function vs Server Action terminology and `use server` placement
-- module-level actions imported by Client Components and Server Function props
-- forms, `FormData`, `bind`, `formAction`, `requestSubmit`, progressive enhancement, and `next/form` distinctions
-- runtime validation, authentication, resource/tenant authorization, mass-assignment prevention, and action argument trust boundaries
-- same-origin/`allowedOrigins` and body-size/upload considerations
-- `useActionState`, `useFormStatus`, expected errors, pending state, and accessible form feedback
-- `useOptimistic`, rollback/reconciliation, lost-update and mutation concurrency models
-- `updateTag`, `revalidateTag`, `revalidatePath`, `refresh`, cookie writes, and redirect ordering after mutations
-- idempotency, duplicate requests, unique constraints, transactions, state-machine guards, outbox/durable side effects, and retry safety
-- Server Function vs internal server helper vs Route Handler ownership
-- production action debugging, mutation latency decomposition, security review, and senior mutation architecture design
+## Phase 08 completion note
 
-Full HTTP Route Handler semantics remain Phase 08; complete request-pipeline/auth security, observability, performance, testing, and deployment operations remain Phases 09 and 13–17.
+Phase 08 is complete for stable Route Handler and HTTP semantics because it teaches:
+
+- `route.ts`, supported HTTP methods, 405 behavior, automatic/custom OPTIONS, route resolution, and page/route ownership
+- Web `Request` / `Response`, `NextRequest` / `NextResponse`, `nextUrl`, cookies, headers, redirects/rewrites, async params, and `RouteContext`
+- JSON, form, text, and binary request bodies; one-read streams; schema validation; content-type checks; mass-assignment and SSRF prevention
+- JSON/text/XML/CSV/file/download responses, Web streams, framing, cancellation, backpressure, late-stream failure behavior, and object-storage transfer patterns
+- current GET Route Handler not-cached-by-default behavior, previous `force-static` model, Cache Components prerender/runtime classification, extracted `use cache` helpers, and HTTP-cache separation
+- authentication/resource authorization, CORS/preflight, CSRF baseline, rate limiting, request timeouts, safe logging, and API error contracts
+- webhook raw signature verification, replay/deduplication/idempotency, callback/open-redirect safety, and durable acknowledgement/work-queue patterns
+- Server Action vs Route Handler vs direct server helper decisions, shared domain logic, BFF boundaries, upstream proxy safety, and API versioning
+- serverless/process-local/filesystem/timeout/DB-connection constraints, load/latency debugging, raw HTTP reproduction, production incident runbooks, and senior HTTP/API design review
+
+Full Proxy/request-pipeline mechanics remain Phase 09. Full authentication/security, observability, performance, automated testing, and deployment operations remain Phases 13–17.
 
 ## Completion rule
 

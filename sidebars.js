@@ -171,6 +171,16 @@ const nextjsItems = [
     'nextjs/mutations-forms-and-server-functions/revalidation-refresh-redirects-and-cookies',
     'nextjs/mutations-forms-and-server-functions/idempotency-transactions-and-side-effects',
     'nextjs/mutations-forms-and-server-functions/mutation-architecture-debugging-and-design-review',
+  ], { collapsed: true }),
+  category('08 · Route Handlers', [
+    'nextjs/route-handlers/route-ts-methods-and-http-semantics',
+    'nextjs/route-handlers/request-response-nextrequest-and-nextresponse',
+    'nextjs/route-handlers/request-bodies-validation-and-content-types',
+    'nextjs/route-handlers/responses-streaming-files-and-downloads',
+    'nextjs/route-handlers/caching-rendering-and-runtime-behavior',
+    'nextjs/route-handlers/security-cors-webhooks-and-rate-limiting',
+    'nextjs/route-handlers/server-actions-vs-route-handlers-and-bff-architecture',
+    'nextjs/route-handlers/production-debugging-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',
