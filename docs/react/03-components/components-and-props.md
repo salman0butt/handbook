@@ -4,6 +4,15 @@ description: Learn function components, props, composition, pure rendering, boun
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Components and Props
 
 Components are the building blocks of a React application.
@@ -37,15 +46,17 @@ Without components, a growing interface can become one large mixture of markup, 
 
 Components let you create boundaries around meaningful UI responsibilities.
 
-```text
-ProductPage
-├── ProductGallery
-├── ProductDetails
-│   ├── Price
-│   ├── VariantSelector
-│   └── AddToBasketButton
-└── DeliveryInfo
-```
+<VisualDiagram title="Component boundaries turn one page into meaningful responsibilities">
+  <DiagramStack align="center">
+    <DiagramNode title="ProductPage" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="ProductGallery" tone="cyan" />
+      <DiagramNode title="ProductDetails" tone="purple">Price · VariantSelector · AddToBasketButton</DiagramNode>
+      <DiagramNode title="DeliveryInfo" tone="green" />
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 Good boundaries make it easier to understand:
 
@@ -60,13 +71,15 @@ Good boundaries make it easier to understand:
 
 Treat a component as a UI calculation:
 
-```text
-props + state + context
-          ↓
-      component
-          ↓
-   React elements
-```
+<VisualDiagram title="Component = UI calculation" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="props + state + context" tone="blue" wide />
+    <DiagramArrow label="render" />
+    <DiagramNode title="component" tone="purple" wide />
+    <DiagramArrow label="returns" />
+    <DiagramNode title="React elements" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 A component should not be thought of as a long-lived mutable object that you manually update.
 
@@ -94,15 +107,16 @@ Lowercase JSX names are treated as host/platform elements such as `div`, `button
 
 A useful model is:
 
-```text
-parent owns data
-      ↓
-passes props
-      ↓
-child receives inputs
-      ↓
-child calculates UI
-```
+<VisualDiagram title="Props flow down from the owner">
+  <LifecycleBar
+    items={[
+      { label: 'Parent owns data', tone: 'blue' },
+      { label: 'Passes props', tone: 'cyan' },
+      { label: 'Child receives inputs', tone: 'purple' },
+      { label: 'Child calculates UI', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Example:
 
@@ -124,13 +138,15 @@ Props let the same component structure work with different values.
 
 Data normally flows down the tree:
 
-```text
-App
- ↓
-ProductList
- ↓
-ProductCard
-```
+<VisualDiagram title="One-way data flow" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="App" tone="blue" wide />
+    <DiagramArrow label="props" />
+    <DiagramNode title="ProductList" tone="purple" wide />
+    <DiagramArrow label="props" />
+    <DiagramNode title="ProductCard" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 ```jsx
 function ProductList({products}) {
@@ -364,19 +380,18 @@ Usage:
 
 The child owns the interaction surface. The parent owns what deletion means for parent/domain state.
 
-```text
-parent owns state
-      ↓
-passes data + callback
-      ↓
-child renders UI
-      ↓
-user interacts
-      ↓
-child calls callback
-      ↓
-parent updates owned state
-```
+<VisualDiagram title="Child interaction can update parent-owned state without reversing data flow">
+  <LifecycleBar
+    items={[
+      { label: 'Parent owns state', tone: 'blue' },
+      { label: 'Passes data + callback', tone: 'cyan' },
+      { label: 'Child renders UI', tone: 'purple' },
+      { label: 'User interacts', tone: 'orange' },
+      { label: 'Child calls callback', tone: 'purple' },
+      { label: 'Parent updates owned state', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 This is how one-way data flow still supports child-to-parent interactions.
 
@@ -399,29 +414,26 @@ Useful boundaries often appear when:
 
 ## Too large
 
-```text
-CheckoutPage
-├── address logic
-├── shipping logic
-├── payment logic
-├── basket calculations
-├── validation
-└── all UI markup
-```
+<VisualDiagram title="Too large: one component owns unrelated domains" compact>
+  <DiagramNode title="CheckoutPage" tone="red" wide>
+    address · shipping · payment · basket calculations · validation · all UI markup
+  </DiagramNode>
+</VisualDiagram>
 
 One component owns several domains and changes for unrelated reasons.
 
 ## Too fragmented
 
-```text
-CheckoutPage
-├── CheckoutTitleWrapper
-├── CheckoutTitleText
-├── CheckoutTitleIcon
-├── CheckoutDivider
-├── CheckoutButtonText
-└── CheckoutButtonIcon
-```
+<VisualDiagram title="Too fragmented: abstraction without ownership" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="CheckoutTitleWrapper" tone="slate" />
+    <DiagramNode title="CheckoutTitleText" tone="slate" />
+    <DiagramNode title="CheckoutTitleIcon" tone="slate" />
+    <DiagramNode title="CheckoutDivider" tone="slate" />
+    <DiagramNode title="CheckoutButtonText" tone="slate" />
+    <DiagramNode title="CheckoutButtonIcon" tone="slate" />
+  </DiagramGrid>
+</VisualDiagram>
 
 Many tiny components can add indirection without adding meaningful ownership, reuse, or behavior.
 
@@ -448,13 +460,12 @@ Do not interpret colocation as "put everything in one file." It means related co
 
 A useful distinction can be:
 
-```text
-UI primitive
-Button, Dialog, TextField
-
-Feature/domain component
-CheckoutSummary, UserPermissions, InvoiceTable
-```
+<VisualDiagram title="UI primitives vs domain components">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="UI primitive" tone="blue">Button · Dialog · TextField</DiagramNode>
+    <DiagramNode title="Feature / domain component" tone="purple">CheckoutSummary · UserPermissions · InvoiceTable</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Domain components know application concepts. UI primitives try to expose reusable presentation/interaction contracts.
 
@@ -479,15 +490,16 @@ specialCheckoutMode
 
 A healthier progression is:
 
-```text
-build concrete feature
-      ↓
-observe real repetition
-      ↓
-identify stable responsibility
-      ↓
-extract smallest useful API
-```
+<VisualDiagram title="Healthy abstraction progression">
+  <LifecycleBar
+    items={[
+      { label: 'Build concrete feature', tone: 'blue' },
+      { label: 'Observe real repetition', tone: 'cyan' },
+      { label: 'Identify stable responsibility', tone: 'purple' },
+      { label: 'Extract smallest useful API', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Duplication can be cheaper than the wrong abstraction.
 
@@ -503,19 +515,18 @@ function App() {
 
 A simplified render model is:
 
-```text
-App renders
-   ↓
-creates ProductCard element description
-   ↓
-React renders ProductCard with props
-   ↓
-ProductCard calculates children
-   ↓
-React reconciles result
-   ↓
-necessary changes may commit
-```
+<VisualDiagram title="Parent → child rendering flow">
+  <LifecycleBar
+    items={[
+      { label: 'App renders', tone: 'blue' },
+      { label: 'Creates ProductCard element description', tone: 'cyan' },
+      { label: 'React renders ProductCard with props', tone: 'purple' },
+      { label: 'ProductCard calculates children', tone: 'orange' },
+      { label: 'React reconciles result', tone: 'green' },
+      { label: 'Necessary changes may commit', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 A parent rendering can cause child rendering. That does not mean every child's DOM changes.
 
@@ -562,17 +573,17 @@ If a child displays the wrong value:
 5. check whether state was copied unnecessarily from props;
 6. check identity/keys if the wrong child state is being preserved.
 
-```text
-wrong child UI
-      ↓
-inspect child inputs
-      ↓
-trace prop upward
-      ↓
-find source of truth
-      ↓
-fix ownership/calculation
-```
+<VisualDiagram title="Trace wrong child UI back to ownership" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Wrong child UI', tone: 'red' },
+      { label: 'Inspect child inputs', tone: 'orange' },
+      { label: 'Trace prop upward', tone: 'blue' },
+      { label: 'Find source of truth', tone: 'purple' },
+      { label: 'Fix ownership / calculation', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## When should I create a component?
 
@@ -617,7 +628,6 @@ function ProductCard({product, onAddToBasket}) {
       <div className="product-card__content">
         <h2>{product.name}</h2>
         <ProductPrice price={product.price} currency={product.currency} />
-
         <StockMessage inStock={product.inStock} />
 
         <button
@@ -641,17 +651,11 @@ Do not automatically extract `ProductImage`, `ProductPrice`, and `StockMessage`;
 
 Design components for:
 
-```text
-Product Details
-├── product image gallery
-├── product title
-├── rating
-├── price
-├── variant selector
-├── quantity selector
-├── add-to-basket action
-└── delivery information
-```
+<VisualDiagram title="Product details decomposition exercise" compact>
+  <DiagramNode title="Product Details" tone="blue" wide>
+    image gallery · title · rating · price · variant selector · quantity selector · add-to-basket action · delivery information
+  </DiagramNode>
+</VisualDiagram>
 
 For each proposed component, answer:
 
@@ -682,21 +686,15 @@ How do you decide whether to extract a reusable component, and what costs can pr
 
 Components define **responsibilities**. Props define **inputs**.
 
-Keep this model:
-
-```text
-clear responsibility
-      +
-clear inputs
-      +
-pure rendering
-      +
-clear state ownership
-      +
-deliberate composition
-      =
-component that is easier to understand and change
-```
+<VisualDiagram title="A healthy component boundary" compact>
+  <DiagramGrid columns={5}>
+    <DiagramNode title="Responsibility" tone="blue" />
+    <DiagramNode title="Inputs" tone="cyan" />
+    <DiagramNode title="Pure rendering" tone="purple" />
+    <DiagramNode title="State ownership" tone="orange" />
+    <DiagramNode title="Composition" tone="green" />
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not optimize for the largest possible component or the smallest possible component. Optimize for boundaries that make ownership and change easier to reason about.
 

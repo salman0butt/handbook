@@ -4,17 +4,30 @@ description: Understand why state does not change immediately, how batching work
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # State as a snapshot and update queues
 
 State variables look like ordinary JavaScript variables, but their behavior is different.
 
 The key mental model is:
 
-```text
-Each render receives a snapshot of state.
-A setter requests another render.
-It does not mutate the snapshot you already have.
-```
+<VisualDiagram title="State is a render snapshot" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Current render" tone="blue" wide>receives a fixed snapshot of state</DiagramNode>
+    <DiagramArrow label="setter requests future work" />
+    <DiagramNode title="Future render" tone="green" wide>receives the next state snapshot</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
+
+A setter requests another render. It does **not** mutate the snapshot you already have.
 
 ## A render owns a fixed snapshot
 
@@ -45,17 +58,17 @@ requests a future render. It does not rewrite the `count` variable in the curren
 
 Think of renders as separate photographs:
 
-```text
-Render A
-count = 0
-handler A captures count = 0
-      ↓ click
-setCount(1)
-      ↓
-Render B
-count = 1
-handler B captures count = 1
-```
+<VisualDiagram title="Each render gets its own state + handlers">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Render A" tone="blue">
+      count = 0<br />handler A captures count = 0
+    </DiagramNode>
+    <DiagramNode title="Render B" tone="green">
+      count = 1<br />handler B captures count = 1
+    </DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="click → setCount(1) → next render" />
+</VisualDiagram>
 
 This explains many “stale state” questions without treating React as asynchronous magic.
 
@@ -67,16 +80,12 @@ setCount(count + 1);
 
 means roughly:
 
-```text
-using this render's count,
-request a future state value
-```
-
-It does not mean:
-
-```text
-mutate count right now
-```
+<VisualDiagram title="What a setter means" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="What it does" tone="green">Using this render's count, request a future state value.</DiagramNode>
+    <DiagramNode title="What it does not do" tone="red">Mutate count right now.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## React batches updates
 
@@ -92,19 +101,19 @@ function handleClick() {
 
 Conceptually:
 
-```text
-event handler begins
-   ↓
-queue update
-queue update
-queue update
-   ↓
-event handler finishes
-   ↓
-React processes updates
-   ↓
-next render
-```
+<VisualDiagram title="Batching inside one interaction">
+  <LifecycleBar
+    items={[
+      { label: 'Event handler begins', tone: 'orange' },
+      { label: 'Queue count update', tone: 'blue' },
+      { label: 'Queue open update', tone: 'purple' },
+      { label: 'Queue message update', tone: 'cyan' },
+      { label: 'Handler finishes', tone: 'slate' },
+      { label: 'React processes queue', tone: 'green' },
+      { label: 'Next render', tone: 'blue' },
+    ]}
+  />
+</VisualDiagram>
 
 Batching avoids unnecessary intermediate renders and inconsistent half-updated UI.
 
@@ -118,11 +127,16 @@ setCount(count + 1);
 
 If this render's `count` is `0`, all three expressions calculate `1`.
 
-```text
-replace with 1
-replace with 1
-replace with 1
-```
+<VisualDiagram title="Three replacements from the same snapshot" compact>
+  <LifecycleBar
+    items={[
+      { label: 'replace with 1', tone: 'blue' },
+      { label: 'replace with 1', tone: 'blue' },
+      { label: 'replace with 1', tone: 'blue' },
+    ]}
+  />
+  <DiagramNode title="Next state = 1" tone="green" wide>Each expression used the same render snapshot.</DiagramNode>
+</VisualDiagram>
 
 The next state is `1`, not `3`.
 
@@ -138,9 +152,16 @@ setCount(current => current + 1);
 
 React processes the queue:
 
-```text
-0 → 1 → 2 → 3
-```
+<VisualDiagram title="Updater functions build on queued state" compact>
+  <LifecycleBar
+    items={[
+      { label: '0', tone: 'slate' },
+      { label: '1', tone: 'blue' },
+      { label: '2', tone: 'purple' },
+      { label: '3', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 This is the correct tool when multiple updates must build on each other.
 
@@ -155,11 +176,15 @@ setCount(current => current + 1);
 
 Conceptually:
 
-```text
-replace with 5
-then run n => n + 1
-result = 6
-```
+<VisualDiagram title="Replacement + updater queue" compact>
+  <LifecycleBar
+    items={[
+      { label: 'replace with 5', tone: 'blue' },
+      { label: 'n => n + 1', tone: 'purple' },
+      { label: 'result = 6', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 If you later write:
 
@@ -267,15 +292,16 @@ Updaters should calculate only.
 
 Ask:
 
-```text
-Which render created this handler?
-      ↓
-What values existed in that render?
-      ↓
-Am I replacing state or deriving from queued state?
-      ↓
-Does async code retain an older snapshot?
-```
+<VisualDiagram title="Stale-state debugging flow">
+  <LifecycleBar
+    items={[
+      { label: 'Which render created this handler?', tone: 'blue' },
+      { label: 'What values existed in that render?', tone: 'purple' },
+      { label: 'Replacement or updater?', tone: 'orange' },
+      { label: 'Does async code retain an older snapshot?', tone: 'red' },
+    ]}
+  />
+</VisualDiagram>
 
 This reasoning is more reliable than adding random dependencies or refs.
 
@@ -333,12 +359,14 @@ Then explain your answer using the queue model.
 
 ## Summary
 
-```text
-state belongs to a render snapshot
-setter → queues future state
-React batches updates
-updater function → derives from queued previous state
-```
+<VisualDiagram title="Snapshot + queue summary">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Snapshot" tone="blue">State belongs to a render snapshot.</DiagramNode>
+    <DiagramNode title="Setter" tone="purple">Queues future state.</DiagramNode>
+    <DiagramNode title="Batching" tone="cyan">React can process multiple queued updates together.</DiagramNode>
+    <DiagramNode title="Updater" tone="green">Derives from the queued previous state.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 If you understand snapshots and queues, stale-state behavior becomes predictable.
 

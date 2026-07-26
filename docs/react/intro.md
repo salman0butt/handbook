@@ -6,6 +6,16 @@ slug: /react/intro
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # React Handbook
 
 > **Docs target: React 19.2**  
@@ -22,53 +32,57 @@ Start with the **[version policy](./version.md)** when you want to know which Re
 
 React becomes easier when you stop thinking of it as a collection of Hooks and start with one idea:
 
-```text
-current props + current state
-            ↓
-component calculates UI
-            ↓
-React coordinates rendering
-            ↓
-necessary changes are committed
-            ↓
-browser displays the result
-```
+<VisualDiagram
+  title="React's core render loop"
+  subtitle="Current inputs are used to calculate UI; React coordinates only the host changes that are needed."
+>
+  <DiagramStack align="center">
+    <DiagramNode title="Current inputs" tone="blue" wide>
+      props + state + context
+    </DiagramNode>
+    <DiagramArrow label="render" />
+    <DiagramNode title="Component calculates UI" tone="purple" wide>
+      Function components describe the next interface for this render.
+    </DiagramNode>
+    <DiagramArrow label="reconcile" />
+    <DiagramNode title="React coordinates rendering" tone="cyan" wide>
+      React compares identities and determines what host work is necessary.
+    </DiagramNode>
+    <DiagramArrow label="commit" />
+    <DiagramNode title="Necessary changes are committed" tone="green" wide>
+      DOM or other host changes happen only where the result actually differs.
+    </DiagramNode>
+    <DiagramArrow label="paint" />
+    <DiagramNode title="Browser displays the result" tone="orange" wide>
+      The browser paints the committed interface.
+    </DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 From there, the handbook builds the models for state snapshots, identity, Effects, refs, Context, Suspense, transitions, server rendering, and React internals.
 
 ## Learning path
 
-```text
-JavaScript for React
-        ↓
-React mental model
-        ↓
-JSX and components
-        ↓
-rendering + events + state
-        ↓
-forms + lists + keys
-        ↓
-Effects + refs + custom Hooks
-        ↓
-Context + reducers + state architecture
-        ↓
-modern React 19+
-        ↓
-Suspense + transitions + concurrency
-        ↓
-React DOM + SSR + Server Components
-        ↓
-React Compiler + Rules of React
-        ↓
-TypeScript + testing + accessibility
-        ↓
-performance + architecture + patterns
-        ↓
-React internals
-        ↓
-senior engineering decisions
-```
+<VisualDiagram title="Zero → senior React learning path" subtitle="Build mental models first, then layer production architecture on top.">
+  <LifecycleBar
+    items={[
+      { label: 'JavaScript for React', tone: 'slate' },
+      { label: 'React mental model', tone: 'blue' },
+      { label: 'JSX + components', tone: 'purple' },
+      { label: 'Rendering + events + state', tone: 'cyan' },
+      { label: 'Forms + lists + keys', tone: 'green' },
+      { label: 'Effects + refs + custom Hooks', tone: 'orange' },
+      { label: 'Context + reducers + state architecture', tone: 'purple' },
+      { label: 'Modern React 19+', tone: 'blue' },
+      { label: 'Suspense + concurrency', tone: 'cyan' },
+      { label: 'SSR + Server Components', tone: 'green' },
+      { label: 'Compiler + Rules of React', tone: 'orange' },
+      { label: 'TypeScript + testing + accessibility', tone: 'purple' },
+      { label: 'Performance + architecture', tone: 'blue' },
+      { label: 'Internals + senior decisions', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 ## What this handbook covers
 
@@ -145,24 +159,16 @@ Version-specific material is labelled, and Canary/Experimental APIs are never si
 
 React is the UI library. Many production applications also use tools around it.
 
-```text
-React core
-├── components
-├── Hooks
-├── Context
-├── Suspense
-├── transitions
-└── React DOM APIs
-
-Ecosystem / application tooling
-├── Vite
-├── React Router
-├── TanStack Query
-├── Redux Toolkit
-├── Zustand
-├── React Hook Form
-└── frameworks
-```
+<VisualDiagram title="React core vs ecosystem" subtitle="Know which guarantees come from React and which come from surrounding application tooling.">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React core" tone="blue">
+      Components · Hooks · Context · Suspense · transitions · React DOM APIs
+    </DiagramNode>
+    <DiagramNode title="Ecosystem / application tooling" tone="purple">
+      Vite · React Router · TanStack Query · Redux Toolkit · Zustand · React Hook Form · frameworks
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 The handbook labels ecosystem libraries clearly so you learn what React itself guarantees and what comes from surrounding tools.
 
@@ -184,6 +190,26 @@ Legacy material is useful knowledge, but it should not be confused with the reco
 
 Most important chapters follow the same reasoning sequence:
 
+<VisualDiagram title="How to study a React topic" subtitle="Move from definition to production reasoning instead of memorising syntax in isolation.">
+  <LifecycleBar
+    items={[
+      { label: 'What?', tone: 'blue' },
+      { label: 'Why?', tone: 'cyan' },
+      { label: 'Mental model', tone: 'purple' },
+      { label: 'Syntax', tone: 'green' },
+      { label: 'Small example', tone: 'orange' },
+      { label: 'Behaviour', tone: 'blue' },
+      { label: 'Real example', tone: 'cyan' },
+      { label: 'Mistakes', tone: 'red' },
+      { label: 'Debugging', tone: 'orange' },
+      { label: 'Trade-offs', tone: 'purple' },
+      { label: 'Production pattern', tone: 'green' },
+      { label: 'Exercise', tone: 'blue' },
+      { label: 'Interview reasoning', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
+
 1. **What is it?** — establish the simplest accurate model.
 2. **Why does it exist?** — understand the problem being solved.
 3. **Mental model** — visualize what React or JavaScript is doing.
@@ -202,6 +228,14 @@ Don't aim to remember every React API. Aim to understand React well enough that 
 :::
 
 ## How to start
+
+<DecisionTree
+  question="Where should I begin?"
+  items={[
+    { label: 'Arrays, objects, destructuring, closures, async code still feel shaky', value: 'Start with JavaScript for React' },
+    { label: 'Those JavaScript concepts already feel comfortable', value: 'Continue with What is React?' },
+  ]}
+/>
 
 If JavaScript arrays, objects, destructuring, immutability, closures, and async code are not yet comfortable, begin with **[JavaScript for React](./00-prerequisites/javascript-for-react.md)**.
 

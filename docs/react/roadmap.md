@@ -4,6 +4,13 @@ description: The complete zero-to-senior React roadmap from JavaScript prerequis
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramGrid,
+  DiagramNode,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # React learning roadmap
 
 > **Status: all 12 original roadmap phases are complete for the audited React 19.2 stable line.**
@@ -12,82 +19,69 @@ This handbook is designed to build **mental models before API memorization**.
 
 The progression is:
 
-```text
-JavaScript for React
-        ↓
-React mental model
-        ↓
-JSX + components
-        ↓
-rendering + events + state
-        ↓
-Effects + refs + custom Hooks
-        ↓
-Context + reducers + state architecture
-        ↓
-modern React 19+
-        ↓
-Suspense + transitions + concurrency
-        ↓
-React DOM + SSR + Server Components
-        ↓
-Compiler + Rules of React
-        ↓
-TypeScript + testing + accessibility
-        ↓
-performance + architecture + patterns
-        ↓
-internals + debugging + production engineering
-        ↓
-capstone projects + interview mastery
-```
+<VisualDiagram title="Complete React learning progression" subtitle="Each stage builds on the mental models from the previous one.">
+  <LifecycleBar
+    items={[
+      { label: 'JavaScript for React', tone: 'slate' },
+      { label: 'React mental model', tone: 'blue' },
+      { label: 'JSX + components', tone: 'purple' },
+      { label: 'Rendering + events + state', tone: 'cyan' },
+      { label: 'Effects + refs + custom Hooks', tone: 'orange' },
+      { label: 'Context + reducers + state architecture', tone: 'purple' },
+      { label: 'Modern React 19+', tone: 'blue' },
+      { label: 'Suspense + transitions + concurrency', tone: 'cyan' },
+      { label: 'React DOM + SSR + Server Components', tone: 'green' },
+      { label: 'Compiler + Rules of React', tone: 'orange' },
+      { label: 'TypeScript + testing + accessibility', tone: 'purple' },
+      { label: 'Performance + architecture + patterns', tone: 'blue' },
+      { label: 'Internals + production engineering', tone: 'slate' },
+      { label: 'Capstones + interview mastery', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## How to use the roadmap
 
 For most topics, study in this order:
 
-```text
-WHAT
- ↓
-WHY
- ↓
-MENTAL MODEL
- ↓
-SYNTAX
- ↓
-SMALL EXAMPLE
- ↓
-HOW REACT BEHAVES
- ↓
-REAL EXAMPLE
- ↓
-COMMON MISTAKES
- ↓
-DEBUGGING
- ↓
-TRADE-OFFS
- ↓
-PRODUCTION PATTERN
- ↓
-EXERCISE
- ↓
-INTERVIEW REASONING
-```
+<VisualDiagram title="Topic study loop" subtitle="Learn the concept, observe behaviour, then pressure-test it in production and interviews.">
+  <LifecycleBar
+    items={[
+      { label: 'What', tone: 'blue' },
+      { label: 'Why', tone: 'cyan' },
+      { label: 'Mental model', tone: 'purple' },
+      { label: 'Syntax', tone: 'green' },
+      { label: 'Small example', tone: 'orange' },
+      { label: 'React behaviour', tone: 'blue' },
+      { label: 'Real example', tone: 'cyan' },
+      { label: 'Common mistakes', tone: 'red' },
+      { label: 'Debugging', tone: 'orange' },
+      { label: 'Trade-offs', tone: 'purple' },
+      { label: 'Production pattern', tone: 'green' },
+      { label: 'Exercise', tone: 'blue' },
+      { label: 'Interview reasoning', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 The handbook repeatedly reinforces these mental models:
 
-- **state is a snapshot**;
-- **keys are identity**;
-- **Effects synchronize external systems**;
-- **refs are escape hatches**;
-- **Context propagates values but does not own state by itself**;
-- **reducers model state transitions**;
-- **Suspense is a readiness/reveal boundary, not a fetch API**;
-- **concurrency is not multithreading**;
-- **Server Components are not the same thing as SSR**;
-- **Compiler optimization does not replace the Rules of React**;
-- **profile before optimizing**;
-- **production architecture is about ownership, failure boundaries, evidence, and reversibility**.
+<VisualDiagram title="Mental models you should keep returning to" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="State" tone="blue">State is a snapshot.</DiagramNode>
+    <DiagramNode title="Identity" tone="purple">Keys are identity.</DiagramNode>
+    <DiagramNode title="Effects" tone="orange">Effects synchronize external systems.</DiagramNode>
+    <DiagramNode title="Refs" tone="cyan">Refs are escape hatches.</DiagramNode>
+    <DiagramNode title="Context" tone="green">Context propagates values; it does not own state by itself.</DiagramNode>
+    <DiagramNode title="Reducers" tone="purple">Reducers model state transitions.</DiagramNode>
+    <DiagramNode title="Suspense" tone="blue">Suspense is a readiness/reveal boundary, not a fetch API.</DiagramNode>
+    <DiagramNode title="Concurrency" tone="cyan">Concurrency is not multithreading.</DiagramNode>
+    <DiagramNode title="Server Components" tone="green">Server Components are not the same thing as SSR.</DiagramNode>
+    <DiagramNode title="Compiler" tone="orange">Compiler optimisation does not replace the Rules of React.</DiagramNode>
+    <DiagramNode title="Performance" tone="blue">Profile before optimising.</DiagramNode>
+    <DiagramNode title="Production architecture" tone="slate">Ownership, failure boundaries, evidence, and reversibility matter.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Phase 1 — Foundations ✅
 

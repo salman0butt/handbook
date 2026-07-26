@@ -4,6 +4,16 @@ description: Understand React state, snapshots, queued updates, lazy initializat
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # useState
 
 State is information a component needs to remember between renders.
@@ -47,13 +57,12 @@ Two problems exist:
 
 State solves both:
 
-```text
-React remembers state value
-        +
-setter queues an update
-        ↓
-React can render again with new state
-```
+<VisualDiagram title="What state adds to a component" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React remembers the state value" tone="blue">The value persists across renders for this component identity.</DiagramNode>
+    <DiagramNode title="The setter queues an update" tone="purple">React can render again with a future state value.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Basic syntax
 
@@ -63,11 +72,12 @@ const [count, setCount] = useState(0);
 
 `useState(0)` returns an array with two positions:
 
-```text
-[count, setCount]
-  ↑       ↑
-value   setter
-```
+<VisualDiagram title="useState return value" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="count" tone="blue" eyebrow="STATE VALUE">The value for this render.</DiagramNode>
+    <DiagramNode title="setCount" tone="green" eyebrow="SETTER">Requests a future state update.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 The square brackets are JavaScript array destructuring, not special React syntax.
 
@@ -77,19 +87,17 @@ Do not think of `setCount` as mutating the `count` variable in the current funct
 
 Think of it as queuing state for a future render.
 
-```text
-render A
-count = 0
-   ↓
-click handler from render A runs
-   ↓
-setCount(1)
-   ↓
-React schedules/queues update
-   ↓
-render B
-count = 1
-```
+<VisualDiagram title="State snapshot across renders">
+  <LifecycleBar
+    items={[
+      { label: 'Render A: count = 0', tone: 'blue' },
+      { label: 'Handler from Render A runs', tone: 'orange' },
+      { label: 'setCount(1)', tone: 'purple' },
+      { label: 'React queues update', tone: 'cyan' },
+      { label: 'Render B: count = 1', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Each render receives its own snapshot of props and state.
 
@@ -112,17 +120,17 @@ If `count` is `0`, the log prints `0` in that handler.
 
 The setter requested another render. It did not rewrite the `count` constant captured by this render's handler.
 
-```text
-render creates count = 0
-        ↓
-render creates handleClick closure
-        ↓
-handler remembers that render's count
-        ↓
-setter queues future state
-        ↓
-current closure still has count = 0
-```
+<VisualDiagram title="A handler closes over its render snapshot" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Render creates count = 0', tone: 'blue' },
+      { label: 'Render creates handleClick closure', tone: 'purple' },
+      { label: 'Handler remembers count = 0', tone: 'orange' },
+      { label: 'Setter queues future state', tone: 'cyan' },
+      { label: 'Current closure still sees 0', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 This snapshot model explains many "stale state" bugs later.
 
@@ -133,16 +141,7 @@ A value usually belongs in state when it:
 1. changes over time; and
 2. affects what the component renders.
 
-Examples:
-
-```text
-selected tab
-form input
-open/closed dialog
-current page
-basket quantity
-expanded accordion item
-```
+Examples include selected tabs, form drafts, dialog visibility, page selection, basket quantity, and expanded accordion items.
 
 Not every variable belongs in state.
 
@@ -182,13 +181,15 @@ All three calls use the same `count` snapshot from the current render.
 
 If `count` is `0`, each expression asks for `1`.
 
-```text
-current snapshot: count = 0
-
-setCount(0 + 1)
-setCount(0 + 1)
-setCount(0 + 1)
-```
+<VisualDiagram title="Three direct replacements use one snapshot" compact>
+  <DiagramNode title="Current snapshot: count = 0" tone="blue" wide />
+  <DiagramArrow label="each expression calculates" />
+  <DiagramGrid columns={3}>
+    <DiagramNode title="setCount(1)" tone="purple" />
+    <DiagramNode title="setCount(1)" tone="purple" />
+    <DiagramNode title="setCount(1)" tone="purple" />
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Updater functions
 
@@ -202,15 +203,16 @@ setCount((current) => current + 1);
 
 Conceptually:
 
-```text
-queued 0
- ↓ +1
-1
- ↓ +1
-2
- ↓ +1
-3
-```
+<VisualDiagram title="Updater queue builds from the previous queued value" compact>
+  <LifecycleBar
+    items={[
+      { label: '0', tone: 'slate' },
+      { label: '+1 → 1', tone: 'blue' },
+      { label: '+1 → 2', tone: 'purple' },
+      { label: '+1 → 3', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Updater functions are especially useful when multiple updates can occur in one event or when the update logic is naturally expressed from the previous state.
 
@@ -218,17 +220,16 @@ Updater functions are especially useful when multiple updates can occur in one e
 
 React can batch state updates so several setter calls do not force separate immediate renders after every call.
 
-A useful mental model is:
-
-```text
-event / update source
-      ↓
-queue state updates
-      ↓
-React processes updates
-      ↓
-render with resulting state
-```
+<VisualDiagram title="Batching model" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Event / update source', tone: 'orange' },
+      { label: 'Queue state updates', tone: 'purple' },
+      { label: 'React processes queue', tone: 'cyan' },
+      { label: 'Render resulting state', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Do not write code that depends on a setter synchronously changing the current state variable.
 
@@ -300,12 +301,12 @@ Reorder using operations that produce a new array rather than mutating the state
 
 Treating state as immutable helps preserve the snapshot model:
 
-```text
-previous state object
-        ↓ remains unchanged
-new state object
-        ↓ represents next snapshot
-```
+<VisualDiagram title="Immutable snapshots" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Previous state object" tone="slate">Remains unchanged and still represents the previous snapshot.</DiagramNode>
+    <DiagramNode title="New state object" tone="green">Represents the next snapshot.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 It also makes reference identity meaningful for React and surrounding tooling.
 
@@ -406,13 +407,18 @@ If many state transitions are tightly related and update logic becomes difficult
 
 Every state value should have a clear owner.
 
-Suppose siblings need the same selected variant:
+Suppose siblings need the same selected variant.
 
-```text
-ProductPage
-├── ProductGallery
-└── ProductDetails
-```
+<VisualDiagram title="Lift shared state to the closest common owner">
+  <DiagramStack align="center">
+    <DiagramNode title="ProductPage" tone="blue" wide eyebrow="owns selectedVariant" />
+    <DiagramArrow />
+    <DiagramGrid columns={2}>
+      <DiagramNode title="ProductGallery" tone="purple">reads selectedVariant</DiagramNode>
+      <DiagramNode title="ProductDetails" tone="green">reads + requests changes</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 If both need one coordinated value, move ownership to their closest common parent:
 
@@ -459,7 +465,12 @@ function Tabs({defaultSelectedId}) {
 
 Neither is always better.
 
-Controlled APIs improve coordination from outside. Uncontrolled APIs can reduce parent state for self-contained behavior.
+<VisualDiagram title="Controlled vs uncontrolled component state">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Controlled" tone="purple">Caller owns the value; easier to coordinate externally.</DiagramNode>
+    <DiagramNode title="Uncontrolled" tone="blue">Component owns the value; simpler for self-contained behavior.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Later chapters will design reusable component APIs that intentionally support one or both models.
 
@@ -477,21 +488,26 @@ The initial prop is used only to create the initial state. If `user.name` later 
 
 Now there may be two sources of truth:
 
-```text
-user.name from parent
-        vs
-name local state
-```
+<VisualDiagram title="Copying props can create competing owners" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="user.name" tone="blue" eyebrow="PARENT VALUE" />
+    <DiagramNode title="name" tone="orange" eyebrow="LOCAL STATE" />
+  </DiagramGrid>
+</VisualDiagram>
 
 This can be correct for an editable draft:
 
-```text
-server/current profile value
-        ↓ initialize draft
-local editable draft
-        ↓ save/cancel
-explicit synchronization decision
-```
+<VisualDiagram title="A copied value is valid when it represents a different lifecycle" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Server/current profile value', tone: 'blue' },
+      { label: 'Initialize draft', tone: 'cyan' },
+      { label: 'Local editable draft', tone: 'purple' },
+      { label: 'Save / cancel', tone: 'orange' },
+      { label: 'Explicit synchronization decision', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 But it should be intentional.
 
@@ -505,25 +521,16 @@ React ties state to a component's identity and position in the tree. A different
 <ProfileEditor key={user.id} user={user} />
 ```
 
-Do not use keys randomly. The rendering/identity chapter will explain why this works and when it is appropriate.
+Do not use keys randomly. The rendering/identity chapter explains why this works and when it is appropriate.
 
 ## `useState` vs a ref
 
-State:
-
-```text
-persists between renders
-+
-updates can trigger rendering
-```
-
-Ref:
-
-```text
-persists between renders
-+
-changing ref.current does not request rendering
-```
+<VisualDiagram title="State vs ref">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="State" tone="blue">Persists between renders; updates can request rendering.</DiagramNode>
+    <DiagramNode title="Ref" tone="purple">Persists between renders; changing `ref.current` does not request rendering.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 If a changing value affects the rendered UI, state is usually the right primitive.
 
@@ -565,15 +572,16 @@ Do not install a global state library because props exist.
 
 Start with ownership:
 
-```text
-local component state
-      ↓ if siblings coordinate
-lift state
-      ↓ if distant subtree needs stable shared value
-Context / reducer
-      ↓ if external-store requirements exist
-external store
-```
+<VisualDiagram title="Escalate state scope only when requirements demand it">
+  <LifecycleBar
+    items={[
+      { label: 'Local component state', tone: 'blue' },
+      { label: 'Lift if siblings coordinate', tone: 'cyan' },
+      { label: 'Context / reducer for shared subtree needs', tone: 'purple' },
+      { label: 'External store for external-store requirements', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 The right choice depends on consumers, update frequency, domain boundaries, persistence, and server/client state distinction.
 
@@ -746,11 +754,7 @@ In a real cart, the canonical quantity might instead belong to cart/domain state
 
 ## Exercise
 
-Build a quantity selector with:
-
-```text
-[-]  1  [+]
-```
+Build a quantity selector with `[-] 1 [+]` controls.
 
 Requirements:
 
@@ -785,19 +789,16 @@ How do you decide whether a value belongs in local state, a parent, a reducer, C
 
 ## Summary
 
-Keep these rules:
-
-```text
-State belongs to renders, not mutable variables.
-Each render sees a snapshot.
-Setters queue future state.
-Use updater functions for previous-state transitions.
-Store the minimum state necessary.
-Derive what you can.
-Treat state as immutable.
-Give each state value one clear owner.
-Choose a different abstraction when the problem is not local UI state.
-```
+<VisualDiagram title="useState rules to keep">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Snapshots" tone="blue">State belongs to renders, not mutable variables.</DiagramNode>
+    <DiagramNode title="Setters" tone="purple">Queue future state.</DiagramNode>
+    <DiagramNode title="Updater functions" tone="cyan">Use for previous-state transitions.</DiagramNode>
+    <DiagramNode title="Minimal state" tone="orange">Derive what you can.</DiagramNode>
+    <DiagramNode title="Immutability" tone="green">Create next-state values instead of mutating old snapshots.</DiagramNode>
+    <DiagramNode title="Ownership" tone="slate">Give each state value one clear owner and change abstractions when the problem is not local UI state.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## References
 

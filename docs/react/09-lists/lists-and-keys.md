@@ -4,17 +4,30 @@ description: Learn rendering arrays, stable keys, identity, reorder bugs, fragme
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Lists and keys
 
 React applications constantly turn collections of data into collections of UI.
 
-```text
-array of data
-   ↓ map/filter
-array of React elements
-   ↓ keys identify siblings
-rendered list
-```
+<VisualDiagram title="Data collection → rendered list">
+  <LifecycleBar
+    items={[
+      { label: 'Array of data', tone: 'blue' },
+      { label: 'map / filter', tone: 'purple' },
+      { label: 'Array of React elements', tone: 'cyan' },
+      { label: 'Keys identify siblings', tone: 'orange' },
+      { label: 'Rendered list', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## Rendering a list with `map`
 
@@ -52,9 +65,13 @@ Keep transformations readable. It is often easier to name intermediate collectio
 
 A key tells React which sibling corresponds to which conceptual item across renders.
 
-```text
-key = item identity among siblings
-```
+<VisualDiagram title="Key = sibling identity" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Conceptual item" tone="blue" wide>for example user #42</DiagramNode>
+    <DiagramArrow label="stable key" />
+    <DiagramNode title="Rendered sibling identity" tone="green" wide>React can match this item across renders.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Example:
 
@@ -72,22 +89,16 @@ If the component also needs the ID:
 
 ## Why keys matter
 
-Imagine:
+Imagine A, B, C and then an item is inserted at the top.
 
-```text
-A
-B
-C
-```
-
-and then an item is inserted at the top:
-
-```text
-X
-A
-B
-C
-```
+<VisualDiagram title="Stable keys preserve identity during insertion">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Before" tone="slate">A · B · C</DiagramNode>
+    <DiagramNode title="After" tone="blue">X · A · B · C</DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="stable keys let React match existing items" />
+  <DiagramNode title="A, B, and C keep their conceptual identities" tone="green" wide>Only X is new.</DiagramNode>
+</VisualDiagram>
 
 With stable keys, React can understand that A, B, and C are still the same conceptual items and X is new.
 
@@ -121,15 +132,16 @@ If the list never inserts, removes, sorts, filters, or reorders, an index may ap
 
 But if order changes, the key stays attached to the **position**, not the item.
 
-```text
-Before
-index 0 → Todo A → local state A
-index 1 → Todo B → local state B
-
-After reorder
-index 0 → Todo B → React may preserve state A here
-index 1 → Todo A → React may preserve state B here
-```
+<VisualDiagram title="Index keys can move local state to the wrong item" subtitle="Position stays stable while the conceptual item changes.">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Before reorder" tone="blue">
+      index 0 → Todo A → local state A<br />index 1 → Todo B → local state B
+    </DiagramNode>
+    <DiagramNode title="After reorder" tone="red">
+      index 0 → Todo B → may preserve state A<br />index 1 → Todo A → may preserve state B
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 This can produce bugs such as:
 
@@ -148,12 +160,16 @@ key={Math.random()}
 
 Every render produces a new identity.
 
-```text
-old item removed
-new item mounted
-state lost
-DOM work repeated
-```
+<VisualDiagram title="Random key forces remounting" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Old item removed', tone: 'red' },
+      { label: 'New item mounted', tone: 'orange' },
+      { label: 'State lost', tone: 'purple' },
+      { label: 'DOM work repeated', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 A random key does not make rendering safer.
 
@@ -368,12 +384,16 @@ First use index keys and observe the failure modes. Then switch to stable IDs an
 
 ## Summary
 
-```text
-map creates elements
-key identifies siblings
-stable identity preserves the right state
-position-based identity can break when collections change
-```
+<VisualDiagram title="List identity summary" compact>
+  <LifecycleBar
+    items={[
+      { label: 'map creates elements', tone: 'blue' },
+      { label: 'key identifies siblings', tone: 'purple' },
+      { label: 'stable identity preserves correct state', tone: 'green' },
+      { label: 'position-only identity can break when collections change', tone: 'red' },
+    ]}
+  />
+</VisualDiagram>
 
 Keys model identity. Design them from your data, not from render position.
 

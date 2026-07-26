@@ -4,21 +4,31 @@ description: Learn React event handlers, propagation, capture, preventDefault, h
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Responding to events
 
 Events connect user interactions to application behavior.
 
-```text
-user action
-   ↓
-browser event
-   ↓
-React event handler
-   ↓
-state update / side effect
-   ↓
-possible new render
-```
+<VisualDiagram title="From user action to possible render">
+  <LifecycleBar
+    items={[
+      { label: 'User action', tone: 'orange' },
+      { label: 'Browser event', tone: 'slate' },
+      { label: 'React event handler', tone: 'purple' },
+      { label: 'State update / side effect', tone: 'cyan' },
+      { label: 'Possible new render', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## Event handlers are functions
 
@@ -108,11 +118,14 @@ Do not move this into an Effect merely because it is asynchronous.
 
 A useful decision rule:
 
-```text
-Did a specific user interaction cause it?
-        ↓ yes
-Event handler is usually the right place
-```
+<DecisionTree
+  question="What caused this work?"
+  items={[
+    { label: 'A specific user interaction caused it', value: 'Event handler is usually the right place' },
+    { label: 'It is pure UI calculation', value: 'Keep it in render' },
+    { label: 'It synchronizes with an external system over time', value: 'An Effect may be appropriate' },
+  ]}
+/>
 
 ## Passing handler props
 
@@ -132,13 +145,11 @@ The child owns the interaction surface. The parent owns the business meaning.
 
 Prefer meaningful names such as:
 
-```text
-onSave
-onDelete
-onClose
-onSelectProduct
-onCheckout
-```
+- `onSave`
+- `onDelete`
+- `onClose`
+- `onSelectProduct`
+- `onCheckout`
 
 over vague names such as `onAction` when a clearer contract exists.
 
@@ -156,13 +167,15 @@ Clicking the button can trigger both handlers.
 
 Conceptually:
 
-```text
-button handler
-    ↓
-parent handler
-    ↓
-ancestor handlers
-```
+<VisualDiagram title="Bubble phase" subtitle="The target handles the event first, then ancestor handlers can receive it.">
+  <DiagramStack align="center">
+    <DiagramNode title="Button handler" tone="purple" wide eyebrow="target" />
+    <DiagramArrow label="bubble" />
+    <DiagramNode title="Parent handler" tone="cyan" wide />
+    <DiagramArrow label="bubble" />
+    <DiagramNode title="Ancestor handlers" tone="blue" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 ## stopPropagation
 
@@ -193,11 +206,15 @@ React supports capture handlers such as:
 
 Conceptually:
 
-```text
-capture phase ↓
-target handler
-bubble phase ↑
-```
+<VisualDiagram title="Capture → target → bubble">
+  <LifecycleBar
+    items={[
+      { label: 'Capture phase ↓', tone: 'blue' },
+      { label: 'Target handler', tone: 'purple' },
+      { label: 'Bubble phase ↑', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Capture is useful for infrastructure such as analytics or routing, but most feature code uses normal bubbling handlers.
 
@@ -224,13 +241,16 @@ function SignupForm() {
 
 These solve different problems:
 
-```text
-stopPropagation()
-→ should ancestor handlers receive this event?
-
-preventDefault()
-→ should the browser perform its built-in action?
-```
+<VisualDiagram title="Two different controls">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="stopPropagation()" tone="orange" eyebrow="EVENT ROUTE">
+      Should ancestor handlers receive this event?
+    </DiagramNode>
+    <DiagramNode title="preventDefault()" tone="blue" eyebrow="BROWSER ACTION">
+      Should the browser perform its built-in default action?
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Buttons inside forms
 
@@ -269,6 +289,16 @@ function Counter() {
 
 The log still sees the current render's `count`. The setter requests a future render; it does not mutate the existing snapshot.
 
+<VisualDiagram title="Event handler sees its render snapshot" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Render snapshot: count = 0" tone="blue" wide />
+    <DiagramArrow label="click" />
+    <DiagramNode title="Handler reads count = 0" tone="purple" wide>setCount(1) requests future work; it does not rewrite this snapshot.</DiagramNode>
+    <DiagramArrow label="next render" />
+    <DiagramNode title="New snapshot: count = 1" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
+
 ## Common mistakes
 
 ### Calling a handler during render
@@ -295,12 +325,13 @@ If a child action must always trigger parent logic, explicitly call a callback r
 
 ### Moving user-driven logic into Effects
 
-```text
-user clicked Buy
-→ handler should perform or start the action
-```
-
-Do not add state only so an Effect can notice the state and then perform the action.
+<VisualDiagram title="User-driven work belongs at the interaction boundary" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="User clicked Buy" tone="orange" wide />
+    <DiagramArrow />
+    <DiagramNode title="Handler starts the action" tone="green" wide>Do not add state only so an Effect can notice it and act later.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 ## Debugging event problems
 
@@ -357,11 +388,13 @@ Explain the execution order for each interaction.
 
 ## Summary
 
-```text
-render logic = pure calculation
-user interaction = event handler
-external synchronization not tied to one interaction = maybe Effect
-```
+<VisualDiagram title="Where different kinds of work belong">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Render logic" tone="blue">Pure calculation of UI.</DiagramNode>
+    <DiagramNode title="Event handler" tone="orange">User-caused interaction and side effects.</DiagramNode>
+    <DiagramNode title="Effect" tone="purple">External synchronization not tied to one specific interaction.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Events are not just syntax. They are a boundary where user intent enters your application.
 

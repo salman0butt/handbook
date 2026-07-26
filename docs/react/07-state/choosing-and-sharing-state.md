@@ -4,17 +4,29 @@ description: Learn minimal state, single sources of truth, lifting state, contro
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Choosing and sharing state
 
 Many React bugs are not caused by the wrong Hook. They are caused by the wrong **state model**.
 
 A strong state model answers three questions:
 
-```text
-What truly changes?
-Who owns it?
-Who needs it?
-```
+<VisualDiagram title="Three state-architecture questions" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="What truly changes?" tone="blue">Separate real state from values you can derive.</DiagramNode>
+    <DiagramNode title="Who owns it?" tone="purple">Choose one authoritative owner for each fact.</DiagramNode>
+    <DiagramNode title="Who needs it?" tone="green">Place state only as high as its consumers require.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Store the minimum state
 
@@ -65,11 +77,13 @@ const [hasError, setHasError] = useState(false);
 
 Impossible combinations can appear:
 
-```text
-isLoading = true
-isSuccess = true
-hasError = true
-```
+<VisualDiagram title="Contradictory booleans allow impossible UI" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="isLoading = true" tone="orange" />
+    <DiagramNode title="isSuccess = true" tone="green" />
+    <DiagramNode title="hasError = true" tone="red" />
+  </DiagramGrid>
+</VisualDiagram>
 
 A status model may be clearer:
 
@@ -79,10 +93,15 @@ const [status, setStatus] = useState('idle');
 
 with states such as:
 
-```text
-idle → submitting → success
-                  ↘ error
-```
+<VisualDiagram title="One status can model valid workflow states" compact>
+  <LifecycleBar
+    items={[
+      { label: 'idle', tone: 'slate' },
+      { label: 'submitting', tone: 'blue' },
+      { label: 'success / error', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## Group related state, not merely nearby state
 
@@ -130,11 +149,16 @@ const selectedItem = items.find(item => item.id === selectedId);
 
 Each piece of state should have a clear owner.
 
-```text
-ProductPage
-├── Gallery
-└── ProductOptions
-```
+<VisualDiagram title="Lift state to the closest common owner">
+  <DiagramStack align="center">
+    <DiagramNode title="ProductPage" tone="blue" wide eyebrow="owns selectedVariant" />
+    <DiagramArrow label="passes value + callback" />
+    <DiagramGrid columns={2}>
+      <DiagramNode title="Gallery" tone="purple">reads selected variant</DiagramNode>
+      <DiagramNode title="ProductOptions" tone="green">reads + requests changes</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 If both children need the selected variant, neither child is a good owner.
 
@@ -166,12 +190,14 @@ It means:
 
 > For each unique piece of information, choose one owner.
 
-```text
-local modal state → Modal feature
-selected product → Product page
-current user → broader app boundary
-server cache → server-state layer
-```
+<VisualDiagram title="One owner per fact" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Local modal state" tone="blue">Modal feature</DiagramNode>
+    <DiagramNode title="Selected product" tone="purple">Product page</DiagramNode>
+    <DiagramNode title="Current user" tone="green">Broader app/session boundary</DiagramNode>
+    <DiagramNode title="Server cache" tone="orange">Server-state layer</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 State should live as low as possible while still correctly serving all consumers.
 
@@ -226,30 +252,29 @@ function Disclosure() {
 
 Neither pattern is universally better.
 
-```text
-uncontrolled
-+ easier to drop in
-- harder for parent to coordinate
-
-controlled
-+ flexible and coordinated
-- requires more parent configuration
-```
+<VisualDiagram title="Controlled vs uncontrolled">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Uncontrolled" tone="blue" eyebrow="SELF-OWNED">
+      Easier to drop in; harder for a parent to coordinate externally.
+    </DiagramNode>
+    <DiagramNode title="Controlled" tone="purple" eyebrow="PARENT-OWNED">
+      More configurable and coordinated; requires explicit parent wiring.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## State locality before global state
 
 Before adding Context, Redux, Zustand, or another store, ask whether state can remain local.
 
-```text
-Need state in one component?
-→ keep it local
-
-Need siblings to coordinate?
-→ lift it to common parent
-
-Need distant consumers?
-→ consider composition/context/store based on the problem
-```
+<DecisionTree
+  question="How far does this state need to travel?"
+  items={[
+    { label: 'One component', value: 'Keep it local' },
+    { label: 'Siblings must coordinate', value: 'Lift to their closest common parent' },
+    { label: 'Distant consumers / external access / specialised lifecycle', value: 'Consider composition, Context, or a store based on requirements' },
+  ]}
+/>
 
 Global state is not automatically “more scalable.” It can make ownership harder to reason about.
 
@@ -285,13 +310,16 @@ const [status, setStatus] = useState('viewing');
 
 Possible states:
 
-```text
-viewing
-editing
-saving
-saved
-error
-```
+<VisualDiagram title="Workflow state should model valid phases" compact>
+  <LifecycleBar
+    items={[
+      { label: 'viewing', tone: 'slate' },
+      { label: 'editing', tone: 'blue' },
+      { label: 'saving', tone: 'orange' },
+      { label: 'saved / error', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 For more complex transitions, this thinking naturally leads toward reducers or state machines.
 
@@ -385,13 +413,17 @@ For each value, decide whether it is:
 
 ## Summary
 
-```text
-store the minimum
-avoid contradictions
-avoid duplication
-choose one owner per fact
-lift only as high as necessary
-```
+<VisualDiagram title="Good state architecture" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Store the minimum', tone: 'blue' },
+      { label: 'Avoid contradictions', tone: 'red' },
+      { label: 'Avoid duplication', tone: 'orange' },
+      { label: 'Choose one owner per fact', tone: 'purple' },
+      { label: 'Lift only as high as necessary', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Good state architecture removes bugs before they need debugging.
 
