@@ -228,6 +228,26 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '28 · Performance',
+          items: [
+            'react/performance/measure-before-optimizing',
+            'react/performance/memo-usememo-and-usecallback',
+            'react/performance/profiler-and-performance-tracks',
+            'react/performance/layout-insertion-and-debug-hooks',
+            'react/performance/render-cost-state-placement-and-scheduling',
+          ],
+        },
+        {
+          type: 'category',
+          label: '29 · Architecture & Patterns',
+          items: [
+            'react/architecture/component-and-state-architecture',
+            'react/architecture/design-systems-and-component-apis',
+            'react/architecture/advanced-composition-patterns',
+          ],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },
