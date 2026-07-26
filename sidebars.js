@@ -184,6 +184,24 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '23 · React Compiler',
+          items: [
+            'react/react-compiler/compiler-mental-model-and-setup',
+            'react/react-compiler/automatic-memoization-and-manual-memoization',
+            'react/react-compiler/adoption-configuration-and-directives',
+            'react/react-compiler/libraries-debugging-and-production-rollout',
+          ],
+        },
+        {
+          type: 'category',
+          label: '24 · Rules of React',
+          items: [
+            'react/rules-of-react/purity-immutability-and-render-safety',
+            'react/rules-of-react/rules-of-hooks-and-eslint',
+          ],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },
