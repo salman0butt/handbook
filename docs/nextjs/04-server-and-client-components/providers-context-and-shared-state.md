@@ -1,6 +1,6 @@
 ---
 title: Providers, Context & Shared State
- description: Place client providers deliberately, share server-started data safely, and avoid turning the whole application into a client tree.
+description: Place client providers deliberately, share server-started data safely, and avoid turning the whole application into a client tree.
 ---
 
 # Providers, Context & Shared State
