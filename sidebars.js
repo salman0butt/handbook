@@ -115,6 +115,15 @@ const nextjsItems = [
     'nextjs/app-router-and-layouts/parallel-routes-and-slots',
     'nextjs/app-router-and-layouts/intercepting-routes-and-route-driven-modals',
     'nextjs/app-router-and-layouts/routing-architecture-and-design-review',
+  ], { collapsed: true }),
+  category('03 · Navigation & URL State', [
+    'nextjs/navigation-and-url-state/link-client-navigation-and-prefetching',
+    'nextjs/navigation-and-url-state/programmatic-navigation-and-redirects',
+    'nextjs/navigation-and-url-state/pathname-params-and-active-navigation',
+    'nextjs/navigation-and-url-state/search-params-url-state-and-pagination',
+    'nextjs/navigation-and-url-state/navigation-pending-state-and-user-feedback',
+    'nextjs/navigation-and-url-state/history-scroll-focus-and-accessibility',
+    'nextjs/navigation-and-url-state/navigation-architecture-debugging-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',
