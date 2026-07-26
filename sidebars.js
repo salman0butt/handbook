@@ -59,7 +59,39 @@ const reactItems = [
     'react/mock-interview-practice/live-coding-round',
     'react/mock-interview-practice/behavioral-and-experience-round',
   ]),
-  category('📋 Reference & Coverage', ['react/reference/api-coverage', 'react/reference/final-completeness-audit']),
+  category('37 · Context API & Built-in State', [
+    'react/context-api-and-built-in-state-management/state-management-ecosystem-map',
+    'react/context-api-and-built-in-state-management/context-api-production-patterns',
+  ]),
+  category('38 · Redux Toolkit', [
+    'react/redux-toolkit/redux-toolkit-fundamentals',
+    'react/redux-toolkit/redux-toolkit-async-and-rtk-query',
+    'react/redux-toolkit/redux-toolkit-typescript-testing-performance',
+  ]),
+  category('39 · Zustand', [
+    'react/zustand/zustand-fundamentals',
+    'react/zustand/zustand-selectors-middleware-and-persistence',
+    'react/zustand/zustand-ssr-typescript-testing',
+  ]),
+  category('40 · TanStack Query', [
+    'react/tanstack-query/tanstack-query-fundamentals-and-cache',
+    'react/tanstack-query/tanstack-query-mutations-invalidation-optimistic',
+    'react/tanstack-query/tanstack-query-pagination-prefetching-ssr-testing',
+  ]),
+  category('41 · React Hook Form', [
+    'react/react-hook-form/react-hook-form-fundamentals-validation',
+    'react/react-hook-form/react-hook-form-controller-field-arrays',
+    'react/react-hook-form/react-hook-form-typescript-performance-testing-react19',
+  ]),
+  category('42 · State Management Decision Guide', [
+    'react/state-management-decision-guide/choosing-the-right-state-tool',
+    'react/state-management-decision-guide/combining-tools-without-duplicating-state',
+  ]),
+  category('📋 Reference & Coverage', [
+    'react/reference/api-coverage',
+    'react/reference/final-completeness-audit',
+    'react/reference/state-management-ecosystem-coverage',
+  ]),
 ];
 
 const nextjsItems = [
