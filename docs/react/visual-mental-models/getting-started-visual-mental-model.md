@@ -6,6 +6,7 @@ description: Visualize the React app toolchain, createRoot bridge, component tre
 import {
   VisualDiagram,
   DiagramStack,
+  DiagramRow,
   DiagramGrid,
   DiagramNode,
   DiagramArrow,
