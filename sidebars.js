@@ -32,26 +32,10 @@ const sidebars = {
             'react/getting-started/strict-mode',
           ],
         },
-        {
-          type: 'category',
-          label: '03 · JSX',
-          items: ['react/fundamentals/jsx'],
-        },
-        {
-          type: 'category',
-          label: '04 · Components',
-          items: ['react/components/components-and-props'],
-        },
-        {
-          type: 'category',
-          label: '05 · Rendering',
-          items: ['react/rendering/render-cycle'],
-        },
-        {
-          type: 'category',
-          label: '06 · Events',
-          items: ['react/events/responding-to-events'],
-        },
+        { type: 'category', label: '03 · JSX', items: ['react/fundamentals/jsx'] },
+        { type: 'category', label: '04 · Components', items: ['react/components/components-and-props'] },
+        { type: 'category', label: '05 · Rendering', items: ['react/rendering/render-cycle'] },
+        { type: 'category', label: '06 · Events', items: ['react/events/responding-to-events'] },
         {
           type: 'category',
           label: '07 · State',
@@ -62,21 +46,9 @@ const sidebars = {
             'react/state/preserving-and-resetting-state',
           ],
         },
-        {
-          type: 'category',
-          label: '08 · Conditional Rendering',
-          items: ['react/conditional-rendering/conditional-rendering'],
-        },
-        {
-          type: 'category',
-          label: '09 · Lists & Keys',
-          items: ['react/lists/lists-and-keys'],
-        },
-        {
-          type: 'category',
-          label: '10 · Forms',
-          items: ['react/forms/forms'],
-        },
+        { type: 'category', label: '08 · Conditional Rendering', items: ['react/conditional-rendering/conditional-rendering'] },
+        { type: 'category', label: '09 · Lists & Keys', items: ['react/lists/lists-and-keys'] },
+        { type: 'category', label: '10 · Forms', items: ['react/forms/forms'] },
         {
           type: 'category',
           label: '11 · Effects',
@@ -90,39 +62,23 @@ const sidebars = {
         {
           type: 'category',
           label: '12 · Refs',
-          items: [
-            'react/refs/use-ref',
-            'react/refs/dom-refs-and-imperative-handles',
-          ],
+          items: ['react/refs/use-ref', 'react/refs/dom-refs-and-imperative-handles'],
         },
-        {
-          type: 'category',
-          label: '13 · Custom Hooks',
-          items: ['react/custom-hooks/custom-hooks'],
-        },
+        { type: 'category', label: '13 · Custom Hooks', items: ['react/custom-hooks/custom-hooks'] },
         {
           type: 'category',
           label: '14 · Context',
-          items: [
-            'react/context/context-and-use-context',
-            'react/context/context-architecture-and-performance',
-          ],
+          items: ['react/context/context-and-use-context', 'react/context/context-architecture-and-performance'],
         },
         {
           type: 'category',
           label: '15 · Reducers',
-          items: [
-            'react/reducers/use-reducer-and-reducer-design',
-            'react/reducers/reducer-with-context',
-          ],
+          items: ['react/reducers/use-reducer-and-reducer-design', 'react/reducers/reducer-with-context'],
         },
         {
           type: 'category',
           label: '16 · State Architecture',
-          items: [
-            'react/state-architecture/state-categories',
-            'react/state-architecture/use-sync-external-store',
-          ],
+          items: ['react/state-architecture/state-categories', 'react/state-architecture/use-sync-external-store'],
         },
         {
           type: 'category',
@@ -244,6 +200,32 @@ const sidebars = {
             'react/architecture/component-and-state-architecture',
             'react/architecture/design-systems-and-component-apis',
             'react/architecture/advanced-composition-patterns',
+          ],
+        },
+        {
+          type: 'category',
+          label: '30 · Internals',
+          items: [
+            'react/internals/reconciliation-identity-and-state-preservation',
+            'react/internals/fiber-render-work-and-scheduling',
+          ],
+        },
+        {
+          type: 'category',
+          label: '31 · Debugging',
+          items: [
+            'react/debugging/error-boundaries-owner-stacks-and-root-errors',
+            'react/debugging/production-observability-and-failure-triage',
+          ],
+        },
+        {
+          type: 'category',
+          label: '32 · Production Engineering',
+          items: [
+            'react/production-engineering/security-and-trust-boundaries',
+            'react/production-engineering/legacy-react-maintenance-and-migration',
+            'react/production-engineering/large-team-react-engineering',
+            'react/production-engineering/senior-architectural-decision-making',
           ],
         },
         {
