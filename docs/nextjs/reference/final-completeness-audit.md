@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–10 are implemented; Phase 11 Metadata & SEO is next.**
+> **Status: NOT COMPLETE — Phases 1–11 are implemented; Phase 12 Images, Fonts & Scripts is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -31,7 +31,8 @@ This page is the final release gate for the handbook. It must not be marked comp
 - [x] Phase 08 · Route Handlers
 - [x] Phase 09 · Request Pipeline & Proxy
 - [x] Phase 10 · Rendering, Suspense & Streaming
-- [ ] Phase 11 · Metadata & SEO
+- [x] Phase 11 · Metadata & SEO
+- [ ] Phase 12 · Images, Fonts & Scripts
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
@@ -52,6 +53,8 @@ Phase 09 includes `proxy.ts`, migration from `middleware.ts`, exact request orde
 
 Phase 10 includes Server Component rendering orchestration; RSC Payload and initial HTML; Client Component prerendering and hydration; hard vs soft navigation; route-segment reconciliation and preserved layouts; `loading.tsx`; manual Suspense; progressive streaming; Cache Components static shells and request-time dynamic holes; server-started Promises consumed with React `use()`; hydration mismatches and visible-before-interactive behavior; streamed error/retry/recovery models; infrastructure buffering; RSC-vs-JS-vs-hydration performance reasoning; security; diagnostics; and senior rendering architecture review.
 
+Phase 11 includes static `metadata` and dynamic `generateMetadata`; Server Component ownership; async params/search params; route-tree ordering, shallow merging, parent extension, and file-based precedence; titles, descriptions, `metadataBase`, canonical URLs and alternates; Open Graph/Twitter metadata and generated social images; favicon/icon/apple-icon and manifests; robots and sitemap routes including Next.js 16 `generateSitemaps` Promise IDs; JSON-LD with HTML script-context XSS-safe serialization; broader metadata fields and verification; dedicated `viewport` / `generateViewport`; streaming metadata and HTML-limited bot behavior; Cache Components interactions; crawler/social performance; content lifecycle, preview/staging, multi-tenant URL identity; and senior SEO debugging/architecture review.
+
 ## Final audit gates
 
 - [ ] Re-check npm `latest`, support policy, release notes, and App Router docs.
@@ -71,7 +74,7 @@ Phase 10 includes Server Component rendering orchestration; RSC Payload and init
 - [ ] Verify Vercel-specific content is clearly labeled as platform-specific.
 - [ ] Verify experimental/preview/canary features are labeled and not taught as stable.
 - [ ] Verify deprecated/historical behavior appears only where migration context requires it.
-- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, and logs.
+- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, and logs.
 - [ ] Verify performance advice follows measurement → diagnosis → change → measurement.
 - [ ] Complete all capstone specifications.
 - [ ] Complete interview mastery.
