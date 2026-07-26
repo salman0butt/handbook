@@ -105,6 +105,16 @@ const nextjsItems = [
     'nextjs/foundations/creating-and-running-a-nextjs-app',
     'nextjs/foundations/project-structure-and-file-conventions',
     'nextjs/foundations/server-browser-and-build-time-mental-model',
+  ], { collapsed: true }),
+  category('02 · App Router & Layouts', [
+    'nextjs/app-router-and-layouts/route-tree-pages-and-layouts',
+    'nextjs/app-router-and-layouts/layouts-templates-and-state-preservation',
+    'nextjs/app-router-and-layouts/dynamic-segments-and-async-params',
+    'nextjs/app-router-and-layouts/route-groups-private-folders-and-multiple-roots',
+    'nextjs/app-router-and-layouts/loading-error-not-found-and-default-files',
+    'nextjs/app-router-and-layouts/parallel-routes-and-slots',
+    'nextjs/app-router-and-layouts/intercepting-routes-and-route-driven-modals',
+    'nextjs/app-router-and-layouts/routing-architecture-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',
