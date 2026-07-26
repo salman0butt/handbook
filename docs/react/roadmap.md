@@ -1,14 +1,16 @@
 ---
 title: React Learning Roadmap
-description: A zero-to-senior learning path for the React handbook, from JavaScript prerequisites through internals and architecture.
+description: The complete zero-to-senior React roadmap from JavaScript prerequisites through React 19.2, internals, production engineering, capstones, and interview mastery.
 sidebar_position: 3
 ---
 
 # React learning roadmap
 
-This handbook is designed to build **mental models before API memorisation**.
+> **Status: all 12 original roadmap phases are complete for the audited React 19.2 stable line.**
 
-The target progression is:
+This handbook is designed to build **mental models before API memorization**.
+
+The progression is:
 
 ```text
 JavaScript for React
@@ -19,9 +21,9 @@ JSX + components
         ↓
 rendering + events + state
         ↓
-Hooks + effects + refs
+Effects + refs + custom Hooks
         ↓
-forms + context + reducers
+Context + reducers + state architecture
         ↓
 modern React 19+
         ↓
@@ -29,16 +31,18 @@ Suspense + transitions + concurrency
         ↓
 React DOM + SSR + Server Components
         ↓
+Compiler + Rules of React
+        ↓
 TypeScript + testing + accessibility
         ↓
 performance + architecture + patterns
         ↓
-internals + senior decision-making
+internals + debugging + production engineering
+        ↓
+capstone projects + interview mastery
 ```
 
 ## How to use the roadmap
-
-Do not race to advanced Hooks. A developer who understands rendering, state ownership, identity, and Effects can learn new APIs quickly. A developer who memorises APIs without those models often gets stuck when an application behaves unexpectedly.
 
 For most topics, study in this order:
 
@@ -70,264 +74,277 @@ EXERCISE
 INTERVIEW REASONING
 ```
 
-## Phase 1 — Foundations
+The handbook repeatedly reinforces these mental models:
+
+- **state is a snapshot**;
+- **keys are identity**;
+- **Effects synchronize external systems**;
+- **refs are escape hatches**;
+- **Context propagates values but does not own state by itself**;
+- **reducers model state transitions**;
+- **Suspense is a readiness/reveal boundary, not a fetch API**;
+- **concurrency is not multithreading**;
+- **Server Components are not the same thing as SSR**;
+- **Compiler optimization does not replace the Rules of React**;
+- **profile before optimizing**;
+- **production architecture is about ownership, failure boundaries, evidence, and reversibility**.
+
+## Phase 1 — Foundations ✅
 
 Goal: become comfortable reading and writing small React components without treating React as magic.
 
-Topics:
+Covered:
 
-- JavaScript concepts React code relies on;
-- what React is and what problem it solves;
+- JavaScript prerequisites;
 - declarative UI;
-- UI as a function of state;
 - component trees;
 - JSX;
-- props and composition;
-- creating a modern React app with Vite;
+- props/composition;
+- Vite setup;
 - `createRoot`;
 - Strict Mode;
 - development vs production behavior.
 
 Milestone: build a small product page from reusable components.
 
-## Phase 2 — Rendering, events, state, lists, and forms
+## Phase 2 — Rendering, events, state, lists, and forms ✅
 
 Goal: understand why UI changes.
 
-Topics:
+Covered:
 
 - render triggers;
-- render phase vs commit phase;
-- browser paint;
-- state as a snapshot;
-- batching and queued updates;
-- event handlers;
-- propagation and default browser behavior;
-- choosing minimal state;
-- immutability;
+- render vs commit;
+- state snapshots;
+- queued/batched updates;
+- events;
+- minimal state;
 - lifting state;
-- controlled and uncontrolled inputs;
-- lists, keys, and identity;
+- controlled/uncontrolled inputs;
+- lists/keys/identity;
 - forms and validation.
 
 Milestone: build a Todo/product-filtering app without unnecessary Effects.
 
-## Phase 3 — Effects, refs, and reusable Hooks
+## Phase 3 — Effects, refs, and reusable Hooks ✅
 
-Goal: learn React's escape hatches without overusing them.
+Goal: learn escape hatches without overusing them.
 
-Topics:
+Covered:
 
-- synchronization with external systems;
+- synchronization;
 - `useEffect`;
-- dependency reasoning;
+- dependencies;
 - cleanup;
-- Strict Mode effect behavior;
-- race conditions and cancellation;
+- race conditions;
 - stale closures;
 - removing unnecessary Effects;
 - `useEffectEvent`;
-- `useRef`;
-- DOM refs;
-- callback refs;
+- refs / DOM refs / callback refs;
 - imperative handles;
 - custom Hooks.
 
-Milestone: integrate a browser API or remote service with correct cleanup and cancellation.
+Milestone: integrate a browser API or remote system with correct cleanup/cancellation.
 
-## Phase 4 — Context, reducers, and state architecture
+## Phase 4 — Context, reducers, and state architecture ✅
 
-Goal: make deliberate state ownership decisions.
+Goal: make deliberate ownership decisions.
 
-Topics:
+Covered:
 
-- Context mental model;
-- provider placement;
-- context propagation;
-- context performance;
-- reducers and actions;
+- Context mental model and provider placement;
+- Context performance;
+- reducers/actions;
 - reducer purity;
 - reducer + Context;
-- local state vs shared client state;
-- server state vs client state;
-- external stores;
+- local/shared/server/URL/external state;
 - `useSyncExternalStore`.
 
-Milestone: design state for a multi-feature dashboard without putting everything into one global store.
+Milestone: design state for a multi-feature dashboard without one giant global store.
 
-## Phase 5 — Modern React 19+
+## Phase 5 — Modern React 19+ ✅
 
-Goal: understand modern React instead of learning React 18-era patterns as the endpoint.
+Goal: learn the current platform instead of stopping at React 18-era patterns.
 
-Topics:
+Covered:
 
 - Actions;
 - async transitions;
-- form action functions;
+- form actions;
 - `useActionState`;
 - `useFormStatus`;
 - `useOptimistic`;
 - `use`;
 - ref as a prop;
 - modern Context provider syntax;
-- document metadata support;
-- resource loading APIs;
-- React 19 removals and migration knowledge;
-- React 19.2 additions such as `<Activity>` and `useEffectEvent`.
+- metadata/resource APIs;
+- `<Activity>`;
+- React 19 migration/removals.
 
-Milestone: build a form/mutation flow with pending, error, and optimistic UI states.
+Milestone: build a mutation flow with pending, validation, error, success, and optimistic states.
 
-## Phase 6 — Suspense, transitions, and concurrency
+## Phase 6 — Suspense, transitions, and concurrency ✅
 
-Goal: reason about responsiveness and interruptible rendering conceptually.
+Goal: reason about responsiveness and interruptible rendering.
 
-Topics:
+Covered:
 
-- urgent vs non-urgent updates;
+- urgent/non-urgent updates;
 - `startTransition`;
 - `useTransition`;
 - `useDeferredValue`;
-- interruption;
 - Suspense boundaries;
-- nested Suspense;
+- nested reveal sequences;
 - stale-content patterns;
-- code splitting;
-- `lazy`;
-- supported Suspense data sources;
-- streaming interactions.
+- `lazy` and code splitting;
+- supported suspension sources;
+- concurrent rendering mental model.
 
-Milestone: build a responsive search experience that keeps urgent input updates fast.
+Milestone: build responsive search that keeps urgent input updates fast.
 
-## Phase 7 — React DOM, SSR, and Server Components
+## Phase 7 — React DOM, SSR, and Server Components ✅
 
-Goal: understand where React ends and frameworks begin.
+Goal: understand where React ends and framework infrastructure begins.
 
-Topics:
+Covered:
 
-- `createRoot` and `hydrateRoot`;
-- portals and `flushSync`;
-- resource preloading APIs;
-- CSR vs SSR vs static rendering;
+- React DOM components/props;
+- portals / `flushSync`;
 - hydration;
-- streaming;
-- Node streams vs Web Streams;
-- React Server Components concepts;
-- Server vs Client Components;
-- `'use client'` and `'use server'`;
-- serialization boundaries;
-- Server Functions/Actions concepts;
-- framework responsibility.
+- streaming SSR;
+- static rendering / resume / PPR architecture;
+- Server Components;
+- Server/Client boundaries;
+- `'use client'` / `'use server'`;
+- Server Functions;
+- `cache` / `cacheSignal`;
+- serialization and security boundaries.
 
-Milestone: explain the complete path from server render to hydrated interactive UI.
+Milestone: explain the full server-render → streaming → hydration/client-interaction path.
 
-## Phase 8 — React Compiler and Rules of React
+## Phase 8 — React Compiler and Rules of React ✅
 
-Goal: write code that React and the compiler can reason about safely.
+Goal: write code React and Compiler can reason about safely.
 
-Topics:
+Covered:
 
-- purity and idempotency;
-- side effects outside render;
+- purity/idempotence;
 - immutability;
 - Rules of Hooks;
-- compiler mental model;
+- Compiler mental model;
 - automatic memoization;
-- lint rules;
+- configuration;
+- directives;
 - diagnostics;
 - incremental adoption;
-- compiler vs `useMemo`, `useCallback`, and `memo`.
+- library compilation;
+- compiler-aware ESLint.
 
-Milestone: profile an application and explain whether manual memoization is still justified.
+Milestone: explain when Compiler removes the need for manual memoization and when explicit identity still matters.
 
-## Phase 9 — TypeScript, testing, and accessibility
+## Phase 9 — TypeScript, testing, and accessibility ✅
 
 Goal: make correctness part of component design.
 
-Topics:
+Covered:
 
-- typed props, events, refs, context, and reducers;
-- discriminated unions;
-- generic and polymorphic components;
-- React Testing Library;
-- user-focused tests;
-- async testing and API mocking;
-- Playwright/E2E concepts;
+- typed components/Hooks/context/reducers/refs/forms;
+- discriminated unions and reusable APIs;
+- Testing Library;
+- async `act`;
+- Suspense/Action/optimistic testing;
+- test-layer strategy;
 - semantic HTML;
-- keyboard interaction;
-- focus management;
-- forms, dialogs, ARIA, and live regions.
+- `useId`;
+- keyboard/focus/dialog/form/live-region accessibility.
 
-Milestone: build and test an accessible form/dialog workflow with strong types.
+Milestone: build and test an accessible typed mutation workflow.
 
-## Phase 10 — Performance, architecture, and patterns
+## Phase 10 — Performance, architecture, and patterns ✅
 
 Goal: move from feature implementation to system design.
 
-Topics:
+Covered:
 
-- React DevTools Profiler;
+- measurement-first optimization;
+- `memo` / `useMemo` / `useCallback`;
+- `<Profiler>`;
 - React Performance Tracks;
-- state locality;
-- component boundaries;
-- virtualization;
-- network waterfalls;
-- bundle splitting;
-- feature-based architecture;
-- dependency direction;
-- public module APIs;
+- layout/insertion/debug Hooks;
+- state placement/update scope;
+- feature architecture;
 - design systems;
-- compound components;
-- controlled/uncontrolled APIs;
-- headless components;
-- provider/reducer/state-reducer patterns.
+- controlled/uncontrolled/compound/slot/render-prop/HOC patterns.
 
-Milestone: design the frontend architecture for a large SaaS feature and defend the trade-offs.
+Milestone: design and defend the frontend architecture for a large SaaS feature.
 
-## Phase 11 — Internals and senior engineering
+## Phase 11 — Internals, debugging, and production engineering ✅
 
-Goal: understand implementation concepts without confusing them with React's public contract.
+Goal: understand implementation concepts without confusing them with public contracts.
 
-Topics:
+Covered:
 
-- React elements;
-- Fiber;
-- Fiber tree;
-- reconciliation;
-- render and commit phases;
-- update queues;
-- scheduling and priorities;
-- lanes at a conceptual level;
-- batching;
-- concurrent rendering;
-- hydration;
-- Suspense internals concepts;
-- public contract vs implementation detail;
-- debugging production rendering problems.
+- reconciliation and identity;
+- Fiber work model;
+- scheduling priorities;
+- render vs commit;
+- private implementation vs public contract;
+- Error Boundaries;
+- Owner Stacks / `captureOwnerStack`;
+- root error callbacks;
+- production observability/triage;
+- application security;
+- legacy maintenance/migration;
+- large-team engineering;
+- senior architectural decision-making.
 
-Milestone: reason from symptoms to likely causes instead of randomly changing Hooks.
+Milestone: reason from production symptoms to likely causes and design a safe remediation path.
 
-## Phase 12 — Projects and interview preparation
+## Phase 12 — Projects and interview mastery ✅
 
-Projects progress from a counter and Todo app to an ecommerce frontend and large SaaS architecture.
+Goal: turn the handbook into demonstrable engineering skill.
 
-Interview preparation is organised by:
+Projects:
 
-- junior;
-- mid-level;
-- senior;
-- staff/architecture.
+- progressive fundamentals→production project ladder;
+- real-time operations dashboard;
+- commerce/action/optimistic workflow capstone;
+- multi-team SaaS architecture/platform capstone.
 
-The goal is not one-sentence definitions. Answers should explain behavior, trade-offs, debugging, and production decisions.
+Interview mastery:
+
+- junior→senior React questions;
+- debugging/performance/security scenarios;
+- React system-design prompts;
+- trade-off drills;
+- staff architecture/leadership scenarios.
+
+Milestone: defend architecture, debug from evidence, explain trade-offs, and communicate production decisions clearly.
 
 ## Beginner coverage cross-check
 
-The curriculum also covers the reasonable beginner expectations found in common React tutorials: modern JavaScript syntax, JSX, components, props, events, conditionals, lists, forms, styling, routing, portals, Suspense, transitions, refs, common Hooks, and custom Hooks.
+The handbook covers the reasonable beginner expectations found in common React curricula:
 
-Third-party tools such as React Router, TanStack Query, Redux Toolkit, Zustand, React Hook Form, CSS-in-JS libraries, and Tailwind are always labelled **ecosystem**, not React core.
+- modern JavaScript;
+- JSX;
+- components/props;
+- events;
+- conditionals;
+- lists;
+- forms;
+- refs;
+- core Hooks;
+- Effects;
+- custom Hooks;
+- portals;
+- Suspense/transitions;
+- accessibility basics.
+
+Ecosystem tools such as React Router, TanStack Query, Redux Toolkit, Zustand, React Hook Form, Tailwind, and framework-specific APIs are labeled as **ecosystem**, not React core.
 
 ## What not to skip
 
-If you want senior-level React understanding, do not skip these topics:
+For senior-level understanding, do not skip:
 
 1. state as a snapshot;
 2. state ownership;
@@ -338,19 +355,36 @@ If you want senior-level React understanding, do not skip these topics:
 7. Context trade-offs;
 8. server state vs client state;
 9. Suspense and transitions;
-10. profiling before optimization;
-11. accessibility;
-12. public API vs implementation detail.
+10. server/client boundaries;
+11. Rules of React / Compiler;
+12. profiling before optimization;
+13. accessibility;
+14. security trust boundaries;
+15. failure/observability architecture;
+16. public API vs implementation detail;
+17. migration and reversibility.
+
+## Completion and maintenance
+
+The original roadmap is complete against the stable React 19.2 documentation line audited on **2026-07-26**.
+
+Use these pages to maintain it:
+
+- **[Official React API Coverage](./reference/api-coverage.md)** — compact ongoing coverage contract;
+- **[Final React Handbook Completeness Audit](./reference/final-completeness-audit.md)** — long-form stable-surface audit.
+
+When stable React changes, re-check official React docs, npm stable tags, release notes, Compiler/ESLint guidance, and the production build before changing recommendations.
 
 ## References
 
 - https://react.dev/learn
 - https://react.dev/reference/react
 - https://react.dev/reference/react-dom
+- https://react.dev/versions
 - https://react.dev/blog
-- https://www.w3schools.com/react/
-- https://www.w3schools.com/react/react_syllabus.asp
 
-## Next
+## Continue learning
 
-Before React syntax, review **[JavaScript for React](./00-prerequisites/javascript-for-react.md)**.
+A completed roadmap is not the end of React learning.
+
+Use the capstones, interview drills, production scenarios, and future release audits to keep the handbook current and turn knowledge into engineering judgment.
