@@ -58,10 +58,10 @@ React 19+ adds primitives that make asynchronous mutations and resources easier 
     <DiagramNode tone="orange" eyebrow="Prediction" title="useOptimistic">
       Show a temporary expected result while the authoritative mutation is unresolved.
     </DiagramNode>
-    <DiagramNode tone="pink" eyebrow="Resources" title="use">
+    <DiagramNode tone="cyan" eyebrow="Resources" title="use">
       Read a supported resource such as a Promise or Context while letting React coordinate suspension.
     </DiagramNode>
-    <DiagramNode tone="gray" eyebrow="Visibility" title="Activity">
+    <DiagramNode tone="slate" eyebrow="Visibility" title="Activity">
       Preserve UI state while changing visibility and effect behaviour for hidden work.
     </DiagramNode>
   </DiagramGrid>
@@ -71,7 +71,7 @@ React 19+ adds primitives that make asynchronous mutations and resources easier 
 
 <VisualDiagram title="Two mutation models">
   <DiagramRow>
-    <DiagramNode tone="gray" eyebrow="Manual" title="Traditional event flow">
+    <DiagramNode tone="slate" eyebrow="Manual" title="Traditional event flow">
       Event handler → set pending → await request → set error/success → reset pending.
     </DiagramNode>
     <DiagramNode tone="green" eyebrow="Action-aware" title="Modern React flow">
@@ -85,10 +85,10 @@ React 19+ adds primitives that make asynchronous mutations and resources easier 
 <VisualDiagram title="Optimistic state lifecycle">
   <LifecycleBar
     items={[
-      { label: 'Authoritative state', detail: 'What the app currently knows is true' },
-      { label: 'Optimistic projection', detail: 'Temporary expected result shown immediately' },
-      { label: 'Server / mutation result', detail: 'The authoritative outcome arrives' },
-      { label: 'Reconcile', detail: 'Keep success or recover from failure' },
+      { label: 'Authoritative state', tone: 'blue' },
+      { label: 'Optimistic projection', tone: 'orange' },
+      { label: 'Mutation result', tone: 'purple' },
+      { label: 'Reconcile', tone: 'green' },
     ]}
   />
 </VisualDiagram>
@@ -96,9 +96,8 @@ React 19+ adds primitives that make asynchronous mutations and resources easier 
 ## Where modern React stops
 
 <DecisionTree
-  title="Do I need a React 19 primitive or application infrastructure?"
   question="What problem are you solving?"
-  options={[
+  items={[
     { label: 'One async UI mutation', value: 'Action / transition primitives may fit.' },
     { label: 'Form result and validation state', value: 'Consider useActionState and useFormStatus.' },
     { label: 'Temporary optimistic feedback', value: 'Consider useOptimistic.' },
