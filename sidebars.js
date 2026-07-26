@@ -49,6 +49,16 @@ const reactItems = [
     'react/interview-question-bank/debugging-security-production-system-design',
     'react/interview-question-bank/coding-output-and-trick-questions',
   ]),
+  category('36 · Mock Interview Practice', [
+    'react/mock-interview-practice/overview-scoring-and-how-to-practice',
+    'react/mock-interview-practice/minute-react-screen',
+    'react/mock-interview-practice/minute-senior-react-round',
+    'react/mock-interview-practice/minute-frontend-deep-dive',
+    'react/mock-interview-practice/full-stack-react-node-round',
+    'react/mock-interview-practice/lead-staff-architecture-round',
+    'react/mock-interview-practice/live-coding-round',
+    'react/mock-interview-practice/behavioral-and-experience-round',
+  ]),
   category('📋 Reference & Coverage', ['react/reference/api-coverage', 'react/reference/final-completeness-audit']),
 ];
 
