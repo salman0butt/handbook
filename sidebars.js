@@ -158,6 +158,32 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '20 · React DOM',
+          items: [
+            'react/react-dom/portals-and-flush-sync',
+            'react/react-dom/dom-components-custom-elements-and-svg',
+          ],
+        },
+        {
+          type: 'category',
+          label: '21 · Server Rendering',
+          items: [
+            'react/server-rendering/hydration-and-hydrate-root',
+            'react/server-rendering/streaming-ssr',
+            'react/server-rendering/static-rendering-and-partial-prerendering',
+          ],
+        },
+        {
+          type: 'category',
+          label: '22 · Server Components',
+          items: [
+            'react/server-components/server-components-and-client-boundaries',
+            'react/server-components/server-functions-and-directives',
+            'react/server-components/cache-and-cache-signal',
+          ],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },
