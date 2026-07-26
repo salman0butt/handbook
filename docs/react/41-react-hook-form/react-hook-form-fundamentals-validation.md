@@ -4,6 +4,16 @@ description: Learn React Hook Form 7 useForm, register, handleSubmit, formState,
 sidebar_position: 1
 ---
 
+import {
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramRow,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # React Hook Form fundamentals and validation
 
 This handbook targets **React Hook Form 7.82.0**.
@@ -14,18 +24,22 @@ React Hook Form manages **form state**, not general application state.
 
 ## Mental model
 
-```text
-useForm()
-│
-├── register fields
-├── track values
-├── validate
-├── expose formState
-└── handle submission
-      │
-      ▼
-application mutation / action
-```
+<VisualDiagram title="React Hook Form owns the form workflow">
+  <DiagramStack align="center">
+    <DiagramNode title="useForm()" tone="red" wide>Creates the form controller and subscription model.</DiagramNode>
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="register fields" tone="blue" />
+      <DiagramNode title="track values" tone="cyan" />
+      <DiagramNode title="validate" tone="orange" />
+      <DiagramNode title="formState" tone="purple" />
+      <DiagramNode title="submission" tone="green" />
+      <DiagramNode title="dynamic fields" tone="slate" />
+    </DiagramGrid>
+    <DiagramArrow label="valid submit" />
+    <DiagramNode title="Application mutation / action" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 ## Why a form library exists
 
@@ -114,15 +128,15 @@ function Login() {
 
 Conceptually:
 
-```text
-register('email')
-       │
-       ▼
-name + ref + event handlers
-       │
-       ▼
-<input ... /> joins form model
-```
+<VisualDiagram title="How register connects an input" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="register('email')" tone="red" />
+    <DiagramArrow label="returns field props" />
+    <DiagramNode title="name + ref + onChange + onBlur" tone="blue" />
+    <DiagramArrow label="spread onto input" />
+    <DiagramNode title="Input joins the form model" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 The current API connects fields through returned props such as `name`, `ref`, `onChange`, and `onBlur`.
 
@@ -150,16 +164,16 @@ Client validation improves UX. It does not replace server validation.
 
 ## `handleSubmit`
 
-```text
-submit event
-    │
-    ▼
-React Hook Form validation
-    │
-    ├── invalid → expose errors
-    │
-    └── valid   → call onSubmit(values)
-```
+<VisualDiagram title="Submission validation flow" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Submit event" tone="blue" />
+    <DiagramArrow label="handleSubmit runs validation" />
+    <DiagramRow>
+      <DiagramNode title="Invalid" tone="red">Expose field/form errors.</DiagramNode>
+      <DiagramNode title="Valid" tone="green">Call `onSubmit(values)`.</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 `handleSubmit` orchestrates validation before your submit callback.
 
@@ -167,17 +181,18 @@ React Hook Form validation
 
 Important form metadata includes concepts such as:
 
-```text
-errors
-isDirty
-dirtyFields
-touchedFields
-isSubmitting
-isSubmitted
-isSubmitSuccessful
-isValid
-isValidating
-```
+<VisualDiagram title="Important formState signals">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="errors" tone="red" />
+    <DiagramNode title="isDirty" tone="orange" />
+    <DiagramNode title="dirtyFields" tone="orange" />
+    <DiagramNode title="touchedFields" tone="cyan" />
+    <DiagramNode title="isSubmitting" tone="purple" />
+    <DiagramNode title="isSubmitted" tone="slate" />
+    <DiagramNode title="isSubmitSuccessful" tone="green" />
+    <DiagramNode title="isValid / isValidating" tone="blue" />
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not destructure everything automatically. Subscribe to the state the component actually needs.
 
@@ -202,30 +217,25 @@ React Hook Form supports async default-value workflows in current v7 APIs.
 
 The important architecture is:
 
-```text
-load initial record
-      │
-      ▼
-initialize/reset form values
-      │
-      ▼
-user edits local form draft
-      │
-      ▼
-submit mutation
-```
+<LifecycleBar
+  items={[
+    { label: 'load initial record', tone: 'blue' },
+    { label: 'initialize/reset defaults', tone: 'cyan' },
+    { label: 'user edits local draft', tone: 'orange' },
+    { label: 'submit mutation', tone: 'green' },
+  ]}
+/>
 
 Do not continuously overwrite user edits whenever server data refetches.
 
 ## Dirty vs touched
 
-```text
-touched
-= has the user interacted with this field?
-
-dirty
-= does current value differ from the initial/default value?
-```
+<VisualDiagram title="Dirty and touched are different">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="touched" tone="cyan">Has the user interacted with this field?</DiagramNode>
+    <DiagramNode title="dirty" tone="orange">Does the current value differ from the default value?</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 These are different concepts.
 
@@ -239,13 +249,17 @@ const plan = watch('plan')
 
 For targeted subscription behavior, use APIs such as `useWatch` rather than forcing the entire form owner to respond to every field change.
 
-```text
-form control
-   │
-   ├── field A subscription
-   ├── field B subscription
-   └── formState subscription
-```
+<VisualDiagram title="Fine-grained form subscriptions" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Form control" tone="red" wide />
+    <DiagramArrow label="subscribes independently" />
+    <DiagramRow>
+      <DiagramNode title="Field A" tone="blue" />
+      <DiagramNode title="Field B" tone="cyan" />
+      <DiagramNode title="formState" tone="purple" />
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
 Subscription granularity is one of React Hook Form's important architectural advantages.
 
@@ -257,18 +271,15 @@ Examples include Zod, Yup, and others.
 
 Keep the trust boundary clear:
 
-```text
-client schema validation
-        │
-        ▼
-better immediate UX
-        │
-        ▼
-server receives untrusted input
-        │
-        ▼
-server validates again
-```
+<VisualDiagram title="Client validation is UX, not authority" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Client schema validation" tone="blue">Fast feedback and better UX.</DiagramNode>
+    <DiagramArrow />
+    <DiagramNode title="Server receives untrusted input" tone="orange" />
+    <DiagramArrow label="validate again" />
+    <DiagramNode title="Authoritative server validation" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 A TypeScript type is not runtime validation.
 
@@ -297,15 +308,13 @@ React Hook Form does not automatically make custom form UIs accessible.
 
 A server may reject values that passed client validation.
 
-```text
-client validation passes
-      │
-      ▼
-server rejects email as already used
-      │
-      ▼
-map server response to form error
-```
+<LifecycleBar
+  items={[
+    { label: 'client validation passes', tone: 'blue' },
+    { label: 'server rejects domain rule', tone: 'red' },
+    { label: 'map response to form error', tone: 'orange' },
+  ]}
+/>
 
 Use APIs such as `setError` when a server/domain error belongs to a specific field or the form root.
 
@@ -321,19 +330,16 @@ This matters because dirty state is compared against defaults.
 
 ## Form state vs server mutation state
 
-```text
-React Hook Form
-├── values
-├── field errors
-├── dirty/touched
-└── form validation
-
-TanStack Query / Server Action / API mutation
-├── request
-├── server error
-├── cache invalidation
-└── remote reconciliation
-```
+<VisualDiagram title="Separate form draft ownership from server mutation lifecycle">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React Hook Form" tone="red">
+      Values · field errors · dirty/touched · local form validation.
+    </DiagramNode>
+    <DiagramNode title="Query / Server Action / API mutation" tone="orange">
+      Request · server error · cache invalidation · remote reconciliation.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not force one tool to own both lifecycles.
 
