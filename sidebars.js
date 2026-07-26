@@ -140,6 +140,16 @@ const nextjsItems = [
     'nextjs/server-and-client-components/server-only-client-only-and-environment-poisoning',
     'nextjs/server-and-client-components/boundary-performance-security-and-debugging',
     'nextjs/server-and-client-components/server-client-architecture-and-design-review',
+  ], { collapsed: true }),
+  category('05 · Data Fetching', [
+    'nextjs/data-fetching/async-server-components-and-data-ownership',
+    'nextjs/data-fetching/fetch-and-direct-data-sources',
+    'nextjs/data-fetching/parallel-sequential-and-waterfalls',
+    'nextjs/data-fetching/preload-deduplication-and-react-cache',
+    'nextjs/data-fetching/suspense-streaming-and-use',
+    'nextjs/data-fetching/client-side-data-fetching',
+    'nextjs/data-fetching/errors-security-and-debugging',
+    'nextjs/data-fetching/data-fetching-architecture-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', [
     'nextjs/reference/api-coverage',
