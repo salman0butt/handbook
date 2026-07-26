@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–9 are implemented; Phase 10 Rendering, Suspense & Streaming is next.**
+> **Status: NOT COMPLETE — Phases 1–10 are implemented; Phase 11 Metadata & SEO is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -30,24 +30,27 @@ This page is the final release gate for the handbook. It must not be marked comp
 - [x] Phase 07 · Mutations, Forms & Server Functions
 - [x] Phase 08 · Route Handlers
 - [x] Phase 09 · Request Pipeline & Proxy
-- [ ] Phase 10 · Rendering, Suspense & Streaming
+- [x] Phase 10 · Rendering, Suspense & Streaming
+- [ ] Phase 11 · Metadata & SEO
 - [ ] Remaining roadmap phases
 
-Phase 02 includes route-tree composition, pages and nested layouts, templates, dynamic/catch-all/optional catch-all segments, Promise-based params, `generateStaticParams`, route groups, private folders, multiple root layouts, loading/error/not-found/default conventions, parallel routes, intercepting routes, route-driven modals, debugging, architecture review, and production-design trade-offs.
+Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
 
-Phase 03 includes `<Link>` and current 16.2 prefetch behavior, `useRouter`, server redirects, pathname/param/selected-layout hooks, Promise-based page `searchParams`, URL-driven filtering and pagination, `useLinkStatus`, route-change observation, native History API integration, Back/Forward, scroll/focus/accessibility, safe redirect policy, navigation performance debugging, and senior navigation design review.
+Phase 03 includes `<Link>`, prefetching, `useRouter`, server redirects, pathname/param/layout hooks, Promise-based `searchParams`, URL-driven filtering/pagination, `useLinkStatus`, History API, scroll/focus/accessibility, redirect safety, and navigation architecture review.
 
-Phase 04 includes Server Components by default, the `'use client'` module-graph boundary, initial Client Component prerender/hydration mental model, interleaving through `children`/ReactNode slots, React-serializable props, minimal public DTOs, provider/context placement, server-started Promise consumption with `use()`, request-scoped React `cache` context patterns, third-party and browser-only integration, `server-only` / `client-only`, environment poisoning prevention, boundary performance/security/debugging, and senior server/client architecture review.
+Phase 04 includes Server Components by default, `'use client'`, module-graph boundaries, interleaving, serialization, provider placement, third-party/browser-only integration, `server-only` / `client-only`, environment isolation, performance/security/debugging, and server/client architecture review.
 
-Phase 05 includes async Server Component data ownership, server `fetch`, direct database/ORM/SDK reads, parallel vs sequential fetching, dependency waterfalls, N+1/batching/fan-out analysis, preload/start-early patterns, request-scoped React `cache`, Promise sharing, Suspense and streaming-data boundaries, React `use()`, client-side fetching/SWR patterns, live-client refresh, timeout/retry/security/error handling, dev-vs-production fetch debugging, and senior data-architecture review.
+Phase 05 includes async Server Component data ownership, server `fetch`, direct database/ORM/SDK reads, parallel/sequential fetching, dependency waterfalls, N+1/batching/fan-out analysis, preloading, React `cache`, Suspense/`use()`, client fetching, timeout/retry/security/error handling, and data architecture review.
 
-Phase 06 includes the modern Next.js 16.2 cache/rendering decision model, current server `fetch` cache semantics, the previous non-Cache-Components model, `cacheComponents`, `'use cache'`, `cacheLife`, `cacheTag`, `revalidateTag`, `updateTag`, `revalidatePath`, `connection()`, request-time dynamic boundaries, remote/distributed caching, experimental private caching, Cache Components partial prerendering, Client Router Cache interactions, cache isolation/security, production incident debugging, and senior cache/rendering architecture review.
+Phase 06 includes current server `fetch` cache semantics, previous model, Cache Components, `'use cache'`, `cacheLife`, `cacheTag`, revalidation APIs, `connection()`, request-time boundaries, remote/distributed caching, partial prerendering, Router Cache interactions, cache isolation/security, incident debugging, and cache architecture review.
 
-Phase 07 includes current Server Function/Server Action terminology, `'use server'`, form actions, `FormData`, `bind`, `formAction`, progressive enhancement, `next/form` distinctions, runtime validation, authentication and resource authorization, action CSRF/origin/body-size considerations, `useActionState`, `useFormStatus`, `useOptimistic`, mutation concurrency, post-write revalidation/refresh/redirect/cookie sequencing, idempotency, transactions, side-effect reliability, action debugging, and senior mutation architecture review.
+Phase 07 includes Server Function/Server Action terminology, `'use server'`, form actions, `FormData`, progressive enhancement, validation/auth/authorization, action security, `useActionState`, `useFormStatus`, `useOptimistic`, mutation concurrency, revalidation/refresh/redirect/cookies, idempotency, transactions, side effects, and mutation architecture review.
 
-Phase 08 includes `route.ts` ownership and method semantics; native `Request` / `Response`; `NextRequest` / `NextResponse`; async params and `RouteContext`; JSON/form/text/binary parsing; validation, mass-assignment and SSRF protections; files, downloads, streaming and cancellation; current GET caching and Cache Components behavior; HTTP caching; CORS; CSRF considerations; authentication and resource authorization; webhooks, replay protection and callback safety; rate limiting; Server Action vs Route Handler vs BFF decisions; serverless/runtime constraints; production debugging; and senior HTTP/API design review.
+Phase 08 includes Route Handler ownership/method semantics, Web `Request` / `Response`, `NextRequest` / `NextResponse`, async params, request parsing, validation, files/downloads/streaming, GET caching behavior, Cache Components, HTTP caching, CORS, CSRF/auth baseline, webhooks/replay/callback safety, rate limiting, BFF decisions, runtime constraints, debugging, and HTTP/API design review.
 
-Phase 09 includes the Next.js 16 `proxy.ts` convention and migration from `middleware.ts`; exact request execution order; static matchers, regex, `has`/`missing`, negative matching and prefetch filtering; `NextRequest`, `NextResponse.next`, request/response header distinction and cookie handling; redirects, rewrites, locale and tenant routing; RSC-safe rewrites; optimistic auth gating, CORS, CSRF posture and nonce-based CSP implications; `NextFetchEvent.waitUntil`, runtime/deployment/performance constraints; experimental Proxy test helpers; production debugging; and senior request-pipeline architecture review.
+Phase 09 includes `proxy.ts`, migration from `middleware.ts`, exact request order, matchers and prefetch filtering, `NextResponse.next`, request/response headers and cookies, redirects/rewrites, localization/tenancy, RSC-safe rewrites, optimistic auth gating, CORS/CSRF/CSP baseline, `waitUntil`, runtime/performance constraints, experimental Proxy test helpers, debugging, and request-pipeline architecture review.
+
+Phase 10 includes Server Component rendering orchestration; RSC Payload and initial HTML; Client Component prerendering and hydration; hard vs soft navigation; route-segment reconciliation and preserved layouts; `loading.tsx`; manual Suspense; progressive streaming; Cache Components static shells and request-time dynamic holes; server-started Promises consumed with React `use()`; hydration mismatches and visible-before-interactive behavior; streamed error/retry/recovery models; infrastructure buffering; RSC-vs-JS-vs-hydration performance reasoning; security; diagnostics; and senior rendering architecture review.
 
 ## Final audit gates
 
