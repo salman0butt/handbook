@@ -202,6 +202,32 @@ const sidebars = {
         },
         {
           type: 'category',
+          label: '25 · TypeScript',
+          items: [
+            'react/typescript/typescript-components-and-props',
+            'react/typescript/typing-hooks-context-reducers-and-refs',
+            'react/typescript/advanced-component-api-design',
+          ],
+        },
+        {
+          type: 'category',
+          label: '26 · Testing',
+          items: [
+            'react/testing/testing-library-and-user-behavior',
+            'react/testing/async-suspense-actions-and-act',
+            'react/testing/production-testing-strategy',
+          ],
+        },
+        {
+          type: 'category',
+          label: '27 · Accessibility',
+          items: [
+            'react/accessibility/semantics-use-id-and-accessible-names',
+            'react/accessibility/keyboard-focus-forms-dialogs-and-dynamic-ui',
+          ],
+        },
+        {
+          type: 'category',
           label: '📋 Reference & Coverage',
           items: ['react/reference/api-coverage'],
         },
