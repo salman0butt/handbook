@@ -4,23 +4,31 @@ description: Learn controlled and uncontrolled fields, FormData, validation, acc
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Forms
 
 Forms combine browser behavior, React state, validation, accessibility, and server interaction. Good React form code starts by understanding the **native form model** before adding libraries.
 
-```text
-form controls
-    ↓
-user input
-    ↓
-controlled state OR browser-owned values
-    ↓
-validation
-    ↓
-submission
-    ↓
-server/client action
-```
+<VisualDiagram title="Form lifecycle" subtitle="A form is a workflow across browser controls, ownership, validation, and submission.">
+  <LifecycleBar
+    items={[
+      { label: 'Form controls', tone: 'blue' },
+      { label: 'User input', tone: 'orange' },
+      { label: 'React-controlled or browser-owned values', tone: 'purple' },
+      { label: 'Validation', tone: 'cyan' },
+      { label: 'Submission', tone: 'green' },
+      { label: 'Server / client action', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 ## Start with semantic HTML
 
@@ -68,17 +76,18 @@ function SearchBox() {
 
 The loop is:
 
-```text
-state value
-   ↓
-input value
-   ↓ user types
-onChange
-   ↓
-set state
-   ↓
-render with new value
-```
+<VisualDiagram title="Controlled input loop">
+  <LifecycleBar
+    items={[
+      { label: 'State value', tone: 'blue' },
+      { label: 'Input value', tone: 'purple' },
+      { label: 'User types', tone: 'orange' },
+      { label: 'onChange', tone: 'cyan' },
+      { label: 'set state', tone: 'green' },
+      { label: 'Render with new value', tone: 'blue' },
+    ]}
+  />
+</VisualDiagram>
 
 Controlled inputs are useful when the rest of the UI must react to each change.
 
@@ -96,15 +105,16 @@ This works well when you mainly need the value at submission time.
 
 ## Controlled vs uncontrolled
 
-```text
-Controlled
-value / checked + onChange
-React owns current value
-
-Uncontrolled
-defaultValue / defaultChecked
-browser owns current value
-```
+<VisualDiagram title="Controlled vs uncontrolled form ownership">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Controlled" tone="purple" eyebrow="REACT OWNS CURRENT VALUE">
+      `value` / `checked` + `onChange`<br />Useful when UI must respond to each edit.
+    </DiagramNode>
+    <DiagramNode title="Uncontrolled" tone="blue" eyebrow="BROWSER OWNS CURRENT VALUE">
+      `defaultValue` / `defaultChecked`<br />Useful when values are mainly needed at submission time.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Neither is always superior.
 
@@ -384,10 +394,12 @@ React does not provide built-in `touched` or `dirty` state.
 
 They are useful form concepts:
 
-```text
-touched = has the user interacted with this field?
-dirty = does current value differ from initial value?
-```
+<VisualDiagram title="Touched vs dirty" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Touched" tone="orange">Has the user interacted with this field?</DiagramNode>
+    <DiagramNode title="Dirty" tone="purple">Does the current value differ from the initial value?</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Libraries such as React Hook Form build APIs around these ideas, but they are ecosystem concepts, not React core APIs.
 
@@ -435,18 +447,16 @@ This is different from traditional `onSubmit` handling.
 
 ## Traditional submit vs Action
 
-```text
-onSubmit
-→ receive event
-→ often preventDefault()
-→ read FormData manually
-→ manage pending/error state yourself
-
-form action={function}
-→ receive FormData directly
-→ runs using React Action/Transition model
-→ integrates with modern pending/error/optimistic APIs
-```
+<VisualDiagram title="Traditional submit vs React 19 Action">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="onSubmit" tone="blue" eyebrow="EVENT MODEL">
+      Receive event → often `preventDefault()` → read `FormData` → manage request/pending/error workflow yourself.
+    </DiagramNode>
+    <DiagramNode title="form action={function}" tone="purple" eyebrow="ACTION MODEL">
+      Receive `FormData` directly → run through React's Action/Transition model → integrate with modern pending/error/optimistic APIs.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Both are valid. The modern React section will cover Actions deeply rather than pretending every form must be rewritten immediately.
 
@@ -468,14 +478,16 @@ Those APIs deserve dedicated chapters because they change the mutation model, no
 
 For a complex form, separate concerns:
 
-```text
-field rendering
-validation rules
-submission/mutation
-pending state
-server errors
-navigation/success behavior
-```
+<VisualDiagram title="Complex form responsibilities" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Fields" tone="blue">rendering + input semantics</DiagramNode>
+    <DiagramNode title="Validation" tone="orange">rules + error messages</DiagramNode>
+    <DiagramNode title="Submission" tone="purple">mutation / Action</DiagramNode>
+    <DiagramNode title="Pending" tone="cyan">submission feedback</DiagramNode>
+    <DiagramNode title="Server errors" tone="red">domain + trust-boundary failures</DiagramNode>
+    <DiagramNode title="Success/navigation" tone="green">reset, redirect, next workflow</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not put every concern into one `handleChange` and one giant component.
 
@@ -591,14 +603,18 @@ First implement it with native FormData and uncontrolled fields. Then convert on
 
 ## Summary
 
-```text
-start with native forms
-choose controlled state intentionally
-use FormData when browser-owned values are enough
-derive validation where possible
-keep accessibility and server validation first-class
-learn React 19 Actions as a separate modern mutation model
-```
+<VisualDiagram title="Form design summary">
+  <LifecycleBar
+    items={[
+      { label: 'Start with native forms', tone: 'blue' },
+      { label: 'Choose controlled state intentionally', tone: 'purple' },
+      { label: 'Use FormData when browser-owned values are enough', tone: 'cyan' },
+      { label: 'Derive validation where possible', tone: 'orange' },
+      { label: 'Keep accessibility + server validation first-class', tone: 'green' },
+      { label: 'Learn React 19 Actions as a separate mutation model', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 ## References
 

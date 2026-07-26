@@ -4,28 +4,40 @@ description: Learn how React ties state to tree position, component type, and ke
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Preserving and resetting state
 
 State is not stored “inside the component function.” React stores state and associates it with a component's **identity in the render tree**.
 
-```text
-component type
-+ tree position
-+ key when relevant
-      ↓
-component identity
-      ↓
-state preserved or reset
-```
+<VisualDiagram title="What determines component identity?" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Component type" tone="blue" />
+    <DiagramNode title="Tree position" tone="purple" />
+    <DiagramNode title="Key (when relevant)" tone="orange" />
+  </DiagramGrid>
+  <DiagramArrow label="together define" />
+  <DiagramNode title="Rendered identity" tone="green" wide>React preserves or resets state based on this identity.</DiagramNode>
+</VisualDiagram>
 
 ## State belongs to a position in the tree
 
 Suppose React renders:
 
-```text
-App
-└── Counter
-```
+<VisualDiagram title="State is attached to rendered position" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="App" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramNode title="Counter" tone="purple" eyebrow="this rendered position owns the Counter state" />
+  </DiagramStack>
+</VisualDiagram>
 
 The `Counter` state is associated with that rendered position.
 
@@ -55,14 +67,16 @@ function App({isCompany}) {
 
 React sees different component types at the same position.
 
-```text
-PersonForm
-    ↓ switch
-CompanyForm
-    ↓
-old state removed
-new state created
-```
+<VisualDiagram title="Changing type creates a new identity" compact>
+  <LifecycleBar
+    items={[
+      { label: 'PersonForm', tone: 'blue' },
+      { label: 'switch type', tone: 'orange' },
+      { label: 'old state removed', tone: 'red' },
+      { label: 'CompanyForm gets new state', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## JSX location is not the important location
 
@@ -100,6 +114,13 @@ If each contact should have a fresh draft:
 
 Now changing contacts intentionally creates a new component identity.
 
+<VisualDiagram title="Key as an identity reset switch" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="key = user-42" tone="blue">Chat draft belongs to user-42.</DiagramNode>
+    <DiagramNode title="key = user-91" tone="green">React creates a different Chat identity with a fresh draft.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
 ## Keys do not need to be globally unique
 
 A key only needs to distinguish siblings in its current collection or keyed position.
@@ -126,12 +147,16 @@ Every render produces a new identity.
 
 Result:
 
-```text
-old component removed
-new component mounted
-state resets
-DOM may be recreated
-```
+<VisualDiagram title="Unstable key → remount loop" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Old component removed', tone: 'red' },
+      { label: 'New component mounted', tone: 'orange' },
+      { label: 'Local state resets', tone: 'purple' },
+      { label: 'DOM may be recreated', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 This is not a harmless way to “make React update.”
 
@@ -211,19 +236,23 @@ When items reorder, position alone is not enough.
 
 Without stable keys:
 
-```text
-position 0 → state A
-position 1 → state B
-```
+<VisualDiagram title="Position-based identity can attach state to the wrong item" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="position 0" tone="orange">state A</DiagramNode>
+    <DiagramNode title="position 1" tone="orange">state B</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 After reordering, React can associate the wrong state with the wrong conceptual item.
 
 Stable keys change the model:
 
-```text
-key user-42 → state for user-42
-key user-91 → state for user-91
-```
+<VisualDiagram title="Stable keys attach state to conceptual identity" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="key user-42" tone="blue">state for user-42</DiagramNode>
+    <DiagramNode title="key user-91" tone="green">state for user-91</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 This is why list keys are fundamentally about identity.
 
@@ -297,11 +326,12 @@ Implement the behavior using component identity rather than an Effect that clear
 
 ## Summary
 
-```text
-state is tied to rendered identity
-same type + same position/key → preserve
-identity changes → reset
-```
+<VisualDiagram title="State identity summary" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Same identity" tone="green">same type + same position/key → preserve state</DiagramNode>
+    <DiagramNode title="Different identity" tone="red">type / position / key changes → reset state</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Keys are part of your application's identity model, not a warning-suppression mechanism.
 

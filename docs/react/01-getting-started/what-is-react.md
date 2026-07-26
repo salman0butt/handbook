@@ -4,6 +4,15 @@ description: Understand React's declarative component model, why it exists, what
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # What is React?
 
 React is a JavaScript library for building user interfaces from **components**.
@@ -12,15 +21,17 @@ A component describes what a part of the interface should look like for its curr
 
 That sounds simple, but it introduces the mental model used throughout this handbook:
 
-```text
-data
- ↓
-components calculate UI
- ↓
-React coordinates rendering
- ↓
-DOM changes are committed when needed
-```
+<VisualDiagram title="React's basic data → UI model">
+  <DiagramStack align="center">
+    <DiagramNode title="Data" tone="blue" wide>props · state · context</DiagramNode>
+    <DiagramArrow label="inputs" />
+    <DiagramNode title="Components calculate UI" tone="purple" wide>Components describe what the interface should be for the current inputs.</DiagramNode>
+    <DiagramArrow label="render + reconcile" />
+    <DiagramNode title="React coordinates rendering" tone="cyan" wide>React determines what host work is necessary.</DiagramNode>
+    <DiagramArrow label="commit" />
+    <DiagramNode title="DOM changes when needed" tone="green" wide>Only necessary host changes are committed.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 ## Why does React exist?
 
@@ -40,19 +51,18 @@ With direct DOM manipulation, you can build all of this, but you must carefully 
 
 React gives you another model:
 
-```text
-Application state
-      ↓
-Components describe UI
-      ↓
-React renders the result
-      ↓
-State changes
-      ↓
-Components run again
-      ↓
-React commits necessary changes
-```
+<VisualDiagram title="State-driven UI loop" subtitle="Describe the UI from state instead of manually synchronising every affected DOM node.">
+  <LifecycleBar
+    items={[
+      { label: 'Application state', tone: 'blue' },
+      { label: 'Components describe UI', tone: 'purple' },
+      { label: 'React renders', tone: 'cyan' },
+      { label: 'State changes', tone: 'orange' },
+      { label: 'Components run again', tone: 'purple' },
+      { label: 'React commits necessary changes', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Instead of making every DOM update the center of your application logic, you describe the UI for the current data.
 
@@ -90,13 +100,16 @@ function BasketSummary({items}) {
 
 The shift is:
 
-```text
-Imperative
-"Find this element and change it."
-
-Declarative
-"For this data, the UI should look like this."
-```
+<VisualDiagram title="Imperative vs declarative UI">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Imperative" tone="orange" eyebrow="HOW">
+      “Find this element and change it.”
+    </DiagramNode>
+    <DiagramNode title="Declarative" tone="green" eyebrow="WHAT">
+      “For this data, the UI should look like this.”
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Declarative does **not** mean React eliminates complexity. It changes where you express that complexity: state, component boundaries, data flow, and render logic become the main design concerns.
 
@@ -125,16 +138,17 @@ function UserCard({user}) {
 
 This forms a component tree:
 
-```text
-App
-├── Header
-├── ProductList
-│   ├── ProductCard
-│   ├── ProductCard
-│   └── ProductCard
-└── Basket
-    └── BasketItem
-```
+<VisualDiagram title="Component tree" subtitle="React architecture is tree-shaped: ownership, Context, identity, and rendering all depend on this structure.">
+  <DiagramStack align="center">
+    <DiagramNode title="App" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Header" tone="cyan" />
+      <DiagramNode title="ProductList" tone="purple">renders multiple ProductCard children</DiagramNode>
+      <DiagramNode title="Basket" tone="green">renders BasketItem children</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 Thinking in component trees is one of the most important React skills because data ownership, state preservation, Context, rendering, and architecture all depend on the tree.
 
@@ -142,11 +156,13 @@ Thinking in component trees is one of the most important React skills because da
 
 A useful conceptual model is:
 
-```text
-UI = f(props, state, context)
-```
-
-Given the same relevant inputs, a pure component should describe the same UI.
+<VisualDiagram title="UI as a calculation" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="props + state + context" tone="blue" wide />
+    <DiagramArrow label="f(inputs)" />
+    <DiagramNode title="UI description" tone="green" wide>Given the same relevant inputs, a pure component should describe the same UI.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 ```jsx
 function Greeting({isLoggedIn, name}) {
@@ -194,17 +210,17 @@ Do not define rendering as "React changes the DOM."
 
 A better simplified sequence is:
 
-```text
-update triggers rendering
-        ↓
-components calculate the next UI
-        ↓
-React reconciles the result
-        ↓
-React commits necessary host changes
-        ↓
-browser can paint
-```
+<VisualDiagram title="Trigger → render → reconcile → commit → paint">
+  <LifecycleBar
+    items={[
+      { label: 'Update triggers work', tone: 'orange' },
+      { label: 'Components calculate next UI', tone: 'purple' },
+      { label: 'React reconciles identity + structure', tone: 'cyan' },
+      { label: 'Necessary host changes commit', tone: 'green' },
+      { label: 'Browser can paint', tone: 'blue' },
+    ]}
+  />
+</VisualDiagram>
 
 A component can render without causing a visible DOM change.
 
@@ -248,15 +264,12 @@ A complete application often needs decisions about:
 
 Frameworks can provide integrated solutions for those concerns.
 
-```text
-React
-  ↓
-UI primitives and rendering model
-
-Framework
-  ↓
-React + application architecture/infrastructure conventions
-```
+<VisualDiagram title="Library vs framework boundary">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React" tone="blue">UI primitives + rendering model</DiagramNode>
+    <DiagramNode title="Framework" tone="purple">React + routing + data + server/runtime + deployment conventions</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 This handbook distinguishes React core from framework behavior so you know which assumptions are portable.
 
@@ -266,15 +279,16 @@ Libraries such as React Router, TanStack Query, Redux Toolkit, Zustand, and Reac
 
 Learn the underlying problem first:
 
-```text
-understand local state
-      ↓
-understand ownership
-      ↓
-understand Context/reducers
-      ↓
-then evaluate an external state library
-```
+<VisualDiagram title="Learn the problem before the library">
+  <LifecycleBar
+    items={[
+      { label: 'Understand local state', tone: 'blue' },
+      { label: 'Understand ownership', tone: 'cyan' },
+      { label: 'Understand Context + reducers', tone: 'purple' },
+      { label: 'Evaluate external library requirements', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 The same principle applies to data fetching, forms, and routing.
 
@@ -340,19 +354,18 @@ If `useEffect`, `useMemo`, or Context feels magical, return to rendering, snapsh
 
 When UI is wrong, ask in this order:
 
-```text
-What data does this render see?
-        ↓
-Which component owns that data?
-        ↓
-What triggered the render?
-        ↓
-What UI did the component calculate?
-        ↓
-Did identity/keys preserve the expected state?
-        ↓
-Is an Effect/external system involved?
-```
+<VisualDiagram title="React debugging ladder" subtitle="Start with the render's data before reaching for another Hook.">
+  <LifecycleBar
+    items={[
+      { label: 'What data does this render see?', tone: 'blue' },
+      { label: 'Who owns that data?', tone: 'cyan' },
+      { label: 'What triggered the render?', tone: 'orange' },
+      { label: 'What UI was calculated?', tone: 'purple' },
+      { label: 'Did identity/keys preserve state?', tone: 'green' },
+      { label: 'Is an Effect/external system involved?', tone: 'red' },
+    ]}
+  />
+</VisualDiagram>
 
 This produces better debugging than randomly adding Hooks.
 
@@ -362,17 +375,17 @@ Take a familiar interface—GitHub, an e-commerce store, or a dashboard—and sk
 
 For example:
 
-```text
-Dashboard
-├── Sidebar
-├── Header
-└── Main
-    ├── StatsGrid
-    │   ├── StatCard
-    │   ├── StatCard
-    │   └── StatCard
-    └── ActivityTable
-```
+<VisualDiagram title="Example dashboard component tree">
+  <DiagramStack align="center">
+    <DiagramNode title="Dashboard" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Sidebar" tone="slate" />
+      <DiagramNode title="Header" tone="cyan" />
+      <DiagramNode title="Main" tone="purple">StatsGrid → StatCards · ActivityTable</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 Ask:
 
@@ -398,17 +411,16 @@ What belongs to React core versus a React framework, and why does that distincti
 
 ## Summary
 
-Keep this mental model:
-
-```text
-React is a UI library.
-Components calculate UI from current inputs.
-State updates can schedule rendering.
-Rendering is not the same as DOM mutation.
-React coordinates a component tree over time.
-The browser platform still matters.
-Frameworks and ecosystem libraries solve additional problems around React.
-```
+<VisualDiagram title="React in six ideas">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="UI library" tone="blue">React coordinates interfaces built from components.</DiagramNode>
+    <DiagramNode title="Components calculate UI" tone="purple">Current inputs determine the UI description.</DiagramNode>
+    <DiagramNode title="State schedules rendering" tone="cyan">State updates can request new rendering work.</DiagramNode>
+    <DiagramNode title="Render ≠ DOM mutation" tone="orange">Rendering can happen without visible host changes.</DiagramNode>
+    <DiagramNode title="Tree + identity matter" tone="green">Ownership and state preservation depend on structure and identity.</DiagramNode>
+    <DiagramNode title="Platform + ecosystem still matter" tone="slate">Browser APIs, frameworks, and third-party libraries solve additional concerns.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## References
 

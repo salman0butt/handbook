@@ -4,21 +4,32 @@ description: Learn if statements, early returns, ternaries, logical AND, conditi
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Conditional rendering
 
 React does not invent a special template language for conditions. You use JavaScript to decide which JSX should be returned.
 
 ## The core model
 
-```text
-current props + state
-      ↓
-JavaScript condition
-      ↓
-choose JSX
-      ↓
-React renders that result
-```
+<VisualDiagram title="Conditional rendering = JavaScript choosing UI">
+  <LifecycleBar
+    items={[
+      { label: 'Current props + state', tone: 'blue' },
+      { label: 'JavaScript condition', tone: 'purple' },
+      { label: 'Choose JSX', tone: 'cyan' },
+      { label: 'React renders that result', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## `if` statements
 
@@ -87,6 +98,13 @@ Prefer an explicit boolean:
 ```jsx
 {items.length > 0 && <CartItems items={items} />}
 ```
+
+<VisualDiagram title="Why the `0` pitfall happens" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="items.length === 0" tone="orange">`0 && <List />` evaluates to `0`.</DiagramNode>
+    <DiagramNode title="items.length > 0" tone="green">Explicit boolean evaluates to `false`, so nothing is rendered.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Conditional variables
 
@@ -162,6 +180,13 @@ switches component types, so state for the replaced subtree is reset.
 
 This is an identity issue, not a special rule about ternaries.
 
+<VisualDiagram title="Conditional branches can preserve or reset state">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Same type + same position" tone="green">Profile ↔ Profile → identity can be preserved.</DiagramNode>
+    <DiagramNode title="Different component type" tone="red">EditForm ↔ Preview → old subtree state is replaced.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
 ## Model states, not boolean combinations
 
 Conditional rendering becomes easier when state represents valid UI modes.
@@ -179,6 +204,16 @@ if (status === 'loading') { ... }
 if (status === 'error') { ... }
 if (status === 'success') { ... }
 ```
+
+<VisualDiagram title="Model explicit UI modes" compact>
+  <LifecycleBar
+    items={[
+      { label: 'idle', tone: 'slate' },
+      { label: 'loading', tone: 'blue' },
+      { label: 'success / error', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Good state structure and good conditional rendering reinforce each other.
 
@@ -242,17 +277,30 @@ function OrdersPanel({status, orders, error}) {
 
 Each state is explicit and each branch has one clear responsibility.
 
+<DecisionTree
+  question="Which branch should OrdersPanel render?"
+  items={[
+    { label: 'status = loading', value: 'OrdersSkeleton' },
+    { label: 'status = error', value: 'ErrorPanel' },
+    { label: 'orders.length = 0', value: 'EmptyOrders' },
+    { label: 'otherwise', value: 'OrdersTable' },
+  ]}
+/>
+
 ## Exercise
 
 Build a file uploader with these UI modes:
 
-```text
-idle
-selecting
-uploading
-success
-error
-```
+<VisualDiagram title="Uploader workflow states" compact>
+  <LifecycleBar
+    items={[
+      { label: 'idle', tone: 'slate' },
+      { label: 'selecting', tone: 'blue' },
+      { label: 'uploading', tone: 'orange' },
+      { label: 'success / error', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Do not use five independent boolean state variables. Model the workflow and render the correct UI for each state.
 
