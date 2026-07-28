@@ -4,221 +4,25 @@ description: Learn how custom Hooks reuse stateful logic, compose Hooks, design 
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Custom Hooks
 
 Custom Hooks let you reuse **stateful React logic** between components.
 
-They do not share state automatically. They share the logic that creates and manages state.
+They do not share state automatically. They share the logic that creates, reads, updates, or synchronizes state.
 
 ```jsx
 function useOnlineStatus() {
   const [online, setOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    function handleOnline() {
-      setOnline(true);
-    }
-
-    function handleOffline() {
-      setOnline(false);
-    }
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  return online;
-}
-```
-
-Usage:
-
-```jsx
-function StatusBadge() {
-  const online = useOnlineStatus();
-  return <span>{online ? 'Online' : 'Offline'}</span>;
-}
-```
-
-## Mental model
-
-```text
-Component A
-   ↓ calls
-useOnlineStatus()
-   ↓
-its own state + Effects
-
-Component B
-   ↓ calls
-useOnlineStatus()
-   ↓
-its own state + Effects
-```
-
-The Hook reuses behavior, not a single shared state instance.
-
-## Why custom Hooks exist
-
-Without extraction, components can accumulate repeated stateful infrastructure:
-
-```text
-Component
-├── state
-├── Effect
-├── cleanup
-├── event listener
-├── derived flags
-└── JSX
-```
-
-A custom Hook can create a clearer boundary:
-
-```text
-useOnlineStatus
-├── state
-├── subscription
-└── cleanup
-
-Component
-└── JSX + domain behavior
-```
-
-## Naming rule
-
-A custom Hook name starts with `use`.
-
-```jsx
-function useOnlineStatus() {}
-function useDebouncedValue() {}
-function useLocalStorageState() {}
-```
-
-This tells React tooling and readers that the function may call Hooks and must follow the Rules of Hooks.
-
-## Do not prefix ordinary helpers with use
-
-Bad:
-
-```jsx
-function useSortedProducts(products) {
-  return [...products].sort(compareProducts);
-}
-```
-
-This function does not use Hooks.
-
-Prefer:
-
-```jsx
-function getSortedProducts(products) {
-  return [...products].sort(compareProducts);
-}
-```
-
-Or calculate directly during render when simple.
-
-The `use` prefix has semantic meaning.
-
-## Rules of Hooks still apply
-
-Inside a custom Hook:
-
-```jsx
-function useFeature() {
-  const [value, setValue] = useState(0);
-  useEffect(() => {}, []);
-}
-```
-
-Hooks must still be called:
-
-- at the top level;
-- unconditionally;
-- from React components or custom Hooks.
-
-Bad:
-
-```jsx
-function useFeature(enabled) {
-  if (enabled) {
-    useEffect(() => {}, []); // ❌ conditional Hook call
-  }
-}
-```
-
-## A custom Hook can call other custom Hooks
-
-```jsx
-function useDashboardData(userId) {
-  const online = useOnlineStatus();
-  const preferences = usePreferences(userId);
-  const notifications = useNotifications(userId);
-
-  return {
-    online,
-    preferences,
-    notifications,
-  };
-}
-```
-
-This is composition.
-
-Custom Hooks can form application-level abstractions while still using React's primitive Hooks underneath.
-
-## Inputs and outputs are API design
-
-A custom Hook is a function API.
-
-Badly designed:
-
-```jsx
-const result = useEverything(user, settings, router, api, theme, flags);
-```
-
-This may hide too many responsibilities.
-
-Prefer focused contracts:
-
-```jsx
-const session = useSession();
-const permissions = usePermissions(session.userId);
-```
-
-The Hook name, parameters, and return shape should communicate one responsibility.
-
-## Return values versus objects
-
-Tuple can fit setter-like APIs:
-
-```jsx
-const [value, setValue] = useLocalStorageState('theme', 'light');
-```
-
-Object can fit multiple named capabilities:
-
-```jsx
-const {
-  data,
-  loading,
-  error,
-  reload,
-} = useUserProfile(userId);
-```
-
-Choose the shape that makes usage clear.
-
-## Example: useOnlineStatus
-
-```jsx
-function useOnlineStatus() {
-  const [online, setOnline] = useState(() => navigator.onLine);
 
   useEffect(() => {
     function update() {
@@ -238,103 +42,147 @@ function useOnlineStatus() {
 }
 ```
 
-The Hook owns synchronization with the browser network-status API.
+## Mental model
 
-## Example: useDebouncedValue
+<VisualDiagram title="Custom Hooks reuse behaviour, not one shared state instance" subtitle="Each component call participates in that component's own Hook state and Effect lifecycle.">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Component A" tone="blue">calls useOnlineStatus() → its own Hook state + Effect</DiagramNode>
+    <DiagramNode title="Component B" tone="purple">calls useOnlineStatus() → its own Hook state + Effect</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```jsx
-function useDebouncedValue(value, delay) {
-  const [debounced, setDebounced] = useState(value);
+If you need one shared state source, use an ownership model such as lifted state, Context, an external store, or another appropriate shared owner. Extracting a custom Hook alone does not make data global.
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setDebounced(value);
-    }, delay);
+## Why custom Hooks exist
 
-    return () => clearTimeout(id);
-  }, [value, delay]);
+Without extraction, a component can mix domain UI with reusable infrastructure.
 
-  return debounced;
-}
-```
+<VisualDiagram title="Extraction creates a meaningful boundary">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Before" tone="red" eyebrow="COMPONENT OWNS EVERYTHING">
+      state · Effect · cleanup · browser listener · derived flags · JSX
+    </DiagramNode>
+    <DiagramNode title="After" tone="green" eyebrow="SEPARATED RESPONSIBILITY">
+      useOnlineStatus owns subscription mechanics; component owns UI + domain behaviour
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Usage:
-
-```jsx
-const debouncedQuery = useDebouncedValue(query, 300);
-```
-
-But ask whether debouncing is actually the right UX/performance tool. A custom Hook does not automatically make a pattern correct.
-
-## Example: useLocalStorageState
-
-```jsx
-function useLocalStorageState(key, initialValue) {
-  const [value, setValue] = useState(() => {
-    const stored = localStorage.getItem(key);
-    return stored === null ? initialValue : JSON.parse(stored);
-  });
-
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
-
-  return [value, setValue];
-}
-```
-
-This is useful in a client-only environment, but production code should consider:
-
-- server rendering where `localStorage` does not exist;
-- schema/version migrations;
-- JSON errors;
-- cross-tab synchronization;
-- storage quota;
-- sensitive data.
-
-Custom Hooks should not hide platform constraints.
-
-## Hooks hide mechanics, not meaning
-
-Good abstraction:
+Good custom Hooks hide mechanics while preserving meaning.
 
 ```jsx
 const online = useOnlineStatus();
 ```
 
-The component cares about online status, not listener setup/cleanup.
+The caller understands the concept—online status—without needing to know the event-listener details.
 
-Risky abstraction:
+## Naming rule
+
+A custom Hook name starts with `use` because it may call Hooks and must follow the Rules of Hooks.
 
 ```jsx
-useDoEverythingWhenUserChanges(user);
+function useOnlineStatus() {}
+function useDebouncedValue() {}
+function useLocalStorageState() {}
 ```
 
-This hides multiple unrelated side effects and makes the component's behavior difficult to see.
-
-## Avoid generic lifecycle wrappers
-
-Bad:
+Do not prefix ordinary helpers with `use`:
 
 ```jsx
-function useMount(callback) {
-  useEffect(() => {
-    callback();
-  }, []);
+function getSortedProducts(products) {
+  return [...products].sort(compareProducts);
 }
 ```
 
-This encourages lifecycle thinking rather than synchronization thinking.
+## Rules of Hooks still apply
 
-A better custom Hook describes the domain or external system:
+Hooks inside a custom Hook must still be called at the top level and unconditionally.
+
+```jsx
+function useFeature(enabled) {
+  if (enabled) {
+    useEffect(() => {}, []); // ❌ conditional Hook call
+  }
+}
+```
+
+## Custom Hooks compose other Hooks
+
+```jsx
+function useDashboardData(userId) {
+  const online = useOnlineStatus();
+  const preferences = usePreferences(userId);
+  const notifications = useNotifications(userId);
+
+  return {online, preferences, notifications};
+}
+```
+
+<VisualDiagram title="Hook composition" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Component" tone="blue" wide />
+    <DiagramArrow label="calls" />
+    <DiagramNode title="useDashboardData" tone="purple" wide />
+    <DiagramArrow label="composes" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="useOnlineStatus" tone="cyan" />
+      <DiagramNode title="usePreferences" tone="green" />
+      <DiagramNode title="useNotifications" tone="orange" />
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
+
+Composition is useful when the combined abstraction still represents one coherent concept.
+
+## Inputs and outputs are API design
+
+A custom Hook is an internal function API. Its name, parameters, and return shape should communicate responsibility.
+
+Avoid broad service-locator style APIs:
+
+```jsx
+const result = useEverything(user, settings, router, api, theme, flags);
+```
+
+Prefer focused contracts:
+
+```jsx
+const session = useSession();
+const permissions = usePermissions(session.userId);
+```
+
+## Tuple or object?
+
+Setter-like APIs can fit a tuple:
+
+```jsx
+const [value, setValue] = useLocalStorageState('theme', 'light');
+```
+
+Multiple named capabilities often fit an object:
+
+```jsx
+const {data, loading, error, reload} = useUserProfile(userId);
+```
+
+Choose the shape that makes the consumer contract clearest.
+
+## Hooks hide mechanics, not meaning
+
+<VisualDiagram title="Good abstraction vs hidden behaviour">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Good" tone="green">useChatConnection(roomId) clearly says which external system is synchronized.</DiagramNode>
+    <DiagramNode title="Risky" tone="red">useDoEverythingWhenUserChanges(user) hides unrelated behaviours and ownership.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+Avoid generic lifecycle wrappers such as `useMount`. Prefer domain/external-system names that preserve React's synchronization model.
 
 ```jsx
 useChatConnection(roomId);
 useWindowResize(handler);
 useAnalyticsScreen(screenName);
 ```
-
-The abstraction should preserve the correct React mental model.
 
 ## Custom Hook for synchronization
 
@@ -349,20 +197,23 @@ function useChatConnection(roomId) {
 }
 ```
 
-Usage:
+The Hook owns one restartable synchronization process.
 
-```jsx
-function ChatRoom({roomId}) {
-  useChatConnection(roomId);
-  return <h1>{roomId}</h1>;
-}
-```
-
-The component communicates intent: this room needs a chat connection.
+<VisualDiagram title="A synchronization Hook should preserve Effect semantics" compact>
+  <LifecycleBar
+    items={[
+      {label: 'caller provides reactive configuration', tone: 'blue'},
+      {label: 'Hook starts synchronization', tone: 'purple'},
+      {label: 'configuration changes', tone: 'orange'},
+      {label: 'cleanup old process', tone: 'red'},
+      {label: 'start new process', tone: 'green'},
+    ]}
+  />
+</VisualDiagram>
 
 ## Effect Events inside custom Hooks
 
-React 19.2 lets a custom Hook separate reactive subscription configuration from latest callback behavior.
+React 19.2 can separate subscription configuration from latest callback behaviour.
 
 ```jsx
 function useWindowEvent(type, listener) {
@@ -379,130 +230,67 @@ function useWindowEvent(type, listener) {
 }
 ```
 
-Now changing the callback implementation does not necessarily require removing and re-adding the browser listener.
+`type` configures the subscription and stays reactive. The latest `listener` behaviour can be called through the Effect Event without forcing a resubscription solely because the callback changed.
 
-Do not use this to hide genuine dependencies. `type` still configures the external subscription and remains reactive.
+## Custom Hooks do not automatically share subscriptions
 
-## State is not shared between Hook callers
+If two components call a Hook that uses `useState`/`useEffect`, they each own their own Hook lifecycle.
 
-```jsx
-function A() {
-  const online = useOnlineStatus();
-}
-
-function B() {
-  const online = useOnlineStatus();
-}
-```
-
-Each call has its own Hook state/effect lifecycle.
-
-If you need one shared external subscription across many components, consider architecture such as:
-
-- Context around a shared owner;
-- external store + `useSyncExternalStore`;
-- framework/server-state cache;
-- a deliberately shared module/service with React integration.
-
-Custom Hook extraction alone does not make data global.
+<DecisionTree
+  question="Do many consumers need one shared source?"
+  items={[
+    {label: 'No, each component can own its own lifecycle', value: 'A custom Hook may be enough'},
+    {label: 'Yes, one React-tree owner should distribute it', value: 'Consider Context around a shared owner'},
+    {label: 'Yes, the source lives outside React or needs subscription semantics', value: 'Consider useSyncExternalStore / an external-store integration'},
+  ]}
+/>
 
 ## Do not extract too early
 
-Three repeated lines do not automatically require a Hook.
+Extract when the abstraction clarifies a reusable concept, not because a file crossed an arbitrary line count.
 
-Extract when the abstraction clarifies a reusable concept.
+Strong signals include repeated synchronization, repeated state-machine behaviour, a reusable browser integration, or infrastructure obscuring the component's purpose.
 
-Good signals:
+## API stability matters
 
-- repeated synchronization logic;
-- repeated state machine behavior;
-- a reusable browser/platform integration;
-- a domain concept used by multiple components;
-- a component is obscured by infrastructure details.
-
-Weak signal:
-
-- "the component is 80 lines long."
-
-Line count is not architecture.
-
-## Custom Hook API stability
-
-Changing a Hook return shape affects every caller.
-
-Example:
+Widely used Hooks behave like internal libraries.
 
 ```jsx
 const {data, status} = useOrders();
 ```
 
-If the Hook later returns very different semantics, migration cost spreads across the app.
+If the return semantics change, migration cost spreads to every caller. Define responsibility, document inputs/outputs, and evolve the API intentionally.
 
-Treat widely used custom Hooks like internal libraries:
+## Avoid leaking implementation details
 
-- define responsibility;
-- document inputs/outputs;
-- avoid leaking implementation details;
-- evolve APIs intentionally.
-
-## Avoid leaking setters unnecessarily
-
-Potentially weak API:
+Weak:
 
 ```jsx
 const {user, setUser, setLoading, setError} = useSession();
 ```
 
-This exposes internal state mechanics.
-
-Stronger domain API:
+Stronger:
 
 ```jsx
-const {
-  user,
-  loading,
-  signIn,
-  signOut,
-} = useSession();
+const {user, loading, signIn, signOut} = useSession();
 ```
 
-Consumers depend on behavior rather than internal state structure.
+Consumers should depend on domain capabilities, not every internal setter/ref.
 
 ## Testing custom Hooks
 
-Prefer testing behavior through a component using the Hook when practical.
+Prefer testing the public behaviour through a component when practical. For example, test that an online-status indicator updates when browser online/offline events fire.
 
-For example, test that an online-status indicator updates after browser online/offline events.
-
-This verifies the user-visible contract rather than internal Hook implementation.
-
-For low-level library Hooks, dedicated Hook test utilities may be useful, but keep tests focused on public behavior.
+Low-level library Hooks may deserve dedicated Hook tests, but keep tests focused on observable contracts.
 
 ## Common mistakes
 
-### Mistake: custom Hook that does not use Hooks
-
-Use a normal helper instead.
-
-### Mistake: hiding unrelated Effects
-
-One Hook should have a coherent responsibility.
-
-### Mistake: using Hooks as service locators
-
-```jsx
-const everything = useApp();
-```
-
-This often creates invisible coupling and broad re-render dependencies.
-
-### Mistake: returning implementation details
-
-Prefer domain operations over exposing every setter/ref.
-
-### Mistake: thinking extraction fixes architecture
-
-Moving questionable logic from a component into `useSomething` does not make it correct.
+- naming an ordinary helper with `use`;
+- hiding unrelated Effects behind one Hook;
+- using Hooks as broad service locators;
+- returning every internal setter/ref;
+- assuming extraction fixes questionable architecture;
+- assuming a custom Hook automatically shares state.
 
 ## Production example: useDocumentTitle
 
@@ -514,67 +302,51 @@ function useDocumentTitle(title) {
 }
 ```
 
-Usage:
+This gives a clear name to synchronization with the browser document. In React 19, rendered document metadata APIs may be a better fit for some title/meta use cases; choose based on the actual platform requirement.
 
-```jsx
-function InvoicePage({invoice}) {
-  useDocumentTitle(`Invoice ${invoice.number}`);
+## Extraction decision
 
-  return <InvoiceDetails invoice={invoice} />;
-}
-```
-
-The Hook gives a clear name to synchronization with the browser document.
-
-Note: React 19 has built-in document metadata support for rendered `<title>`, `<meta>`, and related tags. Later modern-React chapters will cover when those built-ins are a better approach than a custom Effect Hook.
+<DecisionTree
+  question="Should this logic become a custom Hook?"
+  items={[
+    {label: 'It is ordinary pure calculation', value: 'Use a normal function or calculate during render'},
+    {label: 'It is repeated stateful / Hook-based behaviour with one clear responsibility', value: 'A custom Hook is a good candidate'},
+    {label: 'It combines unrelated domains only to shorten a component', value: 'Do not hide the architecture inside one Hook'},
+  ]}
+/>
 
 ## Exercise
 
-Extract a `useKeyboardShortcut` Hook from this repeated logic:
-
-```jsx
-useEffect(() => {
-  function handleKeyDown(event) {
-    if (event.ctrlKey && event.key === 'k') {
-      onOpenSearch();
-    }
-  }
-
-  window.addEventListener('keydown', handleKeyDown);
-  return () => window.removeEventListener('keydown', handleKeyDown);
-}, [onOpenSearch]);
-```
-
-Requirements:
-
-- accept shortcut configuration;
-- accept a callback;
-- avoid unnecessary listener re-subscription when only callback behavior changes;
-- keep genuine subscription configuration reactive.
+Extract a `useKeyboardShortcut` Hook from repeated keyboard-listener logic. Keep the shortcut configuration reactive, ensure cleanup is correct, and decide whether the latest callback should use normal dependencies or an Effect Event.
 
 ## Interview questions
 
 **Junior:** What does a custom Hook reuse?
 
-**Mid-level:** Why does calling the same custom Hook twice not share state?
+**Mid-level:** Why do two components calling the same custom Hook not automatically share state?
 
-**Senior:** What makes a custom Hook a strong architectural abstraction rather than merely code moved out of a component?
+**Senior:** How do you decide whether a custom Hook is a good abstraction or merely hidden complexity?
 
 ## Summary
 
-```text
-Custom Hooks reuse stateful behavior.
-They compose React Hooks into meaningful APIs.
-They do not automatically share state.
-They should clarify intent, not hide complexity blindly.
-```
+<VisualDiagram title="Custom Hook summary">
+  <LifecycleBar
+    items={[
+      {label: 'find one coherent stateful behaviour', tone: 'blue'},
+      {label: 'extract Hook mechanics', tone: 'purple'},
+      {label: 'keep ownership explicit', tone: 'cyan'},
+      {label: 'design focused inputs/outputs', tone: 'green'},
+      {label: 'share state only through a real shared owner', tone: 'orange'},
+    ]}
+  />
+</VisualDiagram>
 
 ## References
 
 - https://react.dev/learn/reusing-logic-with-custom-hooks
-- https://react.dev/reference/rules/rules-of-hooks
+- https://react.dev/reference/react
 - https://react.dev/reference/react/useEffectEvent
 
 ## Next
 
-Next we move into **Context, reducers, and deliberate shared-state architecture**.
+Continue with **[Context and useContext](../14-context/context-and-use-context.md)**.
