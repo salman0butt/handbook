@@ -4,17 +4,25 @@ description: Learn React 19.2 Effect Events, reactive versus non-reactive Effect
 sidebar_position: 4
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # useEffectEvent
 
 > **React 19.2+**
 
-`useEffectEvent` lets you separate **reactive synchronization** from **non-reactive logic that runs as part of an Effect**.
+`useEffectEvent` separates **reactive synchronization** from **non-reactive logic that runs as part of an Effect**.
 
 ```jsx
 import {useEffect, useEffectEvent} from 'react';
 ```
-
-The core problem is easier to understand with an example.
 
 ## The reconnect problem
 
@@ -33,27 +41,20 @@ function ChatRoom({roomId, theme}) {
 }
 ```
 
-This Effect uses both `roomId` and `theme`.
+`roomId` and `theme` play different roles.
 
-But they play different roles:
+<VisualDiagram title="One Effect, two different kinds of values">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" eyebrow="REACTIVE CONFIGURATION" title="roomId">
+      Configures which external connection exists. Changing it should reconnect.
+    </DiagramNode>
+    <DiagramNode tone="purple" eyebrow="LATEST VALUE" title="theme">
+      Only affects notification presentation. Changing it should not reconnect.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-roomId
-  ↓
-configures the connection
-  ↓
-should cause re-synchronization
-
-
-theme
-  ↓
-only affects the notification
-  ↓
-should use latest value
-but should not reconnect
-```
-
-If `theme` changes, reconnecting the chat is unnecessary.
+Putting both values in the dependency list makes a theme change reconnect the chat unnecessarily.
 
 ## Effect Event solution
 
@@ -76,34 +77,34 @@ function ChatRoom({roomId, theme}) {
 }
 ```
 
-Now:
-
-```text
-roomId changes
-   ↓
-reconnect
-
-
-theme changes
-   ↓
-no reconnect
-   ↓
-next Effect Event call sees latest theme
-```
+<VisualDiagram title="Reactive restart vs latest-value read">
+  <DiagramGrid columns={2}>
+    <DiagramStack align="center">
+      <DiagramNode tone="blue" title="roomId changes" wide />
+      <DiagramArrow label="reactive dependency" />
+      <DiagramNode tone="green" title="Reconnect" wide />
+    </DiagramStack>
+    <DiagramStack align="center">
+      <DiagramNode tone="purple" title="theme changes" wide />
+      <DiagramArrow label="no restart" />
+      <DiagramNode tone="cyan" title="Next Effect Event call sees latest theme" wide />
+    </DiagramStack>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Mental model
 
-An Effect Event is:
+<VisualDiagram title="What is an Effect Event?">
+  <DiagramStack align="center">
+    <DiagramNode tone="purple" title="Logic belongs to an Effect" wide />
+    <DiagramArrow label="and" />
+    <DiagramNode tone="cyan" title="It needs the latest committed values" wide />
+    <DiagramArrow label="but" />
+    <DiagramNode tone="orange" title="Those values should not restart synchronization" wide />
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-logic that belongs to an Effect
-        +
-should see latest committed values
-        +
-should not itself make the Effect reactive to those values
-```
-
-It behaves more like an event handler than ordinary Effect code, but it is specifically for Effect logic.
+It behaves somewhat like an event handler, but it is specifically for logic called from Effects.
 
 ## Basic syntax
 
@@ -113,12 +114,12 @@ const onSomething = useEffectEvent(() => {
 });
 ```
 
-Then call it from an Effect:
+Call it from an Effect:
 
 ```jsx
 useEffect(() => {
   onSomething();
-}, [/* actual reactive synchronization dependencies */]);
+}, [/* actual synchronization dependencies */]);
 ```
 
 ## Effect Events see latest committed values
@@ -139,35 +140,42 @@ function Timer({intervalMs, message}) {
 }
 ```
 
-Changing `message` does not restart the interval.
+<VisualDiagram title="Timer ownership">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" title="intervalMs">Configures the timer, so changing it restarts the timer.</DiagramNode>
+    <DiagramNode tone="purple" title="message">Does not configure the timer; each tick should read the latest message.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-The next tick sees the latest committed `message`.
+## Classify reactive and non-reactive logic
 
-Changing `intervalMs` **does** restart the interval because that value configures the external timer synchronization.
-
-## Reactive versus non-reactive Effect logic
-
-Ask:
+Ask one question:
 
 > Should changing this value restart or reconfigure the external system?
 
-If yes, it is reactive synchronization logic.
+<DecisionTree
+  question="How should an Effect-related value behave?"
+  items={[
+    { label: 'Changing it must restart/reconfigure the external process', value: 'Keep it as a normal Effect dependency' },
+    { label: 'Changing it should not restart, but the latest value is needed when an external event fires', value: 'Consider reading it inside an Effect Event' },
+    { label: 'The work is caused directly by a click, submit, or input', value: 'Use a normal event handler instead' },
+    { label: 'The value is needed to calculate UI', value: 'Read it during render' },
+  ]}
+/>
 
-If no, but the latest value should be read when some external event fires, it may belong in an Effect Event.
+Examples:
 
-Example:
+| Value | Likely role |
+|---|---|
+| WebSocket URL | Reactive connection configuration |
+| `roomId` | Reactive connection configuration |
+| Notification theme | Latest-value Effect Event logic |
+| Muted preference | Often latest-value event logic |
+| Latest cart count for logging | Possibly latest-value event logic |
 
-```text
-WebSocket URL          → reactive
-roomId                 → reactive
-notification theme     → non-reactive Effect Event logic
-muted preference       → possibly non-reactive event logic
-latest cart count      → possibly non-reactive event logic
-```
+The correct classification depends on the external system being synchronized.
 
-The classification depends on what the external system is actually synchronizing with.
-
-## Do not use Effect Events to cheat dependency arrays
+## Do not use Effect Events to cheat dependencies
 
 Bad:
 
@@ -178,12 +186,10 @@ const run = useEffectEvent(() => {
 
 useEffect(() => {
   run();
-}, []); // ❌ hides that connection depends on roomId
+}, []); // ❌ hides that the connection depends on roomId
 ```
 
-`roomId` configures the connection. It belongs in normal Effect synchronization.
-
-Correct:
+`roomId` configures the connection. It belongs in normal Effect synchronization:
 
 ```jsx
 useEffect(() => {
@@ -192,13 +198,16 @@ useEffect(() => {
 }, [roomId]);
 ```
 
-Effect Events are not a general-purpose "ignore dependencies" mechanism.
+<VisualDiagram title="Effect Event misuse">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="red" eyebrow="WRONG" title="Hide a real dependency">Moves reactive configuration into an Effect Event merely to silence the linter.</DiagramNode>
+    <DiagramNode tone="green" eyebrow="RIGHT" title="Separate roles honestly">Dependencies restart the process; Effect Events read non-reactive latest values.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Where Effect Events can be called
 
-Effect Events are for Effect logic.
-
-They can be called from:
+They are for Effect logic and may be called from:
 
 - `useEffect`;
 - `useLayoutEffect`;
@@ -207,11 +216,8 @@ They can be called from:
 
 Do not call them during rendering.
 
-Bad:
-
 ```jsx
 const readLatest = useEffectEvent(() => value);
-
 const current = readLatest(); // ❌ during render
 ```
 
@@ -219,21 +225,13 @@ If render needs `value`, read `value` directly.
 
 ## Do not pass Effect Events around
 
-Bad:
-
 ```jsx
-<Child onConnected={onConnected} />
+<Child onConnected={onConnected} /> // ❌
 ```
 
-Effect Events conceptually belong to the Effect that uses them.
-
-Do not treat them like normal callbacks or callback props.
-
-If a child needs a callback because of a user interaction, use a normal event callback.
+Effect Events conceptually belong to the Effect that uses them. A child callback triggered by user interaction should be a normal event callback.
 
 ## Do not put Effect Events in dependency arrays
-
-Bad:
 
 ```jsx
 useEffect(() => {
@@ -241,41 +239,22 @@ useEffect(() => {
 }, [onConnected]); // ❌
 ```
 
-Effect Event functions intentionally do not have stable identity.
+Effect Event functions intentionally do not provide stable identity and are not dependencies.
 
-They are not dependencies.
+## Effect Event vs `useCallback`
 
-## Effect Event versus useCallback
+<VisualDiagram title="Different tools, different problems">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" title="useCallback">Memoizes function identity when identity itself matters.</DiagramNode>
+    <DiagramNode tone="purple" title="useEffectEvent">Separates non-reactive Effect logic and reads latest committed values.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-They solve different problems.
+`useEffectEvent` is not a performance optimization.
 
-### `useCallback`
+## Effect Event vs a ref for latest values
 
-```text
-memoizes a function identity
-        ↓
-useful when identity itself matters
-```
-
-Examples:
-
-- memoized child props;
-- another Hook/API requiring a stable callback identity;
-- specific performance scenarios.
-
-### `useEffectEvent`
-
-```text
-separates non-reactive Effect logic
-        ↓
-latest committed values without re-synchronizing
-```
-
-It is not a performance optimization.
-
-## Effect Event versus ref for latest values
-
-Older code sometimes stores the latest value in a ref:
+Older code sometimes stores the latest value manually:
 
 ```jsx
 const themeRef = useRef(theme);
@@ -292,30 +271,7 @@ useEffect(() => {
 }, [roomId]);
 ```
 
-This can work, but it manually creates a "latest value" channel outside React's reactive model.
-
-For genuine Effect-event logic in React 19.2+, `useEffectEvent` communicates intent more clearly and integrates with the Hooks linter.
-
-Refs remain useful for many other imperative/non-render values.
-
-## Timer example
-
-```jsx
-function ClockLogger({delay, prefix}) {
-  const onTick = useEffectEvent(() => {
-    console.log(prefix, new Date().toISOString());
-  });
-
-  useEffect(() => {
-    const id = setInterval(onTick, delay);
-    return () => clearInterval(id);
-  }, [delay]);
-}
-```
-
-`delay` configures the timer.
-
-`prefix` does not need to recreate the timer but should remain current.
+For genuine Effect-event logic in React 19.2+, `useEffectEvent` communicates intent more clearly and integrates with the Hooks linter. Refs remain useful for other imperative, non-render values.
 
 ## Browser listener example
 
@@ -340,49 +296,43 @@ function KeyboardTracker({enabled, onShortcut}) {
 }
 ```
 
-Here `enabled` controls whether the listener exists.
+<VisualDiagram title="Listener lifecycle and latest callback">
+  <LifecycleBar
+    items={[
+      { label: 'enabled controls listener existence', tone: 'blue' },
+      { label: 'Browser keydown event fires', tone: 'orange' },
+      { label: 'Effect Event runs', tone: 'purple' },
+      { label: 'Latest onShortcut callback is used', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-The latest `onShortcut` behavior can be used without tearing down and recreating the listener solely because a callback prop changed.
+## When should you use it?
 
-## When should I use useEffectEvent?
-
-Use it when all of these are true:
+Use `useEffectEvent` when all are true:
 
 1. the logic genuinely belongs to an Effect;
 2. it needs the latest committed values;
-3. those values should not re-synchronize the external system;
-4. the logic will be called from an Effect or Effect Event.
+3. those values should not restart the external system;
+4. the logic is called from an Effect or another Effect Event.
 
-## When should I NOT use it?
-
-Do not use it for:
-
-- normal click/input handlers;
-- avoiding dependency warnings;
-- general stable callback identity;
-- calculations during render;
-- passing callbacks between components;
-- hiding a real synchronization dependency.
+Do not use it for normal user-event handlers, render calculations, dependency suppression, stable callback identity, cross-component callback props, or hiding genuine synchronization dependencies.
 
 ## Debugging checklist
 
-If an Effect Event seems necessary, ask:
-
-```text
-What external system does the Effect manage?
-            ↓
-Which values configure that system?
-            ↓
-Those stay reactive dependencies.
-            ↓
-Which latest values are only needed when an external event occurs?
-            ↓
-Those may belong in an Effect Event.
-```
+<VisualDiagram title="Effect Event debugging flow">
+  <LifecycleBar
+    items={[
+      { label: 'Name the external system', tone: 'slate' },
+      { label: 'Identify values that configure it', tone: 'blue' },
+      { label: 'Keep those as dependencies', tone: 'green' },
+      { label: 'Identify latest-only values used when events fire', tone: 'purple' },
+      { label: 'Move only those reads into an Effect Event', tone: 'cyan' },
+    ]}
+  />
+</VisualDiagram>
 
 ## Production example
-
-A SaaS notification socket:
 
 ```jsx
 function Notifications({workspaceId, muted}) {
@@ -394,7 +344,6 @@ function Notifications({workspaceId, muted}) {
 
   useEffect(() => {
     const socket = connectToWorkspace(workspaceId);
-
     socket.on('notification', onNotification);
     socket.connect();
 
@@ -403,34 +352,11 @@ function Notifications({workspaceId, muted}) {
 }
 ```
 
-Changing workspaces reconnects.
-
-Toggling mute does not reconnect, but subsequent notifications use the latest mute preference.
+Changing workspaces reconnects. Toggling mute does not reconnect, but later notifications use the latest mute preference.
 
 ## Exercise
 
-Start with:
-
-```jsx
-function Player({trackId, volume}) {
-  useEffect(() => {
-    const player = connectPlayer(trackId);
-
-    player.on('ready', () => {
-      player.setVolume(volume);
-    });
-
-    player.connect();
-    return () => player.disconnect();
-  }, [trackId, volume]);
-}
-```
-
-Refactor so:
-
-- changing `trackId` reconnects;
-- changing `volume` does not reconnect;
-- when `ready` fires, it uses the latest volume.
+Refactor a player connection so changing `trackId` reconnects, changing `volume` does not reconnect, and the `ready` event uses the latest volume.
 
 ## Interview questions
 
@@ -442,14 +368,12 @@ Refactor so:
 
 ## Summary
 
-```text
-Reactive Effect logic
-→ determines when synchronization restarts.
-
-Effect Event logic
-→ runs from the Effect and sees latest committed values
-  without becoming a synchronization dependency.
-```
+<VisualDiagram title="Reactive Effect logic vs Effect Event logic" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" title="Reactive Effect logic">Determines when synchronization restarts.</DiagramNode>
+    <DiagramNode tone="purple" title="Effect Event logic">Runs from an Effect and sees latest committed values without becoming a restart dependency.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## References
 
