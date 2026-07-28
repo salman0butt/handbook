@@ -90,6 +90,17 @@ const nextjsItems = [
     'nextjs/images-fonts-and-scripts/scripts-strategies-layouts-inline-and-lifecycle',
     'nextjs/images-fonts-and-scripts/third-party-scripts-analytics-consent-security-and-performance',
     'nextjs/images-fonts-and-scripts/resource-loading-performance-debugging-and-design-review',
+  ], { collapsed: true }),
+  category('13 · Authentication, Authorization & Security', [
+    'nextjs/authentication-authorization-and-security/authentication-session-authorization-mental-model',
+    'nextjs/authentication-authorization-and-security/authentication-flows-passwords-oauth-mfa-and-providers',
+    'nextjs/authentication-authorization-and-security/session-management-cookies-tokens-and-revocation',
+    'nextjs/authentication-authorization-and-security/authorization-dal-dtos-tenancy-and-resource-scoping',
+    'nextjs/authentication-authorization-and-security/server-actions-route-handlers-and-proxy-security',
+    'nextjs/authentication-authorization-and-security/csrf-xss-csp-and-browser-security-boundaries',
+    'nextjs/authentication-authorization-and-security/secrets-environment-data-exposure-and-server-only',
+    'nextjs/authentication-authorization-and-security/ssrf-uploads-webhooks-rate-limits-and-abuse-defense',
+    'nextjs/authentication-authorization-and-security/security-auditing-threat-modeling-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
