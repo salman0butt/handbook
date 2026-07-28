@@ -79,6 +79,17 @@ const nextjsItems = [
     'nextjs/metadata-and-seo/metadata-fields-viewport-verification-and-resource-hints',
     'nextjs/metadata-and-seo/streaming-metadata-cache-components-and-seo-performance',
     'nextjs/metadata-and-seo/seo-architecture-debugging-and-production-review',
+  ], { collapsed: true }),
+  category('12 · Images, Fonts & Scripts', [
+    'nextjs/images-fonts-and-scripts/image-component-model-static-remote-and-layout-stability',
+    'nextjs/images-fonts-and-scripts/responsive-images-sizes-fill-placeholders-and-lcp',
+    'nextjs/images-fonts-and-scripts/image-optimization-security-caching-and-loaders',
+    'nextjs/images-fonts-and-scripts/advanced-images-art-direction-static-export-and-debugging',
+    'nextjs/images-fonts-and-scripts/fonts-google-local-variable-fonts-and-fallbacks',
+    'nextjs/images-fonts-and-scripts/font-preloading-css-variables-and-architecture',
+    'nextjs/images-fonts-and-scripts/scripts-strategies-layouts-inline-and-lifecycle',
+    'nextjs/images-fonts-and-scripts/third-party-scripts-analytics-consent-security-and-performance',
+    'nextjs/images-fonts-and-scripts/resource-loading-performance-debugging-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];

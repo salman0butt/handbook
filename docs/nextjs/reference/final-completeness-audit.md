@@ -5,18 +5,28 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–11 are implemented; Phase 12 Images, Fonts & Scripts is next.**
+> **Status: NOT COMPLETE — Phases 1–12 are implemented; Phase 13 Authentication, Authorization & Security is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
-## Baseline at handbook start
+## Baseline history
+
+### Handbook start
 
 - Verified date: **July 26, 2026**
-- Stable npm `latest`: **Next.js 16.2.11**
+- Stable npm `latest` at start: **Next.js 16.2.11**
 - Supported line: **16.x Active LTS**
-- Next.js 16.3: **preview/canary at this snapshot**
 - Router scope: **App Router only**
 - Pages Router: **intentionally out of scope**
+
+### Latest stable re-check
+
+- Re-verified date: **July 28, 2026**
+- Current npm `latest`: **Next.js 16.2.12**
+- Next.js 16.3: **preview/canary — not stable**
+- Stable curriculum remains on the **16.2 Active LTS** contract
+
+The audit keeps the original baseline for history while allowing later phases to refresh the exact stable patch. Preview/canary behavior is not silently promoted into stable chapters.
 
 ## Progress snapshot
 
@@ -32,7 +42,8 @@ This page is the final release gate for the handbook. It must not be marked comp
 - [x] Phase 09 · Request Pipeline & Proxy
 - [x] Phase 10 · Rendering, Suspense & Streaming
 - [x] Phase 11 · Metadata & SEO
-- [ ] Phase 12 · Images, Fonts & Scripts
+- [x] Phase 12 · Images, Fonts & Scripts
+- [ ] Phase 13 · Authentication, Authorization & Security
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
@@ -55,9 +66,11 @@ Phase 10 includes Server Component rendering orchestration; RSC Payload and init
 
 Phase 11 includes static `metadata` and dynamic `generateMetadata`; Server Component ownership; async params/search params; route-tree ordering, shallow merging, parent extension, and file-based precedence; titles, descriptions, `metadataBase`, canonical URLs and alternates; Open Graph/Twitter metadata and generated social images; favicon/icon/apple-icon and manifests; robots and sitemap routes including Next.js 16 `generateSitemaps` Promise IDs; JSON-LD with HTML script-context XSS-safe serialization; broader metadata fields and verification; dedicated `viewport` / `generateViewport`; streaming metadata and HTML-limited bot behavior; Cache Components interactions; crawler/social performance; content lifecycle, preview/staging, multi-tenant URL identity; and senior SEO debugging/architecture review.
 
+Phase 12 includes the current Next.js 16.2.12 image, font, and script contracts: `next/image` geometry and responsive candidate selection; `fill`, `sizes`, placeholders, loading, `preload`, `fetchPriority`, deprecated `priority`, LCP reasoning, remote/local source allow-lists, quality/width/format policy, local-IP and redirect protections, source-response and disk-cache controls, SVG security, custom loaders, `getImageProps`, art direction, static-export image strategy, immutable media identity, and image incident debugging; `next/font` Google/local self-hosting, variable/static faces, subsets, display/fallback/metric adjustment, CSS variables, route-scoped preloading, multilingual typography, and typography CLS diagnostics; `next/script` strategies, layout scope, inline-script identity, lifecycle callbacks and client boundaries, CSP nonce integration, third-party failure isolation, analytics/pageview ownership, consent/data minimization, facades/embeds, and experimental `@next/third-parties`; plus a unified browser resource-loading and production design review.
+
 ## Final audit gates
 
-- [ ] Re-check npm `latest`, support policy, release notes, and App Router docs.
+- [ ] Re-check npm `latest`, support policy, release notes, and App Router docs at final release.
 - [ ] Audit every Getting Started topic.
 - [ ] Audit every stable file-system convention.
 - [ ] Audit every stable component, hook, function, and directive.
@@ -66,7 +79,8 @@ Phase 11 includes static `metadata` and dynamic `generateMetadata`; Server Compo
 - [ ] Audit request APIs and async request-bound values.
 - [ ] Audit Server Functions, forms, mutations, and security requirements.
 - [ ] Audit Route Handlers, Proxy, and request pipeline behavior.
-- [ ] Audit metadata, images, fonts, scripts, and resource optimization.
+- [ ] Re-audit metadata, images, fonts, scripts, and resource optimization against final stable release.
+- [ ] Audit authentication, authorization, sessions, CSRF, CSP, secrets, XSS, and broader security architecture.
 - [ ] Audit error handling, instrumentation, OpenTelemetry, and debugging APIs.
 - [ ] Audit testing guidance.
 - [ ] Audit configuration options relevant to application engineering.
@@ -74,7 +88,7 @@ Phase 11 includes static `metadata` and dynamic `generateMetadata`; Server Compo
 - [ ] Verify Vercel-specific content is clearly labeled as platform-specific.
 - [ ] Verify experimental/preview/canary features are labeled and not taught as stable.
 - [ ] Verify deprecated/historical behavior appears only where migration context requires it.
-- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, and logs.
+- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, and logs.
 - [ ] Verify performance advice follows measurement → diagnosis → change → measurement.
 - [ ] Complete all capstone specifications.
 - [ ] Complete interview mastery.

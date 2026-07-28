@@ -9,11 +9,11 @@ Framework behavior changes quickly enough that version context is part of engine
 
 ## Current verified baseline
 
-**Verified: July 26, 2026**
+**Verified: July 28, 2026**
 
 | Item | Handbook baseline |
 | --- | --- |
-| Next.js npm `latest` | **16.2.11** |
+| Next.js npm `latest` | **16.2.12** |
 | Supported production line | **16.x Active LTS** |
 | Next.js 16.3 | **Preview/canary — not stable** |
 | Stable React docs | **React 19.2** |
@@ -26,7 +26,7 @@ Framework behavior changes quickly enough that version context is part of engine
 | Safari | **16.4+** |
 | Default bundler | **Turbopack** for `next dev` and `next build` |
 
-The latest patch matters. The July 2026 Next.js security release moved the recommended Active LTS patch to **16.2.11**, so “Next.js 16” alone is not a sufficiently precise production dependency policy.
+The latest stable patch matters. npm moved the `latest` tag to **16.2.12** after the July 20 security release that had recommended 16.2.11 at publication. Production dependency policy should therefore verify the current stable patch rather than relying on a handbook snapshot or the phrase “Next.js 16.”
 
 ## Stable, preview, and canary
 
@@ -36,13 +36,13 @@ Treat release channels as different contracts:
 - **Preview** — public preview of an upcoming release. Useful for evaluation, not assumed by handbook examples.
 - **Canary** — rapidly changing prerelease channel. APIs may change before stable.
 
-At this snapshot, **16.3 preview/canary features are excluded from the stable curriculum** unless a later verification shows they have shipped to npm `latest`.
+At this snapshot, **16.3 remains preview/canary and is excluded from the stable curriculum** unless a later verification shows it has shipped to npm `latest`.
 
 ## App Router and React versions
 
 There is an important nuance behind the phrase “Next.js uses React 19.2.”
 
-The stable React documentation currently targets **React 19.2**, but the Next.js App Router uses a framework-managed React Canary build that includes stable React 19 changes plus framework-facing features being validated ahead of future React releases. Your application should still declare `react` and `react-dom` dependencies for tooling and ecosystem compatibility.
+The stable React documentation currently targets **React 19.2**, but the Next.js App Router uses a framework-managed React Canary build that includes stable React 19 behavior plus framework-facing features being validated ahead of future React releases. Your application should still declare `react` and `react-dom` dependencies for tooling and ecosystem compatibility.
 
 This handbook therefore separates:
 
@@ -70,17 +70,17 @@ Do not infer that Proxy is an authorization layer. It can perform early request 
 
 Next.js 16 introduced **Cache Components** behind `cacheComponents: true`. It combines the modern `use cache` model with partial prerendering behavior.
 
-This needs careful wording because, in Next.js 16.2, Cache Components is **opt-in**. The handbook will teach:
+In Next.js 16.2, Cache Components remains **opt-in**. The handbook therefore teaches:
 
-1. the stable App Router behavior when Cache Components is **not enabled**;
+1. stable App Router behavior when Cache Components is **not enabled**;
 2. the Cache Components model when it **is enabled**;
-3. the migration and architectural differences between the two.
+3. migration and architectural differences between the two.
 
 That prevents a common documentation error: teaching an opt-in model as though every Next.js 16 application behaves that way by default.
 
 ### Request APIs are asynchronous
 
-Modern App Router code treats request-bound values such as route `params` and relevant request APIs as asynchronous where the current API requires it. Examples will not copy old synchronous patterns from Next.js 13/14 tutorials.
+Modern App Router code treats request-bound values such as route `params` and relevant request APIs as asynchronous where the current API requires it. Examples do not copy old synchronous patterns from Next.js 13/14 tutorials.
 
 ### React Compiler integration is stable, but optional
 
@@ -89,6 +89,20 @@ Next.js 16 describes its React Compiler integration as stable. That does not mea
 ### Linting is separate from `next build`
 
 Next.js 16 removed the `next lint` command and production builds no longer run linting for you. Run ESLint, Biome, or another chosen linter explicitly in development and CI.
+
+### Image defaults and controls changed
+
+Next.js 16 changed several image-optimization contracts that older tutorials commonly teach incorrectly:
+
+- `Image` gained the explicit `preload` prop and the older `priority` prop is deprecated.
+- image quality choices are constrained by `images.qualities`; the default list is `[75]`.
+- the default minimum image cache TTL is **14,400 seconds (4 hours)**.
+- local image query strings require deliberate local-pattern policy rather than old permissive assumptions.
+- optimization of local/private IP sources is blocked by default.
+- remote source redirects are bounded; the default maximum is **3**.
+- newer stable resource controls include source-response and disk-cache limits.
+
+Phase 12 teaches these as version-sensitive production contracts rather than generic `<img>` advice.
 
 ### 16.2 improves debugging and platform integration
 
@@ -120,7 +134,7 @@ For example:
 - `process.env` is a **Node.js/runtime** capability.
 - a provider's geographic regions, CDN cache topology, function limits, and analytics product are **platform behavior**.
 
-We will never silently turn a Vercel platform feature into a framework requirement.
+We do not silently turn a Vercel platform feature into a framework requirement.
 
 ## Creating against the current stable release
 
@@ -136,7 +150,23 @@ For Next.js 16.1 and later, the framework also provides an upgrade command:
 pnpm next upgrade
 ```
 
-Before a production upgrade, read the relevant version guide, run the production build and tests, and verify rendering, caching, request handling, and deployment behavior rather than assuming semver alone captures every operational change.
+Before a production upgrade, read the relevant version guide, run the production build and tests, and verify rendering, caching, request handling, image behavior, and deployment behavior rather than assuming semver alone captures every operational change.
+
+## Dependency policy
+
+A production repository should answer:
+
+```text
+Which exact Next.js patch is locked?
+Which support line is it on?
+Which security advisories apply?
+Which preview/canary flags are enabled?
+When was the last stable-doc re-audit?
+```
+
+Do not use `^16` as a substitute for release management.
+
+The lockfile, deployment artifact, and CI build should make the exact framework version reproducible.
 
 ## Version-sensitive topics in this handbook
 
@@ -150,8 +180,27 @@ Re-check official docs before relying on these areas during upgrades:
 - Turbopack compatibility
 - React Compiler integration
 - route segment configuration
-- image defaults and optimizations
+- image defaults, loader security, and cache controls
+- font/script optimization behavior
+- experimental third-party helpers
 - deployment adapters and self-hosting behavior
+
+## Stable does not mean universal
+
+A stable framework API can still depend on:
+
+```text
+browser support
+Node/runtime capability
+reverse-proxy behavior
+CDN cache configuration
+filesystem persistence
+third-party provider contracts
+```
+
+The handbook separates stable API status from operational portability.
+
+For example, the Image component is stable, but a pure static export cannot depend on the default on-demand Next.js image optimizer because there is no runtime Next.js server to perform that work.
 
 ## Primary sources
 
@@ -175,5 +224,7 @@ For an existing Next.js project, answer these before changing code:
 5. Which Node.js version does production actually use?
 6. Does CI run linting and type checking explicitly?
 7. Which behaviors come from the hosting provider rather than Next.js core?
+8. Which image quality/source/cache controls differ from the Next.js 16.2 defaults?
+9. Does the app use any experimental packages or preview flags?
 
 If you cannot answer those questions, you do not yet have enough version context to debug framework behavior safely.
