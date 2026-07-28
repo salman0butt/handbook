@@ -4,6 +4,15 @@ description: The JavaScript concepts you need before React, with React-oriented 
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # JavaScript for React
 
 React is a JavaScript library. Most confusing "React problems" at the beginning are really JavaScript problems involving objects, arrays, closures, promises, or reference identity.
@@ -454,6 +463,17 @@ const second = {theme: 'dark'};
 first === second; // false
 ```
 
+<VisualDiagram title="Value equality vs reference identity" subtitle="React APIs often care whether an object or function is the same reference, not merely whether its contents look equal.">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="green" eyebrow="PRIMITIVES" title="Compare by value">
+      `5 === 5` → true. Equal primitive values compare as equal.
+    </DiagramNode>
+    <DiagramNode tone="orange" eyebrow="OBJECTS / FUNCTIONS" title="Compare by identity">
+      Two separately created objects can contain the same data while still being different references.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
 This becomes crucial for:
 
 - Effect dependencies;
@@ -480,6 +500,17 @@ const nextUser = {...user, name: 'Sara'};
 const nextItems = [...items, newItem];
 ```
 
+<VisualDiagram title="Mutation vs immutable update" subtitle="React state is easiest to reason about when previous snapshots remain unchanged.">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="red" eyebrow="MUTATION" title="Change the existing reference">
+      Old code and new code can now observe the same object with changed contents.
+    </DiagramNode>
+    <DiagramNode tone="green" eyebrow="IMMUTABLE UPDATE" title="Create the next reference">
+      The previous snapshot stays intact while the new object/array represents the next value.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
 React's programming model works best when props and state are treated as immutable snapshots.
 
 ## Closures
@@ -501,15 +532,17 @@ React event handlers and Effects are closures too.
 
 A useful future mental model is:
 
-```text
-render happens
-    ↓
-local props/state values exist
-    ↓
-functions are created
-    ↓
-those functions close over that render's values
-```
+<VisualDiagram title="How a React render creates closures" subtitle="A handler does not read a magical live state variable; it closes over the values from the render that created it.">
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="Render happens" wide>React calls the component for one render.</DiagramNode>
+    <DiagramArrow label="this render has" />
+    <DiagramNode tone="purple" title="Local props and state values" wide>These values form the render's current snapshot.</DiagramNode>
+    <DiagramArrow label="component creates" />
+    <DiagramNode tone="cyan" title="Handlers, callbacks, and Effect functions" wide>Normal JavaScript functions are created during this render.</DiagramNode>
+    <DiagramArrow label="closure captures" />
+    <DiagramNode tone="green" title="That render's values" wide>When the function runs later, it can still remember the values from the scope where it was created.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 This is why "stale closure" problems are really a combination of JavaScript closures and React's render snapshots.
 
@@ -533,15 +566,16 @@ JavaScript on the main browser thread runs one task at a time. Asynchronous oper
 
 A simplified model:
 
-```text
-run current JavaScript
-        ↓
-current call stack finishes
-        ↓
-queued microtasks/tasks become eligible
-        ↓
-future JavaScript runs
-```
+<VisualDiagram title="Simplified browser JavaScript event loop" subtitle="Async APIs can schedule future work, but current JavaScript runs to completion before the next queued work executes.">
+  <LifecycleBar
+    items={[
+      { label: 'Run current JavaScript', tone: 'blue' },
+      { label: 'Current call stack finishes', tone: 'purple' },
+      { label: 'Queued microtasks/tasks become eligible', tone: 'orange' },
+      { label: 'Future JavaScript runs', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 React concurrency does **not** mean your component JavaScript suddenly runs on multiple CPU threads. React can schedule, prioritize, pause, restart, or discard rendering work within its rendering model.
 
@@ -623,16 +657,18 @@ How do JavaScript closures and object identity influence React dependency manage
 
 The JavaScript ideas to keep in your head are:
 
-```text
-React components are JavaScript functions.
-Props/state contain JavaScript values.
-Lists are arrays.
-Callbacks are functions.
-Async work uses Promises.
-Closures remember render-time values.
-Object identity matters.
-Immutable updates create new references.
-```
+<VisualDiagram title="JavaScript mental models React relies on">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" title="Functions">React components are JavaScript functions.</DiagramNode>
+    <DiagramNode tone="purple" title="Values">Props and state contain ordinary JavaScript values.</DiagramNode>
+    <DiagramNode tone="cyan" title="Collections">Lists are arrays transformed with normal JavaScript methods.</DiagramNode>
+    <DiagramNode tone="orange" title="Callbacks">Event handlers and many APIs receive functions to call later.</DiagramNode>
+    <DiagramNode tone="green" title="Async work">Promises and `async` / `await` model eventual results.</DiagramNode>
+    <DiagramNode tone="purple" title="Closures">Functions remember values from the scope/render that created them.</DiagramNode>
+    <DiagramNode tone="orange" title="Identity">Object and function reference identity matters to React APIs.</DiagramNode>
+    <DiagramNode tone="green" title="Immutability">New references let previous snapshots remain unchanged.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Next
 
