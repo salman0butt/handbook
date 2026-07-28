@@ -4,9 +4,19 @@ description: Subscribe React components to stores and browser APIs outside React
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `useSyncExternalStore` and external subscriptions
 
-`useSyncExternalStore` is React's built-in Hook for reading values from a data source that lives **outside React** and can notify subscribers when it changes.
+`useSyncExternalStore` is React's built-in Hook for reading from a source that lives **outside React** and can notify subscribers when that source changes.
 
 ```jsx
 const snapshot = useSyncExternalStore(
@@ -18,48 +28,37 @@ const snapshot = useSyncExternalStore(
 
 It solves a different problem from Context.
 
-```text
-Context
-→ distributes React tree data
-
-useSyncExternalStore
-→ subscribes React to an external mutable source
-```
+<VisualDiagram title="Context vs useSyncExternalStore">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Context" tone="purple">Distributes a React-tree value from the nearest provider.</DiagramNode>
+    <DiagramNode title="useSyncExternalStore" tone="green">Subscribes React rendering to an externally owned mutable source.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## What counts as an external store?
 
-An external store is any source whose state is not owned by `useState` or `useReducer` in the component tree.
+Examples include custom JavaScript stores, browser subscription APIs, third-party state libraries, state shared with non-React code, and any source with snapshot + subscription semantics.
 
-Examples:
-
-- custom JavaScript store object;
-- third-party state library;
-- browser online/offline state;
-- media query subscription;
-- shared store used by React and non-React code;
-- application store with `subscribe` + snapshot semantics.
+“External” describes ownership—not necessarily global scope.
 
 ## Basic mental model
 
 React needs two capabilities:
 
-```text
-1. Read the current value
-2. Know when that value may have changed
-```
+<VisualDiagram title="The external-store contract" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="getSnapshot()" tone="blue" eyebrow="READ">Return the current renderable snapshot.</DiagramNode>
+    <DiagramNode title="subscribe(callback)" tone="green" eyebrow="NOTIFY">Tell React that the source may have changed.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-That maps to:
-
-```text
-getSnapshot()  → read
-subscribe(cb)  → notify
-```
+When the store notifies React, React reads the snapshot again and decides whether the rendered value changed.
 
 ## Minimal external store
 
 ```js
 let todos = [];
-let listeners = new Set();
+const listeners = new Set();
 
 export const todosStore = {
   getSnapshot() {
@@ -68,18 +67,12 @@ export const todosStore = {
 
   subscribe(listener) {
     listeners.add(listener);
-
-    return () => {
-      listeners.delete(listener);
-    };
+    return () => listeners.delete(listener);
   },
 
   addTodo(todo) {
     todos = [...todos, todo];
-
-    for (const listener of listeners) {
-      listener();
-    }
+    for (const listener of listeners) listener();
   },
 };
 ```
@@ -87,109 +80,67 @@ export const todosStore = {
 React consumer:
 
 ```jsx
-import { useSyncExternalStore } from 'react';
-import { todosStore } from './todosStore.js';
-
 function TodoList() {
   const todos = useSyncExternalStore(
     todosStore.subscribe,
     todosStore.getSnapshot,
   );
 
-  return todos.map(todo => (
-    <p key={todo.id}>{todo.text}</p>
-  ));
+  return todos.map(todo => <p key={todo.id}>{todo.text}</p>);
 }
 ```
 
-## `subscribe`
+## Subscription lifecycle
 
-The subscribe function receives a callback.
+<VisualDiagram title="How React observes an external source">
+  <LifecycleBar
+    items={[
+      {label: 'component subscribes', tone: 'blue'},
+      {label: 'store changes', tone: 'orange'},
+      {label: 'store notifies callback', tone: 'purple'},
+      {label: 'React calls getSnapshot()', tone: 'cyan'},
+      {label: 'snapshot changed?', tone: 'green'},
+      {label: 'render if needed', tone: 'slate'},
+    ]}
+  />
+</VisualDiagram>
 
-It should register that callback and return an unsubscribe function.
+`subscribe` should register the callback and return a cleanup function that removes it.
 
-```js
-function subscribe(callback) {
-  listeners.add(callback);
+## Snapshot identity is part of the contract
 
-  return () => {
-    listeners.delete(callback);
-  };
-}
-```
-
-Whenever the external data may have changed:
-
-```js
-for (const listener of listeners) {
-  listener();
-}
-```
-
-React then calls `getSnapshot` to determine the current value.
-
-## `getSnapshot`
-
-`getSnapshot` returns the value React should render from the external store.
-
-```js
-function getSnapshot() {
-  return todos;
-}
-```
-
-Important requirement:
-
-> If the store has not changed, repeated `getSnapshot()` calls should return an `Object.is`-equal snapshot.
+If the store has not changed, repeated `getSnapshot()` calls should return an `Object.is`-equal value.
 
 Bad:
 
 ```js
 function getSnapshot() {
-  return [...todos]; // ❌ new array every call
+  return [...todos]; // ❌ new identity every call
 }
 ```
-
-Even when nothing changed, this creates a different snapshot identity.
 
 Better:
 
 ```js
-let todos = [];
-
 function getSnapshot() {
   return todos;
 }
 ```
 
-Create a new array only when the store actually changes.
+Create a new immutable snapshot only when the store actually changes.
 
-## Immutable snapshots are easiest
+<VisualDiagram title="Stable snapshot contract">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Store unchanged" tone="green">getSnapshot() returns the same / Object.is-equal snapshot.</DiagramNode>
+    <DiagramNode title="Store changed" tone="orange">Create a new snapshot, then notify subscribers.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-A strong store model is:
-
-```text
-store changes
-   ↓
-create new immutable snapshot
-   ↓
-notify subscribers
-```
-
-```js
-function addTodo(todo) {
-  todos = [...todos, todo];
-  emitChange();
-}
-```
-
-If the underlying store is mutable, you may need to cache an immutable snapshot and only replace it when relevant data changes.
+If the underlying source mutates in place, cache an immutable snapshot and replace that cache only when relevant data changes.
 
 ## Browser API example: online status
 
 ```jsx
-import { useSyncExternalStore } from 'react';
-
 function subscribe(callback) {
   window.addEventListener('online', callback);
   window.addEventListener('offline', callback);
@@ -209,39 +160,15 @@ export function useOnlineStatus() {
 }
 ```
 
-Component:
-
-```jsx
-function StatusBadge() {
-  const online = useOnlineStatus();
-
-  return <span>{online ? 'Online' : 'Offline'}</span>;
-}
-```
-
-This is a clean example because the browser, not React, owns the source of truth.
+This is a natural fit because the browser owns the authoritative value.
 
 ## Why not `useEffect` + `useState`?
 
-You could manually write:
+A manual subscription can work for simple sources, but `useSyncExternalStore` exists specifically to integrate externally owned mutable state with React's rendering model and concurrency expectations.
 
-```jsx
-const [online, setOnline] = useState(navigator.onLine);
+If you are building or adapting an external store, prefer the dedicated primitive.
 
-useEffect(() => {
-  // subscribe and set state
-}, []);
-```
-
-For some simple browser APIs that can work.
-
-But `useSyncExternalStore` exists specifically to integrate external stores with React's rendering model safely and consistently.
-
-Use the dedicated primitive when you are subscribing to an external mutable source.
-
-## Extract into a custom Hook
-
-Consumers should usually not repeat store wiring.
+## Hide mechanics behind a custom Hook
 
 ```jsx
 export function useTodos() {
@@ -252,17 +179,11 @@ export function useTodos() {
 }
 ```
 
-Then:
-
-```jsx
-const todos = useTodos();
-```
-
-This hides external-store mechanics behind a domain API.
+Consumers should depend on a domain API rather than repeat subscription plumbing.
 
 ## `subscribe` identity matters
 
-If you define `subscribe` inside a component:
+Defining a new subscribe function during every render can cause unnecessary resubscription.
 
 ```jsx
 function Component() {
@@ -273,21 +194,11 @@ function Component() {
 }
 ```
 
-that function is recreated on every render.
-
-React may need to resubscribe when `subscribe` changes.
-
-Prefer a stable function defined outside the component when possible:
-
-```js
-const subscribe = callback => store.subscribe(callback);
-```
-
-or expose `store.subscribe` directly if its calling semantics are safe.
+Prefer a stable subscription function outside the component when possible, or use a library abstraction that owns this efficiently.
 
 ## Parameterized subscriptions
 
-Sometimes a custom Hook depends on an ID.
+A store may subscribe by identifier:
 
 ```jsx
 function useProject(projectId) {
@@ -298,13 +209,11 @@ function useProject(projectId) {
 }
 ```
 
-This can be valid, but function identity and caching deserve attention.
-
-A library may provide selector/subscription primitives that handle this efficiently.
+This can be valid, but function identity, snapshot caching, and selector design become part of the store architecture.
 
 ## `getServerSnapshot`
 
-The optional third argument supports server rendering.
+The optional third argument supports server rendering and hydration.
 
 ```jsx
 const value = useSyncExternalStore(
@@ -314,9 +223,9 @@ const value = useSyncExternalStore(
 );
 ```
 
-`getServerSnapshot` supplies the snapshot used during server rendering and hydration.
+`getServerSnapshot` returns the value used during server rendering and the initial hydration path.
 
-Example for online status:
+For browser-only data such as online status, the server may choose a deterministic placeholder snapshot:
 
 ```jsx
 function getServerSnapshot() {
@@ -324,66 +233,40 @@ function getServerSnapshot() {
 }
 ```
 
-The server cannot know the browser's actual network state, so you choose a deterministic server snapshot.
-
 ## Hydration consistency
 
-The server snapshot and initial client hydration need to be compatible.
+<VisualDiagram title="External store SSR → hydration flow" subtitle="The initial browser store state should be compatible with the server snapshot.">
+  <LifecycleBar
+    items={[
+      {label: 'server chooses snapshot', tone: 'blue'},
+      {label: 'render HTML', tone: 'purple'},
+      {label: 'serialize / recreate initial data', tone: 'cyan'},
+      {label: 'browser initializes compatible snapshot', tone: 'green'},
+      {label: 'hydrate', tone: 'orange'},
+      {label: 'live subscriptions take over', tone: 'slate'},
+    ]}
+  />
+</VisualDiagram>
 
-If the server renders one value and hydration immediately sees a different value without a valid strategy, you can create hydration inconsistencies.
+The exact transfer mechanism is framework/application specific. The important contract is that server and initial client snapshots agree enough for hydration.
 
-For external stores used with SSR, think about:
+## “The result of getSnapshot should be cached”
 
-- what value exists on the server;
-- how initial store data reaches the client;
-- whether the same initial snapshot can be reconstructed;
-- when live subscriptions should take over.
-
-## Server-injected store data
-
-A server-rendered application might serialize initial store data into the HTML.
-
-Conceptually:
-
-```text
-server store snapshot
-      ↓
-render HTML
-      ↓
-serialize snapshot
-      ↓
-browser initializes store with same snapshot
-      ↓
-hydrate
-      ↓
-start live subscriptions
-```
-
-The exact mechanism is framework/application specific.
-
-## Snapshot caching error
-
-A common error is effectively:
-
-```text
-The result of getSnapshot should be cached
-```
-
-Cause:
+A common cause is returning a new object on every read:
 
 ```js
 function getSnapshot() {
-  return { count: store.count }; // new object every call
+  return {count: store.count}; // ❌
 }
 ```
 
-Fix by returning a cached/immutable snapshot that only changes when store data changes.
+Instead, update a cached snapshot only when state changes:
 
 ```js
-let snapshot = { count: 0 };
+let snapshot = {count: 0};
 
 function increment() {
-  snapshot = { count: snapshot.count + 1 };
+  snapshot = {count: snapshot.count + 1};
   emitChange();
 }
 
@@ -394,40 +277,24 @@ function getSnapshot() {
 
 ## External stores and selectors
 
-A simple store may return the whole state:
+Reading one property from a whole-store snapshot does not automatically create a fine-grained subscription.
 
 ```jsx
-const state = useSyncExternalStore(
-  store.subscribe,
-  store.getSnapshot,
-);
-```
-
-Then:
-
-```jsx
+const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
 const total = state.cart.total;
 ```
 
-But the component's subscription is still based on the snapshot returned by `getSnapshot`.
-
-Fine-grained selector behavior requires store/library design that can subscribe or compare at the required granularity.
-
-Do not assume destructuring creates a selector subscription.
+The subscription still observes the snapshot returned by `getSnapshot`. Fine-grained selector behaviour requires store/library design that supports the desired comparison/subscription semantics.
 
 ## Context + external store
 
-These tools can work together.
-
-For example, Context may provide a store instance:
+Context and external stores can work together.
 
 ```jsx
 <StoreContext value={workspaceStore}>
   <Workspace />
 </StoreContext>
 ```
-
-Then a custom Hook can subscribe to that external store:
 
 ```jsx
 function useWorkspaceSnapshot() {
@@ -441,106 +308,55 @@ function useWorkspaceSnapshot() {
 }
 ```
 
-Now:
+<VisualDiagram title="Scoped external-store pattern">
+  <DiagramStack align="center">
+    <DiagramNode title="Context" tone="purple" wide>Chooses which store instance this subtree uses.</DiagramNode>
+    <DiagramArrow label="consumer reads instance" />
+    <DiagramNode title="useSyncExternalStore" tone="green" wide>Subscribes to that store's changing snapshot.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-Context chooses which store instance
-useSyncExternalStore subscribes to its data
-```
-
-This is a powerful pattern for scoped external stores.
-
-## Store instance scope
-
-You can create one store per feature instance rather than one global singleton.
-
-```text
-EditorProvider
-└── editorStore A
-
-EditorProvider
-└── editorStore B
-```
-
-Each subtree can subscribe to its own store instance.
-
-This combines tree-based scoping with external-store subscription behavior.
+This allows store A and store B to exist in separate provider subtrees without requiring one global singleton.
 
 ## When to use this Hook directly
 
-Use `useSyncExternalStore` directly when:
+Use it directly when building your own external-store abstraction, integrating browser subscription APIs, connecting mutable state outside React, or authoring React bindings for a library.
 
-- building your own external store abstraction;
-- integrating a browser subscription API;
-- integrating existing mutable state outside React;
-- authoring a library that exposes React bindings for an external source.
+Application code using Redux, Zustand, or similar libraries normally uses the library's own React Hooks rather than wiring `useSyncExternalStore` manually.
 
-Application developers using Redux/Zustand/etc. normally use the library's React Hooks instead of wiring `useSyncExternalStore` manually.
+## Not a replacement for local state
 
-## Not a replacement for `useState`
-
-Bad idea:
-
-```text
-I learned useSyncExternalStore,
-so all state can move outside React.
-```
-
-Local React state remains the best default for local UI state.
-
-Use external stores because the ownership/subscription requirements demand them.
+<DecisionTree
+  question="Does this value need an external store?"
+  items={[
+    {label: 'It is ordinary local UI state owned by one component/feature', value: 'Prefer useState / useReducer'},
+    {label: 'React owns it but descendants need broad access', value: 'Context may be enough'},
+    {label: 'The underlying source lives outside React and can notify subscribers', value: 'useSyncExternalStore is the matching primitive'},
+    {label: 'The problem is remote fetching/cache lifecycle', value: 'Use a server-state architecture instead'},
+  ]}
+/>
 
 ## Not a server-state cache
 
-`useSyncExternalStore` subscribes to an external store.
-
-It does not automatically provide:
-
-- fetching;
-- caching policy;
-- invalidation;
-- deduplication;
-- retries;
-- mutations;
-- pagination.
-
-Those are separate concerns.
+`useSyncExternalStore` does not automatically provide fetching, caching policy, invalidation, deduplication, retries, mutations, or pagination. It synchronizes React with an external source; it does not define that source's domain lifecycle.
 
 ## Concurrency mental model
 
-The Hook exists so React can reason about the external source through a stable snapshot contract.
+React can reason about the source only through the snapshot contract you provide.
 
-Your responsibility is to provide:
-
-```text
-subscribe
-getSnapshot
-optional getServerSnapshot
-```
-
-with consistent semantics.
+<VisualDiagram title="Your external-store responsibilities" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="subscribe" tone="green">Notify React when relevant store state may change.</DiagramNode>
+    <DiagramNode title="getSnapshot" tone="blue">Return a stable immutable snapshot while unchanged.</DiagramNode>
+    <DiagramNode title="getServerSnapshot" tone="purple">Provide compatible initial server/hydration state when SSR is used.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not mutate a snapshot behind React's back while continuing to return the same identity.
 
 ## Exercise
 
-Build a small external store for browser preferences:
-
-```js
-{
-  compactMode: false,
-  fontScale: 1,
-}
-```
-
-Requirements:
-
-- `getSnapshot` returns stable immutable snapshots;
-- `subscribe` registers/removes listeners;
-- setters create a new snapshot;
-- a `usePreferencesStore` Hook uses `useSyncExternalStore`;
-- render two separate consumers;
-- explain how this differs from Context + `useReducer`.
+Build a preferences store containing `compactMode` and `fontScale`. Make snapshots immutable/stable, implement subscribe/unsubscribe, expose a `usePreferencesStore` Hook, and explain how this differs from Context + `useReducer`.
 
 ## Interview questions
 
@@ -548,26 +364,27 @@ Requirements:
 
 **Senior:** Why must an unchanged store return a stable snapshot identity?
 
-**Staff:** How would you design SSR/hydration for an external store, and how would you decide between Context, reducer+Context, and an external subscription model?
+**Staff:** How would you design SSR/hydration for an external store, and how would you scope multiple store instances safely?
 
 ## Summary
 
-```text
-state lives outside React
-        ↓
-subscribe tells React when it may change
-        ↓
-getSnapshot returns current stable snapshot
-        ↓
-React renders consumers safely
-        ↓
-getServerSnapshot bridges SSR when needed
-```
+<VisualDiagram title="External-store integration sequence">
+  <LifecycleBar
+    items={[
+      {label: 'external source owns data', tone: 'green'},
+      {label: 'React subscribes', tone: 'blue'},
+      {label: 'source notifies', tone: 'orange'},
+      {label: 'React rereads stable snapshot', tone: 'purple'},
+      {label: 'render if snapshot changed', tone: 'cyan'},
+    ]}
+  />
+</VisualDiagram>
 
 ## References
 
 - https://react.dev/reference/react/useSyncExternalStore
+- https://react.dev/reference/react/useContext
 
 ## Next
 
-Next phase moves into **modern React 19+ APIs**, including Actions, `useActionState`, `useFormStatus`, `useOptimistic`, `use`, modern provider/ref patterns, `<Activity>`, and current React DOM capabilities.
+Continue into the state-management ecosystem chapters, where Context, Redux Toolkit, Zustand, TanStack Query, React Hook Form, and URL state are compared by ownership and lifecycle.

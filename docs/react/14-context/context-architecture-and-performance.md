@@ -4,138 +4,122 @@ description: Design Context providers deliberately, split read and write concern
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Context architecture and performance
 
 Context is simple at the API level and architectural at the application level.
 
-The difficult questions are not:
+The difficult questions are not how to call `createContext` or `useContext`. They are about **ownership, scope, update frequency, subscriptions, and coupling**.
 
-```text
-How do I call createContext?
-How do I call useContext?
-```
-
-They are:
-
-```text
-Who owns this state?
-Which subtree needs it?
-Which consumers should update together?
-Should reads and writes be coupled?
-Is this actually Context-shaped data?
-```
+<VisualDiagram title="The real Context design questions">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Ownership" tone="blue">Who actually owns and changes this state?</DiagramNode>
+    <DiagramNode title="Scope" tone="purple">Which subtree needs access?</DiagramNode>
+    <DiagramNode title="Change pattern" tone="cyan">Which consumers should update together?</DiagramNode>
+    <DiagramNode title="Read/write API" tone="green">Should reading and dispatching be separate dependencies?</DiagramNode>
+    <DiagramNode title="Frequency" tone="orange">How often does this value change?</DiagramNode>
+    <DiagramNode title="Fit" tone="slate">Is this really Context-shaped data?</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Provider placement is an ownership decision
 
-Consider a cart feature.
+Consider cart state that only matters inside shop routes.
 
-```text
-App
-├── MarketingPages
-├── Storefront
-│   ├── ProductPage
-│   ├── CartDrawer
-│   └── Checkout
-└── Admin
-```
-
-If only Storefront needs cart state, placing `CartProvider` around the whole application creates a broader dependency than necessary.
-
-Prefer:
+<VisualDiagram title="Place providers at the smallest useful scope">
+  <DiagramStack align="center">
+    <DiagramNode title="App" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Marketing" tone="slate">does not need cart</DiagramNode>
+      <DiagramNode title="Storefront + CartProvider" tone="green">ProductPage · CartDrawer · Checkout</DiagramNode>
+      <DiagramNode title="Admin" tone="slate">does not need cart</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 ```jsx
-function App() {
-  return (
-    <Routes>
-      <Route
-        path="/shop/*"
-        element={
-          <CartProvider>
-            <Storefront />
-          </CartProvider>
-        }
-      />
-      <Route path="/admin/*" element={<Admin />} />
-    </Routes>
-  );
-}
+<Route
+  path="/shop/*"
+  element={
+    <CartProvider>
+      <Storefront />
+    </CartProvider>
+  }
+/>
 ```
 
-State locality applies to Context too.
+State locality applies to Context too. A provider at application root creates a broader dependency and longer lifetime than a feature-local provider.
 
 ## Context value identity
 
-React compares a provider's previous and next `value` with `Object.is`.
+React compares the previous and next provider `value` with `Object.is`.
 
 ```jsx
-<AuthContext value={{ user, signOut }}>
+<AuthContext value={{user, signOut}}>
 ```
 
 The object is newly created whenever the provider renders.
 
-That means consumers observe a new context value identity on every provider render.
+<VisualDiagram title="Provider render does not always mean context value stability" compact>
+  <LifecycleBar
+    items={[
+      {label: 'provider renders', tone: 'blue'},
+      {label: 'value expression creates object', tone: 'purple'},
+      {label: 'Object.is compares identity', tone: 'cyan'},
+      {label: 'consumers can receive update', tone: 'orange'},
+    ]}
+  />
+</VisualDiagram>
 
-This may be perfectly acceptable.
-
-Do not cargo-cult memoization. First ask whether provider renders are actually frequent and whether consumer work is expensive.
-
-## When memoizing a provider value can help
+This may be perfectly acceptable. Memoize only when profiling shows provider churn and consumer work are meaningful.
 
 ```jsx
 const value = useMemo(
-  () => ({ user, signOut }),
+  () => ({user, signOut}),
   [user, signOut],
 );
-
-return <AuthContext value={value}>{children}</AuthContext>;
 ```
 
-This is potentially useful when:
-
-- the provider renders for reasons unrelated to the context value;
-- many consumers depend on the context;
-- the value is an object/function bundle;
-- profiling shows those updates matter.
-
-But remember: React Compiler may reduce the need for manual memoization in compiled applications, and memoization should remain a performance tool rather than a correctness requirement.
+React Compiler may reduce the need for some manual memoization. Treat memoization as a measured performance tool, not a correctness requirement.
 
 ## Split unrelated contexts
 
-A single provider with unrelated values creates unnecessary coupling.
+A broad context couples values that change independently:
 
 ```jsx
-<AppContext value={{ theme, user, cart, locale }}>
+<AppContext value={{theme, user, cart, locale}}>
 ```
 
-If `theme` changes, every consumer of that context participates in the context update even if it only cares about `cart`.
+<VisualDiagram title="Split independent domains instead of one mega-context">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="Theme" tone="purple" />
+    <DiagramNode title="Auth" tone="blue" />
+    <DiagramNode title="Cart" tone="green" />
+    <DiagramNode title="Locale" tone="orange" />
+  </DiagramGrid>
+</VisualDiagram>
 
-Better boundaries:
-
-```jsx
-<ThemeContext value={theme}>
-  <AuthContext value={user}>
-    <CartContext value={cart}>
-      {children}
-    </CartContext>
-  </AuthContext>
-</ThemeContext>
-```
-
-This is not about making dozens of contexts blindly. It is about separating domains that change independently and have different consumers.
+Do not create dozens of contexts mechanically. Split when domains have different owners, lifetimes, change patterns, or consumer groups.
 
 ## Split state from dispatch
 
-A useful reducer architecture is to provide state and dispatch through separate contexts.
+Reducer-based features can expose reads and writes through separate contexts.
 
 ```jsx
 const TasksContext = createContext(null);
 const TasksDispatchContext = createContext(null);
-```
 
-Provider:
-
-```jsx
-function TasksProvider({ children }) {
+function TasksProvider({children}) {
   const [tasks, dispatch] = useReducer(tasksReducer, initialTasks);
 
   return (
@@ -148,89 +132,53 @@ function TasksProvider({ children }) {
 }
 ```
 
-Now a component that only dispatches actions does not also need to read task state.
+<VisualDiagram title="Separate read and write dependencies">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="State Context" tone="blue">Consumers that render from tasks subscribe to task state.</DiagramNode>
+    <DiagramNode title="Dispatch Context" tone="green">Dispatch-only consumers receive the stable dispatch function.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```jsx
-function AddTaskButton() {
-  const dispatch = useTasksDispatch();
+The `dispatch` function returned by `useReducer` has stable identity, which makes it a natural write-only dependency.
 
-  return (
-    <button
-      onClick={() => dispatch({ type: 'added', id: crypto.randomUUID(), text: 'New' })}
-    >
-      Add
-    </button>
-  );
-}
-```
-
-This improves API clarity and can reduce unnecessary subscriptions.
-
-## Why dispatch identity is useful
-
-The `dispatch` function returned by `useReducer` has a stable identity.
-
-That makes it a natural value for a dedicated dispatch Context.
-
-Consumers can depend on dispatch without receiving the full current state object.
-
-## Read/write custom Hooks
+## Feature Hooks create a stronger boundary
 
 ```jsx
 export function useTasks() {
   const tasks = useContext(TasksContext);
-
-  if (tasks === null) {
-    throw new Error('useTasks must be used within TasksProvider');
-  }
-
+  if (tasks === null) throw new Error('useTasks must be used within TasksProvider');
   return tasks;
 }
 
 export function useTasksDispatch() {
   const dispatch = useContext(TasksDispatchContext);
-
-  if (dispatch === null) {
-    throw new Error('useTasksDispatch must be used within TasksProvider');
-  }
-
+  if (dispatch === null) throw new Error('useTasksDispatch must be used within TasksProvider');
   return dispatch;
 }
 ```
 
-This creates a feature API instead of exposing implementation details everywhere.
+Consumers depend on a feature API rather than the raw Context objects.
 
-## Context selectors are not built into `useContext`
-
-Suppose the context value is:
+## `useContext` is not a selector API
 
 ```jsx
-{
-  user,
-  permissions,
-  notifications,
-  theme,
-}
+const {theme} = useContext(AppContext);
 ```
 
-A component doing:
+Destructuring one field does not subscribe to only that field. The component reads the context value as a whole.
 
-```jsx
-const { theme } = useContext(AppContext);
-```
-
-still subscribes to the context value as a whole. Destructuring one property does not make `useContext` a selector API.
-
-If fine-grained subscriptions become important, options include:
-
-- split contexts;
-- move rapidly changing state closer to consumers;
-- use an external store with selector support;
-- use a library designed for fine-grained state subscriptions.
+<DecisionTree
+  question="Consumers need different slices of rapidly changing shared state—what next?"
+  items={[
+    {label: 'Domains are actually independent', value: 'Split contexts'},
+    {label: 'State can move closer to the consumers', value: 'Prefer locality'},
+    {label: 'Fine-grained subscriptions are a core requirement', value: 'Evaluate an external store / library with selector semantics'},
+  ]}
+/>
 
 ## Context and `memo`
 
-A component reading Context can update when that Context changes even if wrapped in `memo`.
+A component reading Context can update when that Context changes even if it is wrapped in `memo`.
 
 ```jsx
 const Product = memo(function Product() {
@@ -239,9 +187,9 @@ const Product = memo(function Product() {
 });
 ```
 
-`memo` does not freeze contextual inputs.
+`memo` compares props; Context is another input.
 
-A possible split is:
+If profiling proves an expensive child needs prop-based memoization, split the context-reading container from the expensive view:
 
 ```jsx
 function ProductContainer() {
@@ -249,68 +197,39 @@ function ProductContainer() {
   return <ProductView currency={currency} />;
 }
 
-const ProductView = memo(function ProductView({ currency }) {
-  // expensive rendering
+const ProductView = memo(function ProductView({currency}) {
+  // expensive render
 });
 ```
 
-Now the outer component reads Context and the inner component can be optimized around props if profiling justifies it.
-
 ## High-frequency state may be a poor Context fit
 
-Context can technically provide rapidly changing data such as pointer coordinates or animation frames.
+Context can transport pointer coordinates or animation-frame data, but that does not mean it should.
 
-That does not mean it should.
+<VisualDiagram title="Shared-state rendering pressure" compact>
+  <DiagramNode title="frequency × subscriber count × render cost" tone="orange" wide>
+    High values make subscription granularity increasingly important.
+  </DiagramNode>
+</VisualDiagram>
 
-Ask:
-
-```text
-How often does this value change?
-How many consumers read it?
-How expensive are their renders?
-Do consumers need different slices?
-```
-
-For very high-frequency shared state, an external subscription model may be more appropriate.
+A slowly changing theme and a 60Hz shared signal have very different architecture requirements.
 
 ## Separate server state from client state
 
-Context is not automatically the right home for API data.
+Client state examples include open dialogs, selected tabs, drafts, and wizard steps.
 
-Client state examples:
+Server state examples include inventory, customer records, order status, and analytics results.
 
-- selected tab;
-- open dialog;
-- draft form data;
-- current wizard step.
+<VisualDiagram title="Context transports values; it does not create a server-state lifecycle">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Context" tone="purple">Tree distribution + subscriptions to one provider value.</DiagramNode>
+    <DiagramNode title="Server-state lifecycle" tone="orange">fetching · caching · staleness · invalidation · retries · background refresh</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Server state examples:
+If the hard problem is remote-data lifecycle, use the architecture/tool that owns that lifecycle rather than rebuilding a cache inside Context.
 
-- customer record from an API;
-- product inventory;
-- order status;
-- analytics query results.
-
-Server state has lifecycle concerns beyond sharing:
-
-```text
-fetching
-caching
-staleness
-invalidating
-refetching
-retries
-race handling
-background refresh
-```
-
-Context can transport values but does not solve those problems by itself.
-
-## Provider composition
-
-Large applications can accumulate many providers.
-
-That is not automatically bad.
+## Provider composition is not automatically bad
 
 ```jsx
 <AuthProvider>
@@ -322,13 +241,13 @@ That is not automatically bad.
 </AuthProvider>
 ```
 
-Provider nesting is often preferable to one giant context because each provider expresses a real dependency boundary.
+Multiple focused providers often communicate dependencies more clearly than one giant provider.
 
-If readability becomes poor, compose providers deliberately rather than merging unrelated state.
+If readability becomes awkward, compose providers as a structural convenience without merging unrelated ownership.
 
 ## Colocate providers with features
 
-Instead of one `contexts/` folder containing every application Context, prefer feature ownership where practical:
+A feature-owned provider and its reducer/Hooks should usually live near that feature rather than in a universal `contexts/` dump.
 
 ```text
 features/
@@ -341,78 +260,57 @@ features/
     useAuth.js
 ```
 
-This makes dependencies and domain boundaries easier to understand.
+This is a literal project structure, so text is the clearer format here.
 
 ## Avoid provider side-effect overload
 
-A provider is still a component.
+A provider is still a component. Do not turn it into a giant service container that fetches every API, registers unrelated global listeners, owns many timers, and exposes hundreds of commands.
 
-Do not turn providers into giant service containers that:
-
-- fetch every API;
-- register dozens of global listeners;
-- manage unrelated timers;
-- expose hundreds of commands.
-
-Keep the provider aligned with a coherent domain.
+Keep each provider aligned with a coherent domain.
 
 ## Performance debugging checklist
 
-Before optimizing Context, answer:
-
-1. Which provider is rendering?
-2. Why is it rendering?
-3. Did its `value` identity change?
-4. Which consumers read that Context?
-5. Are those consumer renders actually expensive?
-6. Can state move closer to where it is used?
-7. Should unrelated values be split?
-8. Would an external store better match fine-grained subscriptions?
+<VisualDiagram title="Context performance debugging flow">
+  <LifecycleBar
+    items={[
+      {label: 'Which provider rendered?', tone: 'blue'},
+      {label: 'Why did it render?', tone: 'purple'},
+      {label: 'Did value identity change?', tone: 'cyan'},
+      {label: 'Which consumers read it?', tone: 'orange'},
+      {label: 'Are those renders expensive?', tone: 'red'},
+      {label: 'Can ownership/scope be improved first?', tone: 'green'},
+    ]}
+  />
+</VisualDiagram>
 
 Use the React DevTools Profiler before adding memoization everywhere.
 
 ## Architecture example
 
-```text
-App
-├── AuthProvider
-│   └── Router
-│       ├── Marketing
-│       └── Dashboard
-│           └── DashboardPreferencesProvider
-│               ├── Sidebar
-│               └── Workspace
-│                   └── SelectedProjectProvider
-```
+<VisualDiagram title="Provider scope should narrow as ownership narrows">
+  <DiagramStack align="center">
+    <DiagramNode title="AuthProvider" tone="blue" wide eyebrow="BROAD ENVIRONMENT">wraps routing / authenticated application scope</DiagramNode>
+    <DiagramArrow label="inside dashboard" />
+    <DiagramNode title="DashboardPreferencesProvider" tone="purple" wide eyebrow="FEATURE ENVIRONMENT">only dashboard descendants depend on it</DiagramNode>
+    <DiagramArrow label="inside selected workspace" />
+    <DiagramNode title="SelectedProjectProvider" tone="green" wide eyebrow="LOCAL FEATURE STATE">only the project subtree needs it</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-Notice that providers become more specific deeper in the tree.
+## When should Context become an external store?
 
-That mirrors scope:
-
-```text
-broad environment
-      ↓
-feature environment
-      ↓
-local interaction state
-```
+<DecisionTree
+  question="Is Context still a good subscription model?"
+  items={[
+    {label: 'Moderate updates, coherent subtree, full-value subscriptions are fine', value: 'Context can remain a strong fit'},
+    {label: 'Provider is too broad but ownership can be narrowed', value: 'Fix provider scope first'},
+    {label: 'Many consumers need independent slices / high-frequency updates / non-React access', value: 'Evaluate an external store'},
+  ]}
+/>
 
 ## Exercise
 
-Take this giant context:
-
-```jsx
-<AppContext value={{ user, theme, cart, activeModal, products }}>
-```
-
-Redesign it by answering:
-
-- who owns each value;
-- which subtree needs it;
-- which values change together;
-- which values are server state;
-- which values should remain local state;
-- which contexts, if any, should be split into read/write APIs.
+Take one giant context containing `user`, `theme`, `cart`, `activeModal`, and `products`. Classify owner, scope, frequency, server/client origin, and subscriber needs for each value, then redesign the provider boundaries.
 
 ## Interview questions
 
@@ -424,19 +322,18 @@ Redesign it by answering:
 
 ## Summary
 
-```text
-choose ownership
-      ↓
-place provider at smallest useful scope
-      ↓
-split unrelated domains
-      ↓
-separate read/write APIs when useful
-      ↓
-measure rendering
-      ↓
-optimize or change state model only with evidence
-```
+<VisualDiagram title="Context architecture sequence">
+  <LifecycleBar
+    items={[
+      {label: 'choose the owner', tone: 'blue'},
+      {label: 'place provider at smallest useful scope', tone: 'purple'},
+      {label: 'split unrelated domains', tone: 'cyan'},
+      {label: 'separate read/write APIs when useful', tone: 'green'},
+      {label: 'measure rendering', tone: 'orange'},
+      {label: 'change state model only with evidence', tone: 'slate'},
+    ]}
+  />
+</VisualDiagram>
 
 ## References
 
