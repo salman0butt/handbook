@@ -4,33 +4,38 @@ description: Understand reactive values, start/stop synchronization, dependency 
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Effect lifecycle and dependencies
 
-Effects do not have a component-style lifecycle.
+Effects do not have a component-style lifecycle. An Effect describes a **restartable synchronization process**.
 
-The correct model is:
+<VisualDiagram title="Effect synchronization lifecycle" subtitle="When reactive configuration changes, React stops the old process before starting the new one.">
+  <LifecycleBar
+    items={[
+      { label: 'Start synchronization', tone: 'green' },
+      { label: 'Reactive configuration changes', tone: 'orange' },
+      { label: 'Stop old synchronization', tone: 'red' },
+      { label: 'Start new synchronization', tone: 'green' },
+      { label: 'Component disappears', tone: 'slate' },
+      { label: 'Stop synchronization', tone: 'red' },
+    ]}
+  />
+</VisualDiagram>
 
-```text
-start synchronization
-       ↓
-reactive configuration changes
-       ↓
-stop old synchronization
-       ↓
-start new synchronization
-       ↓
-component disappears
-       ↓
-stop synchronization
-```
-
-This chapter explains why dependencies exist and how to reason about them without fighting the linter.
+Dependencies exist so React can keep an external process aligned with the current render's configuration.
 
 ## Reactive values
 
-Values declared inside a component can change between renders.
-
-Examples:
+Values declared inside a component can differ between renders:
 
 ```jsx
 function ChatRoom({roomId}) {
@@ -39,9 +44,7 @@ function ChatRoom({roomId}) {
 }
 ```
 
-`roomId`, `serverUrl`, and `options` are reactive because a later render may contain different values.
-
-If an Effect reads a reactive value, that value normally belongs in the dependency list.
+`roomId`, `serverUrl`, and `options` are reactive. If an Effect reads a reactive value, that value normally belongs in the dependency list.
 
 ```jsx
 useEffect(() => {
@@ -54,37 +57,35 @@ useEffect(() => {
 
 ## Dependencies describe synchronization configuration
 
-Think of dependencies as the configuration of an external process.
+<VisualDiagram title="Dependencies configure the external process">
+  <DiagramStack align="center">
+    <DiagramNode tone="purple" title="Effect synchronization" wide>Chat connection</DiagramNode>
+    <DiagramArrow label="configured by" />
+    <DiagramGrid columns={2}>
+      <DiagramNode tone="blue" title="serverUrl">Which server should be used?</DiagramNode>
+      <DiagramNode tone="cyan" title="roomId">Which room should be joined?</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-Effect
- ├── serverUrl
- └── roomId
-```
+If either value changes, the old connection no longer matches the current React state.
 
-If either changes, the old process is no longer synchronized with current React state.
+## React compares dependencies with `Object.is`
 
-## React compares dependencies with Object.is
+<VisualDiagram title="Dependency comparison between renders">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="slate" eyebrow="PREVIOUS RENDER" title="Dependencies">https://a.com · general</DiagramNode>
+    <DiagramNode tone="blue" eyebrow="NEXT RENDER" title="Dependencies">https://a.com · travel</DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="Object.is comparison finds roomId changed" />
+  <DiagramNode tone="orange" title="Re-synchronize" wide>Clean up the general-room process, then start the travel-room process.</DiagramNode>
+</VisualDiagram>
 
-Conceptually:
-
-```text
-previous dependencies
-["https://a.com", "general"]
-
-next dependencies
-["https://a.com", "travel"]
-
-room changed
-   ↓
-re-synchronize
-```
-
-Primitive values are often straightforward. Objects and functions require more attention because identity can change even when contents appear equivalent.
+Primitive values are often straightforward. Objects and functions require more care because their identity can change even when their contents appear equivalent.
 
 ## Stale closures
 
-Every render creates new functions that close over that render's values.
+Every render creates functions that close over that render's values.
 
 ```jsx
 function Counter() {
@@ -100,13 +101,21 @@ function Counter() {
 }
 ```
 
-This Effect captures the initial `count` value and never re-synchronizes.
+<VisualDiagram title="Why the interval sees a stale value">
+  <LifecycleBar
+    items={[
+      { label: 'Initial render: count = 0', tone: 'blue' },
+      { label: 'Effect creates interval closure', tone: 'purple' },
+      { label: 'Empty dependency array keeps that process', tone: 'slate' },
+      { label: 'Later renders have new count values', tone: 'orange' },
+      { label: 'Old interval still closes over count = 0', tone: 'red' },
+    ]}
+  />
+</VisualDiagram>
 
-The bug is not that React "failed to update the closure". The code asked React to keep using the synchronization process from the first render.
+React did not fail to update the closure. The code asked React to keep using the synchronization process created by the first render.
 
 ## Do not suppress the dependency linter casually
-
-Bad:
 
 ```jsx
 // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,32 +124,21 @@ useEffect(() => {
 }, []);
 ```
 
-Suppressing the rule removes a correctness check.
+Suppressing the rule removes a correctness check. Redesign the Effect first.
 
-Instead ask:
-
-1. Is the Effect necessary?
-2. Is the reactive value genuinely part of synchronization?
-3. Can code move to an event handler?
-4. Can a value move outside the component?
-5. Can an object/function be created inside the Effect?
-6. Is some logic non-reactive Effect logic that belongs in an Effect Event?
+<DecisionTree
+  question="A dependency feels inconvenient. What should you inspect?"
+  items={[
+    { label: 'The Effect only derives render data', value: 'Remove the Effect and calculate during render' },
+    { label: 'The work is caused by a user action', value: 'Move it into the event handler' },
+    { label: 'A value is truly constant', value: 'Move it outside the component' },
+    { label: 'An object/function only supports the Effect', value: 'Create it inside the Effect' },
+    { label: 'Latest data is needed but should not restart synchronization', value: 'Consider an Effect Event' },
+    { label: 'The value configures the external process', value: 'Keep it as a dependency' },
+  ]}
+/>
 
 ## Move constants outside the component
-
-Before:
-
-```jsx
-function ChatRoom({roomId}) {
-  const serverUrl = 'https://chat.example.com';
-
-  useEffect(() => {
-    connect(serverUrl, roomId);
-  }, [serverUrl, roomId]);
-}
-```
-
-If `serverUrl` is truly constant, prove that by moving it outside:
 
 ```jsx
 const serverUrl = 'https://chat.example.com';
@@ -153,7 +151,7 @@ function ChatRoom({roomId}) {
 }
 ```
 
-Now it is not reactive.
+Moving a genuinely constant value outside proves it is not reactive.
 
 ## Create objects inside the Effect
 
@@ -173,9 +171,7 @@ function ChatRoom({roomId}) {
 }
 ```
 
-`options` is a new object each render.
-
-Better:
+`options` is a new object each render. Prefer expressing the real reactive configuration:
 
 ```jsx
 function ChatRoom({roomId}) {
@@ -187,13 +183,10 @@ function ChatRoom({roomId}) {
 
     const connection = createConnection(options);
     connection.connect();
-
     return () => connection.disconnect();
   }, [roomId]);
 }
 ```
-
-Now the dependency expresses the actual reactive configuration.
 
 ## Functions can cause the same problem
 
@@ -209,9 +202,7 @@ function Search({query}) {
 }
 ```
 
-`createRequest` is recreated each render.
-
-Possible simplification:
+`createRequest` is recreated each render. Often the clearest fix is to move the supporting logic into the Effect:
 
 ```jsx
 useEffect(() => {
@@ -220,11 +211,11 @@ useEffect(() => {
 }, [query]);
 ```
 
-Again, simplify before reaching for `useCallback`.
+Simplify before reaching for `useCallback`.
 
 ## Separate reactive and non-reactive Effect logic
 
-Suppose reconnecting depends on `roomId`, but a notification should use the latest theme.
+Suppose `roomId` configures a connection, while `theme` only affects a notification.
 
 ```jsx
 useEffect(() => {
@@ -239,13 +230,18 @@ useEffect(() => {
 }, [roomId, theme]);
 ```
 
-Now changing the theme reconnects the room, even though theme does not configure the connection.
+Changing the theme now reconnects the room even though theme does not configure the connection.
 
-In React 19.2, `useEffectEvent` provides a model for separating this non-reactive Effect logic. The next chapter covers it in depth.
+<VisualDiagram title="Classify values by their role">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" eyebrow="REACTIVE" title="roomId">Changing it must restart or reconfigure the connection.</DiagramNode>
+    <DiagramNode tone="purple" eyebrow="LATEST VALUE ONLY" title="theme">The notification should use the latest theme without reconnecting.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+React 19.2's `useEffectEvent` provides a clearer model for the second category.
 
 ## Each Effect should model one synchronization process
-
-Good:
 
 ```jsx
 useEffect(() => {
@@ -259,37 +255,38 @@ useEffect(() => {
 }, [userId]);
 ```
 
-These processes can start and stop independently.
+<VisualDiagram title="Independent processes deserve independent Effects">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="cyan" title="Room connection">Starts/stops when roomId changes.</DiagramNode>
+    <DiagramNode tone="green" title="Presence subscription">Starts/stops when userId changes.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Avoid coupling unrelated synchronization just because they happen to exist in the same component.
+Avoid coupling unrelated synchronization merely because it occurs in one component.
 
 ## Dependency changes and cleanup order
-
-For an Effect:
 
 ```jsx
 useEffect(() => {
   connect(roomId);
-
   return () => disconnect(roomId);
 }, [roomId]);
 ```
 
-If `roomId` changes from `general` to `travel`, think:
+If `roomId` changes from `general` to `travel`:
 
-```text
-render with travel
-      ↓
-commit
-      ↓
-cleanup synchronization created by general render
-      ↓
-start synchronization created by travel render
-```
+<VisualDiagram title="Cleanup uses the render that created it">
+  <LifecycleBar
+    items={[
+      { label: 'Render with travel', tone: 'blue' },
+      { label: 'Commit travel UI', tone: 'cyan' },
+      { label: 'Clean up general synchronization', tone: 'red' },
+      { label: 'Start travel synchronization', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-The cleanup closes over the values from the render that created it.
-
-That is useful, not accidental.
+The cleanup closes over values from the render that created it. That is useful: the `general` cleanup knows which process it must stop.
 
 ## Empty dependency arrays
 
@@ -300,11 +297,7 @@ useEffect(() => {
 }, []);
 ```
 
-An empty array is correct when the Effect does not read reactive component values.
-
-It does **not** mean:
-
-> "Ignore all changing values because I want this to run once."
+An empty array is correct when the Effect does not read reactive component values. It does not mean “ignore changing values because I want this to run once.”
 
 ## No dependency array
 
@@ -314,27 +307,9 @@ useEffect(() => {
 });
 ```
 
-This tells React that synchronization may need to occur after every render.
+This says synchronization may need to occur after every render. It is relatively uncommon in well-structured production Effects because most external processes have explicit configuration.
 
-This is relatively uncommon in well-structured production Effects because most external synchronization has explicit reactive configuration.
-
-## Dependencies and state updater functions
-
-Suppose an interval increments a counter:
-
-```jsx
-useEffect(() => {
-  const id = setInterval(() => {
-    setCount(count + 1);
-  }, 1000);
-
-  return () => clearInterval(id);
-}, [count]);
-```
-
-This recreates the interval after every count change.
-
-Use an updater if the logic only needs the previous state:
+## State updater functions can remove unnecessary reads
 
 ```jsx
 useEffect(() => {
@@ -346,52 +321,23 @@ useEffect(() => {
 }, []);
 ```
 
-The updater describes a state transition rather than reading the current render's `count`.
-
-## Common mistake: object identity disguised as business logic
-
-```jsx
-const filters = {status, category};
-
-useEffect(() => {
-  analytics.track('filters_changed', filters);
-}, [filters]);
-```
-
-This runs every render because `filters` is new.
-
-If the real reactive values are `status` and `category`:
-
-```jsx
-useEffect(() => {
-  analytics.track('filters_changed', {status, category});
-}, [status, category]);
-```
-
-The dependency list should communicate the actual data relationship.
+The updater describes a transition from the previous state instead of reading the current render's `count`.
 
 ## Debugging dependency loops
 
-If an Effect loops, inspect this cycle:
+<VisualDiagram title="Common Effect loop">
+  <LifecycleBar
+    items={[
+      { label: 'Effect runs', tone: 'purple' },
+      { label: 'Effect changes state', tone: 'orange' },
+      { label: 'React renders', tone: 'blue' },
+      { label: 'Dependency identity changes', tone: 'red' },
+      { label: 'Effect runs again', tone: 'purple' },
+    ]}
+  />
+</VisualDiagram>
 
-```text
-Effect runs
-   ↓
-Effect changes state
-   ↓
-render
-   ↓
-dependency identity changes
-   ↓
-Effect runs again
-```
-
-Questions:
-
-- Is the state update necessary?
-- Is the state actually derived data?
-- Is an object/function recreated every render?
-- Is the Effect synchronizing an external system at all?
+Ask whether the state update is necessary, whether the value is derived data, whether an object/function is recreated each render, and whether the Effect synchronizes an external system at all.
 
 ## Production example: subscription architecture
 
@@ -411,44 +357,20 @@ function StockTicker({symbol}) {
 }
 ```
 
-This is a strong Effect use case:
-
-```text
-symbol
-  ↓
-external subscription
-  ↓
-price events
-  ↓
-React state
-  ↓
-UI
-```
+<VisualDiagram title="External subscription → React UI">
+  <LifecycleBar
+    items={[
+      { label: 'symbol configures subscription', tone: 'blue' },
+      { label: 'Market emits price events', tone: 'orange' },
+      { label: 'Subscription updates React state', tone: 'purple' },
+      { label: 'React renders current price', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## Exercise
 
-Fix the dependency behavior in this component without disabling the linter:
-
-```jsx
-function Notifications({userId, theme}) {
-  const options = {userId};
-
-  useEffect(() => {
-    const connection = subscribe(options, notification => {
-      showToast(notification, theme);
-    });
-
-    return () => connection.unsubscribe();
-  }, [options, theme]);
-}
-```
-
-Goal:
-
-- reconnect only when `userId` changes;
-- still use the latest `theme` for toasts.
-
-The next chapter provides the React 19.2 tool for the second requirement.
+Refactor a notification subscription so it reconnects only when `userId` changes but still uses the latest `theme` for toasts. Do not disable the linter.
 
 ## Interview questions
 
@@ -460,13 +382,15 @@ The next chapter provides the React 19.2 tool for the second requirement.
 
 ## Summary
 
-```text
-Dependencies are not timing controls.
-They describe the reactive configuration of synchronization.
+<VisualDiagram title="Dependency reasoning in one picture" compact>
+  <DiagramRow>
+    <DiagramNode tone="blue" title="Dependencies">Describe reactive synchronization configuration.</DiagramNode>
+    <DiagramNode tone="red" title="Cleanup">Stops the process created by the previous render.</DiagramNode>
+    <DiagramNode tone="green" title="Restart">Creates a process matching the latest committed configuration.</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-If a dependency feels wrong,
-redesign the Effect before overriding the linter.
-```
+If a dependency feels wrong, redesign the Effect before overriding the linter.
 
 ## References
 
