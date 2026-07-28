@@ -4,18 +4,35 @@ description: Learn the correct mental model for Effects, synchronization, cleanu
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # useEffect and synchronizing with external systems
 
 `useEffect` is one of the most misunderstood React Hooks.
 
 The most important mental model is:
 
-```text
-Effect ≠ "run code after render"
-Effect ≠ "componentDidMount for functions"
-
-Effect = synchronize React with something outside React
-```
+<VisualDiagram title="What an Effect actually represents" subtitle="Effects are synchronization boundaries, not a generic place for code that happens after rendering.">
+  <DiagramGrid columns={3}>
+    <DiagramNode tone="red" eyebrow="NOT THIS" title="After-render bucket">
+      An Effect is not “run arbitrary code after render”.
+    </DiagramNode>
+    <DiagramNode tone="orange" eyebrow="NOT THIS" title="componentDidMount replacement">
+      Hook code should not be designed by mechanically translating class lifecycle methods.
+    </DiagramNode>
+    <DiagramNode tone="green" eyebrow="MENTAL MODEL" title="External synchronization">
+      Keep something outside React synchronized with the rendered component's current configuration.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Examples of external systems include:
 
@@ -51,21 +68,19 @@ The component describes UI. The Effect keeps an external connection synchronized
 
 A React component contains three different kinds of logic.
 
-```text
-Render logic
-  ↓
-calculates UI
-must be pure
-
-Event handler
-  ↓
-runs because a specific interaction happened
-
-Effect
-  ↓
-runs because the rendered component must synchronize
-with an external system
-```
+<VisualDiagram title="Three kinds of component logic" subtitle="Classify the cause of the work before choosing where it belongs.">
+  <DiagramGrid columns={3}>
+    <DiagramNode tone="blue" eyebrow="RENDER" title="Calculate UI">
+      Pure calculations from the current props, state, and Context.
+    </DiagramNode>
+    <DiagramNode tone="orange" eyebrow="EVENT" title="Respond to an interaction">
+      Runs because a specific user action such as click, submit, or input happened.
+    </DiagramNode>
+    <DiagramNode tone="purple" eyebrow="EFFECT" title="Synchronize externally">
+      Runs because the rendered component must keep an external system aligned with its current configuration.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ### Render logic
 
@@ -114,21 +129,19 @@ The dependency list is not a scheduling wish list. It describes the reactive val
 
 Think in terms of **start** and **stop**, not mount/update/unmount.
 
-```text
-roomId = "general"
-       ↓
-start synchronization with general
-       ↓
-roomId changes to "travel"
-       ↓
-stop synchronization with general
-       ↓
-start synchronization with travel
-       ↓
-component disappears
-       ↓
-stop synchronization with travel
-```
+<VisualDiagram title="Effect lifecycle as a synchronization process" subtitle="When reactive configuration changes, React stops the old process before starting the new one.">
+  <LifecycleBar
+    items={[
+      { label: 'roomId = general', tone: 'blue' },
+      { label: 'start general', tone: 'green' },
+      { label: 'roomId → travel', tone: 'orange' },
+      { label: 'stop general', tone: 'red' },
+      { label: 'start travel', tone: 'green' },
+      { label: 'component disappears', tone: 'slate' },
+      { label: 'stop travel', tone: 'red' },
+    ]}
+  />
+</VisualDiagram>
 
 This model scales better than trying to translate class lifecycle methods into Hook code.
 
@@ -243,13 +256,15 @@ If you disagree with the linter, first ask whether the Effect is designed correc
 
 In development Strict Mode, React deliberately performs an extra setup → cleanup → setup cycle to expose Effects that are missing cleanup.
 
-```text
-setup
- ↓
-cleanup
- ↓
-setup again
-```
+<VisualDiagram title="Strict Mode stress-tests Effect symmetry" compact>
+  <LifecycleBar
+    items={[
+      { label: 'setup', tone: 'green' },
+      { label: 'cleanup', tone: 'red' },
+      { label: 'setup again', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 The goal is not to make an Effect "run once despite Strict Mode".
 
@@ -324,12 +339,20 @@ Later chapters will compare raw Effects with framework data APIs and server-stat
 
 Consider two requests:
 
-```text
-request A starts for "react"
-request B starts for "redux"
-request B finishes first
-request A finishes later
-```
+<VisualDiagram title="How an async race can produce stale UI" subtitle="Completion order does not have to match start order.">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" eyebrow="REQUEST A" title="react starts first">
+      Starts earlier, but the network response is slower.
+    </DiagramNode>
+    <DiagramNode tone="purple" eyebrow="REQUEST B" title="redux starts second">
+      Starts later and finishes first, so its result is the newer intended UI.
+    </DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="responses arrive out of order" />
+  <DiagramNode tone="red" title="A finishes after B" wide>
+    Without cancellation or stale-result protection, the older React request can overwrite the newer Redux result.
+  </DiagramNode>
+</VisualDiagram>
 
 Without protection, stale request A might overwrite the newer Redux result.
 
@@ -409,19 +432,18 @@ useEffect(() => {
 
 Use this sequence:
 
-```text
-What external system am I synchronizing with?
-              ↓
-What starts synchronization?
-              ↓
-What stops it?
-              ↓
-Which reactive values configure it?
-              ↓
-Does cleanup fully undo setup?
-              ↓
-Could this logic be render logic or an event instead?
-```
+<VisualDiagram title="Effect debugging flow" subtitle="If you cannot name the external system, question whether an Effect is needed at all.">
+  <LifecycleBar
+    items={[
+      { label: 'Name the external system', tone: 'blue' },
+      { label: 'Identify setup', tone: 'green' },
+      { label: 'Identify cleanup', tone: 'red' },
+      { label: 'List reactive configuration', tone: 'purple' },
+      { label: 'Check setup/cleanup symmetry', tone: 'orange' },
+      { label: 'Could this be render or event logic?', tone: 'cyan' },
+    ]}
+  />
+</VisualDiagram>
 
 If you cannot name the external system, the Effect deserves extra scrutiny.
 
@@ -452,6 +474,15 @@ Usually not for:
 
 Those cases are covered in **You Might Not Need an Effect**.
 
+<DecisionTree
+  question="Does this logic belong in an Effect?"
+  items={[
+    { label: 'Purely calculates UI from current React data', value: 'Keep it in render.' },
+    { label: 'Runs because a specific user interaction happened', value: 'Use the event handler.' },
+    { label: 'Keeps a browser API, subscription, connection, timer, or third-party system synchronized', value: 'An Effect is appropriate.' },
+  ]}
+/>
+
 ## Exercise
 
 Create a `ChatRoom` component with:
@@ -463,10 +494,14 @@ Create a `ChatRoom` component with:
 
 Log every connect/disconnect and explain why switching rooms produces:
 
-```text
-disconnect old room
-connect new room
-```
+<VisualDiagram title="Switching rooms restarts the synchronization" compact>
+  <LifecycleBar
+    items={[
+      { label: 'disconnect old room', tone: 'red' },
+      { label: 'connect new room', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 Then test under Strict Mode.
 
@@ -482,13 +517,16 @@ Then test under Strict Mode.
 
 Remember:
 
-```text
-Render calculates UI.
-Events respond to interactions.
-Effects synchronize with external systems.
-Cleanup stops that synchronization.
-Dependencies describe the reactive configuration of that process.
-```
+<VisualDiagram title="Effect mental model summary">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" title="Render">Calculates UI from current React inputs.</DiagramNode>
+    <DiagramNode tone="orange" title="Events">Respond to specific interactions.</DiagramNode>
+    <DiagramNode tone="purple" title="Effects">Synchronize with external systems.</DiagramNode>
+    <DiagramNode tone="red" title="Cleanup">Stops or reverses the previous synchronization.</DiagramNode>
+    <DiagramNode tone="green" title="Dependencies">Describe the reactive configuration the process reads.</DiagramNode>
+    <DiagramNode tone="cyan" title="Design test">If there is no external system, reconsider the Effect.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## References
 

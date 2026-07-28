@@ -4,25 +4,32 @@ description: Learn how to remove unnecessary Effects by deriving values during r
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # You might not need an Effect
 
 Effects are escape hatches. They are not the default place for application logic.
 
 A strong React engineer tries to keep logic in the simplest model that fits:
 
-```text
-Can I calculate it during render?
-        ↓ yes
-Do that.
-
-Was it caused by a specific interaction?
-        ↓ yes
-Use the event handler.
-
-Is React synchronizing with an external system?
-        ↓ yes
-Use an Effect.
-```
+<DecisionTree
+  question="Where should this logic live?"
+  items={[
+    { label: 'Can it be calculated from current props/state during render?', value: 'Calculate it during render.' },
+    { label: 'Did a specific user interaction cause it?', value: 'Run it in the event handler.' },
+    { label: 'Is a different entity supposed to get a fresh state lifetime?', value: 'Express the identity with structure or a key.' },
+    { label: 'Do multiple components need one changing value?', value: 'Choose one owner and lift/share the state.' },
+    { label: 'Must React stay synchronized with something outside React?', value: 'Use an Effect.' },
+  ]}
+/>
 
 This chapter is about recognizing when an Effect is solving the wrong problem.
 
@@ -48,13 +55,13 @@ const fullName = `${firstName} ${lastName}`;
 
 Why?
 
-```text
-firstName + lastName
-        ↓
-render
-        ↓
-fullName
-```
+<VisualDiagram title="Derived data should flow directly from its inputs" compact>
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="firstName + lastName" wide>These are the real changing inputs.</DiagramNode>
+    <DiagramArrow label="render calculation" />
+    <DiagramNode tone="green" title="fullName" wide>No extra state or synchronization process is required.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 The Effect version creates:
 
@@ -241,23 +248,25 @@ Or make the component controlled if the parent should own the source of truth.
 
 If both parent and child need the same changing value, do not synchronize copies with Effects.
 
-Bad architecture:
+<VisualDiagram title="Duplicated state creates a synchronization problem">
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="Parent copy" wide>Parent believes it owns the current value.</DiagramNode>
+    <DiagramArrow label="Effect synchronization ↕" />
+    <DiagramNode tone="red" title="Child copy" wide>Child also stores the same fact, so the two copies can drift apart.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-Parent state
-   ↕ Effect synchronization
-Child state
-```
+Prefer one source of truth:
 
-Prefer:
-
-```text
-Parent owns state
-      ↓ props
-Child renders value
-      ↑ callback
-Parent updates state
-```
+<VisualDiagram title="Controlled flow keeps one owner">
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="Parent owns state" wide>One authoritative value.</DiagramNode>
+    <DiagramArrow label="props ↓" />
+    <DiagramNode tone="purple" title="Child renders the value" wide>The child receives data rather than mirroring it.</DiagramNode>
+    <DiagramArrow label="callback ↑" />
+    <DiagramNode tone="green" title="Parent updates state" wide>The owner decides the next value.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 This is the controlled-component model.
 
@@ -383,23 +392,27 @@ Imagine an ecommerce filter page.
 
 Avoid:
 
-```text
-query state
-   ↓ Effect
-filteredProducts state
-   ↓ Effect
-resultCount state
-```
+<VisualDiagram title="Anti-pattern: derived values stored as synchronized state" compact>
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="query state" wide />
+    <DiagramArrow label="Effect derives" />
+    <DiagramNode tone="orange" title="filteredProducts state" wide />
+    <DiagramArrow label="another Effect derives" />
+    <DiagramNode tone="red" title="resultCount state" wide>Three pieces of state now need to stay synchronized.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Prefer:
 
-```text
-products + query
-      ↓ render calculation
-filteredProducts
-      ↓
-resultCount
-```
+<VisualDiagram title="Preferred: one source of truth, derived during render" compact>
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="products + query" wide>These are the real inputs.</DiagramNode>
+    <DiagramArrow label="render calculation" />
+    <DiagramNode tone="purple" title="filteredProducts" wide>Derived from current inputs.</DiagramNode>
+    <DiagramArrow label="derive" />
+    <DiagramNode tone="green" title="resultCount" wide>Calculated from the filtered collection.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 One source of truth produces multiple derived values.
 
@@ -441,10 +454,12 @@ Questions:
 
 Effects are valuable precisely because they are specialized.
 
-```text
-Use React's normal data flow first.
-Use Effects when you need to step outside that data flow.
-```
+<VisualDiagram title="Use normal React data flow before reaching for an Effect" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="green" title="Inside React's data flow">Render calculations · events · state ownership · identity · reducers.</DiagramNode>
+    <DiagramNode tone="purple" title="Effect escape hatch">Use when React must synchronize with something outside that normal data flow.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## References
 
