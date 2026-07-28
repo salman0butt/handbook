@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–13 are implemented; Phase 14 Errors, Observability & Debugging is next.**
+> **Status: NOT COMPLETE — Phases 1–14 are implemented; Phase 15 Performance is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -44,7 +44,8 @@ The audit keeps the original baseline for history while allowing later phases to
 - [x] Phase 11 · Metadata & SEO
 - [x] Phase 12 · Images, Fonts & Scripts
 - [x] Phase 13 · Authentication, Authorization & Security
-- [ ] Phase 14 · Errors, Observability & Debugging
+- [x] Phase 14 · Errors, Observability & Debugging
+- [ ] Phase 15 · Performance
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
@@ -71,6 +72,8 @@ Phase 12 includes the current Next.js 16.2.12 image, font, and script contracts:
 
 Phase 13 includes the current stable App Router security model: authentication, session management, and authorization as separate concerns; auth-library/provider ownership; Server Action sign-up/sign-in and server validation; OAuth/OIDC callback, recovery, MFA and safe-redirect design; stateless/database sessions, secure cookies, renewal, rotation and revocation; Proxy optimistic checks vs DAL secure checks; `server-only` DAL/DTO design; RBAC plus tenant/resource/relationship authorization; IDOR/BOLA prevention; Server Action/Route Handler/Proxy security responsibilities; action Origin/Host protections, `allowedOrigins`, closure encryption and multi-instance keys; CSRF, XSS, CSP and nonce-driven dynamic-rendering trade-offs; secrets, `NEXT_PUBLIC_`, RSC/client/action/API exposure boundaries, experimental tainting as defense in depth; SSRF, uploads, object-storage capabilities, active SVG, webhook signatures/replay, distributed rate limiting, bounded resource work, injection classes and API-key lifecycle; plus threat modeling, security audits, incident runbooks, audit-event design, dependency/supply-chain review, and supported-patch policy. Experimental `unauthorized()` / `forbidden()` / `authInterrupts` remain labeled non-production.
 
+Phase 14 includes the stable App Router failure and observability model: expected failures vs uncaught exceptions vs framework control flow; nested `error.tsx`, `global-error.tsx`, production Server Component error sanitization, digests and stable `reset()` recovery; `notFound()`/redirect control flow, streamed 404 status caveats and `noindex`; Server Action, Route Handler, Server Component, Client Component, Proxy and `after()` failure contracts; server `instrumentation.ts`, `register()`, stable `onRequestError`, runtime-aware initialization, structured logs and request/trace/release correlation; `instrumentation-client.ts`, early browser error capture, unhandled rejections, router-transition breadcrumbs and client release identity; provider-neutral OpenTelemetry architecture, custom spans, logs/metrics/traces, sampling and exporters; production source-map policy, `next info`, `next build --debug`, `--debug-prerender`, targeted build debugging, Node inspector usage, hard-vs-soft navigation triage, cache/stream/proxy incident workflows; and SLI/SLO/error-budget/alert/runbook design. `unstable_catchError`, `unstable_retry`, `unstable_rethrow`, and other unstable error helpers remain explicitly non-baseline.
+
 ## Final audit gates
 
 - [ ] Re-check npm `latest`, support policy, release notes, and App Router docs at final release.
@@ -84,7 +87,8 @@ Phase 13 includes the current stable App Router security model: authentication, 
 - [ ] Audit Route Handlers, Proxy, and request pipeline behavior.
 - [ ] Re-audit metadata, images, fonts, scripts, and resource optimization against final stable release.
 - [ ] Re-audit authentication, authorization, sessions, CSRF, CSP, secrets, XSS, SSRF, abuse controls, and broader security architecture against final stable release.
-- [ ] Audit error handling, instrumentation, OpenTelemetry, and debugging APIs.
+- [ ] Re-audit error handling, instrumentation, OpenTelemetry, client observability, source maps, and production-debugging APIs against final stable release.
+- [ ] Audit performance, Web Vitals, profiling, bundle analysis, and budgets.
 - [ ] Audit testing guidance.
 - [ ] Audit configuration options relevant to application engineering.
 - [ ] Audit Node/self-hosting, adapters, static export, and deployment guidance.
