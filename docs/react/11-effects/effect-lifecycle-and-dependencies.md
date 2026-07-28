@@ -50,7 +50,6 @@ function ChatRoom({roomId}) {
 useEffect(() => {
   const connection = createConnection(serverUrl, roomId);
   connection.connect();
-
   return () => connection.disconnect();
 }, [serverUrl, roomId]);
 ```
@@ -81,11 +80,9 @@ If either value changes, the old connection no longer matches the current React 
   <DiagramNode tone="orange" title="Re-synchronize" wide>Clean up the general-room process, then start the travel-room process.</DiagramNode>
 </VisualDiagram>
 
-Primitive values are often straightforward. Objects and functions require more care because their identity can change even when their contents appear equivalent.
+Objects and functions require extra care because identity can change even when contents appear equivalent.
 
 ## Stale closures
-
-Every render creates functions that close over that render's values.
 
 ```jsx
 function Counter() {
@@ -106,14 +103,14 @@ function Counter() {
     items={[
       { label: 'Initial render: count = 0', tone: 'blue' },
       { label: 'Effect creates interval closure', tone: 'purple' },
-      { label: 'Empty dependency array keeps that process', tone: 'slate' },
+      { label: 'Empty dependencies keep that process', tone: 'slate' },
       { label: 'Later renders have new count values', tone: 'orange' },
-      { label: 'Old interval still closes over count = 0', tone: 'red' },
+      { label: 'Old interval still sees count = 0', tone: 'red' },
     ]}
   />
 </VisualDiagram>
 
-React did not fail to update the closure. The code asked React to keep using the synchronization process created by the first render.
+React did not fail to update the closure. The code asked React to keep the synchronization process created by the first render.
 
 ## Do not suppress the dependency linter casually
 
@@ -124,7 +121,7 @@ useEffect(() => {
 }, []);
 ```
 
-Suppressing the rule removes a correctness check. Redesign the Effect first.
+Suppressing the rule removes a correctness check.
 
 <DecisionTree
   question="A dependency feels inconvenient. What should you inspect?"
@@ -155,24 +152,6 @@ Moving a genuinely constant value outside proves it is not reactive.
 
 ## Create objects inside the Effect
 
-Problem:
-
-```jsx
-function ChatRoom({roomId}) {
-  const options = {
-    serverUrl: 'https://chat.example.com',
-    roomId,
-  };
-
-  useEffect(() => {
-    const connection = createConnection(options);
-    return () => connection.disconnect();
-  }, [options]);
-}
-```
-
-`options` is a new object each render. Prefer expressing the real reactive configuration:
-
 ```jsx
 function ChatRoom({roomId}) {
   useEffect(() => {
@@ -188,21 +167,9 @@ function ChatRoom({roomId}) {
 }
 ```
 
-## Functions can cause the same problem
+The dependency now expresses the real reactive configuration instead of a newly created object identity.
 
-```jsx
-function Search({query}) {
-  function createRequest() {
-    return {query, limit: 20};
-  }
-
-  useEffect(() => {
-    fetchResults(createRequest());
-  }, [createRequest]);
-}
-```
-
-`createRequest` is recreated each render. Often the clearest fix is to move the supporting logic into the Effect:
+## Functions can cause the same identity problem
 
 ```jsx
 useEffect(() => {
@@ -211,35 +178,18 @@ useEffect(() => {
 }, [query]);
 ```
 
-Simplify before reaching for `useCallback`.
+Move supporting logic inside the Effect when possible. Simplify before reaching for `useCallback`.
 
 ## Separate reactive and non-reactive Effect logic
-
-Suppose `roomId` configures a connection, while `theme` only affects a notification.
-
-```jsx
-useEffect(() => {
-  const connection = createConnection(roomId);
-
-  connection.on('connected', () => {
-    showNotification('Connected!', theme);
-  });
-
-  connection.connect();
-  return () => connection.disconnect();
-}, [roomId, theme]);
-```
-
-Changing the theme now reconnects the room even though theme does not configure the connection.
 
 <VisualDiagram title="Classify values by their role">
   <DiagramGrid columns={2}>
     <DiagramNode tone="blue" eyebrow="REACTIVE" title="roomId">Changing it must restart or reconfigure the connection.</DiagramNode>
-    <DiagramNode tone="purple" eyebrow="LATEST VALUE ONLY" title="theme">The notification should use the latest theme without reconnecting.</DiagramNode>
+    <DiagramNode tone="purple" eyebrow="LATEST VALUE ONLY" title="theme">A notification should use the latest theme without reconnecting.</DiagramNode>
   </DiagramGrid>
 </VisualDiagram>
 
-React 19.2's `useEffectEvent` provides a clearer model for the second category.
+React 19.2's `useEffectEvent` provides a clearer model for latest-value Effect logic.
 
 ## Each Effect should model one synchronization process
 
@@ -257,21 +207,12 @@ useEffect(() => {
 
 <VisualDiagram title="Independent processes deserve independent Effects">
   <DiagramGrid columns={2}>
-    <DiagramNode tone="cyan" title="Room connection">Starts/stops when roomId changes.</DiagramNode>
-    <DiagramNode tone="green" title="Presence subscription">Starts/stops when userId changes.</DiagramNode>
+    <DiagramNode tone="cyan" title="Room connection">Starts and stops when `roomId` changes.</DiagramNode>
+    <DiagramNode tone="green" title="Presence subscription">Starts and stops when `userId` changes.</DiagramNode>
   </DiagramGrid>
 </VisualDiagram>
 
-Avoid coupling unrelated synchronization merely because it occurs in one component.
-
 ## Dependency changes and cleanup order
-
-```jsx
-useEffect(() => {
-  connect(roomId);
-  return () => disconnect(roomId);
-}, [roomId]);
-```
 
 If `roomId` changes from `general` to `travel`:
 
@@ -286,9 +227,11 @@ If `roomId` changes from `general` to `travel`:
   />
 </VisualDiagram>
 
-The cleanup closes over values from the render that created it. That is useful: the `general` cleanup knows which process it must stop.
+The cleanup closes over values from the render that created it, so the `general` cleanup knows which process to stop.
 
-## Empty dependency arrays
+## Empty and missing dependency arrays
+
+An empty array is correct when the Effect reads no reactive component values:
 
 ```jsx
 useEffect(() => {
@@ -297,9 +240,7 @@ useEffect(() => {
 }, []);
 ```
 
-An empty array is correct when the Effect does not read reactive component values. It does not mean “ignore changing values because I want this to run once.”
-
-## No dependency array
+No dependency array means synchronization may run after every render:
 
 ```jsx
 useEffect(() => {
@@ -307,7 +248,7 @@ useEffect(() => {
 });
 ```
 
-This says synchronization may need to occur after every render. It is relatively uncommon in well-structured production Effects because most external processes have explicit configuration.
+That is relatively uncommon when an external process has explicit configuration.
 
 ## State updater functions can remove unnecessary reads
 
@@ -321,7 +262,7 @@ useEffect(() => {
 }, []);
 ```
 
-The updater describes a transition from the previous state instead of reading the current render's `count`.
+The updater describes a transition from previous state instead of reading the current render's `count`.
 
 ## Debugging dependency loops
 
@@ -337,7 +278,7 @@ The updater describes a transition from the previous state instead of reading th
   />
 </VisualDiagram>
 
-Ask whether the state update is necessary, whether the value is derived data, whether an object/function is recreated each render, and whether the Effect synchronizes an external system at all.
+Ask whether the state update is necessary, whether the value is derived data, whether an object/function is recreated every render, and whether the Effect synchronizes an external system at all.
 
 ## Production example: subscription architecture
 
@@ -383,11 +324,11 @@ Refactor a notification subscription so it reconnects only when `userId` changes
 ## Summary
 
 <VisualDiagram title="Dependency reasoning in one picture" compact>
-  <DiagramRow>
+  <DiagramGrid columns={3}>
     <DiagramNode tone="blue" title="Dependencies">Describe reactive synchronization configuration.</DiagramNode>
     <DiagramNode tone="red" title="Cleanup">Stops the process created by the previous render.</DiagramNode>
     <DiagramNode tone="green" title="Restart">Creates a process matching the latest committed configuration.</DiagramNode>
-  </DiagramRow>
+  </DiagramGrid>
 </VisualDiagram>
 
 If a dependency feels wrong, redesign the Effect before overriding the linter.
