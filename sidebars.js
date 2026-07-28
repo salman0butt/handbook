@@ -101,6 +101,17 @@ const nextjsItems = [
     'nextjs/authentication-authorization-and-security/secrets-environment-data-exposure-and-server-only',
     'nextjs/authentication-authorization-and-security/ssrf-uploads-webhooks-rate-limits-and-abuse-defense',
     'nextjs/authentication-authorization-and-security/security-auditing-threat-modeling-and-design-review',
+  ], { collapsed: true }),
+  category('14 · Errors, Observability & Debugging', [
+    'nextjs/errors-observability-and-debugging/error-taxonomy-expected-uncaught-and-control-flow',
+    'nextjs/errors-observability-and-debugging/error-boundaries-error-tsx-global-error-and-recovery',
+    'nextjs/errors-observability-and-debugging/not-found-redirects-streaming-status-and-framework-errors',
+    'nextjs/errors-observability-and-debugging/server-actions-route-handlers-client-errors-and-failure-contracts',
+    'nextjs/errors-observability-and-debugging/instrumentation-server-on-request-error-and-request-correlation',
+    'nextjs/errors-observability-and-debugging/instrumentation-client-browser-errors-navigation-and-web-vitals',
+    'nextjs/errors-observability-and-debugging/opentelemetry-logs-traces-metrics-and-provider-architecture',
+    'nextjs/errors-observability-and-debugging/production-debugging-source-maps-cli-and-incident-workflows',
+    'nextjs/errors-observability-and-debugging/observability-architecture-slos-alerts-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
