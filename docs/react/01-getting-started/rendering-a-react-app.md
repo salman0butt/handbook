@@ -4,6 +4,15 @@ description: Understand createRoot, root.render, the component tree, and what Re
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Rendering a React application
 
 Before learning state updates, understand how a React tree gets onto the page.
@@ -24,13 +33,13 @@ root.render(<App />);
 
 `createRoot` creates a React root for a browser DOM node.
 
-```text
-browser DOM node
-      ↓
-createRoot(container)
-      ↓
-React root
-```
+<VisualDiagram title="createRoot bridges the browser container to React" compact>
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="Browser DOM node" wide>A real element such as `#root` already exists in the document.</DiagramNode>
+    <DiagramArrow label="createRoot(container)" />
+    <DiagramNode tone="purple" title="React root" wide>React DOM creates the root that will manage the React tree inside that container.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 That root is the bridge through which React manages the component tree mounted in that DOM container.
 
@@ -48,19 +57,18 @@ root.render(<App />);
 
 A useful simplified model is:
 
-```text
-root.render(<App />)
-        ↓
-React evaluates components
-        ↓
-React builds the next UI description
-        ↓
-React compares/reconciles work
-        ↓
-React commits necessary DOM changes
-        ↓
-browser can paint
-```
+<VisualDiagram title="What root.render actually starts" subtitle="Rendering calculates the next UI; host mutation happens only during commit.">
+  <LifecycleBar
+    items={[
+      { label: 'root.render(<App />)', tone: 'blue' },
+      { label: 'Evaluate components', tone: 'purple' },
+      { label: 'Build next UI description', tone: 'cyan' },
+      { label: 'Reconcile identity + structure', tone: 'orange' },
+      { label: 'Commit necessary DOM changes', tone: 'green' },
+      { label: 'Browser can paint', tone: 'slate' },
+    ]}
+  />
+</VisualDiagram>
 
 Later chapters will separate the **render phase**, **commit phase**, and **browser paint** more carefully.
 
@@ -83,15 +91,21 @@ function App() {
 
 If `Dashboard` renders more components, the tree grows:
 
-```text
-App
-├── Header
-└── Dashboard
-    ├── StatsGrid
-    │   ├── StatCard
-    │   └── StatCard
-    └── ActivityTable
-```
+<VisualDiagram title="React component tree" subtitle="Ownership and identity are tree-shaped, even when the DOM structure is different.">
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="App" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={2}>
+      <DiagramNode tone="cyan" title="Header" />
+      <DiagramNode tone="purple" title="Dashboard">Owns the dashboard subtree.</DiagramNode>
+    </DiagramGrid>
+    <DiagramArrow label="Dashboard renders" />
+    <DiagramGrid columns={2}>
+      <DiagramNode tone="green" title="StatsGrid">Contains multiple StatCard children.</DiagramNode>
+      <DiagramNode tone="orange" title="ActivityTable" />
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 React reasons about this tree over time. Position and identity in the tree later become important for state preservation and keys.
 
@@ -124,15 +138,15 @@ The first time a tree is displayed is the initial render.
 
 Later, React can render components again because of updates such as state changes or parent rendering.
 
-```text
-initial root render
-      ↓
-component tree appears
-      ↓
-state/props/context changes
-      ↓
-React schedules more rendering work
-```
+<VisualDiagram title="Initial render and later re-renders">
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="Initial root render" wide>`root.render` introduces the component tree to the root.</DiagramNode>
+    <DiagramArrow label="first commit" />
+    <DiagramNode tone="green" title="Component tree is visible" wide>The browser shows the committed host result.</DiagramNode>
+    <DiagramArrow label="props, state, or Context changes" />
+    <DiagramNode tone="purple" title="React schedules more rendering work" wide>React calculates the next UI without assuming every DOM node must change.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 A re-render does **not** automatically mean every DOM node is recreated. React calculates the next UI and commits the DOM changes that are needed.
 
@@ -153,15 +167,16 @@ The render function is now mutating an external system.
 
 Better reasoning:
 
-```text
-render
-  ↓
-calculate UI
-
-external synchronization
-  ↓
-Effect or event, depending on why it happens
-```
+<VisualDiagram title="Keep render calculation separate from external synchronization">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="green" eyebrow="Render" title="Calculate UI">
+      Read current props/state/context and return the UI description. Keep this path pure.
+    </DiagramNode>
+    <DiagramNode tone="purple" eyebrow="Outside render" title="Synchronize or react to events">
+      Use an Effect for synchronization or an event handler when the work is caused by a user action.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 We will study Effects later. For now, keep render calculation free of side effects.
 
@@ -183,17 +198,16 @@ Most single-page applications do not manually unmount their only app root during
 
 `hydrateRoot` is used when HTML was already generated on the server and React needs to attach to that existing server-rendered markup.
 
-```text
-Client-rendered app
-empty/root container
-      ↓
-createRoot
-
-Server-rendered app
-existing server HTML
-      ↓
-hydrateRoot
-```
+<VisualDiagram title="createRoot vs hydrateRoot">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" eyebrow="Client-rendered" title="createRoot">
+      Start from a container React will populate and manage on the client.
+    </DiagramNode>
+    <DiagramNode tone="purple" eyebrow="Server-rendered" title="hydrateRoot">
+      Start from existing server HTML and attach client React to that markup.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not use hydration terminology for a normal client-only Vite app.
 
@@ -235,11 +249,16 @@ Given:
 
 Write the entry file that renders:
 
-```text
-App
-├── Navbar
-└── MainContent
-```
+<VisualDiagram title="Exercise tree" compact>
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="App" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={2}>
+      <DiagramNode tone="cyan" title="Navbar" />
+      <DiagramNode tone="purple" title="MainContent" />
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 Then explain, in your own words, the difference between:
 

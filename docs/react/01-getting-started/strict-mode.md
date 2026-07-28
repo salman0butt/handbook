@@ -4,6 +4,15 @@ description: Understand React StrictMode, development-only checks, repeated rend
 sidebar_position: 4
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Strict Mode
 
 `<StrictMode>` enables extra **development-only** checks that help surface React bugs early.
@@ -30,15 +39,17 @@ Strict Mode deliberately stresses assumptions that often hide bugs in ordinary d
 
 Mental model:
 
-```text
-Your component appears correct
-        ↓
-Strict Mode adds development checks
-        ↓
-impure render / missing cleanup / unsafe ref logic becomes visible
-        ↓
-fix the underlying assumption
-```
+<VisualDiagram title="Strict Mode makes hidden assumptions visible" subtitle="The development checks expose bugs that repeated or restartable React work would otherwise reveal later.">
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="Component appears correct" wide>The happy path may hide impurity or incomplete cleanup.</DiagramNode>
+    <DiagramArrow label="Strict Mode development checks" />
+    <DiagramNode tone="orange" title="React stresses the assumptions" wide>Repeated render, setup/cleanup cycles, and ref callback checks make unsafe behavior reproducible.</DiagramNode>
+    <DiagramArrow label="bug becomes observable" />
+    <DiagramNode tone="red" title="Underlying issue is identified" wide>Impure render · missing cleanup · unsafe ref logic · misplaced side effect.</DiagramNode>
+    <DiagramArrow label="fix the cause" />
+    <DiagramNode tone="green" title="Component becomes restart-safe" wide>The same code is easier to reason about in production rendering architectures.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Strict Mode does not run these checks to make development annoying. It makes problems reproducible before production architecture makes them harder to diagnose.
 
@@ -46,16 +57,16 @@ Strict Mode does not run these checks to make development annoying. It makes pro
 
 Strict Mode checks are development-only.
 
-```text
-Development with StrictMode
-- extra render checks
-- extra Effect setup/cleanup checks
-- extra ref callback checks
-- deprecation warnings
-
-Production
-- no StrictMode stress checks
-```
+<VisualDiagram title="Strict Mode development checks vs production">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" eyebrow="Development" title="Strict Mode stress checks">
+      Extra render checks · Effect setup/cleanup checks · ref callback checks · deprecation warnings.
+    </DiagramNode>
+    <DiagramNode tone="green" eyebrow="Production" title="Normal production execution">
+      Development-only Strict Mode stress checks are removed from the production build.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not remove Strict Mode merely because development logs or requests reveal duplicated behavior. First ask whether the code has correct cleanup and purity.
 
@@ -113,13 +124,15 @@ During development, Strict Mode can run an extra setup/cleanup cycle to reveal m
 
 Useful reasoning:
 
-```text
-setup
- ↓
-cleanup
- ↓
-setup again
-```
+<VisualDiagram title="Strict Mode Effect stress cycle" compact>
+  <LifecycleBar
+    items={[
+      { label: 'setup', tone: 'blue' },
+      { label: 'cleanup', tone: 'orange' },
+      { label: 'setup again', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 If that sequence breaks your integration, the Effect probably does not fully undo what it sets up.
 
