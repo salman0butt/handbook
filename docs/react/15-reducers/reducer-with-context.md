@@ -4,22 +4,33 @@ description: Combine useReducer and Context to scale feature state without prop 
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Reducer + Context architecture
 
-Reducers centralize **state transition logic**.
+Reducers centralize **state transition logic**. Context distributes **access** through a subtree.
 
-Context distributes **access** through a subtree.
+Together they can form a lightweight feature-state architecture when many descendants need one coherent client-owned state machine.
 
-Together they can form a lightweight feature-state architecture:
-
-```text
-FeatureProvider
-├── useReducer owns state
-├── State Context provides reads
-└── Dispatch Context provides writes
-```
-
-This is useful for complex screens and feature subtrees where many descendants need the same state and actions.
+<VisualDiagram title="Reducer + Context responsibilities">
+  <DiagramStack align="center">
+    <DiagramNode title="FeatureProvider" tone="blue" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="useReducer" tone="purple" eyebrow="OWNER">owns feature state + transitions</DiagramNode>
+      <DiagramNode title="State Context" tone="cyan" eyebrow="READS">distributes current state</DiagramNode>
+      <DiagramNode title="Dispatch Context" tone="green" eyebrow="WRITES">distributes stable dispatch</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 ## Start with local reducer state
 
@@ -28,26 +39,19 @@ Do not introduce Context just because you use a reducer.
 ```jsx
 function CheckoutPage() {
   const [state, dispatch] = useReducer(checkoutReducer, initialState);
-
-  return (
-    <CheckoutForm state={state} dispatch={dispatch} />
-  );
+  return <CheckoutForm state={state} dispatch={dispatch} />;
 }
 ```
 
-If only a small part of the tree needs the data, props may be the cleanest API.
-
-Context becomes useful when passing state/dispatch through many unrelated intermediate layers becomes noisy.
+If a small part of the tree needs the data, props may be the clearest API. Context becomes useful when many descendants need the same state/dispatch through otherwise unrelated intermediate layers.
 
 ## The feature provider pattern
 
 ```jsx
-import { createContext, useContext, useReducer } from 'react';
-
 const CartStateContext = createContext(null);
 const CartDispatchContext = createContext(null);
 
-export function CartProvider({ children }) {
+export function CartProvider({children}) {
   const [state, dispatch] = useReducer(cartReducer, initialCartState);
 
   return (
@@ -60,87 +64,38 @@ export function CartProvider({ children }) {
 }
 ```
 
-Now reads and writes are explicit feature APIs.
-
-## Read Hook
+Consumers can expose feature-specific read/write Hooks:
 
 ```jsx
 export function useCartState() {
   const state = useContext(CartStateContext);
-
-  if (state === null) {
-    throw new Error('useCartState must be used inside CartProvider');
-  }
-
+  if (state === null) throw new Error('useCartState must be used inside CartProvider');
   return state;
 }
-```
 
-## Dispatch Hook
-
-```jsx
 export function useCartDispatch() {
   const dispatch = useContext(CartDispatchContext);
-
-  if (dispatch === null) {
-    throw new Error('useCartDispatch must be used inside CartProvider');
-  }
-
+  if (dispatch === null) throw new Error('useCartDispatch must be used inside CartProvider');
   return dispatch;
 }
 ```
 
-Consumer:
-
-```jsx
-function AddToCartButton({ product }) {
-  const dispatch = useCartDispatch();
-
-  return (
-    <button
-      onClick={() => {
-        dispatch({
-          type: 'item_added',
-          product,
-        });
-      }}
-    >
-      Add to cart
-    </button>
-  );
-}
-```
-
-The button does not need to read the whole cart state just to dispatch an action.
-
 ## Why split state and dispatch?
 
-You could provide both together:
+<VisualDiagram title="Read and write subscriptions can be different dependencies">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="State readers" tone="blue">Need current feature state and can re-render when it changes.</DiagramNode>
+    <DiagramNode title="Dispatch-only components" tone="green">Need the stable dispatch function, not the changing state object.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```jsx
-<CartContext value={{ state, dispatch }}>
-```
+This improves API clarity and can avoid making dispatch-only components depend on the changing state context.
 
-But splitting them has advantages:
+## Keep reducer logic outside the provider
 
-- read and write dependencies are clearer;
-- dispatch-only components do not subscribe to changing state;
-- provider API is easier to reason about;
-- stable dispatch identity is useful.
+A provider should compose ownership/distribution, not become a 500-line transition engine.
 
-It is not mandatory, but it is often a strong default for reducer+Context architectures.
-
-## Put reducer logic outside the provider
-
-Avoid giant provider components:
-
-```jsx
-function CartProvider({ children }) {
-  // 500 lines of transition logic here ❌
-}
-```
-
-Prefer:
+Literal feature structure can remain simple:
 
 ```text
 cart/
@@ -150,74 +105,51 @@ cart/
   useCartDispatch.js
 ```
 
-Or keep Hooks beside the provider if the feature is small.
+The goal is separation of responsibility, not maximum file count.
 
-The goal is not file count. The goal is separation of responsibilities.
+## Reducer purity does not change
 
-## Reducer remains pure
-
-Combining with Context does not change reducer rules.
+Combining a reducer with Context does not permit network requests, storage writes, analytics, timers, DOM effects, or mutation inside the reducer.
 
 ```jsx
 function cartReducer(state, action) {
   switch (action.type) {
     case 'item_added':
       return addItem(state, action.product);
-
     default:
       throw new Error(`Unknown cart action: ${action.type}`);
   }
 }
 ```
 
-No network requests.
-
-No localStorage writes.
-
-No analytics.
-
-No timers.
-
-No mutation.
-
-## Async workflows around reducer state
-
-Suppose checkout submission calls an API.
-
-The async work happens outside the reducer:
+## Async workflows stay outside the reducer
 
 ```jsx
-function CheckoutButton() {
-  const state = useCheckoutState();
-  const dispatch = useCheckoutDispatch();
+async function handleCheckout() {
+  dispatch({type: 'submission_started'});
 
-  async function handleCheckout() {
-    dispatch({ type: 'submission_started' });
-
-    try {
-      const order = await createOrder(state);
-
-      dispatch({
-        type: 'submission_succeeded',
-        orderId: order.id,
-      });
-    } catch (error) {
-      dispatch({
-        type: 'submission_failed',
-        message: error.message,
-      });
-    }
+  try {
+    const order = await createOrder(state);
+    dispatch({type: 'submission_succeeded', orderId: order.id});
+  } catch (error) {
+    dispatch({type: 'submission_failed', message: error.message});
   }
-
-  return <button onClick={handleCheckout}>Checkout</button>;
 }
 ```
 
-The reducer records state transitions. It does not perform external work.
+<VisualDiagram title="External work surrounds the pure state machine">
+  <LifecycleBar
+    items={[
+      {label: 'UI event', tone: 'orange'},
+      {label: 'dispatch started', tone: 'blue'},
+      {label: 'async external work', tone: 'cyan'},
+      {label: 'dispatch success/failure', tone: 'purple'},
+      {label: 'reducer records transition', tone: 'green'},
+    ]}
+  />
+</VisualDiagram>
 
-## Selectors
-
-As state grows, avoid repeating derived calculations everywhere.
+## Selectors centralize derivation
 
 ```js
 export function selectCartTotal(state) {
@@ -228,47 +160,11 @@ export function selectCartTotal(state) {
 }
 ```
 
-Consumer:
-
-```jsx
-function CartTotal() {
-  const state = useCartState();
-  const total = selectCartTotal(state);
-
-  return <strong>Total: {total}</strong>;
-}
-```
-
-Selectors centralize domain derivation.
-
-They do **not** create a fine-grained Context subscription. The component still reads the full Context value.
-
-## Action creator functions: optional
-
-You may see:
-
-```js
-function addItem(product) {
-  return {
-    type: 'item_added',
-    product,
-  };
-}
-```
-
-Then:
-
-```jsx
-dispatch(addItem(product));
-```
-
-This can help when actions are complex or reused.
-
-But do not create action creators for every tiny local action just to imitate Redux conventions.
+Selectors centralize domain calculations, but reading a selector from Context does **not** create a fine-grained context subscription. The component still reads the state Context value.
 
 ## Domain commands as custom Hooks
 
-Sometimes consumers should not know action shapes.
+Consumers do not always need to know raw action shapes.
 
 ```jsx
 export function useCartActions() {
@@ -276,28 +172,18 @@ export function useCartActions() {
 
   return {
     addItem(product) {
-      dispatch({ type: 'item_added', product });
+      dispatch({type: 'item_added', product});
     },
     removeItem(productId) {
-      dispatch({ type: 'item_removed', productId });
+      dispatch({type: 'item_removed', productId});
     },
   };
 }
 ```
 
-Usage:
+This can create a stronger feature API. Do not add wrappers mechanically; use them when they improve domain meaning or API stability.
 
-```jsx
-const { addItem } = useCartActions();
-```
-
-This hides reducer action details behind a feature API.
-
-Trade-off: the returned object/functions may need careful identity handling if consumers rely on them as dependencies or optimization inputs. Do not optimize preemptively.
-
-## Provider boundaries
-
-Do not put the provider higher than necessary.
+## Provider boundaries are part of state architecture
 
 Bad default:
 
@@ -307,7 +193,7 @@ Bad default:
 </CartProvider>
 ```
 
-Better if only shop routes need it:
+Better when only shop routes need cart state:
 
 ```jsx
 <Route
@@ -320,7 +206,12 @@ Better if only shop routes need it:
 />
 ```
 
-The tree is part of your state architecture.
+<VisualDiagram title="Provider scope defines state scope" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Provider too high" tone="red">Longer lifetime · broader coupling · more unrelated consumers in the environment.</DiagramNode>
+    <DiagramNode title="Feature-scoped provider" tone="green">State lifetime and access align with the feature that owns it.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Multiple providers create multiple state instances
 
@@ -336,13 +227,16 @@ The tree is part of your state architecture.
 
 These are two independent carts.
 
-That can be useful in tests, previews, embedded widgets, or multi-instance components.
+<VisualDiagram title="Context state is not inherently singleton/global">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="CartProvider A" tone="blue">owns cart state A</DiagramNode>
+    <DiagramNode title="CartProvider B" tone="purple">owns cart state B</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Context state is not inherently singleton/global.
+This can be useful for tests, previews, embedded widgets, and multi-instance features.
 
 ## Reset by provider identity
-
-Because state belongs to component position and identity, changing a provider key can intentionally reset its reducer state.
 
 ```jsx
 <CartProvider key={storeId}>
@@ -350,96 +244,52 @@ Because state belongs to component position and identity, changing a provider ke
 </CartProvider>
 ```
 
-When `storeId` changes, React can create a fresh provider state instance.
-
-Use this deliberately, not as a mysterious reset hack.
+Changing the key changes component identity, so React can create a fresh reducer state instance. Use this intentionally when identity should reset the whole feature owner.
 
 ## Avoid one reducer for the whole application
 
-A giant reducer such as:
+A universal reducer owning auth, cart, notifications, editor, theme, billing, and unrelated dashboard state usually creates excessive coupling.
 
-```text
-appReducer
-- auth
-- cart
-- notifications
-- dashboard
-- editor
-- theme
-- billing
-```
-
-usually creates excessive coupling.
-
-Prefer reducers around coherent state machines or feature domains.
-
-```text
-CartProvider → cartReducer
-EditorProvider → editorReducer
-CheckoutProvider → checkoutReducer
-```
+<VisualDiagram title="Prefer reducers around coherent feature/state-machine boundaries">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="CartProvider" tone="green">cartReducer</DiagramNode>
+    <DiagramNode title="EditorProvider" tone="purple">editorReducer</DiagramNode>
+    <DiagramNode title="CheckoutProvider" tone="blue">checkoutReducer</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## When reducer + Context is enough
 
-This architecture can be a strong fit when:
+This architecture is a strong fit when:
 
-- state is client-only;
-- one feature subtree needs it;
-- update logic is complex enough for a reducer;
+- state is client-owned;
+- one coherent feature subtree needs it;
+- transition logic benefits from a reducer;
 - many descendants need access;
 - update frequency is moderate;
-- full-context subscriptions are acceptable.
+- full-context state subscriptions are acceptable.
 
 ## When to consider an external store
 
-Signals include:
-
-- state must live outside the React tree;
-- many distant roots must share it;
-- update frequency is high;
-- consumers need fine-grained subscriptions/selectors;
-- integration exists with non-React code;
-- store lifetime should outlive component mounting;
-- a dedicated state library solves required tooling or architecture problems.
-
-Do not migrate simply because the reducer file became long.
+<DecisionTree
+  question="Does the feature need more than reducer + Context provides?"
+  items={[
+    {label: 'One subtree, moderate updates, full-state subscriptions are fine', value: 'Reducer + Context is likely enough'},
+    {label: 'Many distant roots / non-React code need the same owner', value: 'Consider an external store'},
+    {label: 'High-frequency updates with independent selector subscriptions are important', value: 'Consider a store designed for fine-grained subscriptions'},
+    {label: 'The difficult problem is server caching/invalidation', value: 'Use a server-state architecture instead'},
+  ]}
+/>
 
 ## Context + reducer is not Redux
 
-The concepts overlap:
+The concepts overlap—actions, reducer, dispatch, state—but `useReducer` + Context does not automatically provide middleware, selector subscription infrastructure, Redux DevTools integration, normalized-store conventions, or global singleton semantics.
 
-```text
-actions
-reducers
-dispatch
-state
-```
-
-But `useReducer` + Context does not automatically provide:
-
-- middleware;
-- selector subscription infrastructure;
-- Redux DevTools integration;
-- normalized store conventions;
-- global singleton store semantics;
-- ecosystem tooling.
-
-Use the smallest architecture that solves the problem.
+Use the smallest architecture that solves the actual requirements.
 
 ## Testing
 
-You can test the reducer independently:
-
-```js
-expect(
-  cartReducer(initialState, {
-    type: 'item_added',
-    product,
-  })
-).toEqual(expectedState);
-```
-
-And test provider behavior through user-facing components:
+Test the pure reducer directly for transition rules, then test provider integration through visible user behaviour.
 
 ```text
 render CartProvider + UI
@@ -447,47 +297,25 @@ click Add
 assert visible cart count
 ```
 
-This verifies both transition logic and integration.
+This literal test recipe is clearer as text than as a diagram.
 
-## Production architecture example
+## Dependency direction
 
-```text
-features/cart/
-  CartProvider.jsx
-  cartReducer.js
-  cartSelectors.js
-  useCartState.js
-  useCartDispatch.js
-  components/
-    AddToCartButton.jsx
-    CartDrawer.jsx
-    CartTotal.jsx
-```
-
-Dependency direction:
-
-```text
-UI
- ↓
-feature Hooks
- ↓
-Context/provider
- ↓
-reducer + domain helpers
-```
+<VisualDiagram title="Reducer + Context feature dependency direction">
+  <DiagramStack align="center">
+    <DiagramNode title="UI components" tone="blue" wide />
+    <DiagramArrow label="call" />
+    <DiagramNode title="Feature Hooks" tone="cyan" wide />
+    <DiagramArrow label="read / dispatch through" />
+    <DiagramNode title="Context + Provider" tone="purple" wide />
+    <DiagramArrow label="owns" />
+    <DiagramNode title="Reducer + domain helpers" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
 ## Exercise
 
-Build a `ProjectProvider` with:
-
-- `useReducer`;
-- separate state and dispatch contexts;
-- `useProjectState`;
-- `useProjectDispatch`;
-- actions for rename, task add, task toggle, and reset;
-- one derived selector for completion percentage.
-
-Then identify which components need state, which only need dispatch, and whether the provider belongs at app root or project-route scope.
+Build a `ProjectProvider` with `useReducer`, separate state/dispatch contexts, read/write Hooks, rename/task actions, reset, and a completion-percentage selector. Identify which components need state, which only need dispatch, and where the provider belongs.
 
 ## Interview questions
 
@@ -499,19 +327,18 @@ Then identify which components need state, which only need dispatch, and whether
 
 ## Summary
 
-```text
-complex local feature state
-        ↓
-useReducer for transitions
-        ↓
-Context for subtree access
-        ↓
-separate read/write APIs when useful
-        ↓
-keep provider scope intentional
-        ↓
-move to external store only when requirements demand it
-```
+<VisualDiagram title="Reducer + Context decision sequence">
+  <LifecycleBar
+    items={[
+      {label: 'complex local feature transitions', tone: 'blue'},
+      {label: 'useReducer owns state machine', tone: 'purple'},
+      {label: 'Context distributes subtree access', tone: 'cyan'},
+      {label: 'split read/write APIs when useful', tone: 'green'},
+      {label: 'keep provider scope intentional', tone: 'orange'},
+      {label: 'external store only when requirements demand it', tone: 'slate'},
+    ]}
+  />
+</VisualDiagram>
 
 ## References
 
