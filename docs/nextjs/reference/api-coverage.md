@@ -7,7 +7,7 @@ description: Living coverage map from the current Next.js App Router documentati
 
 This is the handbook's living completeness contract against the **current stable Next.js App Router documentation**.
 
-**Baseline re-verified: July 27, 2026 — Next.js 16.2.11 (`latest`, 16.x Active LTS).**
+**Baseline re-verified: July 28, 2026 — Next.js 16.2.12 (`latest`, 16.x Active LTS).**
 
 Next.js 16.3 remains preview/canary at this snapshot and is not taught as stable.
 
@@ -29,8 +29,8 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Area | Status | Notes |
 | --- | --- | --- |
 | App Router | ✅ | Primary and only router taught |
-| Pages Router | ⛔ | Intentionally excluded |
-| Next.js 16.2 stable behavior | 🟠 | Core routing, data, cache, mutations, HTTP, Proxy, rendering, and metadata/SEO complete; later phases cover remaining platform APIs and operations |
+| Pages Router | ⛔ | Intentionally excluded except migration/history context |
+| Next.js 16.2 stable behavior | 🟠 | Core routing, data, cache, mutations, HTTP, Proxy, rendering, metadata/SEO, images, fonts, and scripts complete; later phases cover security/ops/architecture/testing depth |
 | Next.js 16.3 preview/canary | 🧪 | Track but do not teach as stable until promoted to npm `latest` |
 | React 19.2 stable APIs | 🟠 | React handbook owns React depth; Next.js explains framework integration |
 | React Canary exposed by App Router | 🟠 | Covered only where stable Next.js docs establish a supported framework contract |
@@ -52,7 +52,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | 09 · Request Pipeline & Proxy | ✅ |
 | 10 · Rendering, Suspense & Streaming | ✅ |
 | 11 · Metadata & SEO | ✅ |
-| 12 · Images, Fonts & Scripts | 🟡 |
+| 12 · Images, Fonts & Scripts | ✅ |
 | 13 · Authentication, Authorization & Security | 🟡 |
 | 14 · Errors, Observability & Debugging | 🟡 |
 | 15 · Performance | 🟡 |
@@ -79,10 +79,11 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Proxy | ✅ | `09-request-pipeline-and-proxy/*` |
 | Streaming / Suspense rendering | ✅ | `10-rendering-suspense-and-streaming/*` |
 | Metadata and OG Images | ✅ | `11-metadata-and-seo/*` |
-| Error Handling | 🟠 | Route/data/action/API/stream failure models covered; deep Phase 14 |
-| CSS / styling integration | 🟡 | Framework behavior only |
-| Image Optimization | 🟡 | Phase 12 |
-| Font Optimization | 🟡 | Phase 12 |
+| Image Optimization | ✅ | `12-images-fonts-and-scripts/*` |
+| Font Optimization | ✅ | `12-images-fonts-and-scripts/*` |
+| Script / third-party loading | ✅ | `12-images-fonts-and-scripts/*`; experimental helpers labeled 🧪 |
+| Error Handling | 🟠 | Failure models covered through 12; deep Phase 14 |
+| CSS / styling integration | 🟠 | Framework basics exist; design-system styling is not a dedicated Next.js phase |
 | Deploying | 🟠 | Runtime implications introduced; full Phase 17 |
 | Upgrading | 🟠 | Baseline introduced; deep Phase 20 |
 
@@ -96,7 +97,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | `loading` | ✅ | Phase 02 semantics; rendering/streaming depth 10 |
 | `error`, `global-error` | 🟠 | Boundary baseline 02/10; deep Phase 14 |
 | `not-found` | ✅ | Phase 02 |
-| `global-not-found` | 🧪 | Experimental at baseline |
+| `global-not-found` | 🧪 | Experimental at current baseline |
 | `default` | ✅ | Phase 02 |
 | `route` | ✅ | Phase 08 |
 | `proxy` | ✅ | Phase 09 |
@@ -105,15 +106,9 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | `generateStaticParams`, `dynamicParams` | ✅ | Phases 02 / 06 / 08 |
 | Route Groups / Private Folders | ✅ | Phase 02 |
 | Parallel / Intercepting Routes | ✅ | Phase 02; navigation/render context Phase 10 |
-| `favicon.ico` | ✅ | Phase 11 |
-| `icon` / generated icon | ✅ | Phase 11 |
-| `apple-icon` / generated apple icon | ✅ | Phase 11 |
-| `opengraph-image` / `twitter-image` static files | ✅ | Phase 11 |
-| generated `opengraph-image.tsx` / `twitter-image.tsx` | ✅ | Phase 11 |
-| `manifest.json` / `manifest.ts` | ✅ | Phase 11 |
-| `robots.txt` / `robots.ts` | ✅ | Phase 11 |
-| `sitemap.xml` / `sitemap.ts` | ✅ | Phase 11 |
-| metadata-route Proxy exclusions | ✅ | Phase 11 using Phase 09 matcher model |
+| `favicon.ico`, `icon`, `apple-icon` | ✅ | Phase 11 |
+| generated icon / social image conventions | ✅ | Phase 11 |
+| `manifest`, `robots`, `sitemap` | ✅ | Phase 11 |
 | `instrumentation`, `instrumentation-client` | 🟡 | Phase 14 |
 
 ## Server & Client Component Boundaries
@@ -129,11 +124,11 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | `server-only`, `client-only` | ✅ | Phase 04 |
 | environment poisoning prevention | ✅ | Phase 04 |
 | initial Client Component prerendering | ✅ | Phase 04 / 10 |
-| hydration and interaction readiness | ✅ | Phase 10 |
-| hydration mismatch mental model | ✅ | Phase 10; debugging depth 14 |
+| hydration / interaction readiness | ✅ | Phase 10 |
+| hydration mismatch mental model | ✅ | Phase 10; diagnostics depth 14 |
 | RSC Payload | ✅ | Phase 10 |
-| metadata exports Server Component-only | ✅ | Phase 11 |
-| RSC/metadata public-data minimization | ✅ | Phase 10 / 11 baseline; deep security 13 |
+| Image/Font usage without unnecessary client boundaries | ✅ | Phase 12 |
+| Script lifecycle callbacks require client boundary | ✅ | Phase 12 |
 
 ## Data Fetching
 
@@ -142,10 +137,10 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Async Server Components / server data ownership | ✅ | Phase 05 |
 | server `fetch` | ✅ | Fetching 05; cache semantics 06 |
 | direct DB/ORM/SDK reads | ✅ | Phase 05 |
-| avoid own Route Handler HTTP hop | ✅ | Phases 05 / 08 / metadata reuse 11 |
-| parallel/sequential fetching / waterfalls | ✅ | Phase 05; metadata applications Phase 11 |
+| avoid own Route Handler HTTP hop | ✅ | Phases 05 / 08 |
+| parallel/sequential fetching / waterfalls | ✅ | Phase 05 |
 | N+1 / batching / bounded fan-out | ✅ | Phase 05 |
-| preloading / Promise sharing / React `cache` | ✅ | Phase 05; metadata reuse 11 |
+| preloading / Promise sharing / React `cache` | ✅ | Phase 05 |
 | Suspense data streaming | ✅ | Phase 05 foundation; delivery depth 10 |
 | React `use()` with streamed Promise | ✅ | Phases 05 / 10 |
 | client-side fetching / SWR architecture | ✅ | Phase 05 |
@@ -157,23 +152,19 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | default server `fetch` auto behavior | ✅ | Phase 06 |
 | `cache: 'no-store'` / `force-cache` | ✅ | Phase 06 |
 | `next.revalidate`, `next.tags` | ✅ | Phase 06 |
-| React `cache` vs persistent Next.js cache | ✅ | Phases 05–06; metadata distinction 11 |
-| Cache Components | ✅ | Cache contract 06; rendering 10; metadata/viewport interaction 11 |
-| `'use cache'` | ✅ | Phase 06; metadata/viewport application 11 |
-| `cacheLife`, `cacheTag` | ✅ | Phase 06 |
+| React `cache` vs persistent Next.js cache | ✅ | Phases 05–06 |
+| Cache Components | ✅ | Cache contract 06; rendering 10; metadata 11 |
+| `'use cache'`, `cacheLife`, `cacheTag` | ✅ | Phase 06 |
 | `revalidateTag(tag, profile)` | ✅ | Phase 06; mutation workflow 07 |
 | single-arg `revalidateTag(tag)` | ⚠️ | Deprecated |
-| `updateTag`, `revalidatePath` | ✅ | Phases 06–07 |
-| `refresh` from `next/cache` | ✅ | Phase 07 |
-| previous-model route `dynamic` / `revalidate` / `fetchCache` | ✅ | Phase 06; disabled under Cache Components |
+| `updateTag`, `revalidatePath`, `refresh` | ✅ | Phases 06–07 |
+| previous-model `dynamic` / `revalidate` / `fetchCache` | ✅ | Phase 06; disabled under Cache Components |
 | `connection()` | ✅ | Phase 06 |
 | `'use cache: private'` | 🧪 | Experimental |
 | `'use cache: remote'`, `cacheHandlers` | ✅ | Phase 06; ops depth 17 |
-| Partial Prerendering through Cache Components | ✅ | Cache semantics 06; rendering mechanics 10 |
-| static shell / dynamic hole model | ✅ | Phase 10 |
-| Client Router Cache vs server cache | ✅ | Phase 06; navigation rendering Phase 10 |
-| generated metadata-route default caching | ✅ | Phase 11 |
-| metadata/page/shared-domain invalidation reasoning | ✅ | Phase 11 baseline; ops depth 17 |
+| Partial Prerendering through Cache Components | ✅ | Phase 06 / 10 |
+| Client Router Cache vs server cache | ✅ | Phase 06 / 10 |
+| image optimizer cache vs application cache distinction | ✅ | Phase 12 |
 
 ## Mutations, Forms & Server Functions
 
@@ -187,7 +178,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | `useActionState`, `useFormStatus`, `useOptimistic` | ✅ | Phase 07 |
 | mutation concurrency / idempotency / transactions | ✅ | Phase 07 |
 | revalidation / refresh / redirect sequencing | ✅ | Phase 07 |
-| Server Action response updates RSC UI | ✅ | Phase 07; reconciliation context Phase 10 |
+| Server Action response updates RSC UI | ✅ | Phase 07; reconciliation context 10 |
 | Server Function vs Route Handler | ✅ | Phases 07–08 |
 
 ## Route Handlers & HTTP
@@ -196,10 +187,9 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | --- | --- | --- |
 | `route.ts` convention / HTTP methods / 405 | ✅ | Phase 08 |
 | Web `Request` / `Response` | ✅ | Phase 08 |
-| `NextRequest` / `NextResponse` | ✅ | Phase 08; Proxy use Phase 09 |
+| `NextRequest` / `NextResponse` | ✅ | Phase 08; Proxy use 09 |
 | async params / `RouteContext` | ✅ | Phase 08 |
 | JSON/form/text/binary body parsing | ✅ | Phase 08 |
-| one-read streams / cloning | ✅ | Phase 08 |
 | validation / content type / safe errors | ✅ | Phase 08 baseline |
 | files/downloads / Web streams | ✅ | Phase 08 |
 | GET not cached by default | ✅ | Phase 08 current 16.2 behavior |
@@ -208,7 +198,6 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | webhooks / raw signatures / replay | ✅ | Phase 08 |
 | rate limiting / SSRF / callback safety | ✅ | Phase 08 baseline; deep security 13 |
 | BFF / public API versioning | ✅ | Phase 08 baseline; large-app depth 18 |
-| specialized metadata Route Handler behavior | ✅ | Phase 11 |
 
 ## Proxy & Request Pipeline
 
@@ -217,123 +206,168 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | `proxy.ts` naming / single front-door convention | ✅ | Phase 09 |
 | old `middleware.ts` | ⚠️ | Deprecated/migration-only in Next.js 16 |
 | request execution order | ✅ | Phase 09 |
-| matcher strings/arrays/regex | ✅ | Phase 09 |
-| static matcher analysis | ✅ | Phase 09 |
+| matcher strings/arrays/regex / static analysis | ✅ | Phase 09 |
 | `has` / `missing` conditions | ✅ | Phase 09 |
 | asset/API/prefetch matcher design | ✅ | Phase 09 |
-| metadata-route matcher exclusions | ✅ | Phase 11 |
-| `NextResponse.next()` | ✅ | Phase 09 |
-| downstream request-header forwarding | ✅ | Phase 09 |
-| response headers / cookies | ✅ | Phase 09 |
-| redirects vs rewrites | ✅ | Phase 09; SEO redirect-vs-canonical context 11 |
-| localization / host tenancy | ✅ | Phase 09 baseline; canonical/hreflang use 11; large-app depth 18 |
-| optimistic auth gating | ✅ | Phase 09; authoritative auth remains Phase 13 |
+| `NextResponse.next()` / header forwarding | ✅ | Phase 09 |
+| redirects / rewrites / cookies | ✅ | Phase 09 |
+| localization / host tenancy | ✅ | Phase 09 baseline; deep Phase 18 |
+| optimistic auth gating | ✅ | Phase 09; authoritative auth Phase 13 |
 | CSP nonce request pipeline | ✅ | Phase 09 baseline; security depth 13 |
 | `NextFetchEvent.waitUntil()` | ✅ | Phase 09; not a durable queue |
 | Proxy Node.js runtime | ✅ | Phase 09 |
-| Proxy experimental test helpers | 🧪 | Phase 09; automated test depth 16 |
-| `proxyClientMaxBodySize` | 🧪 | Experimental, Phase 09 baseline |
+| Proxy experimental test helpers | 🧪 | Phase 09; automated depth 16 |
+| `proxyClientMaxBodySize` | 🧪 | Experimental |
 
 ## Rendering, Suspense & Navigation Delivery
 
 | Area / API | Status | Handbook location / plan |
 | --- | --- | --- |
-| server rendering orchestration | ✅ | Phase 10 |
-| RSC Payload contents/purpose | ✅ | Phase 10 |
-| HTML prerendering for initial load | ✅ | Phase 10 |
+| server rendering orchestration / RSC Payload / initial HTML | ✅ | Phase 10 |
 | Client Component hydration | ✅ | Phase 10 |
-| hard vs soft navigation rendering | ✅ | Phase 10 |
-| route-segment reconciliation / preserved layouts | ✅ | Phases 02 / 10 |
-| `loading.tsx` as route Suspense/loading UI | ✅ | Phase 10 |
-| manual `<Suspense>` boundaries | ✅ | Phase 10 |
+| hard vs soft navigation / route reconciliation | ✅ | Phase 10 |
+| `loading.tsx` / manual `<Suspense>` | ✅ | Phase 10 |
 | progressive streaming / sibling reveal | ✅ | Phase 10 |
-| fallback design / accessibility baseline | ✅ | Phase 10; accessibility depth later |
-| Cache Components static shells | ✅ | Phase 10 |
-| request-time dynamic holes | ✅ | Phase 10 |
-| cached subtrees entering shell | ✅ | Phases 06 / 10 |
+| Cache Components static shells / dynamic holes | ✅ | Phase 10 |
 | `use()` Promise suspension | ✅ | Phase 10 |
-| server-started Promise → Client consumption | ✅ | Phase 10 |
 | hydration mismatch categories | ✅ | Phase 10; diagnostics depth 14 |
-| visible-before-interactive model | ✅ | Phase 10 |
-| streamed error vs pending distinction | ✅ | Phase 10 |
-| Suspense vs error boundary | ✅ | Phase 10; full error API depth 14 |
-| late streamed failure / committed response implications | ✅ | Phase 10 baseline |
+| streamed failure / response-commit implications | ✅ | Phase 10 baseline |
 | reverse-proxy/CDN buffering consideration | ✅ | Phase 10 baseline; deployment depth 17 |
-| RSC payload size vs client JS size | ✅ | Phase 10 baseline; performance depth 15 |
-| rendering security / private data crossing RSC | ✅ | Phase 10 baseline; deep security 13 |
-| production rendering design review | ✅ | Phase 10; performance/ops depth 15–17 |
-| Next.js 16.3 Instant Navigations | 🧪 | Preview-only at baseline |
+| RSC bytes vs client JS vs hydration CPU | ✅ | Phase 10 baseline; performance depth 15 |
+| Next.js 16.3 Instant Navigations | 🧪 | Preview-only at current baseline |
 
 ## Metadata & SEO
 
 | Area / API | Status | Handbook location / plan |
 | --- | --- | --- |
-| static `metadata` object | ✅ | Phase 11 |
-| `generateMetadata` | ✅ | Phase 11 |
-| `Metadata` / `ResolvingMetadata` types | ✅ | Phase 11 |
-| Server Component-only metadata exports | ✅ | Phase 11 |
-| metadata + `generateMetadata` mutually exclusive per segment | ✅ | Phase 11 |
-| route-tree metadata ordering | ✅ | Phase 11 |
-| shallow metadata merging | ✅ | Phase 11 |
-| explicit parent metadata extension | ✅ | Phase 11 |
-| file-based metadata precedence | ✅ | Phase 11 |
-| `params` / page `searchParams` in `generateMetadata` | ✅ | Phase 11 |
-| `redirect()` / `notFound()` from metadata generation | ✅ | Phase 11 |
-| title string / default / template / absolute | ✅ | Phase 11 |
-| description | ✅ | Phase 11 |
-| `metadataBase` / URL composition | ✅ | Phase 11 |
-| `alternates.canonical` | ✅ | Phase 11 |
-| language / media / content-type alternates | ✅ | Phase 11 |
-| canonical vs redirect distinction | ✅ | Phase 11 |
-| multi-tenant / preview canonical policy | ✅ | Phase 11 baseline; large-app/deployment depth 17–18 |
-| Open Graph metadata | ✅ | Phase 11 |
-| Twitter metadata | ✅ | Phase 11 |
-| static OG/Twitter metadata files + alt files | ✅ | Phase 11 |
-| generated OG/Twitter images with `ImageResponse` | ✅ | Phase 11; image API optimization depth 12 |
-| `generateImageMetadata` | ✅ | Phase 11 |
-| generated social-image cache/failure/security model | ✅ | Phase 11 baseline; deep ops/security 13/17 |
-| favicon / icon / apple-icon conventions | ✅ | Phase 11 |
-| generated icons | ✅ | Phase 11 |
-| `manifest.json` / `manifest.ts` / `MetadataRoute.Manifest` | ✅ | Phase 11 |
-| `robots` metadata object | ✅ | Phase 11 |
-| `robots.txt` / `robots.ts` / `MetadataRoute.Robots` | ✅ | Phase 11 |
-| robots crawl guidance vs authorization/noindex distinction | ✅ | Phase 11 |
-| `sitemap.xml` / `sitemap.ts` / `MetadataRoute.Sitemap` | ✅ | Phase 11 |
-| localized sitemap alternates | ✅ | Phase 11 |
-| `generateSitemaps` | ✅ | Phase 11; Next 16 Promise&lt;string&gt; ID contract covered |
-| sitemap partition/publication/freshness strategy | ✅ | Phase 11 baseline; performance/ops depth 15/17 |
-| JSON-LD rendering | ✅ | Phase 11 |
-| JSON-LD script-context XSS-safe serialization | ✅ | Phase 11 baseline; full XSS/security Phase 13 |
-| JSON-LD typing with community schema types | ✅ | Phase 11; clearly labeled non-core package |
-| verification metadata | ✅ | Phase 11 |
-| authors / creator / publisher / keywords / referrer / formatDetection | ✅ | Phase 11 |
-| App Links | ✅ | Phase 11 |
-| Facebook / Pinterest / `other` metadata | ✅ | Phase 11 baseline |
-| archives / assets / bookmarks / category | ✅ | Phase 11 baseline |
-| deprecated `metadata.viewport` | ⚠️ | Deprecated since Next.js 14; Phase 11 uses dedicated viewport API |
-| static `viewport` object | ✅ | Phase 11 |
-| `generateViewport` | ✅ | Phase 11 |
-| themeColor / colorScheme / viewport sizing fields | ✅ | Phase 11 |
-| viewport Cache Components behavior | ✅ | Phase 11 |
-| streaming metadata | ✅ | Phase 11 |
-| HTML-limited bot blocking metadata | ✅ | Phase 11 |
-| `htmlLimitedBots` | ✅ | Phase 11; advanced override, default preferred |
+| static `metadata` / dynamic `generateMetadata` | ✅ | Phase 11 |
+| Metadata / ResolvingMetadata types and Server Component ownership | ✅ | Phase 11 |
+| ordering / shallow merging / parent extension / file precedence | ✅ | Phase 11 |
+| titles / descriptions / `metadataBase` / canonical / alternates | ✅ | Phase 11 |
+| Open Graph / Twitter metadata | ✅ | Phase 11 |
+| generated social images / `ImageResponse` / `generateImageMetadata` | ✅ | Phase 11 metadata role; general image optimization Phase 12 |
+| icons / manifest | ✅ | Phase 11 |
+| robots / sitemap / `generateSitemaps` | ✅ | Phase 11 |
+| JSON-LD / script-context safe serialization baseline | ✅ | Phase 11; deep XSS Phase 13 |
+| verification / App Links / broader metadata fields | ✅ | Phase 11 |
+| `viewport` / `generateViewport` | ✅ | Phase 11 |
+| deprecated `metadata.viewport` | ⚠️ | Use dedicated viewport APIs |
+| streaming metadata / HTML-limited bots / `htmlLimitedBots` | ✅ | Phase 11 |
 | metadata Cache Components behavior | ✅ | Phase 11 |
-| crawler/social metadata performance model | ✅ | Phase 11 baseline; deep measurement Phase 15 |
-| unsupported metadata → HTTP headers / ReactDOM resource hints / page markup | ✅ | Phase 11 boundary model |
-| metadata/SEO production architecture and incident review | ✅ | Phase 11; deep observability/testing/ops later |
+| ReactDOM resource-hint boundary | ✅ | Introduced 11; integrated into resource strategy Phase 12 |
 
-## Images, Fonts & Scripts
+## Images
 
-| Area | Status | Planned phase |
+| Area / API | Status | Handbook location / notes |
 | --- | --- | --- |
-| social metadata images | ✅ | Phase 11 metadata role |
-| `ImageResponse` for metadata images | ✅ | Phase 11 metadata role |
-| `next/image` optimization | 🟡 | Phase 12 |
-| remote image configuration / loaders | 🟡 | Phase 12 |
-| `next/font` | 🟡 | Phase 12 |
-| `next/script` / third-party scripts | 🟡 | Phase 12 |
-| resource-loading performance strategy | 🟠 | Resource-hint boundary introduced Phase 11; full Phase 12/15 |
+| `next/image` / `Image` | ✅ | Phase 12 |
+| intrinsic `width` / `height` vs rendered CSS size | ✅ | Phase 12 |
+| static image imports / inferred dimensions | ✅ | Phase 12 |
+| static raster blur metadata | ✅ | Phase 12 |
+| public-path images | ✅ | Phase 12 |
+| remote image geometry requirement | ✅ | Phase 12 |
+| `fill` / parent geometry / `object-fit` | ✅ | Phase 12 |
+| `alt` semantic/decorative policy | ✅ | Phase 12 |
+| `sizes` / `srcset` / responsive candidate selection | ✅ | Phase 12 |
+| default lazy loading | ✅ | Phase 12 |
+| `loading="eager"` / `fetchPriority` | ✅ | Phase 12 |
+| `preload` | ✅ | Current Next.js 16 API, Phase 12 |
+| `priority` | ⚠️ | Deprecated in Next.js 16; migration context only |
+| placeholders / `blurDataURL` | ✅ | Phase 12 |
+| `quality` and `images.qualities` allow-list | ✅ | Next.js 16 default `[75]`; Phase 12 |
+| `deviceSizes` / `imageSizes` candidate policy | ✅ | Phase 12 |
+| `remotePatterns` | ✅ | Phase 12 security boundary |
+| `localPatterns` / local-query restrictions | ✅ | Phase 12; Next.js 16 hardening covered |
+| legacy `images.domains` | ⚠️ | Deprecated in favor of `remotePatterns` |
+| authenticated remote-source architecture | ✅ | Optimizer does not forward arbitrary request headers; Phase 12 |
+| `unoptimized` | ✅ | Phase 12 |
+| `onLoad` / `onError` client callbacks | ✅ | Phase 12 |
+| `onLoadingComplete` | ⚠️ | Deprecated; use `onLoad` |
+| WebP/default format negotiation | ✅ | Phase 12 |
+| AVIF trade-off | ✅ | Phase 12 |
+| reverse-proxy/CDN `Accept` forwarding | ✅ | Phase 12 baseline; ops depth 17 |
+| `minimumCacheTTL` | ✅ | Current default 14,400s; Phase 12 |
+| immutable/versioned source identity | ✅ | Phase 12 |
+| `maximumRedirects` | ✅ | Current default 3; Phase 12 |
+| `dangerouslyAllowLocalIP` | ✅ | Security-sensitive; false by default |
+| source response-body limit / `maximumResponseBody` | ✅ | Current stable resource control, Phase 12 |
+| image disk cache / `maximumDiskCacheSize` | ✅ | Current stable resource control, Phase 12 |
+| custom image cache-handler ownership | ✅ | Phase 12 baseline; ops depth 17 |
+| SVG / `dangerouslyAllowSVG` / CSP / disposition | ✅ | Phase 12 baseline; deep security 13 |
+| custom `loader` / `loaderFile` | ✅ | Phase 12 |
+| `getImageProps()` | ✅ | Phase 12 |
+| `<picture>` / art direction | ✅ | Phase 12 using Web platform + Next helper |
+| `overrideSrc` | ✅ | Migration/compatibility use, Phase 12 |
+| animated image considerations | ✅ | Phase 12 |
+| static export image strategy | ✅ | Custom loader / unoptimized / pre-generated variants; Phase 12 |
+| `next/legacy/image` | ⚠️ | Legacy/migration-only |
+| image LCP / candidate / cache debugging | ✅ | Phase 12 baseline; performance depth 15 |
+
+## Fonts
+
+| Area / API | Status | Handbook location / notes |
+| --- | --- | --- |
+| `next/font/google` | ✅ | Phase 12 |
+| build-time download + self-hosted runtime delivery | ✅ | Phase 12 |
+| `next/font/local` | ✅ | Phase 12 |
+| variable fonts | ✅ | Recommended where practical; Phase 12 |
+| static font weights/styles | ✅ | Phase 12 |
+| `subsets` | ✅ | Phase 12 |
+| `display` / default `swap` | ✅ | Phase 12 |
+| `preload` / route-layout scope | ✅ | Phase 12 |
+| `fallback` | ✅ | Phase 12 |
+| `adjustFontFallback` | ✅ | Phase 12 |
+| `axes` | ✅ | Phase 12 |
+| generated `className` / `style` / `variable` | ✅ | Phase 12 |
+| local `declarations` | ✅ | Phase 12 |
+| CSS-variable / design-token integration | ✅ | Phase 12 |
+| centralized font instances | ✅ | Phase 12 architecture |
+| multilingual/subset ownership | ✅ | Phase 12 baseline |
+| font failure / FOUT / FOIT / CLS debugging | ✅ | Phase 12 baseline; measurement depth 15 |
+| font CSP / cross-origin deployment considerations | ✅ | Phase 12 baseline; security/ops depth 13/17 |
+
+## Scripts & Third Parties
+
+| Area / API | Status | Handbook location / notes |
+| --- | --- | --- |
+| `next/script` / `Script` | ✅ | Phase 12 |
+| route/layout script scope / load-once behavior | ✅ | Phase 12 |
+| `afterInteractive` | ✅ | Default strategy; Phase 12 |
+| `lazyOnload` | ✅ | Phase 12 |
+| `beforeInteractive` | ✅ | Root-layout critical-global use only; Phase 12 |
+| `worker` strategy | 🧪 | Experimental and not supported for the App Router workflow; not taught as production primitive |
+| inline `Script` + required `id` | ✅ | Phase 12 |
+| `onLoad` | ✅ | Client callback, Phase 12 |
+| `onReady` | ✅ | Remount/readiness semantics, Phase 12 |
+| `onError` | ✅ | Client callback/failure isolation, Phase 12 |
+| callback/client-boundary constraints | ✅ | Phase 12 |
+| nonce / custom script attributes | ✅ | Phase 12 baseline; CSP depth 13 |
+| script readiness adapter pattern | ✅ | Phase 12 architecture |
+| third-party route scoping / failure isolation | ✅ | Phase 12 |
+| analytics pageview ownership under soft navigation | ✅ | Phase 12 |
+| consent-aware loading architecture | ✅ | Phase 12 engineering baseline; jurisdiction policy external |
+| data minimization / URL privacy | ✅ | Phase 12 baseline; deep security 13 |
+| tag-manager supply-chain governance | ✅ | Phase 12 baseline |
+| iframe/embed facade strategy | ✅ | Phase 12 |
+| server-vs-client analytics event ownership | ✅ | Phase 12 |
+| `@next/third-parties` | 🧪 | Experimental at current 16.2.12 snapshot |
+| Google Analytics / GTM helpers | 🧪 | Via experimental package; Phase 12 context |
+| Maps / YouTube helpers | 🧪 | Via experimental package; Phase 12 context |
+
+## Resource Loading
+
+| Area / API | Status | Handbook location / notes |
+| --- | --- | --- |
+| framework-managed image/font/script loading | ✅ | Phase 12 |
+| ReactDOM `preconnect` | ✅ | Phase 11 boundary; Phase 12 resource strategy |
+| ReactDOM `prefetchDNS` | ✅ | Phase 11 boundary; Phase 12 resource strategy |
+| ReactDOM `preload` | ✅ | Phase 11 boundary; Phase 12 resource strategy |
+| manual hint vs framework-owned hint decision | ✅ | Phase 12 |
+| route-specific resource budgets | ✅ | Phase 12 baseline; measurement depth 15 |
+| hard vs soft navigation resource behavior | ✅ | Phases 10 / 12 |
+| cold vs warm cache reasoning | ✅ | Phase 12 baseline |
+| images/fonts/scripts as shared browser critical path | ✅ | Phase 12 design review |
+| measurement → diagnosis → change → measurement | ✅ | Phase 12 baseline; full Phase 15 |
 
 ## Security
 
@@ -344,12 +378,13 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | cache isolation / tenant keys | ✅ | Phase 06 baseline; deep 13 |
 | action/API validation and authorization | ✅ | Phases 07–08 baseline; deep 13 |
 | Proxy not sole authorization boundary | ✅ | Phase 09 |
-| RSC/HTML must not contain unauthorized private data | ✅ | Phase 10 baseline; deep 13 |
-| metadata/social/JSON-LD must not leak private/unpublished data | ✅ | Phase 11 baseline; deep 13 |
-| metadata canonical host validation | ✅ | Phase 11 using Phase 09 host trust model |
-| JSON-LD HTML script-context injection defense | ✅ | Phase 11 baseline; deep XSS Phase 13 |
-| OG remote-asset SSRF prevention | ✅ | Phase 11 baseline; deep Phase 13 |
-| CSP / CSRF / broad XSS / secrets | 🟠 | Baselines exist; full Phase 13 |
+| RSC/HTML private-data exclusion | ✅ | Phase 10 baseline; deep 13 |
+| metadata/social/JSON-LD public-data safety | ✅ | Phase 11 baseline; deep 13 |
+| image optimizer SSRF / remote-source allow-list | ✅ | Phase 12 baseline; deep Phase 13 |
+| local/private IP image protection | ✅ | Phase 12 |
+| SVG active-content security | ✅ | Phase 12 baseline; deep 13 |
+| third-party script supply chain / CSP / consent boundaries | ✅ | Phase 12 baseline; deep 13 |
+| CSP / CSRF / broad XSS / secrets | 🟠 | Strong baselines exist; full Phase 13 |
 
 ## Errors, Observability & Debugging
 
@@ -358,13 +393,13 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | route boundary placement | ✅ | Phase 02 baseline |
 | mutation/API failure models | ✅ | Phases 07–08 |
 | Proxy debugging/runbooks | ✅ | Phase 09 baseline |
-| streaming pending vs failure model | ✅ | Phase 10 |
-| streamed subtree isolation / retry policy | ✅ | Phase 10 baseline |
-| hydration mismatch debugging | ✅ | Phase 10 baseline |
-| metadata/canonical/social/sitemap/robots debugging runbooks | ✅ | Phase 11 baseline |
-| crawler-specific response debugging | ✅ | Phase 11 baseline |
-| structured logs / OpenTelemetry / instrumentation | 🟠 | Baselines through 11; full Phase 14 |
-| browser hydration/runtime error observability | 🟠 | Phase 10 model; full Phase 14 |
+| streaming / hydration failure models | ✅ | Phase 10 baseline |
+| metadata/canonical/social/crawler runbooks | ✅ | Phase 11 baseline |
+| image layout/candidate/optimizer/source/CDN debugging | ✅ | Phase 12 baseline |
+| font fallback/preload/CLS debugging | ✅ | Phase 12 baseline |
+| script readiness/vendor failure/long-task debugging | ✅ | Phase 12 baseline |
+| structured logs / OpenTelemetry / instrumentation | 🟠 | Baselines through 12; full Phase 14 |
+| browser/runtime observability | 🟠 | Models exist; full Phase 14 |
 
 ## Performance
 
@@ -374,23 +409,28 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | cache architecture | ✅ | Phase 06 |
 | mutation critical path | ✅ | Phase 07 baseline |
 | HTTP/Proxy critical path | ✅ | Phases 08–09 baseline |
-| shell timing / streaming boundary timing | ✅ | Phase 10 baseline |
-| RSC bytes / client JS / hydration CPU separation | ✅ | Phase 10 baseline |
-| metadata/crawler critical path and cache-hit reasoning | ✅ | Phase 11 baseline |
-| generated OG/sitemap load model | ✅ | Phase 11 baseline |
-| measurement budgets / Web Vitals / profiling | 🟠 | Multiple baselines; deep Phase 15 |
+| shell timing / RSC / hydration cost separation | ✅ | Phase 10 baseline |
+| metadata/crawler critical path | ✅ | Phase 11 baseline |
+| responsive image bytes / LCP priority / decode reasoning | ✅ | Phase 12 baseline |
+| font preload / swap / route-scope cost | ✅ | Phase 12 baseline |
+| third-party JS / long-task / route-scope cost | ✅ | Phase 12 baseline |
+| resource waterfall / hints / cold-warm cache review | ✅ | Phase 12 baseline |
+| Web Vitals / profiling / budgets / RUM | 🟠 | Multiple baselines; deep Phase 15 |
 
 ## Testing & Production
 
 | Area | Status | Planned phase |
 | --- | --- | --- |
-| production Docusaurus build validation | ✅ | Handbook workflow through Phase 11 |
-| Server/Client/data/cache/action/API/Proxy test scenarios | 🟠 | Failure cases defined; automation Phase 16 |
-| hard vs soft navigation rendering tests | 🟠 | Test matrix Phase 10; automation Phase 16 |
+| production Docusaurus build validation | ✅ | Handbook workflow through Phase 11; Phase 12 gated by current PR CI |
+| Server/Client/data/cache/action/API/Proxy scenarios | 🟠 | Failure cases defined; automation Phase 16 |
+| hard vs soft navigation rendering tests | 🟠 | Matrix Phase 10; automation Phase 16 |
 | streaming/hydration E2E | 🟠 | Behavior defined Phase 10; automation Phase 16 |
-| metadata/canonical/robots/sitemap/social smoke-test matrix | ✅ | Phase 11 specification; automation Phase 16 |
-| preview/staging SEO safety policy | ✅ | Phase 11 baseline; deployment implementation Phase 17 |
-| deployment streaming/CDN verification | 🟠 | Phase 10/11 baselines; full Phase 17 |
+| metadata/SEO smoke-test matrix | ✅ | Phase 11 specification; automation Phase 16 |
+| image candidate/optimizer/failure scenarios | ✅ | Phase 12 specification; automation Phase 16 |
+| font failure/preload/locale scenarios | ✅ | Phase 12 specification; automation Phase 16 |
+| script strategy/blocked-vendor/navigation scenarios | ✅ | Phase 12 specification; automation Phase 16 |
+| static-export image architecture | ✅ | Phase 12 baseline; deployment depth 17 |
+| deployment streaming/CDN/image-format verification | 🟠 | Baselines 10–12; full Phase 17 |
 | Node/self-hosting/serverless/adapters | 🟠 | Runtime implications introduced; full Phase 17 |
 
 ## Upgrades & Migration
@@ -398,14 +438,17 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Area | Status | Planned phase |
 | --- | --- | --- |
 | App Router upgrade workflow | 🟠 | 01 / 20 |
-| client-heavy SPA → server-first migration | 🟠 | Phases 04–11; deep 20 |
+| client-heavy SPA → server-first migration | 🟠 | Phases 04–12; deep 20 |
 | previous cache model → Cache Components | 🟠 | Phase 06; deep 20 |
 | old standalone PPR/dynamicIO/useCache flags | ⚠️ | Migration-only; modern rendering uses Cache Components |
 | old GET Route Handler cached-by-default assumptions | ⚠️ | Phase 08 teaches current behavior |
 | `middleware.ts` → `proxy.ts` | ⚠️ | Semantics Phase 09; migration playbook 20 |
-| `metadata.viewport` → viewport export / `generateViewport` | ⚠️ | Phase 11 current API; migration depth Phase 20 |
-| older synchronous `generateSitemaps` ID assumptions | ⚠️ | Phase 11 teaches Next 16 Promise&lt;string&gt; ID |
-| Pages API Routes / Pages Router migration | ⛔ | Outside scope |
+| `metadata.viewport` → viewport export / `generateViewport` | ⚠️ | Phase 11 current API; migration depth 20 |
+| old Image `priority` usage | ⚠️ | Phase 12 teaches Next.js 16 `preload`/loading model |
+| `images.domains` | ⚠️ | Prefer `remotePatterns` |
+| `onLoadingComplete` | ⚠️ | Prefer `onLoad` |
+| `next/legacy/image` | ⚠️ | Migration-only |
+| Pages API Routes / Pages Router migration | ⛔ | Outside handbook scope except contextual comparison |
 
 ## Phase 10 completion note
 
@@ -413,19 +456,21 @@ Phase 10 is complete for stable App Router rendering delivery: RSC/HTML/hydratio
 
 ## Phase 11 completion note
 
-Phase 11 is complete for stable metadata and SEO behavior because it teaches:
+Phase 11 is complete for stable metadata and SEO behavior: Metadata API ownership/merging, canonical/alternate URL identity, social metadata and generated images, icons/manifests, robots/sitemaps, JSON-LD, viewport, streaming metadata, Cache Components interactions, and production crawler/SEO architecture.
 
-- static `metadata`, dynamic `generateMetadata`, Server Component ownership, async params/search params, parent resolution, ordering, shallow merging, and file-based precedence
-- title defaults/templates/absolute titles, descriptions, `metadataBase`, canonical URLs, language/content alternates, redirect-vs-canonical decisions, preview hosts, and multi-tenant URL identity
-- Open Graph/Twitter metadata, static social-image files and alt text, generated `ImageResponse` cards, `generateImageMetadata`, caching/failure/SSRF/public-data considerations
-- favicon/icon/apple-icon conventions, generated icons, manifests, metadata-route caching, Proxy exclusions, base-path/multi-zone ownership, and public-resource testing
-- page-level robots metadata, `robots.txt`/`robots.ts`, crawl-vs-index-vs-auth distinctions, sitemaps, localized alternates, `generateSitemaps`, publication lifecycle, large-site partitioning, and freshness
-- JSON-LD from public domain models, canonical consistency, Schema.org typing context, and HTML script-context XSS-safe serialization
-- broader Metadata fields, verification, App Links, platform/custom metadata, dedicated `viewport` / `generateViewport`, accessibility-aware viewport policy, HTTP-header boundaries, and ReactDOM resource hints
-- streaming metadata, HTML-limited bot blocking, `htmlLimitedBots`, Cache Components metadata/viewport behavior, memoization/cache distinctions, crawler critical-path performance, and failure fallbacks
-- production SEO architecture across content lifecycle, locales, tenants, previews, redirects, Proxy, caches, observability, smoke tests, and senior design review
+## Phase 12 completion note
 
-Phase 12 owns `next/image`, `next/font`, `next/script`, and resource optimization. Full security, observability, performance measurement, automated testing, and deployment operations remain Phases 13–17.
+Phase 12 is complete for current stable resource optimization because it teaches:
+
+- `next/image` source/geometry semantics, static imports, remote images, `fill`, `sizes`, responsive candidate selection, alt text, placeholders, loading/eager/high-priority behavior, current `preload`, deprecated `priority`, and LCP reasoning
+- image optimizer trust/configuration: remote/local patterns, quality and width cardinality, WebP/AVIF negotiation, `Accept` forwarding, local-IP blocking, redirect bounds, source-response limits, disk-cache controls, cache/version identity, SVG protections, custom loaders, authenticated-source architecture, and abuse considerations
+- advanced image delivery with `getImageProps()`, `<picture>` art direction, `overrideSrc`, custom CDN loaders, static export, pre-generated variants, signed/private/user-generated media boundaries, and production diagnostics
+- `next/font/google` and `next/font/local`, variable/static files, weights/styles/subsets, display strategies, fallbacks and metric adjustment, axes/declarations, CSS variables, design tokens, route/layout preload scope, multilingual typography, cache identity, CSP/deployment considerations, and font/CLS debugging
+- `next/script` strategy and scope: `beforeInteractive`, `afterInteractive`, `lazyOnload`, inline IDs, lifecycle callbacks/client boundaries, navigation/remount readiness, CSP nonces, route-level ownership, failure isolation, and third-party performance
+- analytics/third-party architecture: adapter/event schema, soft-navigation pageviews, consent-aware loading, data minimization, tag-manager supply-chain controls, CSP/SRI context, iframe/facade patterns, client-vs-server event ownership, and explicit labeling of `@next/third-parties` as experimental
+- a unified resource-loading model covering ReactDOM hints, browser scheduling, cold/warm cache, hard/soft navigation, route budgets, shared critical-path trade-offs, debugging evidence, and measurement-driven design review
+
+Phase 13 now owns full Authentication, Authorization & Security depth. Observability, performance measurement, automated testing, and deployment operations remain Phases 14–17.
 
 ## Completion rule
 
