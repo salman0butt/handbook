@@ -4,93 +4,59 @@ description: Learn when useReducer helps, how actions and reducers work, purity 
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `useReducer` and reducer design
 
-`useReducer` is another way to manage component state.
+`useReducer` is another React state primitive. It is useful when centralizing related state transitions makes the application easier to reason about.
 
-It is especially useful when state updates become difficult to reason about because many event handlers modify related pieces of state in different ways.
+## Core mental model
 
-The core idea is:
+<VisualDiagram title="Reducer update flow" subtitle="Events describe what happened; the reducer calculates the next state.">
+  <LifecycleBar
+    items={[
+      {label: 'user / system event', tone: 'orange'},
+      {label: 'dispatch action', tone: 'blue'},
+      {label: 'reducer receives state + action', tone: 'purple'},
+      {label: 'reducer returns next state', tone: 'green'},
+      {label: 'React renders next snapshot', tone: 'cyan'},
+    ]}
+  />
+</VisualDiagram>
 
-```text
-an event happens
-      ↓
-dispatch an action describing what happened
-      ↓
-reducer receives current state + action
-      ↓
-reducer returns next state
-      ↓
-React renders with that state
-```
+`useReducer` is not the “serious app” version of `useState`. Use whichever model makes transitions clearer.
 
-## `useState` is not the beginner version of `useReducer`
-
-Do not think:
-
-```text
-small app = useState
-serious app = useReducer
-```
-
-Both are valid state primitives.
-
-Use `useState` when updates are simple and easy to understand.
-
-Use `useReducer` when centralizing update logic makes the state transitions clearer.
-
-## A `useState` example
+## When `useState` is enough
 
 ```jsx
-function Tasks() {
-  const [tasks, setTasks] = useState([]);
-
-  function addTask(text) {
-    setTasks(current => [
-      ...current,
-      { id: crypto.randomUUID(), text, done: false },
-    ]);
-  }
-
-  function toggleTask(id) {
-    setTasks(current =>
-      current.map(task =>
-        task.id === id ? { ...task, done: !task.done } : task
-      )
-    );
-  }
-
-  function deleteTask(id) {
-    setTasks(current => current.filter(task => task.id !== id));
-  }
-}
+const [open, setOpen] = useState(false);
 ```
 
-Nothing is wrong here.
+A reducer would add ceremony without improving a simple boolean transition.
 
-But as transitions grow, update logic can become spread across many handlers.
-
-## Moving to a reducer
+## Moving related transitions into a reducer
 
 ```jsx
-import { useReducer } from 'react';
-
 function tasksReducer(state, action) {
   switch (action.type) {
     case 'task_added':
       return [
         ...state,
-        {
-          id: action.id,
-          text: action.text,
-          done: false,
-        },
+        {id: action.id, text: action.text, done: false},
       ];
 
     case 'task_toggled':
       return state.map(task =>
         task.id === action.id
-          ? { ...task, done: !task.done }
+          ? {...task, done: !task.done}
           : task
       );
 
@@ -102,16 +68,17 @@ function tasksReducer(state, action) {
   }
 }
 
-export default function Tasks() {
+function Tasks() {
   const [tasks, dispatch] = useReducer(tasksReducer, []);
-
   // ...
 }
 ```
 
-Now the component dispatches actions instead of directly constructing every next state.
+Now event handlers describe domain events instead of manually rebuilding next state everywhere.
 
 ## Actions describe what happened
+
+Prefer event-shaped actions:
 
 ```jsx
 dispatch({
@@ -121,81 +88,40 @@ dispatch({
 });
 ```
 
-A useful action describes an event in the domain.
+<VisualDiagram title="Good action names explain why state changed">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Event / domain language" tone="green">task_added · checkout_started · shipping_address_changed · cart_cleared</DiagramNode>
+    <DiagramNode title="Implementation language" tone="red">set_tasks · set_field_7 · update_everything</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Prefer:
+React does not require `{type: ...}`; it is a useful convention because structured action objects are easy to log, type, test, and inspect.
 
-```text
-task_added
-checkout_started
-shipping_address_changed
-cart_cleared
-```
+## Reducers are pure calculations
 
-over implementation commands like:
+<VisualDiagram title="Reducer = current state + action → next state" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Inputs" tone="blue">current state + action</DiagramNode>
+    <DiagramNode title="Output" tone="green">next state</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-set_tasks
-set_field_7
-update_everything
-```
-
-The action should help you understand **why** the transition happened.
-
-## Action shape is your design
-
-React does not require `{ type: ... }`.
-
-That is a convention.
-
-You could technically dispatch any value, but structured action objects are easy to read, log, type, and test.
-
-```jsx
-{
-  type: 'quantity_changed',
-  productId: 'p-42',
-  quantity: 3,
-}
-```
-
-## Reducers are pure
-
-A reducer receives:
-
-```text
-current state
-+
-action
-```
-
-and returns:
-
-```text
-next state
-```
-
-It should not perform side effects.
+Reducers should not perform network requests, analytics, timers, DOM mutation, storage writes, or other side effects.
 
 Bad:
 
 ```jsx
 function reducer(state, action) {
   if (action.type === 'order_submitted') {
-    fetch('/api/orders', {
-      method: 'POST',
-      body: JSON.stringify(state),
-    });
+    fetch('/api/orders', {method: 'POST'}); // ❌
   }
-
   return state;
 }
 ```
 
-The network request does not belong in the reducer.
+Reducer logic can run during rendering, so purity matters.
 
-Reducers can run during rendering, so they must remain pure.
-
-## No mutation
+## Do not mutate reducer state
 
 Bad:
 
@@ -213,26 +139,12 @@ Better:
 case 'task_toggled':
   return state.map(task =>
     task.id === action.id
-      ? { ...task, done: !task.done }
+      ? {...task, done: !task.done}
       : task
   );
 ```
 
-The reducer must return new objects/arrays for changed state.
-
-## One action can change multiple fields
-
-Suppose a checkout state contains:
-
-```jsx
-{
-  status: 'editing',
-  error: null,
-  orderId: null,
-}
-```
-
-A successful submission can represent one domain transition:
+## One domain event may update several fields
 
 ```jsx
 case 'submission_succeeded':
@@ -244,13 +156,11 @@ case 'submission_succeeded':
   };
 ```
 
-Do not dispatch three actions merely because three fields change.
+Do not dispatch three setter-like actions merely because three fields change. Model one transition when one domain event changed them together.
 
-Actions should reflect interactions or events, not individual assignments.
+## Reducers can expose poor state modelling
 
-## Reducers can expose invalid state design
-
-If the reducer constantly has to keep several booleans synchronized:
+If several booleans must always be synchronized:
 
 ```jsx
 {
@@ -260,7 +170,7 @@ If the reducer constantly has to keep several booleans synchronized:
 }
 ```
 
-consider whether one status is better:
+consider a single status:
 
 ```jsx
 {
@@ -268,7 +178,14 @@ consider whether one status is better:
 }
 ```
 
-A reducer is not a cure for poor state modeling.
+<VisualDiagram title="Prefer representable state over conflicting flags" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Three booleans" tone="red">Can accidentally represent impossible combinations.</DiagramNode>
+    <DiagramNode title="One status" tone="green">Encodes one valid mode at a time.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+A reducer does not fix a weak state model automatically.
 
 ## `useReducer` signature
 
@@ -276,20 +193,9 @@ A reducer is not a cure for poor state modeling.
 const [state, dispatch] = useReducer(reducer, initialArg, init?);
 ```
 
-Common form:
-
-```jsx
-const [state, dispatch] = useReducer(reducer, initialState);
-```
-
-React gives you:
-
-1. current state;
-2. a stable `dispatch` function.
+React gives you the current state snapshot and a stable `dispatch` function.
 
 ## Lazy initialization
-
-If initial state is expensive to create, use the third argument.
 
 ```jsx
 function createInitialState(products) {
@@ -299,225 +205,141 @@ function createInitialState(products) {
   };
 }
 
-function Catalog({ products }) {
-  const [state, dispatch] = useReducer(
-    reducer,
-    products,
-    createInitialState,
-  );
-}
+const [state, dispatch] = useReducer(
+  reducer,
+  products,
+  createInitialState,
+);
 ```
 
-This separates the initial argument from the initialization calculation.
+Use the initializer when creating initial state is expensive or when the initial argument needs transformation.
 
 ## Props are not automatically reducer state
 
-Be careful with:
-
 ```jsx
-function Editor({ document }) {
+function Editor({document}) {
   const [state, dispatch] = useReducer(reducer, document);
 }
 ```
 
-The initial reducer state is used for initialization. Later prop changes do not magically reset reducer state.
+Later `document` prop changes do not automatically reset reducer state. Decide explicitly whether you need one-time initialization, a controlled model, an explicit reset action, a key-based identity reset, or derived values instead of copied state.
 
-Ask whether you want:
-
-- state initialized once from a prop;
-- a controlled component;
-- explicit reset behavior;
-- identity reset with a `key`;
-- derived values instead of copied state.
-
-## Dispatch does not immediately mutate `state`
+## Dispatch queues a future state snapshot
 
 ```jsx
 function handleClick() {
-  dispatch({ type: 'incremented' });
+  dispatch({type: 'incremented'});
   console.log(state.count);
 }
 ```
 
 The current event handler still sees the current render's state snapshot.
 
-Dispatch queues an update for a future render.
-
-The same snapshot mental model you learned with `useState` still applies.
+<VisualDiagram title="Dispatch follows the same snapshot model as useState" compact>
+  <LifecycleBar
+    items={[
+      {label: 'current render has state A', tone: 'blue'},
+      {label: 'dispatch(action)', tone: 'orange'},
+      {label: 'React queues update', tone: 'purple'},
+      {label: 'reducer calculates state B', tone: 'green'},
+      {label: 'future render sees state B', tone: 'cyan'},
+    ]}
+  />
+</VisualDiagram>
 
 ## Reducer debugging
 
-Reducers are convenient debugging boundaries because every transition has:
+Every transition has a powerful debugging shape:
 
-```text
-previous state
-+ action
-= next state
-```
+<VisualDiagram title="Reducer transition record" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Previous state" tone="slate" wide />
+    <DiagramArrow label="+ action" />
+    <DiagramNode title="Reducer" tone="purple" wide />
+    <DiagramArrow label="returns" />
+    <DiagramNode title="Next state" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
 
-A temporary wrapper can log transitions:
-
-```jsx
-function debugReducer(state, action) {
-  const nextState = reducer(state, action);
-
-  console.log({
-    action,
-    previousState: state,
-    nextState,
-  });
-
-  return nextState;
-}
-```
-
-Do not leave noisy production logging in hot paths, but the model is powerful.
-
-## Reducers are testable in isolation
-
-```js
-const start = [{ id: 1, text: 'Learn reducers', done: false }];
-
-const next = tasksReducer(start, {
-  type: 'task_toggled',
-  id: 1,
-});
-
-expect(next[0].done).toBe(true);
-expect(start[0].done).toBe(false);
-```
-
-This tests transition logic directly.
-
-However, do not replace all component/user tests with reducer unit tests. Reducer correctness is only one part of application behavior.
+A temporary debug wrapper can log `action`, `previousState`, and `nextState`. Reducers are also straightforward to unit-test because transition logic is pure.
 
 ## When `useReducer` helps
 
-Good signs:
+Good signals include:
 
-- several handlers perform related state transitions;
-- state has explicit domain events;
-- update bugs are common;
-- you want transitions in one place;
-- the next state depends on multiple current fields;
-- reducer logic can be tested clearly.
+- several handlers perform related transitions;
+- state has meaningful domain events;
+- update bugs come from duplicated transition logic;
+- next state depends on multiple current fields;
+- central transition rules improve clarity;
+- the transition function is valuable to test independently.
 
-## When it may be overkill
+<DecisionTree
+  question="Should this local state use a reducer?"
+  items={[
+    {label: 'Updates are simple and obvious', value: 'useState is usually clearer'},
+    {label: 'Many related handlers encode the same transition rules', value: 'useReducer may centralize the logic well'},
+    {label: 'The real problem is remote caching or global subscription granularity', value: 'A reducer is solving the wrong problem'},
+  ]}
+/>
 
-```jsx
-const [open, setOpen] = useState(false);
-```
+## Event handlers and reducers have different jobs
 
-Replacing this with:
-
-```jsx
-const [state, dispatch] = useReducer(...);
-```
-
-usually adds ceremony without adding clarity.
-
-## Reducer file boundaries
-
-A useful feature structure:
-
-```text
-features/cart/
-  Cart.jsx
-  cartReducer.js
-  cartActions.js      ← optional, not mandatory
-  cartSelectors.js    ← optional
-```
-
-Do not create Redux-like boilerplate around local `useReducer` unless it solves a real problem.
-
-## Reducer and event handler responsibilities
-
-A healthy boundary is:
-
-```text
-Event handler
-- understand browser/user event
-- prepare domain payload
-- dispatch action
-
-Reducer
-- calculate next state
-- enforce transition rules
-- remain pure
-```
-
-Example:
-
-```jsx
-function handleSubmit(event) {
-  event.preventDefault();
-
-  dispatch({
-    type: 'customer_name_changed',
-    name: event.currentTarget.elements.name.value,
-  });
-}
-```
+<VisualDiagram title="Event layer vs reducer layer">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Event handler" tone="orange">understands browser/user event · prepares domain payload · dispatches action</DiagramNode>
+    <DiagramNode title="Reducer" tone="purple">calculates next state · enforces transition rules · stays pure</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 The reducer should not know about DOM event objects.
 
 ## Side effects happen outside the reducer
 
-If an action requires a server request:
-
-```text
-user submits
-   ↓
-event/action layer starts async work
-   ↓
-result arrives
-   ↓
-dispatch success or failure event
-```
-
-For example:
-
 ```jsx
 async function handleSave() {
-  dispatch({ type: 'save_started' });
+  dispatch({type: 'save_started'});
 
   try {
     const result = await saveOrder(state.order);
-    dispatch({ type: 'save_succeeded', orderId: result.id });
+    dispatch({type: 'save_succeeded', orderId: result.id});
   } catch (error) {
-    dispatch({ type: 'save_failed', message: error.message });
+    dispatch({type: 'save_failed', message: error.message});
   }
 }
 ```
 
-Later, React 19 Actions provide another model for mutation flows. Do not confuse that with reducer purity.
+<VisualDiagram title="Async workflow around a pure reducer">
+  <LifecycleBar
+    items={[
+      {label: 'user submits', tone: 'orange'},
+      {label: 'event/action layer starts async work', tone: 'blue'},
+      {label: 'result arrives', tone: 'cyan'},
+      {label: 'dispatch success/failure event', tone: 'purple'},
+      {label: 'reducer calculates next state', tone: 'green'},
+    ]}
+  />
+</VisualDiagram>
+
+React 19 Actions provide another mutation model later in the handbook; they do not change reducer purity.
 
 ## Reducer invariants
 
-Senior-level reducer design often centers on invariants.
+Senior-level reducer design often centres on rules that must remain true after every transition, for example:
 
-For example:
+- success requires an `orderId`;
+- editing state has no submission error;
+- quantity can never fall below `1`.
 
-```text
-If status === 'success', orderId must exist.
-If status === 'editing', error should be null.
-Quantity can never be below 1.
-```
+The reducer is a natural boundary for ensuring each action preserves those invariants.
 
-The reducer is a natural place to ensure transitions preserve those rules.
+## File boundaries
+
+A feature may keep `cartReducer.js`, selectors, and optional action helpers near the UI that owns them. Do not create Redux-style boilerplate around local `useReducer` unless it solves a real problem.
 
 ## Exercise
 
-Build a checkout reducer supporting:
-
-- `customer_changed`;
-- `shipping_selected`;
-- `submission_started`;
-- `submission_succeeded`;
-- `submission_failed`;
-- `reset`.
-
-Then explain why each action describes an event rather than a setter.
+Build a checkout reducer supporting customer changes, shipping selection, submit start/success/failure, and reset. Explain why each action describes a domain event rather than a setter.
 
 ## Interview questions
 
@@ -529,15 +351,16 @@ Then explain why each action describes an event rather than a setter.
 
 ## Summary
 
-```text
-complex related transitions
-        ↓
-dispatch meaningful actions
-        ↓
-pure reducer calculates next state
-        ↓
-React renders
-```
+<VisualDiagram title="Reducer design summary">
+  <LifecycleBar
+    items={[
+      {label: 'identify related transitions', tone: 'blue'},
+      {label: 'dispatch meaningful events', tone: 'orange'},
+      {label: 'pure reducer calculates next state', tone: 'purple'},
+      {label: 'React renders next snapshot', tone: 'green'},
+    ]}
+  />
+</VisualDiagram>
 
 Use reducers for clearer transitions, not because the application crossed an arbitrary size threshold.
 
