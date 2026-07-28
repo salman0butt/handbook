@@ -4,6 +4,15 @@ description: Create a modern React project with Vite and understand the files, s
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Set up React with Vite
 
 For a small client-side React application where you are learning React itself, Vite is a practical modern build-tool choice.
@@ -51,6 +60,20 @@ my-react-app/
 
 The exact generated files can change between Vite versions. Learn the responsibilities, not the filename trivia.
 
+<VisualDiagram title="Vite React project responsibilities" subtitle="The useful model is what each layer owns, not memorising template filenames.">
+  <DiagramGrid columns={3}>
+    <DiagramNode tone="blue" title="index.html" eyebrow="Browser entry">
+      Contains the real DOM mount point and loads the JavaScript module entry.
+    </DiagramNode>
+    <DiagramNode tone="purple" title="src/main.jsx" eyebrow="React entry">
+      Connects React DOM to the browser container and renders the application tree.
+    </DiagramNode>
+    <DiagramNode tone="green" title="src/App.jsx" eyebrow="Application UI">
+      Defines the top-level component and composes the rest of the React tree.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
 ## `index.html`
 
 Unlike older setups that hide the HTML template behind tooling, Vite keeps `index.html` visible at the project root.
@@ -82,19 +105,17 @@ createRoot(document.getElementById('root')).render(
 
 Mental model:
 
-```text
-index.html
-  ↓
-#root DOM node
-  ↓
-createRoot(...)
-  ↓
-React root
-  ↓
-root.render(<App />)
-  ↓
-component tree
-```
+<VisualDiagram title="How a Vite React app reaches the page" subtitle="The browser mount point exists first; React then owns the tree inside it.">
+  <DiagramStack align="center">
+    <DiagramNode tone="slate" title="index.html" wide>The browser loads the document and module entry.</DiagramNode>
+    <DiagramArrow label="contains" />
+    <DiagramNode tone="blue" title="#root DOM node" wide>A real browser element becomes the mount container.</DiagramNode>
+    <DiagramArrow label="createRoot(container)" />
+    <DiagramNode tone="purple" title="React root" wide>React DOM creates the root that manages this container.</DiagramNode>
+    <DiagramArrow label="root.render(<App />)" />
+    <DiagramNode tone="green" title="Component tree" wide>`App` and its descendants become the React tree managed inside the root.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Most application components never call `createRoot`. It is normally used at the application entry point.
 
@@ -134,17 +155,16 @@ Vite creates optimized output for deployment.
 
 A useful distinction:
 
-```text
-Development
-- extra warnings
-- developer tooling
-- fast iteration
-
-Production
-- optimized output
-- no development-only checks
-- deployable assets
-```
+<VisualDiagram title="Development vs production" subtitle="Measure and debug with the environment distinction in mind.">
+  <DiagramGrid columns={2}>
+    <DiagramNode tone="blue" eyebrow="Development" title="Optimised for feedback">
+      Extra warnings · developer tooling · fast iteration · hot updates.
+    </DiagramNode>
+    <DiagramNode tone="green" eyebrow="Production" title="Optimised for delivery">
+      Optimized output · deployable assets · no development-only checks.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not make performance conclusions from development mode alone.
 
@@ -180,16 +200,14 @@ Use a client build tool when you intentionally want a client-rendered React appl
 
 Decision model:
 
-```text
-Need only client-side React fundamentals?
-        ↓ yes
-Vite is a good learning/tooling choice
-
-Need integrated server rendering, routing,
-data loading, RSC, deployment conventions?
-        ↓ yes
-Evaluate a React framework
-```
+<DecisionTree
+  question="Which starting point fits the application?"
+  items={[
+    { label: 'Learning React fundamentals or intentionally building a client-rendered app', value: 'Vite is a strong build-tool choice.' },
+    { label: 'Need integrated routing, server rendering, data loading, RSC, or deployment conventions', value: 'Evaluate a React framework.' },
+    { label: 'Unsure which capability you actually need', value: 'Classify the application requirements before choosing tooling.' },
+  ]}
+/>
 
 Do not confuse "React" with whichever tool created the project.
 
@@ -215,14 +233,17 @@ Hooks, components, Suspense, Context, and rendering are React. The dev server an
 
 Create a Vite React project and make the component tree:
 
-```text
-App
-├── Header
-├── ProductList
-│   ├── ProductCard
-│   └── ProductCard
-└── Footer
-```
+<VisualDiagram title="Exercise component tree" compact>
+  <DiagramStack align="center">
+    <DiagramNode tone="blue" title="App" wide />
+    <DiagramArrow />
+    <DiagramGrid columns={3}>
+      <DiagramNode tone="cyan" title="Header" />
+      <DiagramNode tone="purple" title="ProductList">Contains multiple ProductCard children.</DiagramNode>
+      <DiagramNode tone="slate" title="Footer" />
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
 Requirements:
 
