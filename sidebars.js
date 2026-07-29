@@ -77,11 +77,29 @@ const nextjsItems = [
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
 
+const typescriptItems = [
+  category('00 · Start Here', ['typescript/intro', 'typescript/version', 'typescript/roadmap'], { collapsed: false }),
+  category('01–05 · Foundations → Unions & Intersections', ['typescript/01-05-foundations-to-unions']),
+  category('06–10 · Narrowing → Literals / as const / satisfies', ['typescript/06-10-narrowing-functions-safety-literals']),
+  category('11–16 · Generics & Type Manipulation', ['typescript/11-16-generics-and-type-manipulation']),
+  category('17–25 · Classes, Compatibility, Inference & Advanced Functions', ['typescript/17-25-classes-compatibility-inference-nullability-functions']),
+  category('26–31 · Modules, TSConfig, Monorepos, Declarations & Libraries', ['typescript/26-31-modules-tsconfig-monorepos-declarations-libraries-js']),
+  category('32–39 · Runtime Validation, Async, Decorators, JSX, React & Node', ['typescript/32-39-runtime-validation-errors-async-decorators-jsx-react-node']),
+  category('40–49 · Architecture, Type-Level, Compiler, Performance & Debugging', ['typescript/40-49-backends-architecture-domain-type-level-compiler-performance-debugging']),
+  category('50–59 · Testing, Security, Production, Migration & Staff Architecture', ['typescript/50-59-testing-linting-build-security-production-migration-patterns-staff']),
+  category('60 · Projects', ['typescript/projects']),
+  category('61 · Interview Mastery', ['typescript/interview-mastery']),
+  category('62 · Interview Question Bank', ['typescript/interview-question-bank']),
+  category('63 · Mock Interview Practice', ['typescript/mock-interviews']),
+  category('📋 Reference & Coverage', ['typescript/reference/api-coverage', 'typescript/reference/final-completeness-audit']),
+];
+
 const sidebars = {
   handbookSidebar: [
     category('⚛️ React Handbook', reactItems, { collapsed: true }),
-    category('▲ Next.js Handbook', nextjsItems, { collapsed: false }),
-    category('📚 More Handbooks', ['javascript/intro', 'typescript/intro', 'nodejs/intro', 'databases/intro', 'system-design/intro', 'devops/intro', 'wordpress/intro', 'ai-engineering/intro']),
+    category('▲ Next.js Handbook', nextjsItems, { collapsed: true }),
+    category('🔷 TypeScript Handbook', typescriptItems, { collapsed: false }),
+    category('📚 More Handbooks', ['javascript/intro', 'nodejs/intro', 'databases/intro', 'system-design/intro', 'devops/intro', 'wordpress/intro', 'ai-engineering/intro']),
   ],
 };
 
