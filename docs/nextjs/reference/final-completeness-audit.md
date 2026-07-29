@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–18 are implemented; Phase 19 Internals & Senior Mental Models is next.**
+> **Status: NOT COMPLETE — Phases 1–19 are implemented; Phase 20 Upgrades & Modern Migration is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -49,7 +49,8 @@ The audit keeps the original baseline for history while allowing later phases to
 - [x] Phase 16 · Testing
 - [x] Phase 17 · Deployment & Production Operations
 - [x] Phase 18 · Architecture & Large Applications
-- [ ] Phase 19 · Internals & Senior Mental Models
+- [x] Phase 19 · Internals & Senior Mental Models
+- [ ] Phase 20 · Upgrades & Modern Migration
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
@@ -86,6 +87,8 @@ Phase 17 includes the current production deployment contract: build/start/reques
 
 Phase 18 includes large-application architecture across the current App Router model: capability/vertical-slice boundaries; route composition roots; dependency direction and explicit public module APIs; safe `app` colocation, private folders and route-group organisation; DAL/query ownership, DTO exposure contracts, commands, transactions, idempotency and outbox/event boundaries; monorepos, design systems, package exports, server/client package entry points and stable `transpilePackages` integration; tenant identity through routing, sessions, database queries, caches, jobs, storage, events, feature flags and noisy-neighbour controls; BFF/Route Handler vs direct Server Component access, Server Actions as UI mutation adapters, provider adapters, synchronous API vs event/job/service boundaries; feature flag/config/state governance; Multi-Zones path ownership, asset isolation, hard cross-zone navigation, mixed-version compatibility and team autonomy; plus ADRs, architecture fitness functions, data/cache/operational ownership and a senior reference architecture/design-review process.
 
+Phase 19 includes the current senior internals mental model without turning private framework machinery into application APIs: public-contract vs implementation-detail stability; RSC/Flight, server/client graph partitioning, client/server references, serialization, initial HTML and hydration; Turbopack's unified dependency graph, route compilation, build metadata/manifests as diagnostic evidence, build/deployment IDs, Output File Tracing and standalone runtime closure; Cache Components prerender execution, static shells, semantic cache keys, Suspense request-time holes, request APIs and `connection()`; Router Cache/prefetch/route-tree reconciliation and deployment-skew hard navigation; Server Function POST references, closure encryption, serialization, Action result-plus-RSC responses and version skew; full request routing/Proxy/render/streaming lifecycle; Node/Edge/process/package/custom-server boundaries; and a first-principles debugging/design-review system based on ownership, lifecycle, representation, cache state and exact release/deployment version. Private `.next` schemas, `next/dist` imports, Flight wire parsing, private headers and manual Action protocol construction remain explicitly outside the application contract.
+
 ## Final audit gates
 
 - [ ] Re-check npm `latest`, support policy, release notes, and App Router docs at final release.
@@ -104,11 +107,12 @@ Phase 18 includes large-application architecture across the current App Router m
 - [ ] Re-audit testing guidance, async Server Component support, Vitest/Jest/RTL, Playwright/Cypress, Proxy testing helpers, Cache Components testing helpers, CI strategy, security/accessibility/performance regressions, and experimental test APIs against final stable release.
 - [ ] Re-audit `next build` / `next start`, standalone output, self-hosting, streaming proxies, graceful shutdown, environment/runtime config, multi-instance cache coordination, deployment/build IDs, Server Action keys, static export, adapters, CI/CD, rollbacks and platform support against final stable release.
 - [ ] Re-audit project organisation, route groups/private folders, DAL/DTO/command boundaries, monorepos/`transpilePackages`, multi-tenancy, BFF/service/event/job boundaries, feature/config governance, Multi-Zones and large-app architecture guidance against final stable release.
+- [ ] Re-audit RSC/Flight and module-graph behavior, Turbopack/build pipeline, route compilation, private manifest boundaries, Output File Tracing, Cache Components prerender/static-shell internals, Router Cache/prefetch/reconciliation, Server Function reference/encryption/skew behavior, request/stream lifecycle, runtime/process/custom-server guidance and private-internals stability boundaries against final stable release.
 - [ ] Audit configuration options relevant to application engineering.
 - [ ] Verify Vercel/platform-specific content is clearly labeled as platform-specific.
 - [ ] Verify experimental/preview/canary features are labeled and not taught as stable.
 - [ ] Verify deprecated/historical behavior appears only where migration context requires it.
-- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, logs, sessions, tenancy, outbound HTTP, incident response, security regression testing, CI/CD, production access and architecture boundaries.
+- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, logs, sessions, tenancy, outbound HTTP, incident response, security regression testing, CI/CD, production access, architecture boundaries and framework transport boundaries.
 - [ ] Verify performance advice follows measurement → diagnosis → change → measurement and has proportionate regression coverage.
 - [ ] Complete all capstone specifications.
 - [ ] Complete interview mastery.
@@ -122,6 +126,6 @@ Phase 18 includes large-application architecture across the current App Router m
 
 The handbook is complete only when the official documentation audit and the educational-quality audit both pass.
 
-A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, testing, deployment, architecture, trade-offs, and production patterns at the depth appropriate to each topic.
+A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, testing, deployment, architecture, internals, trade-offs, and production patterns at the depth appropriate to each topic.
 
 See [API Coverage Contract](./api-coverage.md) for the release gate.
