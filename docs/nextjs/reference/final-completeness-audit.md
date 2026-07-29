@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–14 are implemented; Phase 15 Performance is next.**
+> **Status: NOT COMPLETE — Phases 1–15 are implemented; Phase 16 Testing is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -21,7 +21,7 @@ This page is the final release gate for the handbook. It must not be marked comp
 
 ### Latest stable re-check
 
-- Re-verified date: **July 28, 2026**
+- Re-verified date: **July 29, 2026**
 - Current npm `latest`: **Next.js 16.2.12**
 - Next.js 16.3: **preview/canary — not stable**
 - Stable curriculum remains on the **16.2 Active LTS** contract
@@ -45,7 +45,8 @@ The audit keeps the original baseline for history while allowing later phases to
 - [x] Phase 12 · Images, Fonts & Scripts
 - [x] Phase 13 · Authentication, Authorization & Security
 - [x] Phase 14 · Errors, Observability & Debugging
-- [ ] Phase 15 · Performance
+- [x] Phase 15 · Performance
+- [ ] Phase 16 · Testing
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
@@ -74,6 +75,8 @@ Phase 13 includes the current stable App Router security model: authentication, 
 
 Phase 14 includes the stable App Router failure and observability model: expected failures vs uncaught exceptions vs framework control flow; nested `error.tsx`, `global-error.tsx`, production Server Component error sanitization, digests and stable `reset()` recovery; `notFound()`/redirect control flow, streamed 404 status caveats and `noindex`; Server Action, Route Handler, Server Component, Client Component, Proxy and `after()` failure contracts; server `instrumentation.ts`, `register()`, stable `onRequestError`, runtime-aware initialization, structured logs and request/trace/release correlation; `instrumentation-client.ts`, early browser error capture, unhandled rejections, router-transition breadcrumbs and client release identity; provider-neutral OpenTelemetry architecture, custom spans, logs/metrics/traces, sampling and exporters; production source-map policy, `next info`, `next build --debug`, `--debug-prerender`, targeted build debugging, Node inspector usage, hard-vs-soft navigation triage, cache/stream/proxy incident workflows; and SLI/SLO/error-budget/alert/runbook design. `unstable_catchError`, `unstable_retry`, `unstable_rethrow`, and other unstable error helpers remain explicitly non-baseline.
 
+Phase 15 includes production performance engineering across the full App Router stack: measurement-first critical-path analysis; route budgets; field vs lab data; Core Web Vitals LCP/INP/CLS and p75 interpretation; `useReportWebVitals` RUM architecture; Lighthouse and attribution diagnostics; server/RSC dependency waterfalls, bounded parallelism, cache hit/miss analysis, Cache Components shells, Suspense streaming and payload minimization; Client Component boundary and browser-JavaScript cost; `next/dynamic`, interaction-triggered imports, bundle analysis, stable React Compiler integration, and evidence-driven memoization; hydration/INP/main-thread work, transitions/deferred values, list/DOM bounds and memory; image/font/CSS/script/third-party/network critical paths; database/upstream/pool/tail-latency/cold-start/capacity performance; browser/React/server profiling and release-regression workflows; plus SLOs, budgets, canary comparison, ownership, and senior performance architecture review. Current experimental facilities such as Turbopack `experimental-analyze`, `webVitalsAttribution`, `inlineCss`, and `optimizePackageImports` remain explicitly labelled experimental rather than required production primitives.
+
 ## Final audit gates
 
 - [ ] Re-check npm `latest`, support policy, release notes, and App Router docs at final release.
@@ -88,7 +91,7 @@ Phase 14 includes the stable App Router failure and observability model: expecte
 - [ ] Re-audit metadata, images, fonts, scripts, and resource optimization against final stable release.
 - [ ] Re-audit authentication, authorization, sessions, CSRF, CSP, secrets, XSS, SSRF, abuse controls, and broader security architecture against final stable release.
 - [ ] Re-audit error handling, instrumentation, OpenTelemetry, client observability, source maps, and production-debugging APIs against final stable release.
-- [ ] Audit performance, Web Vitals, profiling, bundle analysis, and budgets.
+- [ ] Re-audit performance, Core Web Vitals, RUM, profiling, bundle analysis, React Compiler integration, lazy loading, experimental performance flags, backend capacity guidance, and budgets against final stable release.
 - [ ] Audit testing guidance.
 - [ ] Audit configuration options relevant to application engineering.
 - [ ] Audit Node/self-hosting, adapters, static export, and deployment guidance.
