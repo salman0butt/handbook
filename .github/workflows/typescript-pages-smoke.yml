@@ -1,0 +1,50 @@
+name: TypeScript Pages smoke verification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/typescript-pages-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Verify published TypeScript handbook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live GitHub Pages routes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check() {
+            local url="$1"
+            local expected="$2"
+            local body
+
+            for attempt in $(seq 1 30); do
+              body="$(curl --fail --silent --show-error --location "$url" || true)"
+              if grep -Fq "$expected" <<<"$body"; then
+                echo "Verified: $url -> $expected"
+                return 0
+              fi
+              echo "Attempt $attempt: published content not visible yet at $url"
+              sleep 10
+            done
+
+            echo "Expected published marker not found: $expected"
+            return 1
+          }
+
+          check 'https://salman0butt.github.io/handbook/typescript/intro' 'TypeScript Developer Handbook'
+          check 'https://salman0butt.github.io/handbook/typescript/11-16-generics-and-type-manipulation' 'Generics & Type Manipulation'
+          check 'https://salman0butt.github.io/handbook/typescript/26-31-modules-tsconfig-monorepos-declarations-libraries-js' 'Modules, TSConfig, Monorepos, Declarations & Libraries'
+          check 'https://salman0butt.github.io/handbook/typescript/40-49-backends-architecture-domain-type-level-compiler-performance-debugging' 'Compiler & Language Service Mental Models'
+          check 'https://salman0butt.github.io/handbook/typescript/50-59-testing-linting-build-security-production-migration-patterns-staff' 'Migration to TypeScript'
+          check 'https://salman0butt.github.io/handbook/typescript/projects' 'Capstone — Production TypeScript Platform'
+          check 'https://salman0butt.github.io/handbook/typescript/interview-mastery' 'Interview Mastery'
+          check 'https://salman0butt.github.io/handbook/typescript/interview-question-bank' '310-question bank'
+          check 'https://salman0butt.github.io/handbook/typescript/mock-interviews' 'Mock Interview Practice'
+          check 'https://salman0butt.github.io/handbook/typescript/reference/api-coverage' 'TypeScript API & Curriculum Coverage'
+          check 'https://salman0butt.github.io/handbook/typescript/reference/final-completeness-audit' 'Status: NOT COMPLETE'
