@@ -7,9 +7,25 @@ const handbooks = [
   {
     icon: '⚛️',
     title: 'React',
-    description: 'Components, hooks, state, performance, architecture, internals, and senior engineering patterns.',
-    status: 'In progress',
+    description: 'Components, hooks, state, performance, architecture, internals, production engineering, and interview mastery.',
+    status: 'Complete',
     href: '/docs/react/intro',
+    featured: true,
+  },
+  {
+    icon: 'TS',
+    title: 'TypeScript',
+    description: 'From type fundamentals to inference, generics, compiler reasoning, architecture, production engineering, and interview mastery.',
+    status: 'Complete',
+    href: '/docs/typescript/intro',
+    featured: true,
+  },
+  {
+    icon: '▲',
+    title: 'Next.js',
+    description: 'App Router, Server Components, caching, security, testing, deployment, architecture, internals, and production operations.',
+    status: 'Complete',
+    href: '/docs/nextjs/intro',
     featured: true,
   },
   {
@@ -18,20 +34,6 @@ const handbooks = [
     description: 'The language foundations behind modern frontend and backend development.',
     status: 'Coming soon',
     href: '/docs/javascript/intro',
-  },
-  {
-    icon: 'TS',
-    title: 'TypeScript',
-    description: 'From type fundamentals to generics, inference, patterns, and production React typing.',
-    status: 'Coming soon',
-    href: '/docs/typescript/intro',
-  },
-  {
-    icon: '▲',
-    title: 'Next.js',
-    description: 'Routing, rendering, data fetching, caching, Server Components, and production architecture.',
-    status: 'Coming soon',
-    href: '/docs/nextjs/intro',
   },
   {
     icon: '⬢',
@@ -89,7 +91,7 @@ function HandbookCard({handbook}) {
       <h3>{handbook.title}</h3>
       <p>{handbook.description}</p>
       <span className={styles.cardLink}>
-        {handbook.featured ? 'Start learning' : 'View handbook'} →
+        {handbook.status === 'Complete' ? 'Open handbook' : 'View handbook'} →
       </span>
     </Link>
   );
@@ -107,11 +109,15 @@ export default function Home() {
             <h1 className={styles.heroTitle}>Learn deeply. Build confidently.</h1>
             <p className={styles.heroSubtitle}>
               Practical handbooks for software engineers — from first principles to production architecture,
-              debugging, trade-offs, and senior-level thinking.
+              debugging, trade-offs, and senior-level thinking. Use the search box in the top navigation to search
+              across the entire documentation library.
             </p>
             <div className={styles.heroActions}>
-              <Link className="button button--primary button--lg" to="/docs/react/intro">
-                Start with React
+              <Link className="button button--primary button--lg" to="/docs/typescript/intro">
+                Explore TypeScript
+              </Link>
+              <Link className="button button--secondary button--lg" to="/docs/react/intro">
+                Explore React
               </Link>
               <Link
                 className="button button--secondary button--lg"
@@ -132,7 +138,7 @@ export default function Home() {
                 <span className={styles.kicker}>THE LIBRARY</span>
                 <h2>Developer Handbooks</h2>
               </div>
-              <p>Each handbook grows from beginner concepts into real-world engineering depth.</p>
+              <p>React, TypeScript, and Next.js are complete; the remaining handbooks can grow independently without changing the navigation model.</p>
             </div>
             <div className={styles.grid}>
               {handbooks.map((handbook) => (
