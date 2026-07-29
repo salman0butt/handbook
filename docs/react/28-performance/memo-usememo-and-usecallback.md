@@ -4,143 +4,104 @@ description: Manual memoization in modern React, when it helps, when it hurts, a
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `memo`, `useMemo`, and `useCallback`
 
-Manual memoization is useful when it solves a measured problem.
+Manual memoization is useful when it solves a measured problem. React Compiler now handles many ordinary memoization opportunities automatically, so the default strategy is increasingly **correct code → measure → targeted optimization**.
 
-It is not a default requirement for every component.
-
-React Compiler now automatically handles many memoization opportunities, so modern React performance guidance is increasingly:
-
-```text
-write correct code
-   ↓
-measure
-   ↓
-let Compiler optimize ordinary cases
-   ↓
-use manual memoization when you need precise identity/performance control
-```
+<VisualDiagram title="Modern memoization strategy">
+  <LifecycleBar items={[
+    { label: 'Write correct pure React code', tone: 'blue' },
+    { label: 'Measure a real bottleneck', tone: 'purple' },
+    { label: 'Let Compiler handle ordinary reuse', tone: 'teal' },
+    { label: 'Add manual memoization only for precise needs', tone: 'orange' },
+    { label: 'Profile again', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
 ## The three tools
 
-### `memo`
+<DiagramGrid columns={3}>
+  <DiagramNode title="memo" tone="purple">Skip a component render when props are equal and nothing else requires it.</DiagramNode>
+  <DiagramNode title="useMemo" tone="blue">Reuse a calculated value while dependencies are equal.</DiagramNode>
+  <DiagramNode title="useCallback" tone="teal">Reuse a function identity while dependencies are equal.</DiagramNode>
+</DiagramGrid>
 
-Caches the result of rendering a component when its props are unchanged.
-
-```js
-import { memo } from 'react';
-
+```jsx
 const Row = memo(function Row({ item }) {
   return <div>{item.name}</div>;
 });
-```
 
-### `useMemo`
-
-Caches a calculated value.
-
-```js
 const visibleItems = useMemo(
   () => filterItems(items, query),
-  [items, query]
+  [items, query],
 );
-```
 
-### `useCallback`
-
-Caches a function identity.
-
-```js
-const handleSelect = useCallback((id) => {
+const handleSelect = useCallback(id => {
   setSelectedId(id);
 }, []);
 ```
 
-All three are about **reusing previous work or identity**.
+All three are about **reuse**, not durable state.
 
 ## `memo` mental model
 
-Without `memo`, a child normally renders when its parent renders.
+<VisualDiagram title="memo adds a prop-comparison gate">
+  <DiagramRow>
+    <DiagramNode title="Parent renders" tone="blue">New parent render attempt</DiagramNode>
+    <DiagramArrow direction="right" label="memo checks" />
+    <DiagramNode title="Child props" tone="purple">Object.is per prop by default</DiagramNode>
+    <DiagramArrow direction="right" label="unchanged?" />
+    <DiagramNode title="Skip child render" tone="green">Only when nothing else requires update</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-```text
-Parent renders
-   ↓
-Child renders
-```
+A memoized component can still render when its own state changes, Context changes, an external-store snapshot changes, or React retries work.
 
-With `memo`, React can skip the child when its props are equal.
-
-```text
-Parent renders
-   ↓
-compare Child props
-   ↓
-unchanged → skip Child render
-```
-
-But `memo` does not make the component frozen.
-
-A memoized component still renders when:
-
-- its own state changes;
-- Context it reads changes;
-- an external store subscription changes;
-- React otherwise needs to retry work.
-
-## Prop equality
-
-By default, `memo` compares each prop with its previous value using `Object.is` semantics.
-
-Primitive props often remain stable naturally.
-
-```jsx
-<Row id={42} selected={false} />
-```
-
-Object/function props are more likely to receive new identities.
+## Prop identity can defeat manual memoization
 
 ```jsx
 <Row options={{ compact: true }} onSelect={() => select(id)} />
 ```
 
-Those values are recreated during every parent render.
+The object and callback are recreated during each parent render.
 
-That can defeat manual `memo`.
-
-## Minimize prop churn before adding complexity
-
-Instead of:
-
-```jsx
-<UserCard user={{ name, avatar, role }} />
-```
-
-prefer a stable existing object when one already represents the concept:
+Before adding more memoization, improve the component API where possible:
 
 ```jsx
 <UserCard user={user} />
-```
-
-Or pass only what the child needs:
-
-```jsx
+// or
 <UserCard name={name} avatar={avatar} />
 ```
 
-Do not create elaborate memoization chains to compensate for an unnecessarily unstable API.
+<DecisionTree
+  question="Why is the child rendering?"
+  items={[
+    { label: 'Its own state / Context / store changed', value: 'memo cannot prevent a required update' },
+    { label: 'Parent rendered and props are effectively unchanged', value: 'Compiler or targeted memo may help if the child is expensive' },
+    { label: 'Props are recreated unnecessarily', value: 'Fix prop/ownership design before building memoization chains' },
+  ]}
+/>
 
 ## `useMemo` is a performance optimization
 
-This is a bad reason:
+Trivial calculations usually do not need it:
 
 ```js
-const total = useMemo(() => price * quantity, [price, quantity]);
+const total = price * quantity;
 ```
 
-The calculation is trivial.
-
-This may be a good reason:
+A verified expensive calculation might:
 
 ```js
 const searchIndex = useMemo(() => {
@@ -148,29 +109,11 @@ const searchIndex = useMemo(() => {
 }, [largeDataset]);
 ```
 
-The benefit depends on whether:
+The benefit depends on actual cost, update frequency, and whether the cached result gets reused.
 
-- the calculation is actually expensive;
-- the component re-renders without the inputs changing;
-- the cached value survives long enough to be reused.
-
-## Correctness must not depend on `useMemo`
-
-Bad design:
-
-```js
-const connection = useMemo(() => createConnection(url), [url]);
-```
-
-If `connection` represents persistent mutable state whose lifetime must be guaranteed, a ref/state/external resource model is usually more appropriate.
-
-React may discard memoized caches for implementation reasons.
-
-Treat `useMemo` as optimization, not durable storage.
+Do not use `useMemo` as durable storage for resources whose lifetime must be guaranteed. Use state, refs, or an appropriate external resource model.
 
 ## `useCallback` caches identity, not execution
-
-This:
 
 ```js
 const handleSave = useCallback(() => {
@@ -178,47 +121,14 @@ const handleSave = useCallback(() => {
 }, [record]);
 ```
 
-does **not** mean `save` runs once.
+`save` still runs every time `handleSave()` is called. React merely may return the same function object while `record` is unchanged.
 
-It means React can return the same function object between renders while `record` stays equal.
-
-The function executes whenever you call it.
-
-## When function identity matters
-
-Useful cases include:
-
-- passing a callback to a manually memoized child;
-- a custom Hook intentionally exposing stable callbacks;
-- a function being a dependency of another Hook;
-- integrating with APIs that subscribe/unsubscribe based on identity.
-
-Example:
-
-```js
-const handleSubmit = useCallback((data) => {
-  post('/orders', data);
-}, []);
-
-return <SlowForm onSubmit={handleSubmit} />;
-```
-
-If `SlowForm` is memoized and genuinely expensive, stable callback identity can help preserve the skip.
+Function identity can matter for a memoized child, Hook dependency, subscription API, or external system that stores callbacks.
 
 ## Functional updates can reduce dependencies
 
-Instead of:
-
 ```js
-const addTodo = useCallback((text) => {
-  setTodos([...todos, { id: crypto.randomUUID(), text }]);
-}, [todos]);
-```
-
-use a functional state update:
-
-```js
-const addTodo = useCallback((text) => {
+const addTodo = useCallback(text => {
   setTodos(current => [
     ...current,
     { id: crypto.randomUUID(), text },
@@ -226,51 +136,13 @@ const addTodo = useCallback((text) => {
 }, []);
 ```
 
-Now the callback does not need the current `todos` snapshot as a dependency.
+This avoids capturing the current `todos` snapshot.
 
-## Do not remove dependencies to force stability
+Never remove real dependencies just to make a callback “stable.” That creates stale closures.
 
-Bad:
+## Restructure Effect dependencies before memoizing them
 
-```js
-const submit = useCallback(() => {
-  send(userId, token);
-}, []); // incorrect
-```
-
-This captures stale values.
-
-Optimization never justifies lying to the dependency model.
-
-Correctness first.
-
-## Object identity and Effects
-
-Suppose:
-
-```js
-const options = {
-  roomId,
-  serverUrl,
-};
-
-useEffect(() => {
-  connect(options);
-}, [options]);
-```
-
-`options` changes identity every render.
-
-One possible solution is `useMemo`:
-
-```js
-const options = useMemo(() => ({
-  roomId,
-  serverUrl,
-}), [roomId, serverUrl]);
-```
-
-But often the better fix is to create the object inside the Effect:
+Instead of creating an object on every render and then memoizing it solely for an Effect:
 
 ```js
 useEffect(() => {
@@ -279,45 +151,25 @@ useEffect(() => {
 }, [roomId, serverUrl]);
 ```
 
-This removes the identity problem entirely.
+Often the best optimization is eliminating the unnecessary identity dependency.
 
-## React Compiler changes the default strategy
+## React Compiler changes the default
 
-React Compiler automatically memoizes many values, functions, and component renders.
+Current React guidance says the Compiler can automatically memoize many values, functions, and component renders. New code generally does not need mechanical `memo`, `useMemo`, and `useCallback` everywhere.
 
-Therefore new code generally should not mechanically add:
+Existing manual memoization should not be mass-deleted without testing because it can affect identity contracts and Compiler output.
 
-```js
-memo(...)
-useMemo(...)
-useCallback(...)
-```
+<VisualDiagram title="Safe migration from manual memoization">
+  <LifecycleBar items={[
+    { label: 'Enable Compiler safely', tone: 'blue' },
+    { label: 'Verify correctness', tone: 'purple' },
+    { label: 'Profile', tone: 'teal' },
+    { label: 'Remove one manual optimization only if justified', tone: 'orange' },
+    { label: 'Compare behavior + performance again', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-everywhere.
-
-Write clear code and let the compiler optimize ordinary cases.
-
-Manual memoization still has legitimate uses when you need precise control.
-
-## Existing manual memoization
-
-Do not mass-delete existing memoization after enabling Compiler.
-
-Existing memoization can influence compilation output and behavior.
-
-Migration strategy:
-
-```text
-1. enable Compiler safely
-2. verify behavior
-3. profile
-4. remove manual memoization only where tested
-5. compare again
-```
-
-## Custom comparison functions
-
-`memo` accepts a custom comparator:
+## Custom comparators are not free
 
 ```js
 const Chart = memo(ChartImpl, (prev, next) => {
@@ -325,174 +177,66 @@ const Chart = memo(ChartImpl, (prev, next) => {
 });
 ```
 
-Be careful.
+The comparison costs time. Deep equality can cost more than rendering, and ignoring a changed callback can preserve stale behavior.
 
-The comparison itself costs time.
+## Memoization chains are architectural warning signs
 
-A deep equality check over a large object may cost more than rendering the component.
-
-### Dangerous callback comparisons
-
-If a custom comparator ignores a function prop whose closure captured changed state, the child can keep stale behavior.
-
-This is a correctness bug disguised as an optimization.
-
-## Memoization chains
-
-Manual optimization often creates chains:
-
-```text
-Child is memoized
-   ↓
-Parent must stabilize callback
-   ↓
-callback uses object
-   ↓
-object must be memoized
-   ↓
-dependencies become complex
-```
-
-That complexity is one reason React Compiler is valuable.
-
-If a manual chain becomes hard to reason about, reconsider the architecture.
+<VisualDiagram title="Manual optimization can cascade">
+  <DiagramStack>
+    <DiagramNode title="Child uses memo" tone="purple">Skip depends on stable props</DiagramNode>
+    <DiagramArrow label="therefore" />
+    <DiagramNode title="Parent stabilizes callback" tone="orange">useCallback</DiagramNode>
+    <DiagramArrow label="callback captures object" />
+    <DiagramNode title="Parent stabilizes object" tone="orange">useMemo</DiagramNode>
+    <DiagramArrow label="complexity grows" />
+    <DiagramNode title="Revisit ownership / API shape" tone="green">Architecture may beat the chain</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 ## State placement often beats memoization
 
-Suppose a large page owns hover state:
+If hover state lives at the page root, each hover starts an update at the page root. If only a `ProductCard` needs it, keep it there.
 
-```text
-Page state changes
-   ↓
-whole page renders
-```
+<VisualDiagram title="Narrow ownership naturally narrows update scope">
+  <DiagramRow>
+    <DiagramNode title="Page-owned hover" tone="red">Large subtree reconsidered</DiagramNode>
+    <DiagramArrow direction="right" label="move ownership" />
+    <DiagramNode title="ProductCard-owned hover" tone="green">Only local owner updates</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Instead, put hover state in the smallest component that owns it:
+## Context bypasses prop memoization
 
-```text
-Page
- └── ProductCard
-      └── local hover state
-```
+A memoized component that reads Context still renders when that Context value changes. `memo` compares props; it does not freeze subscriptions.
 
-Now the update is naturally scoped.
+## Huge lists need bigger tools
 
-No `memo` required.
+Per-row memoization may help, but virtualization, pagination, server filtering, and reducing DOM size can provide much larger gains.
 
-## Context can bypass `memo`
+Do not call Hooks inside loops. Extract a row component first, then measure whether memoization is needed.
 
-```js
-const Toolbar = memo(function Toolbar() {
-  const theme = useContext(ThemeContext);
-  return <div className={theme}>...</div>;
-});
-```
+## Decision guide
 
-If `ThemeContext` changes, `Toolbar` renders even if its props did not.
-
-`memo` only compares props.
-
-## `useMemo` and large lists
-
-Do not call Hooks inside a loop:
-
-```js
-items.map(item => {
-  const value = useMemo(() => compute(item), [item]); // invalid
-});
-```
-
-Extract an item component:
-
-```jsx
-function Row({ item }) {
-  const value = useMemo(() => compute(item), [item]);
-  return <div>{value}</div>;
-}
-```
-
-Then decide whether memoization is actually needed.
-
-For truly huge lists, virtualization may provide much bigger gains than per-row memoization.
+<DecisionTree
+  question="What kind of optimization is justified?"
+  items={[
+    { label: 'Expensive pure calculation repeats with same inputs', value: 'Compiler or targeted useMemo after measurement' },
+    { label: 'Expensive child repeatedly receives equal props', value: 'Compiler or targeted memo' },
+    { label: 'Stable callback identity is an external/API contract', value: 'useCallback may be appropriate' },
+    { label: 'Large collection dominates DOM/render cost', value: 'Virtualization/data architecture first' },
+    { label: 'Local state causes giant ancestor updates', value: 'Move state toward its real owner' },
+    { label: 'Tiny cheap component renders frequently', value: 'Usually leave it alone' },
+  ]}
+/>
 
 ## Common mistakes
 
-### Memoizing trivial calculations
-
-Creates complexity without measurable benefit.
-
-### Memoizing unstable inputs
-
-```js
-const result = useMemo(() => calculate(options), [options]);
-```
-
-when `options` is recreated every render still recalculates every render.
-
-### Using `useCallback` for every handler
-
-Most local event handlers do not need stable identity.
-
-### Deep custom comparators
-
-Can become slower than the render they are trying to avoid.
-
-### Treating memoization as correctness
-
-Caches may be discarded. Store durable state somewhere designed for durability.
-
-### Optimizing before measuring
-
-The component may not be the bottleneck at all.
-
-## Decision table
-
-| Situation | Typical direction |
-| --- | --- |
-| expensive pure calculation repeated with same inputs | consider `useMemo` or Compiler |
-| expensive child gets identical props repeatedly | Compiler or targeted `memo` |
-| memoized child receives callback prop | targeted `useCallback` if needed |
-| tiny component renders often | usually leave it alone |
-| huge list | consider virtualization/data architecture first |
-| Effect reruns because object dependency is recreated | restructure dependency before memoizing |
-| local state causes huge ancestor updates | move state closer to owner |
-| callback must remain stable for API contract | `useCallback` may be appropriate |
-
-## Exercise
-
-Review this component:
-
-```jsx
-function SearchPage({ products }) {
-  const [query, setQuery] = useState('');
-  const [theme, setTheme] = useState('light');
-
-  const results = products.filter(product =>
-    product.name.includes(query)
-  );
-
-  const handleSelect = product => {
-    console.log(product.id);
-  };
-
-  return (
-    <div className={theme}>
-      <SearchInput value={query} onChange={setQuery} />
-      <ProductList results={results} onSelect={handleSelect} />
-    </div>
-  );
-}
-```
-
-Before adding memoization, determine:
-
-1. whether filtering is expensive;
-2. whether `ProductList` is expensive;
-3. whether theme updates cause meaningful wasted work;
-4. whether Compiler is enabled;
-5. whether list virtualization would provide a larger gain.
-
-Only then decide if `useMemo`, `useCallback`, or `memo` is justified.
+- Memoizing trivial calculations.
+- Memoizing values whose dependencies change every render.
+- Using `useCallback` for every local handler.
+- Writing expensive deep custom comparators.
+- Treating `useMemo` as correctness or durable state.
+- Optimizing before profiling.
 
 ## Interview questions
 
@@ -502,15 +246,15 @@ The function identity, not the result of calling the function.
 
 ### Can a `memo` component still re-render?
 
-Yes. Its own state, Context, external stores, retries, and other React work can cause rendering. `memo` primarily skips renders based on unchanged props.
+Yes. State, Context, external stores, retries, and other React work can require rendering.
 
-### Should every expensive calculation use `useMemo`?
+### Should every expensive-looking calculation use `useMemo`?
 
-Not automatically. Measure whether it is expensive in the real scenario and whether the cache is likely to be reused.
+No. Measure real cost and reuse first.
 
-### How does React Compiler change manual memoization?
+### How does React Compiler change the default strategy?
 
-Compiler handles many ordinary memoization opportunities automatically. New code can usually rely on it, while manual memoization remains useful for explicit identity/performance control.
+Compiler handles many ordinary memoization opportunities automatically. Manual APIs remain useful for targeted performance or identity control.
 
 ## References
 

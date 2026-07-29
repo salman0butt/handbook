@@ -4,375 +4,185 @@ description: A production React performance workflow based on evidence, user imp
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Measure Before Optimizing
 
-Performance engineering starts with a question:
+Performance engineering starts with one question:
 
 > **What is actually slow for the user?**
 
-Not:
+React can feel slow because of JavaScript, React render work, Effects, network waterfalls, bundles, hydration, layout/paint, third-party scripts, server work, excessive updates, or poor scheduling. `memo`, `useMemo`, and `useCallback` address only part of that space.
 
-> Which Hook can I add to make this look optimized?
+## Interaction performance is a pipeline
 
-React applications can feel slow for many different reasons:
+<VisualDiagram title="One interaction crosses React and the browser">
+  <LifecycleBar items={[
+    { label: 'User input', tone: 'blue' },
+    { label: 'Event handler / state update', tone: 'purple' },
+    { label: 'React render', tone: 'orange' },
+    { label: 'Commit + layout Effects', tone: 'teal' },
+    { label: 'Browser style / layout / paint', tone: 'green' },
+    { label: 'Passive Effects', tone: 'gray' },
+  ]} />
+</VisualDiagram>
 
-- expensive JavaScript;
-- too much rendering work;
-- unnecessary rendering work;
-- repeated Effects;
-- network waterfalls;
-- large bundles;
-- hydration cost;
-- layout and paint work;
-- long tasks outside React;
-- server-side waterfalls;
-- slow third-party code;
-- excessive state updates;
-- poor scheduling of expensive updates.
+A slowdown can happen at any stage. A React-specific optimization cannot fix a late network request, a huge third-party script, or a browser layout bottleneck.
 
-`memo`, `useMemo`, and `useCallback` only address a small subset of those problems.
-
-## The performance mental model
-
-A user interaction might involve all of these stages:
-
-```text
-user input
-   ↓
-event handler
-   ↓
-state update
-   ↓
-React render work
-   ↓
-commit
-   ↓
-layout Effects
-   ↓
-browser style/layout
-   ↓
-paint
-   ↓
-passive Effects
-```
-
-A slowdown can happen at any point.
-
-A React-specific optimization will not fix a network request that starts too late, a 600 KB third-party script, or a CSS layout bottleneck.
-
-## First identify the symptom
-
-Examples:
-
-- typing feels delayed;
-- opening a modal freezes briefly;
-- route navigation takes too long;
-- a list becomes sluggish with many items;
-- a dashboard updates too frequently;
-- initial load is slow;
-- hydration blocks interaction;
-- server rendering starts quickly but finishes slowly.
-
-Be precise.
+## Define the symptom precisely
 
 “App is slow” is not actionable.
 
-“Typing in the search box takes 150 ms before the character appears when 10,000 rows are visible” is actionable.
+“Typing in the search box takes 150 ms before the character appears when 10,000 rows are visible” gives you an interaction, dataset, and measurable outcome.
 
 ## Reproduce before changing code
 
-Create a repeatable scenario.
+<VisualDiagram title="A useful performance experiment is repeatable">
+  <LifecycleBar items={[
+    { label: 'Same page/build', tone: 'blue' },
+    { label: 'Same dataset/cache state', tone: 'purple' },
+    { label: 'Same interaction', tone: 'orange' },
+    { label: 'Same measurements', tone: 'teal' },
+    { label: 'Compare before vs after', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-```text
-1. load the same page
-2. use the same dataset
-3. perform the same interaction
-4. record the same measurement
-5. compare before/after
-```
-
-Without a stable reproduction, optimization work becomes guesswork.
+Without controlled conditions, optimization becomes guesswork.
 
 ## Measure in the right environment
 
-Development React intentionally performs extra checks.
+Development React intentionally performs extra diagnostics. Strict Mode can repeat some work in development.
 
-For example, Strict Mode may execute some logic more than once during development.
+<DiagramGrid columns={3}>
+  <DiagramNode title="Development" tone="blue">Best for debugging correctness and causes</DiagramNode>
+  <DiagramNode title="Profiling build" tone="purple">Instrumentation closer to production behavior</DiagramNode>
+  <DiagramNode title="Production" tone="green">Final user-facing validation</DiagramNode>
+</DiagramGrid>
 
-Therefore distinguish:
+Do not treat development timing as production truth.
 
-```text
-development debugging
-vs
-production performance
-vs
-profiling build performance
-```
+## Browser Performance panel vs React profiling
 
-A development slowdown is worth understanding, but it is not automatically representative of a production build.
+<VisualDiagram title="Use the tool that can see the suspected cost">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Browser Performance" tone="blue">JS tasks · event timing · network · style · layout · paint</DiagramNode>
+    <DiagramNode title="React DevTools / Profiler" tone="purple">Which components rendered · commit cost · update causes</DiagramNode>
+    <DiagramNode title="React Performance Tracks" tone="teal">Blocking · Transition · Suspense · Effects alongside browser work</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## Browser Performance panel
+React 19.2 Performance Tracks can place React scheduling and component work directly on supported browser performance timelines.
 
-The browser Performance panel helps answer questions React DevTools alone cannot.
+## Find the dominant cost
 
-Look for:
+Suppose a click trace shows:
 
-- long JavaScript tasks;
-- event handling duration;
-- style recalculation;
-- layout;
-- paint;
-- network timing;
-- scripting outside React;
-- blocking third-party work.
+<VisualDiagram title="Optimize the largest contributor, not the most familiar API">
+  <DiagramRow>
+    <DiagramNode title="React render" tone="orange">40 ms</DiagramNode>
+    <DiagramArrow direction="right" label="commit" />
+    <DiagramNode title="Browser layout" tone="red">80 ms</DiagramNode>
+    <DiagramArrow direction="right" label="paint" />
+    <DiagramNode title="Visible result" tone="green">User waits for both</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-React 19.2 adds React Performance Tracks to supported browser performance traces, giving React-specific scheduling information alongside browser work.
-
-This matters because a useful trace might show:
-
-```text
-click
-  ↓
-React blocking update
-  ↓
-40 ms render
-  ↓
-commit
-  ↓
-80 ms browser layout
-```
-
-In that scenario, cutting the render from 40 ms to 30 ms may help, but browser layout is still the dominant cost.
-
-## React DevTools Profiler
-
-Use the Profiler to answer questions such as:
-
-- Which components rendered?
-- Which component subtree was expensive?
-- How often does it render?
-- Which update caused the render?
-- Did an optimization reduce render duration?
-
-Do not optimize a component merely because it appears in a flamegraph.
-
-Rendering is normal.
-
-The question is whether the render is **expensive, frequent, or unnecessary enough to matter**.
+Reducing React render from 40 ms to 30 ms helps, but layout remains the dominant bottleneck.
 
 ## Render count is not the performance metric
 
-A component rendering 50 times can be fine if each render is tiny.
+<DiagramGrid columns={2}>
+  <DiagramNode title="50 renders × 0.05 ms" tone="green">2.5 ms total</DiagramNode>
+  <DiagramNode title="1 render × 120 ms" tone="red">120 ms total</DiagramNode>
+</DiagramGrid>
 
-A component rendering once can be a problem if that render blocks the main thread for 300 ms.
+Rendering is normal. Investigate work that is expensive, frequent, or disruptive enough to affect the user.
 
-Compare:
+## Frequency and cost are separate dimensions
 
-```text
-Component A
-50 renders × 0.05 ms = 2.5 ms
+<VisualDiagram title="Prioritize high-frequency, high-cost work">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Low frequency + low cost" tone="green">Usually fine</DiagramNode>
+    <DiagramNode title="Low frequency + high cost" tone="orange">Profile the interaction</DiagramNode>
+    <DiagramNode title="High frequency + low cost" tone="teal">Often acceptable, measure</DiagramNode>
+    <DiagramNode title="High frequency + high cost" tone="red">Likely bottleneck</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Component B
-1 render × 120 ms = 120 ms
-```
+For too-frequent updates, consider narrower subscriptions, refs for non-render values, fewer state updates, or architecture changes. For expensive individual renders, consider algorithms, virtualization, server work, component boundaries, or targeted memoization.
 
-The second case deserves attention first.
+## Find what triggered the update
 
-## Distinguish frequency from cost
+A component can render because its own state changed, an ancestor rendered, Context changed, an external-store snapshot changed, Suspense retried, a Transition progressed, or framework navigation updated the tree.
 
-Two common performance problems:
+Do not assume props are the cause.
 
-### Too many updates
+## Cascading updates
 
-```text
-scroll event
-  ↓
-setState
-  ↓
-render
-  ↓
-scroll event
-  ↓
-setState
-  ↓
-render
-```
+<VisualDiagram title="Derived state in Effects can create avoidable extra work">
+  <DiagramStack>
+    <DiagramNode title="Render A" tone="blue">UI computed</DiagramNode>
+    <DiagramArrow label="commit" />
+    <DiagramNode title="Effect" tone="orange">Derives value and calls setState</DiagramNode>
+    <DiagramArrow label="new update" />
+    <DiagramNode title="Render B" tone="red">Second render that may have been avoidable</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-Possible directions:
-
-- reduce update frequency;
-- move transient values to refs;
-- subscribe more narrowly;
-- use a specialized external store;
-- avoid unnecessary Effect-driven state.
-
-### Expensive individual renders
-
-Possible directions:
-
-- reduce expensive calculation;
-- split large components;
-- virtualize large collections;
-- move work to the server;
-- defer non-urgent work;
-- memoize only where evidence supports it.
-
-## Identify the source of an update
-
-A component can re-render because:
-
-- its own state changed;
-- an ancestor rendered;
-- Context changed;
-- an external store snapshot changed;
-- a Suspense boundary retried;
-- a Transition progressed;
-- a framework navigation updated the tree.
-
-Do not assume props are the reason.
-
-## Watch for cascading updates
-
-A cascading update happens when new work is scheduled during or immediately after existing React work.
-
-Common sources include:
-
-- state updates from Effects;
-- state derived through Effects instead of render;
-- layout measurements that trigger another render;
-- synchronization loops;
-- duplicated state.
-
-Mental model:
-
-```text
-render A
-  ↓
-commit A
-  ↓
-Effect sets state
-  ↓
-render B
-```
-
-If the second render could have been avoided by deriving the value during the first render, the Effect introduced unnecessary work.
-
-This is one reason **Effect ≠ lifecycle** is also a performance lesson.
+If the value could have been derived during render, the Effect created unnecessary work.
 
 ## Network waterfalls
 
-Performance problems often happen before React renders anything expensive.
+<VisualDiagram title="Serial data dependencies can dominate the page">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Waterfall" tone="red">fetch user → render child → fetch projects → fetch permissions</DiagramNode>
+    <DiagramNode title="Parallel start" tone="green">start user + projects + permissions together when independent</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Bad sequence:
+Server Components, framework data APIs, preloading, and Suspense-aware data systems can help coordinate this. `useMemo` cannot fix a waterfall.
 
-```text
-load route
-   ↓
-fetch user
-   ↓
-render child
-   ↓
-fetch projects
-   ↓
-render child
-   ↓
-fetch permissions
-```
+## Bundle and hydration cost
 
-Better architectures may start independent work concurrently:
+Measure initial JavaScript, route chunks, duplicated dependencies, editor/chart libraries, third-party scripts, and broad `'use client'` boundaries.
 
-```text
-route starts
-   ├── fetch user
-   ├── fetch projects
-   └── fetch permissions
-```
+Server-rendered HTML arriving early does not mean hydration is cheap. Hydration still loads client code, evaluates components, attaches behavior, and can run expensive calculations.
 
-Framework data APIs, Server Components, preloading, and Suspense-aware data systems can help coordinate this.
+## Scheduling and reducing work are different
 
-`useMemo` cannot fix a waterfall.
+<VisualDiagram title="Different performance tools solve different classes of problems">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Memoization" tone="purple">Avoid/reuse some repeated work</DiagramNode>
+    <DiagramNode title="Transition/deferred" tone="teal">Change priority and interruption behavior</DiagramNode>
+    <DiagramNode title="Algorithm/virtualization/server/worker" tone="green">Reduce, move, or bound the work itself</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## Bundle cost
+A Transition can keep urgent input responsive, but it does not make a 200 ms calculation cost 20 ms.
 
-Measure:
+## Practical optimization workflow
 
-- initial JavaScript size;
-- route chunks;
-- duplicated dependencies;
-- large editor/chart libraries;
-- third-party scripts;
-- client modules introduced by broad `'use client'` boundaries.
+<VisualDiagram title="Evidence-driven performance loop">
+  <LifecycleBar items={[
+    { label: 'Define user-visible problem', tone: 'blue' },
+    { label: 'Record baseline', tone: 'purple' },
+    { label: 'Locate dominant cost', tone: 'orange' },
+    { label: 'Change the largest cause', tone: 'teal' },
+    { label: 'Measure again', tone: 'green' },
+    { label: 'Remove unjustified complexity', tone: 'gray' },
+  ]} />
+</VisualDiagram>
 
-Possible improvements:
-
-- `lazy` and route splitting;
-- narrower client boundaries;
-- server-side work;
-- removing unused dependencies;
-- loading optional features on demand.
-
-## Hydration cost
-
-For server-rendered apps, HTML arriving quickly does not guarantee immediate interactivity.
-
-Hydration can be expensive when:
-
-- the client tree is huge;
-- too much code is included in the client bundle;
-- expensive render calculations happen during hydration;
-- large Context/provider trees initialize immediately.
-
-RSC architecture can reduce client JavaScript by keeping non-interactive code on the server.
-
-## Scheduling is different from making work cheaper
-
-Transitions can make expensive updates less disruptive.
-
-```js
-startTransition(() => {
-  setFilter(nextFilter);
-});
-```
-
-This can let urgent work remain responsive.
-
-But it does not magically reduce the CPU cost of the update.
-
-If the calculation still costs 200 ms, that work still exists.
-
-Think:
-
-```text
-memoization → avoid/reuse some work
-Transition  → change priority/interruption behavior
-worker      → move CPU work off main thread
-server      → move work to server
-algorithm   → reduce the work itself
-```
-
-These solve different problems.
-
-## A practical optimization workflow
-
-### Step 1: define user-visible problem
-
-Example:
-
-> Filtering the customer table makes typing lag.
-
-### Step 2: record a baseline
-
-Measure:
-
-- interaction duration;
-- render duration;
-- long tasks;
-- React commits;
-- dataset size.
-
-### Step 3: locate dominant cost
-
-Example finding:
+Example baseline:
 
 ```text
 filterRows(): 70 ms
@@ -380,124 +190,54 @@ Row tree render: 55 ms
 browser layout: 15 ms
 ```
 
-### Step 4: fix the largest cause first
-
-Maybe:
-
-- index the data differently;
-- move filtering server-side;
-- virtualize rows;
-- defer result rendering;
-- memoize a verified expensive transformation.
-
-### Step 5: measure again
-
-Do not stop at “the code looks optimized.”
-
-### Step 6: remove unjustified complexity
-
-An optimization that saves no meaningful time but creates fragile dependency arrays is usually not worth keeping.
+Possible fixes should target the dominant cause: data indexing, server filtering, virtualization, deferred rendering, or memoizing a verified expensive transformation.
 
 ## Performance budgets
 
-Teams can establish budgets for critical flows.
+Budgets should describe user-facing outcomes: search input responsiveness, route-to-useful-content timing, modal opening without input freeze, or smooth list scrolling under realistic data.
 
-Examples:
-
-```text
-search keystroke → visible response under target threshold
-route → useful content under target threshold
-modal open → no observable input freeze
-large list → smooth scrolling
-```
-
-The exact thresholds depend on product requirements and device/network targets.
-
-The important idea is to measure against user-facing outcomes.
+The exact target depends on the product, device, and network population.
 
 ## Common mistakes
 
-### Adding memoization everywhere
-
-This increases complexity and can provide zero benefit.
-
-### Benchmarking only development mode
-
-Development instrumentation changes behavior and cost.
-
-### Optimizing render count instead of user experience
-
-Fewer renders do not automatically mean faster interaction.
-
-### Ignoring browser work
-
-React may finish quickly while layout or paint remains expensive.
-
-### Ignoring network architecture
-
-A fast component cannot render data that has not arrived.
-
-### Measuring different scenarios before and after
-
-Performance comparisons require controlled conditions.
+- Adding memoization everywhere before measuring.
+- Benchmarking only development mode.
+- Optimizing raw render count instead of user-visible latency.
+- Ignoring browser layout/paint.
+- Ignoring network or server architecture.
+- Comparing different scenarios before and after.
 
 ## Production rule of thumb
 
-Optimize in this order:
-
-```text
-1. correctness
-2. architecture
-3. measurement
-4. dominant bottleneck
-5. targeted optimization
-6. verification
-```
-
-Not:
-
-```text
-1. useMemo everything
-2. hope
-```
-
-## Exercise
-
-Take a page containing:
-
-- search input;
-- 5,000 rows;
-- expensive row formatting;
-- Context-driven theme updates.
-
-Design a measurement plan that identifies:
-
-1. typing latency;
-2. filtering cost;
-3. row render cost;
-4. layout cost;
-5. unnecessary theme-related re-renders;
-6. network cost if filtering moves server-side.
-
-Do not propose an optimization until you define what measurement would justify it.
+<VisualDiagram title="Optimization order">
+  <DiagramStack>
+    <DiagramNode title="1 · Correctness" tone="blue">The UI must be right first</DiagramNode>
+    <DiagramArrow label="then" />
+    <DiagramNode title="2 · Architecture + measurement" tone="purple">Own state/data/work correctly and find the bottleneck</DiagramNode>
+    <DiagramArrow label="then" />
+    <DiagramNode title="3 · Targeted optimization" tone="orange">Change the measured cause</DiagramNode>
+    <DiagramArrow label="verify" />
+    <DiagramNode title="4 · User impact improved" tone="green">Keep the change only if it helps</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 ## Interview questions
 
-### Why should React performance work start with profiling?
+### Why start with profiling?
 
-Because slow UX can come from rendering, JavaScript, network, browser layout/paint, hydration, Effects, or third-party code. Profiling identifies the actual dominant cause.
+Because slow UX can come from React rendering, JavaScript, network, browser layout/paint, hydration, Effects, server work, or third-party code. Profiling locates the dominant cause.
 
 ### Is reducing render count always an optimization?
 
-No. A render may be cheap, and memoization itself has complexity and comparison cost. User-visible latency and measured work matter more than raw render count.
+No. Cheap renders can be harmless, while one expensive render can block the user. Measure time and impact.
 
-### What is the difference between reducing work and scheduling work?
+### Reducing work vs scheduling work?
 
-Reducing work makes less computation necessary. Scheduling APIs such as Transitions change when and at what priority work happens, but do not necessarily reduce total computation.
+Reducing work lowers total computation. Scheduling APIs change when work runs and whether it is interruptible.
 
-### What is a common React source of cascading updates?
+### Common React source of cascading updates?
 
-Using Effects to calculate state that could have been derived during render, causing a render → commit → Effect → state update → second render chain.
+Using Effects to derive state that could have been calculated during render, creating render → commit → Effect → update → second render.
 
 ## References
 
