@@ -156,6 +156,17 @@ const nextjsItems = [
     'nextjs/architecture-and-large-applications/feature-flags-configuration-state-and-cross-cutting-governance',
     'nextjs/architecture-and-large-applications/multi-zones-microfrontends-team-ownership-and-independent-delivery',
     'nextjs/architecture-and-large-applications/reference-architecture-adrs-governance-and-large-app-design-review',
+  ], { collapsed: true }),
+  category('19 · Internals & Senior Mental Models', [
+    'nextjs/internals-and-senior-mental-models/internals-mental-model-public-contracts-implementation-details-and-evidence',
+    'nextjs/internals-and-senior-mental-models/rsc-flight-module-graphs-client-references-and-hydration',
+    'nextjs/internals-and-senior-mental-models/build-pipeline-turbopack-route-compilation-manifests-and-output-tracing',
+    'nextjs/internals-and-senior-mental-models/prerendering-static-shells-cache-components-and-runtime-work',
+    'nextjs/internals-and-senior-mental-models/client-router-prefetch-router-cache-and-route-tree-reconciliation',
+    'nextjs/internals-and-senior-mental-models/server-functions-actions-references-serialization-encryption-and-skew',
+    'nextjs/internals-and-senior-mental-models/request-lifecycle-routing-proxy-rendering-streaming-and-response-assembly',
+    'nextjs/internals-and-senior-mental-models/node-edge-runtimes-custom-server-process-model-and-package-boundaries',
+    'nextjs/internals-and-senior-mental-models/first-principles-debugging-senior-mental-models-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
