@@ -16,6 +16,19 @@ const config = {
     },
   },
 
+  plugins: [
+    [
+      '@cmfcmf/docusaurus-search-local',
+      {
+        indexDocs: true,
+        indexBlog: false,
+        indexPages: false,
+        language: 'en',
+        maxSearchResults: 12,
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
