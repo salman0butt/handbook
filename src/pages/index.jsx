@@ -38,9 +38,10 @@ const handbooks = [
   {
     icon: '⬢',
     title: 'Node.js',
-    description: 'APIs, asynchronous systems, security, databases, testing, scalability, and backend design.',
-    status: 'Available',
+    description: 'Runtime internals, async I/O, APIs, data, security, distributed systems, production engineering, projects, and interviews.',
+    status: 'Complete',
     href: '/nodejs',
+    featured: true,
   },
   {
     icon: 'DB',
