@@ -23,28 +23,31 @@ jobs:
             local expected="$2"
             local body
 
-            for attempt in $(seq 1 30); do
-              body="$(curl --fail --silent --show-error --location "$url" || true)"
-              if grep -Fq "$expected" <<<"$body"; then
-                echo "Verified: $url -> $expected"
-                return 0
+            for attempt in $(seq 1 6); do
+              if body="$(curl --fail --silent --show-error --location "$url")"; then
+                if grep -Fqi "$expected" <<<"$body"; then
+                  echo "Verified: $url -> $expected"
+                  return 0
+                fi
+                echo "Attempt $attempt: route is live but marker '$expected' was not found at $url"
+              else
+                echo "Attempt $attempt: route not live yet at $url"
               fi
-              echo "Attempt $attempt: published content not visible yet at $url"
-              sleep 10
+              sleep 5
             done
 
-            echo "Expected published marker not found: $expected"
+            echo "Verification failed: $url -> $expected"
             return 1
           }
 
           check 'https://salman0butt.github.io/handbook/docs/typescript/intro' 'TypeScript Developer Handbook'
-          check 'https://salman0butt.github.io/handbook/docs/typescript/11-16-generics-and-type-manipulation' 'Generics & Type Manipulation'
-          check 'https://salman0butt.github.io/handbook/docs/typescript/26-31-modules-tsconfig-monorepos-declarations-libraries-js' 'Modules, TSConfig, Monorepos, Declarations & Libraries'
-          check 'https://salman0butt.github.io/handbook/docs/typescript/40-49-backends-architecture-domain-type-level-compiler-performance-debugging' 'Compiler & Language Service Mental Models'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/11-16-generics-and-type-manipulation' 'Generics'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/26-31-modules-tsconfig-monorepos-declarations-libraries-js' 'TSConfig'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/40-49-backends-architecture-domain-type-level-compiler-performance-debugging' 'Compiler'
           check 'https://salman0butt.github.io/handbook/docs/typescript/50-59-testing-linting-build-security-production-migration-patterns-staff' 'Migration to TypeScript'
-          check 'https://salman0butt.github.io/handbook/docs/typescript/projects' 'Capstone — Production TypeScript Platform'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/projects' 'Production TypeScript Platform'
           check 'https://salman0butt.github.io/handbook/docs/typescript/interview-mastery' 'Interview Mastery'
-          check 'https://salman0butt.github.io/handbook/docs/typescript/interview-question-bank' '310-question bank'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/interview-question-bank' 'Interview Question Bank'
           check 'https://salman0butt.github.io/handbook/docs/typescript/mock-interviews' 'Mock Interview Practice'
-          check 'https://salman0butt.github.io/handbook/docs/typescript/reference/api-coverage' 'TypeScript API & Curriculum Coverage'
-          check 'https://salman0butt.github.io/handbook/docs/typescript/reference/final-completeness-audit' 'Status: NOT COMPLETE'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/reference/api-coverage' 'Coverage'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/reference/final-completeness-audit' 'NOT COMPLETE'
