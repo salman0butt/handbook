@@ -4,26 +4,22 @@ description: Designing reusable React primitives, variants, slots, composition, 
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Design Systems and Component APIs
 
-A design system is more than a folder of buttons.
+A design system is not just a folder of styled components. It is a set of **stable product-independent contracts** for semantics, interaction, accessibility, visual language, and composition.
 
-It combines:
-
-- visual tokens;
-- reusable primitives;
-- behavior contracts;
-- accessibility;
-- state conventions;
-- API consistency;
-- documentation;
-- testing.
-
-The hardest part is often not CSS. It is **API design**.
-
-## Start with semantic primitives
-
-A button primitive should still be a real button when the interaction is a button.
+## Start with semantics
 
 ```jsx
 function Button(props) {
@@ -31,19 +27,22 @@ function Button(props) {
 }
 ```
 
-Semantics are the foundation for:
+<VisualDiagram title="Native semantics provide behavior before styling begins">
+  <DiagramStack>
+    <DiagramNode title="Semantic element" tone="blue">button · input · label · nav · dialog</DiagramNode>
+    <DiagramArrow label="browser platform supplies" />
+    <DiagramGrid columns={4}>
+      <DiagramNode title="Keyboard" tone="cyan">expected activation</DiagramNode>
+      <DiagramNode title="Focus" tone="purple">native focus behavior</DiagramNode>
+      <DiagramNode title="Accessibility" tone="green">role/name/state foundation</DiagramNode>
+      <DiagramNode title="Forms" tone="orange">submission + disabled semantics</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-- keyboard behavior;
-- accessible names;
-- focus;
-- form behavior;
-- browser defaults.
+A `role` can change semantics; it does not recreate all native behavior for you.
 
-Do not rebuild native behavior unless requirements demand it.
-
-## Variant APIs
-
-Prefer small, intentional variant contracts.
+## Keep variant contracts intentional
 
 ```tsx
 type ButtonProps = {
@@ -52,25 +51,19 @@ type ButtonProps = {
 };
 ```
 
-Avoid a giant bag of unrelated booleans:
-
-```jsx
-<Button
-  primary
-  danger
-  compact
-  outlined
-  blue
-  rounded
-  large
+<DecisionTree
+  question="Should this become a component prop?"
+  items={[
+    { label: 'It represents a stable supported product/design variant', value: 'Expose an intentional prop' },
+    { label: 'It is normal native element behavior', value: 'Reuse native prop types' },
+    { label: 'It is arbitrary visual configuration', value: 'Prefer composition/tokens instead of prop explosion' },
+    { label: 'It creates contradictory combinations', value: 'Model mutually exclusive variants explicitly' },
+  ]}
 />
-```
 
-This creates invalid combinations and unclear precedence.
+Avoid boolean matrices such as `primary`, `danger`, `outlined`, `blue`, and `large` when those combinations do not form a coherent public contract.
 
-## Reuse native props
-
-With TypeScript:
+## Reuse native DOM contracts
 
 ```tsx
 type ButtonProps = React.ComponentPropsWithoutRef<'button'> & {
@@ -78,18 +71,9 @@ type ButtonProps = React.ComponentPropsWithoutRef<'button'> & {
 };
 ```
 
-This preserves standard button props:
+This preserves native `disabled`, `type`, `aria-*`, event, form, and data-attribute behavior.
 
-- `disabled`;
-- `type`;
-- `aria-*`;
-- `onClick`;
-- form behavior;
-- data attributes.
-
-## React 19 refs
-
-Function components can accept `ref` as a prop in React 19.
+React 19 also supports receiving `ref` as a normal prop in function components:
 
 ```tsx
 type InputProps = React.ComponentPropsWithoutRef<'input'> & {
@@ -101,25 +85,15 @@ function Input({ ref, ...props }: InputProps) {
 }
 ```
 
-For modern code, this can remove the need for `forwardRef` in many component APIs.
+## Composition beats configuration when structure varies
 
-## Composition over configuration
-
-A highly configured component can become rigid.
-
-Instead of:
-
-```jsx
-<Card
-  title="Revenue"
-  subtitle="Last 30 days"
-  icon="chart"
-  footerText="Updated now"
-  showDivider
-/>
-```
-
-consider compositional structure:
+<VisualDiagram title="Choose who owns structure">
+  <DiagramRow>
+    <DiagramNode title="Configured component" tone="orange">Library owns structure; caller fills predefined fields</DiagramNode>
+    <DiagramArrow direction="right" label="vs" />
+    <DiagramNode title="Composable primitive" tone="green">Library owns contracts; product owns composition</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
 ```jsx
 <Card>
@@ -127,114 +101,60 @@ consider compositional structure:
     <Card.Title>Revenue</Card.Title>
     <Card.Description>Last 30 days</Card.Description>
   </Card.Header>
-  <Card.Content>
-    <RevenueChart />
-  </Card.Content>
+  <Card.Content><RevenueChart /></Card.Content>
   <Card.Footer>Updated now</Card.Footer>
 </Card>
 ```
 
-Composition lets product code control structure while the design system controls contracts and styling.
+Use configuration for genuinely fixed structure. Use composition when callers need meaningful structural freedom.
 
-## Compound components
+## Compound components coordinate one interaction model
 
-Compound components group related primitives under one conceptual API.
+<VisualDiagram title="Compound component ownership">
+  <DiagramStack>
+    <DiagramNode title="Tabs" tone="blue">public root API + internal coordination</DiagramNode>
+    <DiagramArrow label="internal Context" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Tabs.List" tone="cyan">group semantics</DiagramNode>
+      <DiagramNode title="Tabs.Trigger" tone="purple">focus + selected state</DiagramNode>
+      <DiagramNode title="Tabs.Panel" tone="green">content relationship</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-Example:
+The design system owns keyboard behavior, focus management, selected state, and ARIA relationships. Product code owns the content.
 
-```jsx
-<Tabs value={tab} onValueChange={setTab}>
-  <Tabs.List>
-    <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-    <Tabs.Trigger value="activity">Activity</Tabs.Trigger>
-  </Tabs.List>
+Keep internal provider values private when possible; consumers should depend on the documented component API.
 
-  <Tabs.Panel value="overview">
-    <Overview />
-  </Tabs.Panel>
-</Tabs>
-```
+## Controlled and uncontrolled ownership
 
-The design system owns:
-
-- tab semantics;
-- keyboard behavior;
-- focus management;
-- selected state;
-- ARIA relationships.
-
-The product owns content.
-
-## Context inside compound components
-
-Context can connect compound children:
-
-```text
-Tabs provider
- ├── Tabs.List
- ├── Tabs.Trigger
- └── Tabs.Panel
-```
-
-Keep the Context internal to the primitive when possible.
-
-Consumers should use the public component API rather than internal provider values.
-
-## Controlled and uncontrolled APIs
-
-Reusable primitives often need both modes.
-
-Controlled:
+<DecisionTree
+  question="Who owns the value for this instance?"
+  items={[
+    { label: 'Parent passes value + change callback', value: 'Controlled: parent is source of truth' },
+    { label: 'Caller passes default value only', value: 'Uncontrolled: component owns state' },
+  ]}
+/>
 
 ```jsx
 <Dialog open={open} onOpenChange={setOpen} />
-```
-
-Uncontrolled:
-
-```jsx
 <Dialog defaultOpen />
 ```
 
-The component should have one clear ownership model per instance.
+Do not switch ownership modes accidentally during the same component lifetime.
 
-Do not switch between controlled and uncontrolled behavior accidentally.
+## Events should match the abstraction level
 
-## Event naming
+<DiagramGrid columns={2}>
+  <DiagramNode title="DOM wrapper" tone="cyan">Preserve native event contracts when callers need them</DiagramNode>
+  <DiagramNode title="Higher-level primitive" tone="green">Prefer domain events such as onOpenChange or onValueChange</DiagramNode>
+</DiagramGrid>
 
-Name events by domain state changes.
+A `Select` consumer often cares that the selected value changed, not which DOM event produced it.
 
-Examples:
+## Prop merging is part of correctness
 
-```text
-onOpenChange
-onValueChange
-onSelectionChange
-onCheckedChange
-```
-
-These are often more reusable than DOM-specific names when the component represents a higher-level primitive.
-
-At the lowest DOM wrapper level, preserve native event behavior where possible.
-
-## Do not swallow consumer handlers
-
-Bad:
-
-```jsx
-function Button(props) {
-  return (
-    <button
-      {...props}
-      onClick={() => trackClick()}
-    />
-  );
-}
-```
-
-The consumer's `onClick` gets overwritten.
-
-Better:
+Do not swallow consumer handlers:
 
 ```jsx
 function Button({ onClick, ...props }) {
@@ -247,322 +167,57 @@ function Button({ onClick, ...props }) {
 }
 ```
 
-Even here, ask whether analytics belongs inside the primitive at all.
+Also decide deliberately how `className`, `style`, IDs, ARIA props, and event cancellation are merged. The order of prop spreading can change the public contract.
 
-## Prop spreading order matters
+## Accessibility belongs in the primitive contract
 
-```jsx
-<button {...props} className="button" />
-```
+<VisualDiagram title="A reusable interaction primitive owns more than appearance">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Semantics" tone="blue">role · name · state · relationships</DiagramNode>
+    <DiagramNode title="Interaction" tone="purple">keyboard · pointer · focus · dismissal</DiagramNode>
+    <DiagramNode title="Composition" tone="green">slots · children · controlled state</DiagramNode>
+    <DiagramNode title="DOM contract" tone="cyan">native props · refs · data attributes</DiagramNode>
+    <DiagramNode title="Visual contract" tone="orange">tokens · variants · responsive behavior</DiagramNode>
+    <DiagramNode title="Quality" tone="slate">tests · docs · migration notes</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-means consumer `className` is overwritten.
+Types can enforce props; they cannot by themselves guarantee keyboard semantics or focus behavior.
 
-```jsx
-<button className="button" {...props} />
-```
+## Keep product state out of the design system
 
-means consumer `className` can replace system styling.
+<VisualDiagram title="Design system vs product ownership">
+  <DiagramRow>
+    <DiagramNode title="Design system" tone="blue">Dialog behavior · Button semantics · tokens · form primitives</DiagramNode>
+    <DiagramArrow direction="right" label="composed by" />
+    <DiagramNode title="Product feature" tone="green">Billing cancellation · checkout workflow · permissions</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Usually you need deliberate merging:
+A generic `Dialog` is infrastructure. `EnterpriseBillingCancellationDialog` is usually product behavior and should remain in the feature layer.
 
-```jsx
-<button
-  {...props}
-  className={mergeClasses('button', props.className)}
+## Headless vs styled APIs
+
+Headless primitives can expose robust behavior while leaving visual composition to a product or design layer. Styled primitives can encode visual policy directly.
+
+<DecisionTree
+  question="How much should the primitive own?"
+  items={[
+    { label: 'Many brands/presentations reuse one complex interaction model', value: 'Headless behavior can be valuable' },
+    { label: 'One product needs a stable visual system', value: 'Styled semantic primitives reduce repetition' },
+    { label: 'Business rules differ between usages', value: 'Keep those rules outside the primitive' },
+  ]}
 />
-```
 
-Treat prop merging as an API decision.
-
-## Slots and `asChild` patterns
-
-Some design systems allow a primitive to delegate its rendered element to a child.
-
-Conceptually:
-
-```jsx
-<Button asChild>
-  <a href="/pricing">Pricing</a>
-</Button>
-```
-
-This can preserve product semantics while reusing styling/behavior.
-
-But slot APIs require careful handling of:
-
-- refs;
-- event merging;
-- accessibility;
-- prop precedence;
-- disabled behavior;
-- TypeScript inference.
-
-Do not implement a slot system casually.
-
-## Polymorphic `as` APIs
-
-Another pattern:
-
-```jsx
-<Text as="label">Email</Text>
-```
-
-Polymorphism can be useful for low-level layout/typography primitives.
-
-But broad `as` APIs increase typing and semantic complexity.
-
-A component named `Button` rendering arbitrary elements can create misuse.
-
-Prefer polymorphism where the conceptual primitive remains valid.
-
-## Accessibility is part of the component contract
-
-A Dialog primitive should own:
-
-- `role="dialog"` behavior;
-- accessible name;
-- focus movement;
-- focus restoration;
-- Escape handling;
-- modal interaction rules where applicable.
-
-Do not make every product team reimplement these details.
-
-The design system should centralize hard accessibility behavior.
-
-## `useId` for internal relationships
-
-Reusable primitives can use `useId` for generated relationships.
-
-```jsx
-function Field({ label, error }) {
-  const inputId = useId();
-  const errorId = `${inputId}-error`;
-
-  return (
-    <div>
-      <label htmlFor={inputId}>{label}</label>
-      <input
-        id={inputId}
-        aria-describedby={error ? errorId : undefined}
-      />
-      {error && <p id={errorId}>{error}</p>}
-    </div>
-  );
-}
-```
-
-Do not use `useId` for list keys.
-
-## Separate tokens from component logic
-
-Design tokens describe the visual system:
-
-```text
-spacing
-colors
-typography
-radii
-shadows
-motion
-```
-
-Components consume tokens.
-
-Avoid embedding one-off product values throughout primitive code.
-
-## Variant implementation
-
-A variant system can map semantic props to classes/tokens.
-
-```ts
-const variants = {
-  primary: 'bg-brand text-on-brand',
-  secondary: 'bg-muted text-default',
-};
-```
-
-Keep product semantics in mind.
-
-`danger` is usually more meaningful than `red`.
-
-## Headless vs styled primitives
-
-### Headless
-
-Provides behavior/accessibility, minimal styling.
-
-Useful when multiple brands need different visual systems.
-
-### Styled
-
-Provides behavior + standard visual design.
-
-Useful when product consistency is the goal.
-
-Some systems layer them:
-
-```text
-headless behavior primitive
-   ↓
-styled system component
-   ↓
-product composition
-```
-
-## Avoid business logic in shared primitives
-
-Bad shared Button:
-
-```jsx
-function Button({ productId }) {
-  const cart = useCart();
-  // ...
-}
-```
-
-Now the button is coupled to ecommerce.
-
-Better:
-
-```jsx
-<Button onClick={() => addToCart(productId)}>
-  Add to cart
-</Button>
-```
-
-Shared primitives should stay product-agnostic unless intentionally domain-specific.
-
-## Design system state ownership
-
-A primitive may own interaction state that is intrinsic to the primitive.
-
-Examples:
-
-- tooltip open state;
-- menu active item;
-- tabs keyboard focus;
-- accordion expanded item.
-
-But product/domain state should remain outside.
-
-Example:
-
-```text
-Menu owns highlighted item
-Product owns selected account
-```
-
-## Styling performance
-
-Avoid runtime styling architecture that adds expensive style recalculation without a strong reason.
-
-Static CSS extraction, CSS modules, utility CSS, or compiled styling systems can reduce runtime work.
-
-`useInsertionEffect` exists for library authors who must inject styles dynamically, but React explicitly treats this as a specialized case.
-
-## Component API stability
-
-A design system is infrastructure.
-
-Breaking prop changes can affect hundreds of call sites.
-
-Prefer:
-
-- small explicit APIs;
-- deprecation paths;
-- codemods for large migrations;
-- documentation examples;
-- versioned release notes.
-
-## Testing design-system primitives
-
-Test contracts, not internal implementation.
-
-For a Dialog:
-
-- trigger opens dialog;
-- accessible name exists;
-- focus enters appropriately;
-- Escape closes if designed to;
-- focus restores;
-- controlled mode works;
-- uncontrolled mode works.
-
-For a Button:
-
-- native button semantics remain;
-- disabled behavior works;
-- ref points to actual element;
-- consumer event runs.
-
-## Performance and API design
-
-Stable APIs can reduce unnecessary prop churn.
-
-Prefer passing domain primitives over newly created configuration objects when practical.
-
-But do not distort usability solely for memoization.
-
-React Compiler reduces the need for consumers to micromanage value/function identity.
-
-## Common mistakes
-
-### Rebuilding native controls with `div`
-
-Creates keyboard/accessibility debt.
-
-### Giant boolean prop matrices
-
-Creates invalid combinations and unclear styling precedence.
-
-### Making every component polymorphic
-
-Increases complexity without clear value.
-
-### Leaking internal Context
-
-Consumers become coupled to implementation details.
-
-### Hiding domain state inside shared primitives
-
-Makes reuse fake.
-
-### Inconsistent controlled/uncontrolled contracts
-
-Creates hard-to-debug ownership changes.
-
-## Exercise
-
-Design a reusable `Select` primitive.
-
-Define:
-
-1. semantic structure;
-2. controlled API;
-3. uncontrolled API;
-4. keyboard behavior;
-5. accessible name strategy;
-6. ref behavior;
-7. option identity;
-8. disabled option behavior;
-9. styling variants;
-10. what belongs in the design system vs product code.
-
-## Interview questions
-
-### Why prefer composition over large configuration objects?
-
-Composition gives consumers structural flexibility while keeping reusable behavior and styling in primitives, avoiding huge prop matrices.
-
-### What should a design system own about accessibility?
-
-The difficult reusable behavior intrinsic to each primitive—semantics, keyboard interaction, focus, naming relationships, and state ARIA—not product-specific content.
-
-### What is the difference between controlled and uncontrolled components?
-
-Controlled components receive current state and change callbacks from the owner. Uncontrolled components own their state internally, usually initialized with a default value.
-
-### Why are semantic variant names useful?
-
-They encode product intent (`danger`, `primary`) rather than implementation details (`red`, `blue`), making tokens/theme changes easier.
+## Design-system change lifecycle
+
+<LifecycleBar items={[
+  { label: 'Identify stable need', tone: 'blue' },
+  { label: 'Design semantic API', tone: 'cyan' },
+  { label: 'Implement interaction + a11y', tone: 'purple' },
+  { label: 'Test contracts', tone: 'orange' },
+  { label: 'Document usage', tone: 'green' },
+  { label: 'Version + migrate safely', tone: 'slate' },
+]} />
+
+A good design-system API is hard to misuse, easy to compose, accessible by default, and stable enough that many teams can depend on it without freezing its internals forever.
