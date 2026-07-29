@@ -4,51 +4,59 @@ description: The Rules of React for pure rendering, immutable snapshots, stable 
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Purity, immutability, and render safety
 
 The Rules of React are correctness constraints, not optional style advice.
 
-They matter because React may:
+They matter because React may render more than once, interrupt or abandon work, render on the server, hydrate on the client, and automatically memoize code with React Compiler.
 
-- render more than once;
-- interrupt and restart work;
-- abandon an in-progress render;
-- render on the server and hydrate on the client;
-- automatically memoize code with React Compiler.
+## Components and Hooks must be pure
 
-Code that assumes render runs exactly once is fragile.
+<VisualDiagram title="Render is a calculation from immutable inputs">
+  <DiagramRow>
+    <DiagramNode title="Inputs" tone="blue">props · state · context</DiagramNode>
+    <DiagramArrow direction="right" label="pure render" />
+    <DiagramNode title="UI description" tone="green">JSX / React elements</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## Rule 1: Components and Hooks must be pure
+For the same inputs, rendering should produce the same result. React calls this idempotence.
 
-A component should calculate UI from its inputs:
-
-```text
-props + state + context
-        ↓
-       JSX
-```
-
-For the same inputs, rendering should produce the same result.
-
-This property is often called **idempotence** in React's docs.
-
-## Impure render example
+Bad:
 
 ```jsx
 function ClockLabel() {
-  const now = Date.now(); // ❌ changes during render
+  const now = Date.now();
   return <span>{now}</span>;
 }
 ```
 
-Calling `Date.now()` during render can cause:
+`Date.now()`, `Math.random()`, and similar changing values during render can create retry differences, hydration mismatches, broken memoization assumptions, and unpredictable tests.
 
-- different results across retries;
-- hydration mismatches;
-- incorrect memoization;
-- unpredictable tests.
+## Render and commit are different phases
 
-Better: obtain changing time through state, an external store, a server snapshot, or another appropriate synchronization mechanism.
+<VisualDiagram title="Not every render attempt commits">
+  <LifecycleBar items={[
+    { label: 'Update triggers work', tone: 'blue' },
+    { label: 'Render calculates next UI', tone: 'purple' },
+    { label: 'React may restart / discard', tone: 'orange' },
+    { label: 'Chosen result commits', tone: 'green' },
+    { label: 'Refs attach + Effects run later', tone: 'teal' },
+  ]} />
+</VisualDiagram>
+
+Your component function participates in render. External mutation belongs outside render.
 
 ## Side effects must not run during render
 
@@ -56,69 +64,43 @@ Bad:
 
 ```jsx
 function AnalyticsCard({ event }) {
-  analytics.track(event); // ❌ side effect during render
+  analytics.track(event);
   return <Card />;
 }
 ```
 
-If React retries rendering, the analytics call may happen more than once even though no new UI committed.
+If React retries or abandons that render, the external effect already happened.
 
-Event-caused side effects belong in event handlers:
+<DecisionTree
+  question="Why should this side effect happen?"
+  items={[
+    { label: 'User explicitly clicked/submitted/dragged', value: 'Event handler / Action' },
+    { label: 'Committed UI must synchronize with an external system', value: 'Effect when needed' },
+    { label: 'Only calculating JSX/derived data', value: 'Keep it in render with no side effect' },
+  ]}
+/>
 
-```jsx
-function BuyButton() {
-  function handleClick() {
-    analytics.track('buy-clicked');
-  }
-
-  return <button onClick={handleClick}>Buy</button>;
-}
-```
-
-Synchronization caused by rendering belongs in Effects when an Effect is actually needed.
-
-## Render is calculation, commit is mutation
-
-A useful model:
-
-```text
-render phase
-→ calculate next UI
-→ must be restartable / discardable
-
-commit phase
-→ React mutates DOM/native host
-→ refs attach
-→ Effects can later run
-```
-
-Your component function participates in render, not commit.
-
-## Props are immutable snapshots
+## Props and state are immutable snapshots
 
 Never mutate a prop:
 
 ```jsx
 function UserCard({ user }) {
-  user.name = 'Changed'; // ❌
+  user.name = 'Changed'; // wrong
   return <p>{user.name}</p>;
 }
 ```
 
-Instead derive a new value:
+Create a new value instead:
 
 ```jsx
-function UserCard({ user }) {
-  const displayUser = {
-    ...user,
-    name: user.name.toUpperCase(),
-  };
-
-  return <p>{displayUser.name}</p>;
-}
+const displayUser = {
+  ...user,
+  name: user.name.toUpperCase(),
+};
 ```
 
-## State is also an immutable snapshot
+State follows the same rule.
 
 Bad:
 
@@ -130,61 +112,40 @@ setItems(items);
 Good:
 
 ```jsx
-setItems((items) => [...items, newItem]);
+setItems(items => [...items, newItem]);
 ```
 
-Why does this matter?
+<VisualDiagram title="A render owns a snapshot; updates create the next snapshot">
+  <DiagramRow>
+    <DiagramNode title="Snapshot A" tone="blue">Do not mutate</DiagramNode>
+    <DiagramArrow direction="right" label="state update" />
+    <DiagramNode title="Snapshot B" tone="green">New value / identity</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Because a render holds a snapshot of state. Mutating that snapshot behind React's back breaks identity-based change detection and makes old renders observe unexpected data.
+Mutating old snapshots behind React's back breaks reasoning about identity and makes concurrent/retried work unsafe.
 
-## Hook arguments and return values
+## Hook arguments and return values should be treated as immutable
 
-Once a value has been passed into a Hook, treat that input as immutable for the duration of the interaction.
+Values passed into Hooks participate in Hook contracts. Do not mutate values after passing them to a Hook when that Hook may rely on their identity/content.
 
-A custom Hook should not secretly mutate caller-owned objects.
+Likewise, do not mutate data returned by Hooks unless the API explicitly documents it as mutable, such as a ref object's `.current` outside render-sensitive usage.
 
-Bad:
+## Values should not be mutated after being used in JSX
+
+Once a value has contributed to a React element description, treat that render's value as fixed.
 
 ```jsx
-function useSorted(items) {
-  items.sort(); // ❌ mutates caller value
-  return items;
-}
+const styles = { color: 'red' };
+const element = <div style={styles}>Hello</div>;
+// mutating styles after this point creates ambiguous ownership
 ```
 
-Better:
+Prefer constructing the final value before creating JSX.
 
-```jsx
-function useSorted(items) {
-  return items.toSorted();
-}
-```
+## Local mutation can be safe
 
-or:
-
-```jsx
-return [...items].sort(compareFn);
-```
-
-## Values passed to JSX should remain stable
-
-Avoid mutating objects after using them to create JSX.
-
-Bad conceptual flow:
-
-```text
-create JSX using object
-→ mutate object
-→ expect already-created JSX to reinterpret it
-```
-
-JSX is a description based on the values used when it was created.
-
-## Local mutation can be okay
-
-Mutation itself is not globally forbidden.
-
-This is fine:
+Mutation created and consumed entirely inside one render is often fine because no previous render or external owner can observe it.
 
 ```jsx
 function List({ items }) {
@@ -198,154 +159,129 @@ function List({ items }) {
 }
 ```
 
-`rows` was created during this render and is not shared with previous renders.
+The array is new for this render and does not mutate props/state/shared module data.
 
-The danger is mutating values that existed before render or are shared outside the current calculation.
+<DiagramGrid columns={2}>
+  <DiagramNode title="Local mutation" tone="green">Fresh local array/object created during this render and not shared.</DiagramNode>
+  <DiagramNode title="Shared mutation" tone="red">Props, state, module globals, cached shared objects, or values another render can observe.</DiagramNode>
+</DiagramGrid>
 
-## Globals must not be mutated during render
+## Refs are an escape hatch, not render state
 
-Bad:
+Refs are mutable, but render should not depend on arbitrary reads/writes of `.current` as if it were reactive state.
 
-```js
-const registry = [];
+<VisualDiagram title="State and refs have different ownership contracts">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="State" tone="blue">Snapshot participates in rendering; setters schedule future renders.</DiagramNode>
+    <DiagramNode title="Ref" tone="orange">Mutable imperative storage; changing `.current` does not schedule render.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-function Row({ id }) {
-  registry.push(id); // ❌ global mutation in render
-  return <div>{id}</div>;
-}
-```
+Use refs for DOM nodes, timers, external instances, and other imperative values—not hidden UI state.
 
-Concurrent rendering or Strict Mode can expose this bug quickly.
+## Stable component identity matters
 
-## Ref safety
-
-Refs are escape hatches for mutable values that do not participate in rendering.
-
-Normally do not read or write `ref.current` during render:
-
-```jsx
-function Component() {
-  ref.current += 1; // ❌ render-time mutation
-  return <div />;
-}
-```
-
-Exceptions should be narrow, predictable initialization patterns documented by the ref APIs.
-
-## Static component identity
-
-Do not define component types inside render:
+Do not define a component inside another component's render just to create it dynamically:
 
 ```jsx
 function Parent() {
   function Child() {
-    return <p>Child</p>;
+    return <div />;
   }
 
   return <Child />;
 }
 ```
 
-Each render creates a new `Child` function identity.
+That creates a new component type during each render and can reset state or confuse optimization.
 
-React can treat it as a new component type, causing state and DOM to reset.
+Prefer module-scope component definitions.
 
-Define the component at module scope:
+## React calls Components and Hooks
 
-```jsx
-function Child() {
-  return <p>Child</p>;
-}
+Call components through JSX and Hooks through normal Hook composition. Do not invoke component functions manually as arbitrary utilities.
 
-function Parent() {
-  return <Child />;
-}
-```
+<VisualDiagram title="React must remain the owner of component and Hook execution">
+  <DiagramRow>
+    <DiagramNode title="Your code" tone="blue">JSX + custom Hook calls</DiagramNode>
+    <DiagramArrow direction="right" label="describes structure" />
+    <DiagramNode title="React" tone="purple">Controls render order, state slots, retries, scheduling</DiagramNode>
+    <DiagramArrow direction="right" label="commits" />
+    <DiagramNode title="Host UI" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
-Pass changing data through props instead of recreating a component definition.
+## Why purity unlocks modern React
 
-## Known impure functions
+Purity is what allows React to safely:
 
-Functions such as these are suspicious during render because they can return different values for identical React inputs:
+- retry rendering;
+- interrupt low-priority work;
+- abandon obsolete renders;
+- prerender/server-render deterministically;
+- hydrate matching output;
+- memoize with React Compiler;
+- run Strict Mode development checks.
 
-- `Math.random()`
-- `Date.now()`
-- `new Date()`
-- `crypto.randomUUID()`
-- `performance.now()`
+<VisualDiagram title="Purity creates scheduling and optimization freedom">
+  <DiagramStack align="center">
+    <DiagramNode title="Pure restartable render" tone="blue" />
+    <DiagramArrow label="React can safely" />
+    <DiagramGrid columns={4}>
+      <DiagramNode title="Retry" tone="purple" />
+      <DiagramNode title="Interrupt" tone="orange" />
+      <DiagramNode title="Server render" tone="teal" />
+      <DiagramNode title="Memoize" tone="green" />
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-That does not mean those APIs are forbidden everywhere. Use them at an appropriate lifecycle boundary.
+## Common mistakes
 
-## Why Strict Mode helps
+- calling changing APIs such as `Date.now()` directly during render;
+- mutating props or state;
+- writing localStorage/network/analytics during render;
+- using refs as hidden reactive state;
+- defining component types dynamically in render;
+- manually calling component functions;
+- assuming render executes once and therefore side effects are safe.
 
-Strict Mode intentionally stresses render and Effect assumptions in development.
+## Debugging rule
 
-It can reveal:
+When behavior seems impossible, ask whether some code broke the snapshot model or mutated the outside world during render.
 
-- render side effects;
-- missing cleanup;
-- mutation bugs;
-- ref callback mistakes.
-
-Do not "fix" Strict Mode by disabling it before understanding the bug it exposed.
-
-## Why Compiler makes these rules visible
-
-A compiler can only safely reuse calculations when those calculations are predictable.
-
-If a component performs side effects or mutates hidden values, optimization changes its observable behavior.
-
-So React Compiler is not introducing a new programming model. It makes existing React rules more mechanically enforceable.
-
-## Production debugging
-
-If behavior differs under Compiler or Strict Mode, inspect:
-
-1. render-time mutation;
-2. nondeterministic APIs in render;
-3. component definitions inside components;
-4. ref reads/writes during render;
-5. mutation of props/state/Hook inputs;
-6. hidden singleton/global state;
-7. third-party libraries with render-time side effects.
-
-## Exercise
-
-Find and fix every Rule-of-React problem in this component:
-
-```jsx
-let renders = 0;
-
-function Profile({ user }) {
-  renders++;
-  user.lastSeen = Date.now();
-
-  function Badge() {
-    return <span>{Math.random()}</span>;
-  }
-
-  return <Badge />;
-}
-```
-
-Explain separately why each line is unsafe.
+<DecisionTree
+  question="What kind of bug are you seeing?"
+  items={[
+    { label: 'Hydration differs server vs client', value: 'Check nondeterministic render inputs' },
+    { label: 'UI fails to update after mutation', value: 'Check state/prop immutability' },
+    { label: 'Duplicate external side effect', value: 'Check side effects during render' },
+    { label: 'State resets unexpectedly', value: 'Check component type/key/position identity' },
+  ]}
+/>
 
 ## Interview questions
 
-**Why must React components be pure?**  
-Because React may retry, interrupt, abandon, server-render, or memoize rendering. Pure calculation makes those behaviors safe.
+**Junior:** What does it mean for a React component to be pure?
 
-**Is all mutation forbidden in React?**  
-No. Local mutation of newly created values can be fine; mutating shared values, props, state, globals, or Hook inputs is the problem.
+**Mid-level:** Why is mutating state directly incompatible with React's snapshot model?
 
-**Why are components defined inside components dangerous?**  
-They create a new component type identity on each render and can reset state and DOM.
+**Senior:** Explain how purity enables concurrency, SSR/hydration, Strict Mode, and React Compiler optimization.
+
+## Summary
+
+<VisualDiagram title="Render should be restartable and discardable">
+  <DiagramRow>
+    <DiagramNode title="Immutable inputs" tone="blue" />
+    <DiagramArrow direction="right" label="pure calculation" />
+    <DiagramNode title="JSX description" tone="purple" />
+    <DiagramArrow direction="right" label="React chooses commit" />
+    <DiagramNode title="External world changes later" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
 ## References
 
 - https://react.dev/reference/rules
 - https://react.dev/reference/rules/components-and-hooks-must-be-pure
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/globals
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components
+- https://react.dev/learn/keeping-components-pure
