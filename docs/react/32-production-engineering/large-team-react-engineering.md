@@ -4,24 +4,24 @@ sidebar_position: 3
 description: Ownership, boundaries, standards, design systems, dependency governance, review practices, and change management for large React teams.
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Large-Team React Engineering
 
-A React application can be technically correct and still become hard to evolve when many teams contribute to it.
-
-At scale, the hardest problems are often organizational:
-
-- Who owns each feature?
-- Which abstractions are stable contracts?
-- How do teams share UI without coupling releases?
-- How do architectural decisions get documented?
-- How do you prevent one team from turning a local pattern into a global dependency?
-- How do you migrate old patterns without blocking product delivery?
-
-Senior React engineering is partly about **designing the system through which code changes**.
+At scale, React problems become organizational as much as technical: ownership, stable contracts, dependency direction, migration policy, review quality, and change coordination all shape the architecture.
 
 ## Architecture should mirror ownership
 
-A healthy feature boundary often contains:
+A feature boundary can look like:
 
 ```text
 features/
@@ -34,138 +34,71 @@ features/
     index.ts
 ```
 
-The goal is not a specific folder structure.
+The exact folder names are not the point. The point is that one domain can evolve behind a deliberate public surface.
 
-The goal is that one domain can evolve without every other domain knowing its internals.
+<VisualDiagram title="Feature internals stay private behind an owned contract">
+  <DiagramRow>
+    <DiagramNode title="Other teams" tone="blue">consume supported feature API</DiagramNode>
+    <DiagramArrow direction="right" label="import" />
+    <DiagramNode title="Feature entry point" tone="green">documented exports</DiagramNode>
+    <DiagramArrow direction="right" label="encapsulates" />
+    <DiagramNode title="Feature internals" tone="slate">components · hooks · data · implementation</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-A feature should expose a deliberate public surface instead of encouraging deep imports.
-
-```ts
-// Good
-import { BillingPanel } from '@/features/billing';
-
-// Fragile
-import { normalizeInvoice } from '@/features/billing/internal/utils/normalizeInvoice';
-```
-
-## Public module boundaries reduce coupling
-
-Use package or feature entry points to define supported contracts.
-
-```ts
-export { BillingPanel } from './components/BillingPanel';
-export type { BillingSummary } from './types';
-```
-
-Internal modules remain free to change.
-
-This makes refactoring easier because consumers depend on the contract, not the implementation layout.
+Deep imports turn implementation layout into an accidental organization-wide contract.
 
 ## State ownership should follow domain ownership
 
-Do not create global state because many teams need data.
+<DecisionTree
+  question="Who should own this state?"
+  items={[
+    { label: 'Tooltip/open state used by one component', value: 'Local component owner' },
+    { label: 'Selected billing invoice', value: 'Billing feature owner' },
+    { label: 'Search filters users share/bookmark', value: 'URL + search feature' },
+    { label: 'Remote customer records', value: 'Server/cache data owner' },
+    { label: 'Session/theme platform concern', value: 'Focused application/platform boundary' },
+  ]}
+/>
 
-Ask:
+A giant global store often becomes organizational coupling disguised as convenience.
 
-```text
-Who owns this state?
-Who can write it?
-How long should it live?
-Is it server data, URL state, UI state, or workflow state?
-```
+## Shared libraries need a higher contract bar
 
-Examples:
+<VisualDiagram title="Reuse multiplies the cost of a bad API">
+  <DiagramRow>
+    <DiagramNode title="One-off app component" tone="cyan">can be specialized</DiagramNode>
+    <DiagramArrow direction="right" label="adoption grows" />
+    <DiagramNode title="Shared primitive" tone="purple">needs stable API + ownership</DiagramNode>
+    <DiagramArrow direction="right" label="organization-wide" />
+    <DiagramNode title="Infrastructure" tone="orange">versioning · migration · docs · a11y · tests</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-- authenticated user session → application/platform boundary;
-- selected billing invoice → billing feature;
-- open tooltip → local component;
-- search filters → often URL + search feature;
-- fetched customer data → server/cache layer.
-
-A giant global store often becomes an organizational coupling mechanism.
-
-## Shared libraries need higher standards than app code
-
-A component used once can be specialized.
-
-A component used by 40 teams needs:
-
-- stable API design;
-- accessibility guarantees;
-- TypeScript contracts;
-- upgrade policy;
-- visual regression coverage;
-- migration documentation;
-- ownership;
-- versioning/change process.
-
-Do not move code into a shared package merely because two files look similar.
+Move code into a shared package because it represents a stable shared concept—not merely because two implementations currently look similar.
 
 ## The design system is infrastructure
 
-A mature design system should define more than colors and buttons.
+<DiagramGrid columns={2}>
+  <DiagramNode title="Design system owns" tone="green">tokens · semantic primitives · focus/keyboard behavior · forms · overlays · API conventions · test helpers</DiagramNode>
+  <DiagramNode title="Product feature owns" tone="blue">billing workflow · permissions · checkout policy · domain state</DiagramNode>
+</DiagramGrid>
 
-It can provide:
+Use generic primitives such as `Dialog`; keep business-specific content and workflows in domain features.
 
-- tokens;
-- semantic primitives;
-- accessibility behavior;
-- focus management patterns;
-- form controls;
-- overlays/dialogs;
-- loading/error primitives;
-- motion policy;
-- React API conventions;
-- test helpers.
+## Avoid a framework inside the framework
 
-But the design system should not absorb product-specific business state.
+<VisualDiagram title="Every custom platform layer creates another language">
+  <DiagramStack>
+    <DiagramNode title="React + platform" tone="green">known ecosystem contracts</DiagramNode>
+    <DiagramArrow label="team adds custom abstractions" />
+    <DiagramNode title="Company DSL/runtime/wrapper stack" tone="orange">new APIs · migration burden · ownership cost</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-Bad shared primitive:
+Before creating a custom framework layer, ask what repeated problem it solves, why ordinary React is insufficient, what the escape hatch is, who owns it for years, and how it can be removed.
 
-```jsx
-<EnterpriseBillingCancellationDialog />
-```
-
-Better separation:
-
-```jsx
-<Dialog>
-  <BillingCancellationContent />
-</Dialog>
-```
-
-The system owns interaction primitives; the product feature owns business behavior.
-
-## Avoid framework-within-the-framework abstractions
-
-Large teams sometimes build custom layers that hide React itself:
-
-```text
-company component runtime
-company state DSL
-company effect engine
-company routing wrapper
-company form abstraction
-```
-
-Every abstraction adds a new language engineers must learn.
-
-Before creating one, ask:
-
-1. What repeated problem does it solve?
-2. Why is ordinary React insufficient?
-3. Can a small helper solve it instead?
-4. What is the escape hatch?
-5. Who owns it for years?
-6. How will it be migrated or removed?
-
-Prefer boring, explicit React until repetition justifies infrastructure.
-
-## Architecture Decision Records
-
-Important decisions should outlive Slack threads.
-
-An ADR can contain:
+## ADRs preserve why a decision exists
 
 ```text
 Title
@@ -179,340 +112,106 @@ Owner
 Date
 ```
 
-Useful React ADR topics:
+<VisualDiagram title="Architecture decisions should survive chat history">
+  <DiagramRow>
+    <DiagramNode title="Context + constraints" tone="blue">why change is needed</DiagramNode>
+    <DiagramArrow direction="right" label="compare" />
+    <DiagramNode title="Options + trade-offs" tone="purple">what was considered</DiagramNode>
+    <DiagramArrow direction="right" label="record" />
+    <DiagramNode title="Decision + consequences" tone="green">what future teams inherit</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-- client state library choice;
-- URL-state conventions;
-- RSC adoption boundary;
-- Error Boundary strategy;
-- design-system ownership;
-- data fetching/cache layer;
-- compiler rollout;
-- testing policy;
-- module/package boundaries.
+Useful ADR topics include state strategy, URL conventions, RSC/client boundaries, error strategy, design-system ownership, cache/data layer, compiler rollout, and testing policy.
 
-The goal is not bureaucracy. It is preserving **why** a decision exists.
+## Let automation handle mechanical review
 
-## Review architecture, not formatting
+<DiagramGrid columns={2}>
+  <DiagramNode title="Automation" tone="cyan">format · TypeScript · ESLint · Hooks/Compiler rules · tests · CI</DiagramNode>
+  <DiagramNode title="Human review" tone="purple">ownership · API misuse risk · a11y · security · failure design · coupling · migration</DiagramNode>
+</DiagramGrid>
 
-Automate formatting and basic correctness with:
+Human reviewers should spend attention on decisions tools cannot reliably make.
 
-- formatter;
-- TypeScript;
-- ESLint;
-- React Hooks/Compiler rules;
-- tests;
-- CI.
-
-Human review should focus on questions tools cannot answer well:
-
-- Is state owned correctly?
-- Does this Effect model real synchronization?
-- Is this API easy to misuse?
-- Does the feature respect domain boundaries?
-- Is accessibility correct?
-- Is the security boundary enforced?
-- Is failure/retry behavior designed?
-- Will this create future coupling?
-
-## Define review expectations
-
-Large teams benefit from explicit conventions.
-
-For example:
+## Make recurring production lessons explicit
 
 ```text
 React PR checklist
+- state owner is clear
 - no unnecessary Effect-derived state
-- stable keys
+- stable domain keys
 - semantic HTML/accessibility
-- runtime validation at network boundaries
-- tests at the correct level
+- runtime validation at trust boundaries
+- tests at the correct layer
 - new shared APIs documented
 - observability for critical flows
-- migration note for breaking changes
+- migration notes for breaking changes
 ```
 
-The checklist should capture recurring production lessons, not every style preference.
+Checklists should encode repeated failure patterns, not personal style preferences.
 
-## Ownership should be visible
+## Ownership must be discoverable
 
-Use mechanisms such as:
+<VisualDiagram title="A critical boundary needs an obvious responsible team">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="CODEOWNERS" tone="blue">review routing</DiagramNode>
+    <DiagramNode title="Package/service metadata" tone="cyan">technical ownership</DiagramNode>
+    <DiagramNode title="Docs/catalog" tone="purple">contract + runbook</DiagramNode>
+    <DiagramNode title="On-call" tone="red">incident ownership</DiagramNode>
+    <DiagramNode title="Maintainers" tone="green">safe evolution</DiagramNode>
+    <DiagramNode title="Migration policy" tone="orange">breaking-change path</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-- CODEOWNERS;
-- package ownership metadata;
-- service catalog;
-- docs pages;
-- on-call routing;
-- design-system maintainers.
+## Dependency direction prevents organizational cycles
 
-When a critical shared component fails, the organization should know who can make a safe decision quickly.
+<VisualDiagram title="Prefer directional layers over circular team dependencies">
+  <DiagramStack>
+    <DiagramNode title="Platform / design system" tone="slate">cross-cutting foundations</DiagramNode>
+    <DiagramArrow label="supports" />
+    <DiagramNode title="Shared domain libraries" tone="blue">stable reusable concepts</DiagramNode>
+    <DiagramArrow label="supports" />
+    <DiagramNode title="Features" tone="purple">domain ownership</DiagramNode>
+    <DiagramArrow label="composed by" />
+    <DiagramNode title="Routes / application shell" tone="green">product composition</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-## Avoid circular ownership
+Exact layering varies, but cycles such as Team A internals → Team B internals → Team C state → Team A helper should trigger architectural review.
 
-A problematic architecture looks like:
+## Global Context can create invisible coupling
 
-```text
-Team A feature imports Team B internals
-Team B imports Team C shared state
-Team C depends on Team A UI helper
-```
+<VisualDiagram title="One broad provider becomes an implicit dependency graph">
+  <DiagramRow>
+    <DiagramNode title="Mega AppContext" tone="red">user · theme · locale · billing · search · experiments · notifications</DiagramNode>
+    <DiagramArrow direction="right" label="split by ownership/scope" />
+    <DiagramNode title="Focused providers/stores" tone="green">smaller contracts + clearer update surfaces</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-This makes releases and refactors political and technical bottlenecks.
-
-Strive for dependency direction.
-
-```text
-platform/design system
-        ↓
-shared domain libraries
-        ↓
-features
-        ↓
-route/application composition
-```
-
-Exact layering varies, but cycles should trigger architectural review.
-
-## Shared Context can create organizational coupling
-
-A global Context is easy to add to:
-
-```jsx
-<AppContext value={{
-  user,
-  theme,
-  locale,
-  billing,
-  search,
-  experiments,
-  notifications,
-}}>
-```
-
-Over time it becomes an invisible dependency graph.
-
-Prefer focused providers:
-
-```jsx
-<AuthProvider>
-  <ThemeProvider>
-    <BillingRoute />
-  </ThemeProvider>
-</AuthProvider>
-```
-
-And avoid provider scope broader than needed.
+Provider scope should be no broader than the dependency requires.
 
 ## Stable APIs matter more than stable internals
 
-Teams should be free to refactor implementation while preserving contracts.
-
-Good internal change:
-
-```text
-useReducer
-→ state machine
-→ server cache
-```
-
-Consumers should not care if the public feature API remains stable.
-
-This is the same reason applications should not depend on Fiber internals.
-
-## Version shared packages deliberately
-
-For monorepos, versioning may be implicit in one atomic commit.
-
-For separately released packages, define:
-
-- semver policy;
-- supported React versions;
-- peer dependency rules;
-- deprecation period;
-- codemods where possible;
-- migration docs.
-
-Do not silently break component semantics in a minor package release.
-
-## Deprecation should have an exit path
-
-Bad:
-
-```ts
-/** @deprecated */
-export function OldModal() {}
-```
-
-with no replacement.
-
-Better:
-
-```ts
-/**
- * @deprecated Use Dialog from @company/ui-dialog.
- * Removal target: v8.
- * Migration: go/ui-dialog-migration
- */
-```
-
-Then track remaining usage.
-
-## Prefer migrations over permanent dual systems
-
-During migration, two patterns may coexist.
-
-But define:
-
-```text
-new code uses pattern B
-existing A migrates when touched
-critical A paths scheduled explicitly
-A removed after usage reaches zero
-```
-
-Without an end condition, "temporary" systems become permanent complexity.
-
-## Feature flags need ownership
-
-Every flag should have:
-
-- owner;
-- purpose;
-- creation date;
-- expected removal date;
-- default state;
-- telemetry.
-
-Stale flags multiply test states and can create server/client rendering mismatches.
-
-## Large-team performance governance
-
-Performance should not depend on one expert reviewing every PR.
-
-Establish budgets and automated signals where practical:
-
-- route bundle budgets;
-- Core Web Vitals targets;
-- error-rate thresholds;
-- hydration error monitoring;
-- performance regression tests for critical surfaces;
-- dependency-size review.
-
-Teams still profile locally for specific issues, but organization-wide guardrails catch regressions early.
-
-## Testing policy should define confidence, not percentages
-
-A blanket "80% coverage" target can produce weak tests.
-
-Define what critical features require:
-
-```text
-unit
-→ pure domain logic
-
-component/integration
-→ React behavior and accessibility
-
-E2E
-→ revenue/security/critical workflows
-```
-
-Require regression tests for production incidents when feasible.
-
-## Error Boundary strategy should be consistent
-
-If every team invents its own boundary behavior, the application becomes inconsistent.
-
-Shared guidance can define:
-
-- where route-level boundaries belong;
-- fallback design primitives;
-- retry semantics;
-- error telemetry;
-- correlation IDs;
-- accessibility behavior;
-- what errors should not be thrown.
-
-Product features still choose meaningful boundary granularity.
-
-## Security ownership is cross-cutting
-
-Security cannot be delegated only to the backend team.
-
-Frontend teams own:
-
-- safe HTML rendering;
-- client secret exposure;
-- third-party scripts;
-- URL handling;
-- privacy-safe telemetry;
-- correct Server Function usage;
-- avoiding authorization assumptions in UI.
-
-Backend/platform teams own complementary enforcement.
-
-## RFCs for high-impact changes
-
-Use lightweight RFCs when a change affects many teams.
-
-Examples:
-
-- switching routing framework;
-- adopting RSC across the app;
-- replacing global state layer;
-- introducing design-system v2;
-- Compiler rollout across monorepo;
-- moving from CSR to streaming SSR.
-
-An RFC should include migration cost and failure modes, not only the happy-path API.
-
-## Senior engineers create leverage
-
-A senior engineer's impact is not measured only by code volume.
-
-High-leverage work includes:
-
-- removing a dangerous abstraction;
-- documenting a migration path;
-- adding a CI guardrail;
-- fixing an ownership boundary;
-- making incidents diagnosable;
-- mentoring teams on state/effect architecture;
-- creating a reusable accessible primitive;
-- simplifying dependency direction.
-
-## Interview questions
-
-### What makes code suitable for a shared component library?
-
-It represents a stable, reusable contract with clear ownership and sufficient accessibility/testing/versioning discipline—not merely duplicated JSX.
-
-### How would you prevent a global store from becoming a dumping ground?
-
-Define state categories and domain ownership, keep local/URL/server state in appropriate places, expose focused feature APIs, and review new global writes as architecture changes.
-
-### Why use ADRs?
-
-They preserve decision context and trade-offs so future teams understand why the architecture exists and when it can change.
-
-### How do you migrate a pattern across many teams?
-
-Define the target, new-code rule, compatibility layer if needed, codemod/tooling, ownership, metrics, and deletion criteria.
-
-## Exercise
-
-Design the frontend governance model for a 60-engineer React monorepo.
-
-Define:
-
-- feature/module boundaries;
-- design-system ownership;
-- shared state policy;
-- testing requirements;
-- Error Boundary strategy;
-- dependency/version policy;
-- ADR/RFC process;
-- performance budgets;
-- migration/deprecation process;
-- production ownership/on-call routing.
+A feature may move internally from `useReducer` to a state machine or server cache without forcing consumers to change if its public contract remains stable.
+
+<VisualDiagram title="Encapsulation lets implementation evolve">
+  <DiagramRow>
+    <DiagramNode title="Stable public API" tone="green">consumer contract</DiagramNode>
+    <DiagramArrow direction="right" label="hides" />
+    <DiagramNode title="Replaceable internals" tone="blue">reducer → state machine → server/cache architecture</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
+
+## Large-team change lifecycle
+
+<LifecycleBar items={[
+  { label: 'Define owner', tone: 'blue' },
+  { label: 'Define contract', tone: 'cyan' },
+  { label: 'Automate policy', tone: 'purple' },
+  { label: 'Review architecture', tone: 'orange' },
+  { label: 'Ship incrementally', tone: 'green' },
+  { label: 'Observe + migrate', tone: 'slate' },
+]} />
+
+Large-team React architecture succeeds when teams can change their internals independently while shared boundaries remain understandable, testable, observable, and intentionally governed.
