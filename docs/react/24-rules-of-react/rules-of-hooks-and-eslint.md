@@ -4,45 +4,51 @@ description: Master Hook ordering, the special use API exception, and the modern
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Rules of Hooks and Compiler-aware ESLint
 
 React relies on Hook call order to associate Hook state with a component across renders.
 
-That gives us the core rule:
+> Call normal Hooks at the top level of React function components and custom Hooks.
 
-> Call Hooks at the top level of React function components and custom Hooks.
+## Hook order is identity
 
-## Why Hook order matters
+<VisualDiagram title="Every render must preserve the same Hook slot sequence">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Render 1" tone="blue">
+      slot 1 → useState<br />slot 2 → useEffect<br />slot 3 → useMemo
+    </DiagramNode>
+    <DiagramNode title="Render 2" tone="green">
+      slot 1 → useState<br />slot 2 → useEffect<br />slot 3 → useMemo
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-React conceptually tracks Hook state by call sequence:
+If a Hook disappears conditionally, later slots shift and React can no longer associate the right state/effect with the right call site.
 
-```text
-render #1
-useState      → slot 1
-useEffect     → slot 2
-useMemo       → slot 3
-
-render #2
-useState      → slot 1
-useEffect     → slot 2
-useMemo       → slot 3
-```
-
-If a Hook disappears conditionally, later slots shift and React can no longer match state correctly.
-
-## Invalid: Hook in a condition
+## Invalid: conditional Hook
 
 ```jsx
 function Profile({ enabled }) {
   if (enabled) {
-    const [name, setName] = useState(''); // ❌
+    const [name, setName] = useState(''); // wrong
   }
 
   return null;
 }
 ```
 
-Instead call the Hook unconditionally and put conditional behavior around the result:
+Better:
 
 ```jsx
 function Profile({ enabled }) {
@@ -52,13 +58,21 @@ function Profile({ enabled }) {
     return null;
   }
 
-  return <input value={name} onChange={(e) => setName(e.target.value)} />;
+  return <input value={name} onChange={e => setName(e.target.value)} />;
 }
 ```
 
-## Invalid locations
+<VisualDiagram title="Condition the behavior, not the Hook call">
+  <DiagramRow>
+    <DiagramNode title="Stable Hook call" tone="blue">Always allocate slot</DiagramNode>
+    <DiagramArrow direction="right" label="then branch" />
+    <DiagramNode title="Conditional UI / effect behavior" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
-Normal Hooks must not be called:
+## Normal Hooks must not move between call positions
+
+Avoid calling them:
 
 - inside `if`/`else` branches;
 - inside loops;
@@ -67,29 +81,36 @@ Normal Hooks must not be called:
 - inside arbitrary callbacks;
 - inside class methods;
 - at module scope;
-- inside async functions.
+- inside arbitrary async functions.
+
+The rule is about **stable React-controlled execution order**.
 
 ## Custom Hooks
 
-A custom Hook is a function that itself follows Hook rules and is named with a `use` prefix.
+A custom Hook is a function that follows Hook rules and uses a `use` prefix.
 
 ```jsx
 function useOnlineStatus() {
   const [online, setOnline] = useState(true);
-  // ...
   return online;
 }
 ```
 
-The `use` prefix is not decorative. Tooling uses it to recognize Hook semantics.
+The prefix is meaningful to both humans and tooling.
+
+<VisualDiagram title="Custom Hooks compose Hook slots; they do not create a separate runtime">
+  <DiagramStack align="center">
+    <DiagramNode title="Component" tone="blue" />
+    <DiagramArrow label="calls" />
+    <DiagramNode title="Custom Hook" tone="purple" />
+    <DiagramArrow label="composes" />
+    <DiagramNode title="Built-in Hooks in stable order" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## The special `use` API exception
 
-The `use` API is different from ordinary Hooks.
-
-React's Rules-of-Hooks reference allows `use` to be called conditionally and in loops.
-
-Example:
+React's `use` API is special: it may be called conditionally and in loops.
 
 ```jsx
 function Comments({ shouldLoad, promise }) {
@@ -102,298 +123,184 @@ function Comments({ shouldLoad, promise }) {
 }
 ```
 
-This exception does **not** mean other Hooks can be conditional.
+This does **not** make normal Hooks conditional.
 
-`useState`, `useEffect`, `useMemo`, and other normal Hooks still require stable call order.
+<DiagramGrid columns={2}>
+  <DiagramNode title="Normal Hooks" tone="blue">`useState`, `useEffect`, `useMemo`, etc. require stable top-level call order.</DiagramNode>
+  <DiagramNode title="use(resource)" tone="orange">Special React API with documented conditional/loop usage semantics.</DiagramNode>
+</DiagramGrid>
 
-## ESLint is part of the React toolchain
+Do not generalize the exception.
 
-Modern `eslint-plugin-react-hooks` does more than enforce the classic two Hook rules.
+## ESLint is part of modern React correctness
 
-It now surfaces diagnostics used by React Compiler as well.
-
-Install the current plugin:
+`eslint-plugin-react-hooks` does more than enforce the classic Hook rules. Its recommended presets also surface Rules-of-React and React Compiler diagnostics.
 
 ```bash
 npm install -D eslint-plugin-react-hooks@latest
 ```
 
-The plugin can be useful even if React Compiler is not enabled yet.
+<VisualDiagram title="Linting is the static safety layer before runtime and Compiler">
+  <LifecycleBar items={[
+    { label: 'Source code', tone: 'blue' },
+    { label: 'eslint-plugin-react-hooks', tone: 'purple' },
+    { label: 'Rules / Compiler diagnostics', tone: 'orange' },
+    { label: 'Fix or isolate', tone: 'teal' },
+    { label: 'Safer runtime + Compiler coverage', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-## Why Compiler diagnostics appear in ESLint
-
-React Compiler statically analyzes component and Hook code.
-
-When it finds a pattern that breaks React's model or cannot be safely optimized, that diagnostic can be surfaced by the ESLint plugin.
-
-This gives teams a migration path:
-
-```text
-lint first
-→ understand violations
-→ fix incrementally
-→ increase Compiler coverage
-```
+The plugin is valuable even if Compiler is not enabled.
 
 ## Core rules
 
 ### `rules-of-hooks`
 
-Checks Hook call locations and ordering.
+Checks Hook locations and ordering.
 
 ### `exhaustive-deps`
 
-Checks dependency arrays for Effects and other dependency-aware Hooks.
+Checks dependency arrays for dependency-aware Hooks.
 
-Do not silence it simply to make warnings disappear.
+Do not silence `exhaustive-deps` just to remove warnings. Dependencies describe which reactive values configure the synchronization process.
 
-Dependencies should describe the reactive values used by the synchronization process.
+## Compiler-aware diagnostics
 
-## Compiler-aware rules
+Current recommended plugin presets include rules covering areas such as:
 
-The recommended plugin presets include rules such as:
+- component/Hook factories;
+- Compiler configuration and gating;
+- Error Boundary usage;
+- globals and immutability;
+- incompatible libraries;
+- preservation of manual memoization;
+- purity;
+- ref usage;
+- setting state during render/effects;
+- static component definitions;
+- unsupported syntax;
+- invalid `useMemo` usage.
 
-- `component-hook-factories`
-- `config`
-- `error-boundaries`
-- `gating`
-- `globals`
-- `immutability`
-- `incompatible-library`
-- `preserve-manual-memoization`
-- `purity`
-- `refs`
-- `set-state-in-effect`
-- `set-state-in-render`
-- `static-components`
-- `unsupported-syntax`
-- `use-memo`
+<VisualDiagram title="Many Compiler diagnostics are correctness diagnostics first">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Purity" tone="blue">No impure render-time work</DiagramNode>
+    <DiagramNode title="Immutability" tone="purple">Do not mutate React snapshots/shared inputs</DiagramNode>
+    <DiagramNode title="Stable structure" tone="teal">Hooks/components stay recognisable and ordered</DiagramNode>
+    <DiagramNode title="Refs" tone="orange">Do not use mutable ref values as normal render state</DiagramNode>
+    <DiagramNode title="Effects/state" tone="red">Avoid render loops and avoidable sync effect updates</DiagramNode>
+    <DiagramNode title="Compiler compatibility" tone="green">Supported syntax/config/library contracts</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Each rule points to a class of code that is either incorrect, risky, or difficult to optimize safely.
+## Lint first, compile second
 
-## `component-hook-factories`
+A safe Compiler migration path is:
 
-Flags higher-order patterns that dynamically define components or Hooks.
+<LifecycleBar items={[
+  { label: 'Enable current lint rules', tone: 'blue' },
+  { label: 'Understand violations', tone: 'orange' },
+  { label: 'Fix incrementally', tone: 'purple' },
+  { label: 'Increase Compiler coverage', tone: 'teal' },
+  { label: 'Measure behavior + performance', tone: 'green' },
+]} />
 
-Bad:
+Do not treat Compiler opt-outs as a substitute for fixing broken Hook ordering or impure rendering.
 
-```jsx
-function makeComponent(label) {
-  return function Component() {
-    return <p>{label}</p>;
-  };
-}
-```
+## Dependency arrays are not scheduling wishes
 
-Prefer a static component with props:
+Wrong mental model:
 
-```jsx
-function Component({ label }) {
-  return <p>{label}</p>;
-}
-```
+> “I want this Effect to run once, so I will hide the dependencies.”
 
-## `static-components`
+Better mental model:
 
-Flags components created inside render.
+<VisualDiagram title="Dependencies describe the reactive configuration an Effect reads">
+  <DiagramRow>
+    <DiagramNode title="Reactive values used" tone="blue" />
+    <DiagramArrow direction="right" label="must be represented" />
+    <DiagramNode title="Dependency list" tone="purple" />
+    <DiagramArrow direction="right" label="change? restart sync" />
+    <DiagramNode title="Effect lifecycle" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
-Bad:
+If dependencies feel wrong, first ask whether the Effect itself is necessary or whether the code belongs in render/event logic.
 
-```jsx
-function Parent() {
-  const Child = () => <span>Child</span>;
-  return <Child />;
-}
-```
+## React must call components and Hooks
 
-The identity changes every render.
+Do not bypass React's execution ownership by calling component functions manually.
 
-## `purity`
-
-Flags known impure APIs during render, such as values that change without React inputs changing.
-
-Examples include:
-
-- `Date.now()`;
-- `Math.random()`;
-- `crypto.randomUUID()`;
-- `performance.now()`.
-
-## `immutability`
-
-Flags direct mutation of props, state, or other immutable values.
-
-Bad:
+Wrong:
 
 ```jsx
-items.push(item);
-setItems(items);
+const result = SomeComponent(props);
 ```
-
-Good:
-
-```jsx
-setItems((items) => [...items, item]);
-```
-
-## `globals`
-
-Flags global mutation during render.
-
-Bad:
-
-```js
-let count = 0;
-
-function Component() {
-  count += 1;
-  return <span>{count}</span>;
-}
-```
-
-## `refs`
-
-Flags unsafe ref reads/writes during render.
-
-Refs are mutable escape hatches, not render state.
-
-## `set-state-in-render`
-
-Flags state updates during render that can cause infinite loops or render instability.
-
-Bad:
-
-```jsx
-function Component({ value }) {
-  const [state, setState] = useState(value);
-
-  setState(value); // ❌
-
-  return state;
-}
-```
-
-## `set-state-in-effect`
-
-Flags patterns where an Effect synchronously derives state that could often be calculated during render or updated directly at the source.
-
-This connects to the earlier mental model:
-
-> Effects are for synchronization with external systems, not for routine data derivation.
-
-## `unsupported-syntax`
-
-Flags syntax the Compiler cannot statically analyze safely, including dynamic-scope constructs such as `eval` and `with`.
-
-`eval` is also a serious security risk when used with untrusted input.
-
-## `incompatible-library`
-
-Flags known APIs whose behavior conflicts with React memoization assumptions.
-
-The safe Compiler behavior is often to skip the affected component rather than transform it incorrectly.
-
-## `preserve-manual-memoization`
-
-Helps avoid Compiler transformations that would undermine existing manual memoization contracts.
-
-This is especially important while migrating mature codebases.
-
-## `config`
-
-Validates Compiler configuration names and values.
-
-A typo such as:
-
-```js
-{ compileMode: 'all' }
-```
-
-should not silently look like valid configuration.
-
-## `gating`
-
-Validates runtime gating configuration used for staged Compiler rollout.
-
-## `error-boundaries`
-
-Helps identify patterns that incorrectly rely on `try/catch` for errors thrown by child rendering instead of using React Error Boundaries where appropriate.
-
-## `use-memo`
-
-Validates meaningful `useMemo` usage, such as ensuring a memo callback actually returns the value being memoized.
-
-## Fix priority
-
-Not all lint violations have equal risk.
-
-A practical priority:
-
-### Highest priority
-
-- state updates during render;
-- mutation of props/state/globals;
-- Hook ordering violations;
-- impure render side effects.
-
-These can be correctness bugs even without Compiler.
-
-### Medium priority
-
-- dynamic component identities;
-- incompatible library integrations;
-- unstable manual memoization patterns.
-
-### Adoption/tooling priority
-
-- compiler config;
-- gating;
-- unsupported syntax affecting optimization coverage.
-
-## Do not disable rules globally to reach zero warnings
-
-A zero-warning dashboard achieved through blanket rule suppression gives false confidence.
 
 Prefer:
 
-1. understand the rule;
-2. fix the code where reasonable;
-3. isolate legitimate exceptions narrowly;
-4. document why the exception exists.
-
-## CI strategy
-
-For a mature repository:
-
-```text
-PR
-→ ESLint
-→ tests
-→ production build
-→ optional Compiler coverage/performance checks
+```jsx
+<SomeComponent {...props} />
 ```
 
-Compiler-aware linting should run before merge so violations do not silently accumulate.
+React needs to own component/Hook execution so it can associate state, scheduling, identity, and error boundaries correctly.
+
+## Decision guide
+
+<DecisionTree
+  question="Where should this Hook/API call live?"
+  items={[
+    { label: 'Normal Hook in component/custom Hook', value: 'Top level before conditional returns' },
+    { label: 'Need conditional resource read with use()', value: 'Follow the special use API rules' },
+    { label: 'Need a Hook in an event handler', value: 'Move Hook to component/custom Hook; event uses returned value/callback' },
+    { label: 'Lint warns about Effect dependencies', value: 'Fix synchronization model instead of hiding dependencies' },
+  ]}
+/>
+
+## Common mistakes
+
+- calling `useState` or `useEffect` conditionally;
+- calling Hooks after an early return;
+- calling Hooks from events/callbacks;
+- assuming the special `use` exception applies to all Hooks;
+- disabling `rules-of-hooks` or `exhaustive-deps` broadly;
+- suppressing Compiler diagnostics instead of understanding them;
+- manually calling component functions;
+- treating lint rules as style-only warnings.
+
+## Team policy
+
+For production codebases:
+
+1. run current `eslint-plugin-react-hooks` in CI;
+2. fail builds on new Rules-of-React violations;
+3. document narrow exceptions;
+4. avoid repo-wide disables;
+5. fix the architecture that creates dependency fights;
+6. review new custom Hooks for stable call structure and focused responsibility.
 
 ## Interview questions
 
-**Why can't normal Hooks be conditional?**  
-React relies on stable Hook call order to associate Hook state with the same slots across renders.
+**Junior:** Why must Hooks be called in the same order every render?
 
-**What is special about `use`?**  
-Unlike ordinary Hooks, the `use` API may be called conditionally and in loops according to the current Rules-of-Hooks reference.
+**Mid-level:** Why can `use()` be conditional while `useState()` cannot?
 
-**Does a Compiler lint diagnostic mean the entire app cannot compile?**  
-No. The compiler can skip unsupported components or Hooks and continue optimizing safe code.
+**Senior:** Explain how the modern Hooks ESLint plugin supports both React correctness and React Compiler adoption in a large codebase.
 
-**Why use Compiler-aware ESLint before enabling Compiler?**  
-It exposes Rules-of-React problems early and lets the codebase become compiler-ready incrementally.
+## Summary
+
+<VisualDiagram title="Stable calls let React preserve identity across renders">
+  <DiagramRow>
+    <DiagramNode title="Stable component execution" tone="blue" />
+    <DiagramArrow direction="right" label="same Hook order" />
+    <DiagramNode title="Stable Hook slots" tone="purple" />
+    <DiagramArrow direction="right" label="lint + Compiler can reason" />
+    <DiagramNode title="Correct predictable React" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
 ## References
 
 - https://react.dev/reference/rules/rules-of-hooks
 - https://react.dev/reference/eslint-plugin-react-hooks
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/rules-of-hooks
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/component-hook-factories
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components
-- https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax
+- https://react.dev/reference/react/use
+- https://react.dev/reference/rules
