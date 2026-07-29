@@ -4,6 +4,16 @@ description: Learn how React 19 useActionState models Action results, pending st
 sidebar_position: 2
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `useActionState`
 
 `useActionState` manages **state produced by Actions**.
@@ -15,19 +25,12 @@ const [state, dispatchAction, isPending] = useActionState(
 );
 ```
 
-It looks superficially similar to `useReducer`, but the two Hooks solve different problems.
-
-```text
-useReducer
-  → pure UI state transitions
-
-useActionState
-  → Action result state
-  → may perform side effects
-  → may be async
-  → exposes pending state
-  → orders queued Actions
-```
+<VisualDiagram title="useReducer vs useActionState" subtitle="They both calculate next state, but they solve different lifecycle problems.">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="useReducer" tone="blue" eyebrow="Pure UI transitions">Pure reducer · no side effects · synchronous state transition model.</DiagramNode>
+    <DiagramNode title="useActionState" tone="purple" eyebrow="Action result state">Reducer Action may be async · may perform side effects · exposes pending state · queues Action calls.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Basic example
 
@@ -41,18 +44,11 @@ async function updateName(previousState, nextName) {
   });
 
   if (!response.ok) {
-    return {
-      ...previousState,
-      error: 'Could not update name',
-    };
+    return {...previousState, error: 'Could not update name'};
   }
 
   const user = await response.json();
-
-  return {
-    name: user.name,
-    error: null,
-  };
+  return {name: user.name, error: null};
 }
 
 function ProfileEditor() {
@@ -79,19 +75,19 @@ function ProfileEditor() {
 }
 ```
 
-## The reducer Action
+## Reducer Action mental model
 
-The first argument receives:
+<VisualDiagram title="How one dispatch becomes Action result state" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Previous Action state" tone="slate" />
+    <DiagramArrow label="+ action payload" />
+    <DiagramNode title="reducerAction(previousState, payload)" tone="purple" wide>May perform side effects and may be async.</DiagramNode>
+    <DiagramArrow label="return result" />
+    <DiagramNode title="Next Action state" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-previous state
-+
-action payload
-↓
-next state
-```
-
-Unlike a `useReducer` reducer, this function is allowed to perform side effects and be asynchronous.
+Unlike a `useReducer` reducer, the reducer Action can perform side effects:
 
 ```jsx
 async function cartAction(previousCart, payload) {
@@ -100,45 +96,9 @@ async function cartAction(previousCart, payload) {
 }
 ```
 
-That is why React's documentation describes it as a **reducer Action** rather than an ordinary reducer.
-
-## `useReducer` vs `useActionState`
-
-### `useReducer`
-
-```jsx
-function reducer(state, action) {
-  switch (action.type) {
-    case 'increment':
-      return {...state, count: state.count + 1};
-    default:
-      return state;
-  }
-}
-```
-
-Requirements:
-
-- pure;
-- deterministic;
-- no network requests;
-- no analytics;
-- no imperative side effects.
-
-### `useActionState`
-
-```jsx
-async function reducerAction(previousState, payload) {
-  const result = await save(payload);
-  return result;
-}
-```
-
-This function exists specifically to model a side-effectful Action and its resulting state.
-
 ## Dispatch must happen inside an Action
 
-This is wrong:
+Wrong:
 
 ```jsx
 dispatchAction(payload); // ❌ outside an Action
@@ -152,7 +112,7 @@ startTransition(() => {
 });
 ```
 
-Or pass the returned dispatcher to an Action prop such as a React form:
+Or pass the dispatcher to an Action prop such as a form:
 
 ```jsx
 <form action={dispatchAction}>
@@ -160,76 +120,45 @@ Or pass the returned dispatcher to an Action prop such as a React form:
 </form>
 ```
 
-Action props already run in the Action/Transition model.
-
 ## Pending state
-
-The third returned value tells you whether Action work for this Hook is pending:
 
 ```jsx
 const [state, dispatchAction, isPending] = useActionState(action, initialState);
 ```
 
-Use it for local feedback:
-
-```jsx
-<button disabled={isPending}>
-  {isPending ? 'Adding…' : 'Add to cart'}
-</button>
-```
-
-Do not invent a duplicate `isSubmitting` state unless you actually need a different concept.
+`isPending` belongs to the Action lifecycle for that Hook. Avoid duplicating the same concept with another `isSubmitting` flag unless it represents something different.
 
 ## Sequential Action ordering
 
-A major behavior to understand is that multiple dispatches are queued and processed sequentially.
+Multiple dispatches are queued and processed sequentially.
 
-```text
-dispatch A
-   ↓
-reducerAction(previousState, A)
-   ↓
-result A
-   ↓
-dispatch B uses result A as previousState
-```
+<VisualDiagram title="Queued useActionState calls" subtitle="Each reducer Action receives the result of the previous call.">
+  <LifecycleBar
+    items={[
+      { label: 'Dispatch A', tone: 'blue' },
+      { label: 'Run A with previous state', tone: 'purple' },
+      { label: 'Result A', tone: 'green' },
+      { label: 'Dispatch B consumes Result A', tone: 'orange' },
+      { label: 'Result B becomes state', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-This is useful when each operation logically depends on the previous result.
-
-Example:
+This ordering is useful when each operation logically depends on the previous result.
 
 ```jsx
 async function quantityAction(previousQuantity, type) {
-  if (type === 'add') {
-    return await addOne(previousQuantity);
-  }
-
-  if (type === 'remove') {
-    return await removeOne(previousQuantity);
-  }
-
+  if (type === 'add') return await addOne(previousQuantity);
+  if (type === 'remove') return await removeOne(previousQuantity);
   return previousQuantity;
 }
 ```
 
-## When sequential ordering is a trade-off
-
-Suppose the user clicks four times and every request takes one second.
-
-`useActionState` may intentionally execute those Actions one after another because each receives the previous result.
-
-That gives correctness for reducer-style Action state, but it is not ideal for every workload.
-
-If operations should run independently or in parallel, a different model may be better:
-
-- `useState` + `useTransition`;
-- request-specific state;
-- a server-state library;
-- a domain-specific mutation queue.
+If operations should run independently or in parallel, consider a different model such as `useState` + `useTransition`, request-specific state, a server-state library, or a domain-specific mutation queue.
 
 ## Action payloads
 
-You can dispatch any suitable payload:
+Payloads can be simple or structured:
 
 ```jsx
 dispatchAction({
@@ -239,26 +168,11 @@ dispatchAction({
 });
 ```
 
-Then branch inside the Action:
-
-```jsx
-async function productAction(previousState, action) {
-  switch (action.type) {
-    case 'rename':
-      return await renameProduct(previousState, action);
-    case 'archive':
-      return await archiveProduct(previousState, action);
-    default:
-      return previousState;
-  }
-}
-```
-
-Do not blindly copy reducer action objects if a simpler payload communicates intent more clearly.
+Choose a shape that communicates intent; do not copy reducer conventions mechanically.
 
 ## Form integration
 
-`useActionState` is especially useful with function-valued form `action` props.
+The returned Action can be passed directly to a form:
 
 ```jsx
 async function submitContact(previousState, formData) {
@@ -288,11 +202,18 @@ function ContactForm() {
 }
 ```
 
-In this pattern, the Action receives `FormData` as its payload.
+The reducer Action receives `previousState` first and the `FormData` payload second.
 
-## Expected errors vs unexpected errors
+## Expected vs unexpected errors
 
-Treat known business outcomes as state.
+<VisualDiagram title="Error ownership" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Expected user/domain outcome" tone="orange">Validation error · out of stock · rejected business rule → return structured Action state.</DiagramNode>
+    <DiagramNode title="Unexpected failure" tone="red">Programming/system failure → throw when an Error Boundary and monitoring strategy should handle it.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+Example expected outcome:
 
 ```jsx
 async function checkoutAction(previousState, formData) {
@@ -309,191 +230,71 @@ async function checkoutAction(previousState, formData) {
 }
 ```
 
-Unexpected programmer/system failures may be thrown:
+Keep the returned state shape stable and intentional.
 
-```jsx
-async function checkoutAction(previousState, formData) {
-  const result = await checkout(formData);
+## Reset behaviour
 
-  if (!result) {
-    throw new Error('Checkout returned no result');
-  }
+`useActionState` does not expose a generic reset function. Possible designs include:
 
-  return result;
-}
-```
-
-Thrown errors can flow to the nearest Error Boundary.
-
-## Do not mix validation and exceptions carelessly
-
-Bad model:
-
-```text
-invalid email → throw
-out of stock  → throw
-network down   → throw
-undefined bug  → throw
-```
-
-A better model distinguishes expected user-correctable outcomes from unexpected failures.
-
-```text
-validation/domain problem → return structured state
-unexpected failure        → throw / error boundary / monitoring
-```
-
-## State shape matters
-
-Avoid returning unrelated primitive values from different code paths.
-
-Hard to maintain:
-
-```jsx
-return 'Saved';
-return null;
-return false;
-return {error: 'Failed'};
-```
-
-Prefer a stable state shape:
-
-```jsx
-return {
-  status: 'success',
-  message: 'Saved',
-  data: result,
-};
-```
-
-Or:
-
-```jsx
-return {
-  status: 'error',
-  message: 'Could not save',
-  data: previousState.data,
-};
-```
-
-This gives rendering code a predictable contract.
-
-## Reset behavior
-
-`useActionState` does not give you a generic reset function.
-
-Possible designs include:
-
-1. dispatching an explicit reset payload;
-2. remounting the component with a different `key`;
-3. designing form behavior so successful submission naturally resets browser-owned form fields;
-4. lifting canonical state to the appropriate owner.
-
-Example explicit reset:
-
-```jsx
-const initialState = {status: 'idle', message: null};
-
-async function action(previousState, payload) {
-  if (payload.type === 'reset') {
-    return initialState;
-  }
-
-  // mutation...
-}
-```
+- dispatching an explicit reset payload;
+- remounting with a different `key` when identity should reset;
+- relying on appropriate successful form reset behaviour for browser-owned fields;
+- moving canonical state to a different owner when that better matches the architecture.
 
 ## Progressive enhancement and `permalink`
 
-`useActionState` accepts an optional third `permalink` argument for a specific server-rendered progressive-enhancement scenario.
+The optional `permalink` argument supports a specific React Server Components + Server Function progressive-enhancement scenario:
 
 ```jsx
 useActionState(action, initialState, '/profile');
 ```
 
-This matters when:
+Do not add it to ordinary client-only applications without that server-rendered workflow.
 
-- the page uses React Server Components;
-- the Action is a Server Function;
-- a form may submit before JavaScript has hydrated;
-- the framework can navigate to the canonical URL and preserve the Action result.
+## Server Functions are not required
 
-This is framework/RSC territory. Do not add `permalink` to ordinary client-only Vite forms without a reason.
-
-## Server Functions are not required for the Hook
-
-`useActionState` can be useful with client-side async functions too.
-
-Do not teach:
-
-> `useActionState` is only for server actions.
-
-The Hook is a React Action-state primitive. Server Functions add additional server integration and progressive-enhancement capabilities.
+`useActionState` can also work with client-side async Actions. It is a React Action-state primitive; Server Functions add server integration and progressive-enhancement capabilities.
 
 ## `useActionState` + `useOptimistic`
 
-These Hooks complement each other:
+<VisualDiagram title="Confirmed state and optimistic projection" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="useActionState" tone="purple">Owns confirmed Action result + pending lifecycle + ordered Action state.</DiagramNode>
+    <DiagramArrow label="canonical value becomes base" />
+    <DiagramNode title="useOptimistic" tone="orange">Projects an immediate temporary UI assumption while the Action is pending.</DiagramNode>
+    <DiagramArrow label="Action settles" />
+    <DiagramNode title="Canonical result wins" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-useActionState
-  → confirmed Action result
-  → pending lifecycle
-  → ordered Action state
-
-useOptimistic
-  → temporary immediate UI assumption
-  → converges back to canonical state
+```jsx
+const [cart, cartAction, isPending] = useActionState(saveCart, initialCart);
+const [optimisticCart, updateOptimisticCart] = useOptimistic(cart, cartReducer);
 ```
 
-Example mental model:
-
-```text
-click Add
-  ↓
-optimistic count: 4 immediately
-  ↓
-server Action pending
-  ↓
-confirmed count: 4
-```
-
-We cover this in the optimistic UI chapter.
+They are complementary, not competing Hooks.
 
 ## Common mistakes
 
-### Treating it as a drop-in replacement for `useState`
+- Treating `useActionState` as a replacement for `useState`.
+- Putting ordinary modal/tab/hover state in side-effectful Action logic.
+- Forgetting sequential queue semantics.
+- Returning incompatible state shapes.
+- Calling `dispatchAction` outside an Action/Transition.
+- Throwing expected validation errors when the UI should render them as state.
 
-It is not the default state Hook. Use it when state is specifically the result of Actions.
+## Production decision guide
 
-### Putting pure UI state in side-effectful Action logic
-
-Modal visibility, active tabs, and hover state usually belong in normal React state.
-
-### Forgetting queue semantics
-
-Repeated dispatches are not automatically independent parallel requests.
-
-### Returning incompatible state shapes
-
-Keep the returned state type stable and intentional.
-
-### Calling the dispatcher outside an Action
-
-Wrap it in `startTransition` or use it through an Action prop.
-
-## Production checklist
-
-Before choosing `useActionState`, ask:
-
-```text
-Is this state the result of a user Action?
-Is the Action sync or async?
-Do I want pending state tied to that Action?
-Does sequential ordering make sense?
-Can expected errors be represented as state?
-Would optimistic UI improve responsiveness?
-Is this client-only, or am I using framework/RSC progressive enhancement?
-```
+<DecisionTree
+  question="Does useActionState fit this workflow?"
+  items={[
+    { label: 'State is specifically the result of a user Action?', value: 'Good candidate' },
+    { label: 'Need pending state tied to that Action?', value: 'Good candidate' },
+    { label: 'Sequential previous-result ordering is meaningful?', value: 'Strong fit' },
+    { label: 'Actions should run independently in parallel?', value: 'Use a different mutation model' },
+    { label: 'Need immediate temporary feedback?', value: 'Pair with useOptimistic' },
+  ]}
+/>
 
 ## Interview questions
 
@@ -501,7 +302,7 @@ Is this client-only, or am I using framework/RSC progressive enhancement?
 
 **Mid-level:** How is the function passed to `useActionState` different from a `useReducer` reducer?
 
-**Senior:** Why are queued `useActionState` Actions sequential, and when would that behavior be the wrong fit?
+**Senior:** Why are queued `useActionState` Actions sequential, and when would that behaviour be the wrong fit?
 
 ## References
 

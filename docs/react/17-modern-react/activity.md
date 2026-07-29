@@ -4,9 +4,19 @@ description: Learn how the stable Activity component hides UI while preserving s
 sidebar_position: 6
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `<Activity>` in React 19.2
 
-React 19.2 adds the stable `<Activity>` component.
+`<Activity>` lets React hide and later restore a subtree while preserving its internal state.
 
 ```jsx
 import {Activity} from 'react';
@@ -16,29 +26,27 @@ import {Activity} from 'react';
 </Activity>
 ```
 
-Its purpose is not merely “hide some DOM.” It lets React hide a subtree while **preserving its internal state for later restoration**.
+Its purpose is not simply “hide some DOM.” It gives React an explicit hidden/restorable lifecycle for the subtree.
 
-## Conditional rendering normally unmounts
+## Conditional rendering usually unmounts
 
 ```jsx
 {isOpen && <Sidebar />}
 ```
 
-When `isOpen` becomes false, the component leaves the tree.
+<VisualDiagram title="Conditional rendering removes the subtree" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Sidebar visible', tone: 'blue' },
+      { label: 'Condition becomes false', tone: 'orange' },
+      { label: 'Component unmounts', tone: 'red' },
+      { label: 'Local state is discarded', tone: 'slate' },
+      { label: 'Later mount starts fresh', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-That usually means its local state is lost.
-
-```text
-visible Sidebar
-   ↓
-condition false
-   ↓
-unmount
-   ↓
-local state destroyed
-```
-
-When it mounts again, it starts fresh.
+That is often exactly what you want when leaving the UI should also reset its state.
 
 ## Activity preserves state
 
@@ -48,35 +56,32 @@ When it mounts again, it starts fresh.
 </Activity>
 ```
 
-Conceptually:
+<VisualDiagram title="Activity hide and restore lifecycle" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Visible', tone: 'blue' },
+      { label: 'Switch to hidden', tone: 'orange' },
+      { label: 'DOM is hidden', tone: 'slate' },
+      { label: 'Component state is retained', tone: 'green' },
+      { label: 'Effects are cleaned up', tone: 'red' },
+      { label: 'Visible again', tone: 'cyan' },
+      { label: 'State restored + Effects re-created', tone: 'purple' },
+    ]}
+  />
+</VisualDiagram>
 
-```text
-visible
-  ↓
-hidden
-  ↓
-UI not visible
-state retained
-  ↓
-visible again
-  ↓
-state restored
-```
-
-This is valuable for tabs, sidebars, panels, and workflows where temporary hiding should not mean “forget everything.”
+This is useful for tabs, sidebars, panels, and workflows where temporary hiding should not mean “forget everything.”
 
 ## Hidden mode
 
-Current React 19.2 Activity supports modes such as:
+React 19.2 supports:
 
 ```jsx
 <Activity mode="visible">...</Activity>
 <Activity mode="hidden">...</Activity>
 ```
 
-When hidden, React visually hides the subtree using `display: none` behavior.
-
-That is different from conditionally removing it from the React tree.
+In hidden mode, React visually hides the subtree using `display: none` behaviour. Its state remains available for restoration, while hidden work is treated differently from visible UI.
 
 ## State preservation example
 
@@ -97,15 +102,15 @@ function FiltersPanel() {
 }
 ```
 
-With conditional rendering:
+Conditional rendering:
 
 ```jsx
 {showFilters && <FiltersPanel />}
 ```
 
-Hide and show it again and its local state may reset because the component unmounted.
+can reset the local checkbox state after unmount/remount.
 
-With Activity:
+Activity:
 
 ```jsx
 <Activity mode={showFilters ? 'visible' : 'hidden'}>
@@ -113,43 +118,38 @@ With Activity:
 </Activity>
 ```
 
-The component can resume with its previous state.
+can restore the previous local state when the panel becomes visible again.
 
-## Hidden Effects do not keep running normally
+## Hidden Effects are cleaned up
 
-State preservation does **not** mean every side effect remains active.
+State preservation does **not** mean all side effects remain active.
 
-When an Activity becomes hidden, React can clean up Effects in that subtree.
+<VisualDiagram title="Think: state retained, activity paused" compact>
+  <DiagramGrid columns={3}>
+    <DiagramNode title="State" tone="green">Retained for restoration.</DiagramNode>
+    <DiagramNode title="DOM" tone="slate">Hidden rather than destroyed in the normal element case.</DiagramNode>
+    <DiagramNode title="Effects" tone="red">Cleaned up while hidden and re-created when visible.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-That prevents hidden UI from continuing unnecessary synchronization such as:
+That prevents hidden UI from keeping unnecessary subscriptions, timers, observers, event listeners, or external connections active.
 
-- subscriptions;
-- timers;
-- observers;
-- media synchronization;
-- event listeners;
-- external connections.
+Correct cleanup matters:
 
-When the Activity becomes visible again, React can set those Effects up again.
+```jsx
+useEffect(() => {
+  const connection = connect(roomId);
+  connection.start();
 
-This is why Effect cleanup correctness matters.
-
-## Think “state retained, activity paused”
-
-A useful model is:
-
-```text
-hidden Activity
-  ├── component state retained
-  ├── DOM hidden
-  └── Effects not treated as continuously active UI
+  return () => {
+    connection.stop();
+  };
+}, [roomId]);
 ```
-
-Do not treat hidden Activity as “the component is fully running off-screen forever.”
 
 ## Activity vs CSS hiding
 
-You could write:
+CSS-only hiding preserves a mounted subtree, but React still sees that subtree as ordinarily mounted.
 
 ```jsx
 <div style={{display: isOpen ? 'block' : 'none'}}>
@@ -157,35 +157,20 @@ You could write:
 </div>
 ```
 
-That preserves the mounted subtree, but React still sees it as ordinarily mounted.
-
-Activity gives React semantic knowledge that the subtree is hidden, allowing React to coordinate rendering and Effects differently.
-
-```text
-CSS-only hiding
-→ browser visual concern
-
-Activity
-→ React knows this subtree is hidden/restorable
-```
+<VisualDiagram title="CSS hiding vs Activity" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="CSS display: none" tone="slate">Browser visual concern. React does not receive a hidden/restorable lifecycle signal.</DiagramNode>
+    <DiagramNode title="Activity hidden" tone="purple">React knows the subtree is hidden, can preserve state, defer hidden work, and clean up Effects.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Activity vs conditional rendering
-
-Use conditional rendering when hidden UI should genuinely leave the tree.
-
-```jsx
-{isModalOpen && <Modal />}
-```
-
-Use Activity when you intentionally want stateful restoration or background preparation.
-
-Decision table:
 
 | Requirement | Conditional render | Activity |
 | --- | --- | --- |
 | Remove UI entirely | strong fit | not primary goal |
 | Reset local state when reopened | strong fit | wrong fit |
-| Preserve local state | requires lifting/persistence | strong fit |
+| Preserve local state | requires another owner/persistence | strong fit |
 | React knows subtree is hidden | no | yes |
 | Prepare likely future UI | limited | useful |
 
@@ -201,11 +186,23 @@ A hidden Activity can prepare content before it becomes visible.
 </Suspense>
 ```
 
-This can help React prepare a tab or destination the user is likely to visit next.
+<VisualDiagram title="Preparing likely next UI" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Reports Activity hidden', tone: 'slate' },
+      { label: 'React renders hidden work at lower priority', tone: 'purple' },
+      { label: 'Code/data resources can start preparing', tone: 'orange' },
+      { label: 'User opens Reports', tone: 'blue' },
+      { label: 'Prepared subtree can reveal faster', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-## Activity and Suspense
+Pre-rendering is most useful when the future interaction is likely enough to justify the retained work.
 
-Activity becomes especially interesting with Suspense-enabled resources.
+## Activity + Suspense
+
+Activity becomes especially useful with Suspense-enabled resources:
 
 ```jsx
 <Suspense fallback={<LoadingReports />}>
@@ -215,13 +212,9 @@ Activity becomes especially interesting with Suspense-enabled resources.
 </Suspense>
 ```
 
-A hidden subtree may begin rendering and encounter Suspense-enabled resources before the user makes it visible.
+A hidden subtree can begin rendering and encounter supported suspending resources before the user makes it visible.
 
-That can reduce waiting when the interaction happens later.
-
-## Activity does not make Effect fetching Suspense-aware
-
-Important:
+Activity does **not** magically make Effect-based fetching Suspense-aware:
 
 ```jsx
 useEffect(() => {
@@ -229,9 +222,7 @@ useEffect(() => {
 }, []);
 ```
 
-A hidden Activity does not automatically turn this Effect fetch into pre-rendered Suspense data.
-
-Pre-rendering benefits supported resources that suspend during render, such as Promises read with `use` or framework-managed Suspense resources.
+Use Suspense-aware resources when pre-rendering data during render is the goal.
 
 ## Example: tab state preservation
 
@@ -258,126 +249,58 @@ function Dashboard() {
 }
 ```
 
-If `Reports` contains local filter state, hiding and restoring the tab can preserve it.
+Local filters or draft DOM state in each tab can survive temporary hiding.
 
-## Memory is still a trade-off
+## Memory and stale-state trade-offs
 
-Preserving hidden UI is not free.
+Preservation is not free.
 
-Keeping many large Activity subtrees means React still retains their state and associated structures.
+<VisualDiagram title="What Activity keeps alive" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Benefit" tone="green">State restoration · preserved DOM state · faster likely-next interactions.</DiagramNode>
+    <DiagramNode title="Cost" tone="orange">Memory retention · hidden stale state · broader retained trees · possible background preparation work.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Do not wrap every route and panel in Activity “just in case.”
+Do not wrap every route or panel in Activity “just in case.”
 
-Ask:
+If leaving checkout should discard a draft, preserving that subtree may be the wrong product behaviour. Unmounting or an explicit reset is clearer.
 
-```text
-Is restoration valuable enough to retain this subtree?
-```
+## DOM side effects need care
 
-Potential costs:
+A hidden Activity preserves DOM, so DOM elements with their own side effects—such as playing media—may need explicit cleanup tied to the hidden lifecycle.
 
-- memory;
-- complexity;
-- hidden stale state;
-- harder mental models;
-- accidental pre-render work;
-- broader retained component trees.
-
-## Hidden stale state
-
-State preservation can itself be wrong.
-
-Suppose a checkout form should reset whenever the user leaves the checkout flow.
-
-Activity preservation may retain values that product requirements expect to discard.
-
-In that case, unmounting or explicit reset is preferable.
-
-## Effects must tolerate visibility cycles
-
-An Effect inside Activity should have correct setup and cleanup:
-
-```jsx
-useEffect(() => {
-  const connection = connect(roomId);
-  connection.start();
-
-  return () => {
-    connection.stop();
-  };
-}, [roomId]);
-```
-
-Activity can expose incorrect Effects because visibility changes may cause setup/cleanup cycles without destroying state.
+Design the component so its Effects or layout Effects clean up what should stop when the UI becomes hidden.
 
 ## Accessibility
 
-Hidden Activity content is visually hidden through React's hidden behavior, but accessibility should still be designed around the user's actual active experience.
+Activity does not replace focus management or component semantics. You still need to design tab semantics, modal focus behaviour, announcements, keyboard navigation, and other accessibility requirements around the actual user experience.
 
-Do not rely on Activity alone to solve:
+## Activity and routers
 
-- focus management;
-- tab semantics;
-- modal focus trapping;
-- announcements;
-- keyboard navigation.
-
-When switching visible panels, move focus only when product interaction requires it and use correct semantic structures.
-
-## Activity and routes
-
-It can be tempting to preserve every route with Activity.
-
-Framework routers may already have their own caching, navigation, data, and streaming models.
-
-Do not layer Activity-based route caching on top of a framework without understanding:
-
-- loader lifecycle;
-- server-state invalidation;
-- navigation semantics;
-- memory growth;
-- scroll restoration;
-- accessibility.
-
-## Common mistakes
-
-### Using Activity when state should reset
-
-If leaving the UI should discard local state, normal unmounting is clearer.
-
-### Assuming hidden Effects keep running
-
-Design Effects with correct cleanup and reconnection.
-
-### Treating it as generic CSS `display: none`
-
-Activity is a React lifecycle/rendering primitive with state preservation semantics.
-
-### Pre-rendering too much
-
-Preparing every possible future screen can waste CPU, memory, and network work.
-
-### Expecting Effect-based data fetching to pre-render
-
-Use Suspense-aware resources if pre-rendering is the goal.
+Framework routers may already own route caching, navigation, data, streaming, scroll restoration, and lifecycle. Do not layer Activity-based route preservation on top without understanding the framework's model and memory costs.
 
 ## Production decision guide
 
-```text
-Need to hide UI?
-   ↓
-Should local state reset?
-  ├─ yes → conditional rendering/unmount
-  └─ no
-      ↓
-Is restoration valuable enough to retain subtree?
-  ├─ no → consider lifting only required state
-  └─ yes → Activity may fit
-             ↓
-Would pre-rendering likely future UI help?
-  ├─ yes → combine thoughtfully with Suspense resources
-  └─ no  → state restoration alone may still justify it
-```
+<DecisionTree
+  question="Should this hidden UI use Activity?"
+  items={[
+    { label: 'Should local state reset when hidden?', value: 'Conditional render / unmount' },
+    { label: 'Should state and DOM state be restorable?', value: 'Activity is a candidate' },
+    { label: 'Restoration not worth retained memory?', value: 'Lift only the state that truly must survive' },
+    { label: 'Likely next screen can benefit from preparation?', value: 'Activity + Suspense resources may help' },
+    { label: 'Framework already owns route preservation?', value: 'Prefer the framework model first' },
+  ]}
+/>
+
+## Common mistakes
+
+- Using Activity where product behaviour should reset state.
+- Assuming hidden Effects keep running normally.
+- Treating Activity as generic CSS `display: none`.
+- Pre-rendering too many future screens.
+- Expecting Effect-based fetching to become Suspense-aware.
+- Ignoring memory, stale-state, and accessibility trade-offs.
 
 ## Interview questions
 
@@ -385,7 +308,7 @@ Would pre-rendering likely future UI help?
 
 **Mid-level:** What happens to state and Effects when an Activity becomes hidden?
 
-**Senior:** What are the memory and data-lifecycle trade-offs of using Activity for tab or route preservation?
+**Senior:** What are the memory, DOM, and data-lifecycle trade-offs of using Activity for tab or route preservation?
 
 ## References
 

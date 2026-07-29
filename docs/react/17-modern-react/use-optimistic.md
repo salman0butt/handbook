@@ -4,22 +4,33 @@ description: Learn React 19 optimistic state, Action-scoped updates, reducers, r
 sidebar_position: 4
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Optimistic UI with `useOptimistic`
 
 Optimistic UI shows the user an expected result **before** the underlying Action has finished.
 
-```text
-user clicks Like
-      ↓
-UI shows liked immediately
-      ↓
-request is still pending
-      ↓
-success → canonical state catches up
-failure → UI falls back to canonical state
-```
+<VisualDiagram title="Optimistic mutation lifecycle" subtitle="The UI temporarily projects the expected result while canonical state is still being confirmed.">
+  <LifecycleBar
+    items={[
+      { label: 'User intent', tone: 'blue' },
+      { label: 'Optimistic projection appears', tone: 'orange' },
+      { label: 'Action remains pending', tone: 'purple' },
+      { label: 'Canonical result arrives', tone: 'green' },
+      { label: 'Projection converges or rolls back', tone: 'cyan' },
+    ]}
+  />
+</VisualDiagram>
 
-React 19 provides `useOptimistic` for this pattern.
+React provides `useOptimistic` for this pattern:
 
 ```jsx
 const [optimisticState, setOptimistic] = useOptimistic(value);
@@ -36,25 +47,17 @@ const [optimisticState, dispatchOptimistic] = useOptimistic(
 
 ## Optimistic state is temporary
 
-The most important mental model is:
-
-```text
-canonical value
-   ↓
-useOptimistic(value)
-   ↓
-Action starts
-   ↓
-temporary optimistic projection
-   ↓
-Action ends
-   ↓
-render canonical value again
-```
+<VisualDiagram title="Canonical state remains the source of truth" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Canonical value" tone="green" wide>Props/state/cache value that actually owns the data.</DiagramNode>
+    <DiagramArrow label="Action starts" />
+    <DiagramNode title="Optimistic projection" tone="orange" wide>Temporary expected UI layered on top of the canonical value.</DiagramNode>
+    <DiagramArrow label="Action settles" />
+    <DiagramNode title="Canonical value renders again" tone="green" wide>Success catches up; failure naturally removes the projection.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 `useOptimistic` does not replace the source of truth.
-
-It layers temporary UI state on top of the canonical value while an Action is pending.
 
 ## Basic example
 
@@ -87,11 +90,11 @@ function LikeButton() {
 }
 ```
 
-The user sees feedback immediately even though the canonical `liked` state changes only after confirmation.
+The user sees immediate feedback while the canonical `liked` state waits for confirmation.
 
-## The setter must run inside an Action
+## Optimistic updates belong inside an Action
 
-This is not the intended usage:
+Incorrect:
 
 ```jsx
 setOptimisticLiked(true); // 🚩 outside Action/Transition
@@ -105,53 +108,24 @@ startTransition(() => {
 });
 ```
 
-Or call it from a function Action such as a form Action, where Action context already exists.
+A function-valued Action prop also provides Action context.
 
-## Why optimistic state reverts automatically
+## Why rollback can happen automatically
 
-Suppose the canonical value is:
+Suppose canonical `liked` is still `false`, while the optimistic projection temporarily shows `true`.
 
-```jsx
-const liked = false;
-```
+<VisualDiagram title="Success vs failure convergence" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Success" tone="green">Canonical state changes to the optimistic result, so the projection and source agree.</DiagramNode>
+    <DiagramNode title="Failure" tone="red">Canonical state stays unchanged, so the temporary projection disappears when the Action ends.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-During the Action you set:
-
-```jsx
-setOptimisticLiked(true);
-```
-
-React temporarily renders `true`.
-
-When the Action finishes, `useOptimistic` goes back to the `value` argument passed by the component.
-
-If the canonical state was updated to `true`, both agree.
-
-If the request failed and canonical state is still `false`, the optimistic projection disappears and the UI returns to `false`.
-
-This gives rollback behavior without a separate manual “undo optimistic state” setter for the basic case.
-
-## Canonical state still owns truth
-
-Bad mental model:
-
-```text
-optimistic state becomes the real state
-```
-
-Better:
-
-```text
-real state / props
-      ↓
-optimistic projection while Action pending
-```
-
-If the server changes or rejects the value, canonical state wins.
+Automatic rollback does not automatically explain the failure. Important operations still need understandable error and retry UX.
 
 ## Use a reducer for related optimistic updates
 
-A reducer is useful when one user intent changes multiple related values.
+A reducer helps one intent update several related values consistently:
 
 ```jsx
 function optimisticReducer(state, action) {
@@ -162,48 +136,52 @@ function optimisticReducer(state, action) {
         following: true,
         followerCount: state.followerCount + 1,
       };
-
     case 'unfollow':
       return {
         ...state,
         following: false,
         followerCount: state.followerCount - 1,
       };
-
     default:
       return state;
   }
 }
-```
 
-Then:
-
-```jsx
 const [optimisticUser, dispatchOptimistic] = useOptimistic(
   user,
   optimisticReducer,
 );
 ```
 
-This keeps related fields consistent.
+The reducer should remain pure and immutable.
 
-## Why reducers matter when base state changes
+## Why intent-based reducers matter
 
-Suppose an optimistic item is added while the canonical list also receives new data from elsewhere.
+Canonical data may change from somewhere else while an optimistic Action is still pending.
 
-A reducer can be re-applied to the latest base value:
+<VisualDiagram title="Project intent onto the latest base" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Latest canonical base" tone="green" wide />
+    <DiagramArrow label="re-apply optimistic intent" />
+    <DiagramNode title="Optimistic reducer" tone="purple" wide>`add item` · `follow` · `mark pending delete`</DiagramNode>
+    <DiagramArrow />
+    <DiagramNode title="Current optimistic projection" tone="orange" wide />
+  </DiagramStack>
+</VisualDiagram>
+
+Prefer representing **intent** over copying an entire stale next-state snapshot.
+
+Better:
 
 ```jsx
-const [optimisticTodos, addOptimisticTodo] = useOptimistic(
-  todos,
-  (currentTodos, newTodo) => [
-    ...currentTodos,
-    {...newTodo, pending: true},
-  ],
-);
+{type: 'add', item: newItem}
 ```
 
-This is safer than assuming the base list is frozen for the entire Action.
+Less robust:
+
+```jsx
+{entireNextArray: staleArray}
+```
 
 ## Optimistic list insertion
 
@@ -242,38 +220,11 @@ function TodoList({todos, addTodoAction}) {
 }
 ```
 
-## Stable optimistic identity
+Stable temporary identity matters for keys, focus, editing, pending styling, and reconciling the confirmed item.
 
-When creating temporary list items, use a stable temporary ID.
+## Optimistic delete needs recovery design
 
-Bad:
-
-```jsx
-{id: Math.random()}
-```
-
-Better:
-
-```jsx
-{id: crypto.randomUUID()}
-```
-
-Or use a client-generated ID strategy that the server can preserve or map predictably.
-
-Stable identity matters for:
-
-- list keys;
-- pending styling;
-- focus;
-- editing;
-- reconciliation;
-- replacing the temporary record with the confirmed record.
-
-## Optimistic delete
-
-Deletion is trickier because removing something immediately may hide the object needed for retry.
-
-A safer optimistic reducer can retain metadata:
+Removing an item immediately may hide the information required for retry. A safer design can mark it as pending deletion:
 
 ```jsx
 function reducer(items, action) {
@@ -284,134 +235,63 @@ function reducer(items, action) {
           ? {...item, pendingDelete: true}
           : item,
       );
-
     default:
       return items;
   }
 }
 ```
 
-Then the UI may fade/disable the item rather than removing it instantly.
-
-The right optimistic design depends on recovery needs.
+The UI can fade or disable the item while keeping enough context for recovery.
 
 ## Failure UX
 
-Automatic rollback does not automatically explain the failure to the user.
+<VisualDiagram title="Failure should be visible, not mysterious" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Show optimistic result', tone: 'orange' },
+      { label: 'Request fails', tone: 'red' },
+      { label: 'Canonical state remains unchanged', tone: 'slate' },
+      { label: 'Projection disappears', tone: 'cyan' },
+      { label: 'Explain error + offer recovery', tone: 'blue' },
+    ]}
+  />
+</VisualDiagram>
 
-You still need an error strategy.
+Avoid unexplained “snap back” behaviour for meaningful operations.
 
-```text
-optimistic projection
-      ↓
-request fails
-      ↓
-canonical state remains unchanged
-      ↓
-optimistic projection disappears
-      ↓
-show understandable error + retry path
-```
+## Loading vs optimistic state
 
-Avoid silent “snap back” behavior for important operations.
+<VisualDiagram title="Two different UX statements" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Pending/loading" tone="blue">“I am waiting for confirmation.”</DiagramNode>
+    <DiagramNode title="Optimistic" tone="orange">“I expect this result, so I will show it while confirmation happens.”</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## When optimistic UI is appropriate
+You can use both: show the optimistic item immediately while marking it as pending.
 
-Good candidates:
+## `useOptimistic` + `useActionState`
 
-- likes/reactions;
-- follow/unfollow;
-- adding lightweight items;
-- toggling preferences;
-- low-risk ordering changes;
-- operations with a high success rate and clear rollback.
-
-Less suitable without careful design:
-
-- payments;
-- destructive irreversible operations;
-- inventory reservation;
-- security-sensitive permission changes;
-- legal/financial confirmation states;
-- operations where failure is common or expensive.
-
-The question is not “Can we make this optimistic?”
-
-Ask:
-
-> Would temporarily showing success before confirmation create misleading or dangerous UX?
-
-## Optimistic state vs loading state
-
-Loading state says:
-
-```text
-I am waiting.
-```
-
-Optimistic state says:
-
-```text
-I expect this result, so I will show it now while confirmation happens.
-```
-
-They solve different UX problems.
-
-You may use both:
-
-```jsx
-<li className={todo.pending ? 'pending' : ''}>
-  {todo.text}
-  {todo.pending && <span>Saving…</span>}
-</li>
-```
-
-## `useOptimistic` and `useActionState`
-
-A common architecture:
-
-```text
-server/canonical state
-        ↓
-useActionState manages mutation result
-        ↓
-useOptimistic projects immediate UI
-        ↓
-confirmed state replaces projection
-```
-
-Example:
+<VisualDiagram title="Complementary Action primitives" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="useActionState" tone="purple">Confirmed Action result + pending lifecycle + ordered result state.</DiagramNode>
+    <DiagramArrow label="provides canonical base" />
+    <DiagramNode title="useOptimistic" tone="orange">Immediate temporary projection.</DiagramNode>
+    <DiagramArrow label="confirmation" />
+    <DiagramNode title="Canonical state replaces projection" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ```jsx
 const [cart, cartAction, isPending] = useActionState(saveCart, initialCart);
 const [optimisticCart, updateOptimisticCart] = useOptimistic(cart, cartReducer);
 ```
 
-They are complementary, not competitors.
+## When optimistic UI fits
 
-## Optimistic state and concurrent updates
+Good candidates often include likes/reactions, follows, lightweight item creation, preference toggles, and low-risk ordering changes with a high success rate and clear rollback.
 
-A senior-level concern is what happens when:
-
-1. an optimistic Action is pending;
-2. canonical data changes independently;
-3. the optimistic projection must still apply correctly.
-
-Reducer-based optimistic state is valuable because React can calculate the projection against the latest base value.
-
-This is why optimistic state design should be based on **intent**, not copied snapshots.
-
-Better:
-
-```jsx
-{type: 'add', item: newItem}
-```
-
-Less robust:
-
-```jsx
-{entireNextArray: staleArray}
-```
+Higher-risk operations need caution: payments, irreversible destructive actions, security-sensitive permission changes, inventory reservation, or any flow where showing success before confirmation would be misleading or dangerous.
 
 ## Do not mutate canonical state
 
@@ -432,49 +312,28 @@ function optimisticReducer(items, newItem) {
 }
 ```
 
-The optimistic reducer should remain pure.
+## Production decision guide
+
+<DecisionTree
+  question="Should this mutation use optimistic UI?"
+  items={[
+    { label: 'Must wait for confirmation before showing success?', value: 'Use pending/loading UI' },
+    { label: 'Expected result unsafe or misleading to show early?', value: 'Do not use optimistic UI' },
+    { label: 'Result can be reconciled or rolled back cleanly?', value: 'useOptimistic may fit' },
+    { label: 'Canonical data may change while pending?', value: 'Prefer reducer-based optimistic intent' },
+    { label: 'Failure needs explicit recovery?', value: 'Keep enough optimistic metadata for retry/error UX' },
+  ]}
+/>
 
 ## Common mistakes
 
-### Using optimistic state as permanent state
-
-The `value` argument remains the canonical source.
-
-### Calling the setter outside an Action
-
-Wrap the update in `startTransition` or use it inside an Action prop.
-
-### Optimistically confirming high-risk operations
-
-Do not show “Payment completed” before payment actually completes.
-
-### No failure feedback
-
-Rollback without explanation can look like a bug.
-
-### Unstable list keys
-
-Temporary items still need stable identity.
-
-### Copying stale base state
-
-Prefer reducer intent when the canonical value may change during the Action.
-
-## Production decision guide
-
-```text
-Should UI wait for confirmation?
-  ├─ yes → pending/loading state
-  └─ no
-      ↓
-Is expected result safe to show temporarily?
-  ├─ no → do not use optimistic UI
-  └─ yes
-      ↓
-Can result be cleanly reconciled/rolled back?
-  ├─ no → redesign mutation UX
-  └─ yes → useOptimistic may fit
-```
+- Treating optimistic state as permanent/canonical state.
+- Calling the optimistic setter outside an Action/Transition.
+- Showing premature success for high-risk operations.
+- Providing no failure feedback.
+- Using unstable keys for temporary items.
+- Copying stale base state instead of applying intent.
+- Mutating the canonical collection in the optimistic reducer.
 
 ## Interview questions
 
