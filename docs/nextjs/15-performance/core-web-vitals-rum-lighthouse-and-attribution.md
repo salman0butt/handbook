@@ -7,19 +7,19 @@ description: Measure LCP, INP, CLS, TTFB, and FCP with field data, useReportWebV
 
 Performance decisions need trustworthy measurement.
 
-Next.js provides `useReportWebVitals` as a framework integration point for browser performance metrics, but a production performance system needs more than logging one number to the console.
+Next.js provides `useReportWebVitals` as a framework integration point for browser metrics, but a production performance system needs more than printing one number to the console.
 
 ## Current Core Web Vitals model
 
 The three Core Web Vitals are:
 
 ```text
-LCP → loading
-INP → responsiveness
+LCP → loading experience
+INP → interaction responsiveness
 CLS → visual stability
 ```
 
-Useful good thresholds are:
+Common good thresholds are:
 
 ```text
 LCP ≤ 2.5 seconds
@@ -27,7 +27,7 @@ INP ≤ 200 milliseconds
 CLS ≤ 0.1
 ```
 
-Evaluate field performance at the 75th percentile rather than optimizing a single lucky page load.
+Evaluate field performance at the **75th percentile** rather than optimizing a single lucky page load.
 
 ## Supporting metrics still matter
 
@@ -42,29 +42,11 @@ CLS
 INP
 ```
 
-FID is historical for Core Web Vitals, while INP is the current responsiveness metric. Older dashboards may still contain FID, so migration and trend interpretation may require both.
+FID is historical for Core Web Vitals while INP is the current responsiveness metric. Older dashboards may still contain FID, so migration and trend interpretation may require both.
 
 ## `useReportWebVitals`
 
 Create a narrow Client Component:
-
-```tsx
-'use client'
-
-import { useReportWebVitals } from 'next/web-vitals'
-
-const report = (metric: Parameters<typeof useReportWebVitals>[0] extends infer T ? never : never) => {}
-
-export function WebVitals() {
-  useReportWebVitals((metric) => {
-    console.log(metric)
-  })
-
-  return null
-}
-```
-
-A simpler TypeScript pattern from the API shape:
 
 ```tsx
 'use client'
@@ -83,7 +65,7 @@ export function WebVitals() {
 }
 ```
 
-Then mount that small island from the root layout:
+Mount that small island from the root layout:
 
 ```tsx
 import { WebVitals } from './web-vitals'
@@ -100,17 +82,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-The important architecture point is that the root layout does **not** need to become a broad Client Component just to report metrics.
+The root layout does **not** need to become a broad Client Component just to report metrics.
 
 ## Keep the callback reference stable
 
-The current Next.js API guidance warns against passing a new callback identity on every render because already-available metrics can be reported again.
+Current Next.js guidance warns that changing the callback function identity can cause already-available metrics to be reported again.
 
-Prefer:
+Prefer a module-level or otherwise stable callback:
 
 ```tsx
-const sendMetric = (metric: NextWebVitalsMetric) => {
-  // send
+const sendMetric: ReportCallback = (metric) => {
+  // send to analytics
 }
 
 export function WebVitals() {
@@ -119,11 +101,11 @@ export function WebVitals() {
 }
 ```
 
-rather than defining complex callback state inside a frequently rerendering component.
+## Metric payload
 
-## Metric payload fields
+The reported object contains metric identity/value information. Type against the actual Next.js hook signature rather than maintaining a hand-written interface that can drift.
 
-The callback receives fields such as:
+Useful fields include concepts such as:
 
 ```text
 id
@@ -131,15 +113,13 @@ name
 value
 delta
 rating
-navigationType
-entries
+navigation type
+performance entries
 ```
-
-The exact object is framework/library-defined, so type against the actual API rather than duplicating a hand-maintained interface.
 
 ## Send field data without blocking navigation
 
-A common browser transport is:
+A common transport pattern is:
 
 ```ts
 function postMetric(metric: unknown) {
@@ -159,26 +139,24 @@ function postMetric(metric: unknown) {
 }
 ```
 
-If you own the endpoint, validate payload size and schema. Performance telemetry is still untrusted browser input.
+If you own the endpoint, validate payload size and schema. Browser telemetry is still untrusted input.
 
-## Do not make telemetry expensive
-
-Bad measurement code can become the performance problem.
+## Do not make telemetry the bottleneck
 
 Avoid:
 
-- large analytics SDKs only for a few metrics
-- synchronous storage writes on every event
-- sending a request for every tiny sample
-- serializing giant DOM snapshots
-- attaching high-cardinality secrets
-- logging full URLs with sensitive query parameters
+- a large analytics SDK only for a few metrics
+- synchronous storage work on every event
+- one network request for every tiny sample
+- giant DOM snapshots
+- high-cardinality identifiers
+- full URLs containing sensitive query parameters
 
 Telemetry should be bounded, sampled where appropriate, and privacy reviewed.
 
 ## Real User Monitoring needs context
 
-A useful RUM event can include low-cardinality context:
+A useful RUM event may include low-cardinality dimensions such as:
 
 ```text
 metric name
@@ -204,11 +182,11 @@ free-form tenant names
 high-cardinality request metadata
 ```
 
-Performance observability should follow the redaction and privacy model from Phase 14.
+Follow the redaction/privacy model from Phase 14.
 
-## Route pattern beats raw pathname for aggregation
+## Prefer route patterns to raw IDs
 
-Raw paths:
+Raw paths such as:
 
 ```text
 /orders/1001
@@ -218,38 +196,38 @@ Raw paths:
 
 create high cardinality.
 
-Prefer a normalized dimension:
+Aggregate by a normalized route identity such as:
 
 ```text
 /orders/[id]
 ```
 
-Your analytics pipeline may derive this from route metadata or application context.
+when your telemetry architecture can derive it safely.
 
 ## Segment mobile and desktop
 
-A site can look healthy globally while mobile users suffer.
+A global metric can look healthy while slower devices suffer.
 
-Useful slices:
+Useful slices include:
 
 ```text
 mobile vs desktop
-low-end vs high-end device
+coarse device class
 region
 browser
 route
 release
-logged-in vs public experience
-cold vs repeat visitor
+public vs authenticated journey
+cold vs repeat visit
 ```
 
-Use enough segmentation to reveal real problems, but avoid dimensions that make every event unique.
+Segment enough to reveal real problems without making every event unique.
 
 ## LCP diagnosis
 
 LCP measures when the largest visible content element is painted.
 
-A useful decomposition is:
+A useful critical-path decomposition is:
 
 ```text
 TTFB
@@ -259,69 +237,63 @@ TTFB
 = observed LCP path
 ```
 
-Common LCP causes:
+Common causes:
 
 - slow server response
 - hero image discovered late
-- incorrect image priority
+- wrong image priority
 - render-blocking CSS
 - font dependency
 - client-only rendering
-- expensive hydration before visible content settles
-- third-party contention
+- main-thread contention
+- third-party work
 
-Do not assume every LCP problem is an image problem.
+Do not assume every LCP regression is an image problem.
 
-## Next Image and LCP
+## LCP images
 
-For the actual LCP image, Phase 12 covered current Next.js image APIs such as `preload`, responsive `sizes`, and correct dimensions.
-
-Performance review should verify:
+For the real LCP image, verify:
 
 ```text
 correct source candidate
 correct rendered size
-no accidental oversized download
-resource discovered early enough
-not lazy-loaded when it is the critical LCP image
+no oversized download
+resource discovered early
+not accidentally lazy-loaded
 stable dimensions
 ```
 
-Use browser tooling to identify the real LCP element before changing image configuration.
+Phase 12 covers `next/image`; Phase 15 focuses on proving that the browser chose and scheduled the right resource.
 
 ## INP diagnosis
 
-INP reflects interaction responsiveness.
-
-Think:
+Think of interaction latency as:
 
 ```text
 input delay
 + event-handler work
-+ rendering work
++ React/browser rendering work
 + time until next paint
 ```
 
-Common INP problems:
+Common causes:
 
-- long event handler
-- synchronous filtering/sorting of large data
-- giant rerender
-- chart or editor work
+- long handlers
+- synchronous filtering/sorting
+- giant rerenders
+- charts/editors/grids
 - layout thrashing
 - third-party JavaScript
 - hydration/main-thread competition
 
-Record which interaction caused poor INP. A global score without interaction context is hard to act on.
+Record the interaction that produced poor INP. A global score without interaction context is hard to act on.
 
 ## React transitions and responsiveness
 
-`startTransition` / `useTransition` can mark non-urgent state updates so urgent interaction feedback can remain responsive.
-
-That is scheduling, not removal of work.
+`startTransition` / `useTransition` can mark non-urgent updates so urgent feedback remains responsive.
 
 ```text
-expensive update still exists
+expensive work still exists
 but
 urgent input can receive higher priority
 ```
@@ -330,69 +302,62 @@ If the computation itself is enormous, reduce, move, chunk, virtualize, cache, o
 
 ## CLS diagnosis
 
-CLS is about unexpected visual movement.
-
-Common causes:
+Common causes include:
 
 - images without reserved geometry
-- late banners
-- injected ads
+- late banners/ads
 - font metric changes
-- client-only content appearing above existing content
-- expanding third-party embeds
-- animation using layout properties
+- client-only content inserted above existing content
+- expanding embeds
+- layout-changing animation
 
-Prefer stable placeholders and reserved dimensions.
+Prefer stable geometry and predictable placeholders.
 
 ## Font-induced CLS
 
-Phase 12 covered `next/font`, fallbacks, and metric adjustment.
-
-For performance debugging:
+Inspect:
 
 ```text
-inspect font request timing
-compare fallback and final font metrics
-check route preload scope
-verify unnecessary weights are not loaded
+font request timing
+fallback vs final font metrics
+route preload scope
+unused weights/styles
 ```
 
-A font can be "optimized" at build time and still be overused architecturally.
+A font can be framework-optimized and still be overused architecturally.
 
-## TTFB is an important diagnostic metric
+## TTFB is diagnostic evidence
 
-TTFB can be affected by:
+TTFB can reflect:
 
 ```text
 network distance
 CDN/cache behavior
-server cold start
-request-time authentication
+cold start
+authentication
 uncached data reads
 slow upstream APIs
 database contention
 render startup
 ```
 
-Improving frontend assets cannot fix a backend-dominated TTFB.
+Frontend asset tuning cannot fix a backend-dominated TTFB.
 
-## FCP is useful supporting evidence
+## FCP is supporting evidence
 
-FCP indicates when the browser paints the first DOM content.
-
-It helps answer:
+FCP answers roughly:
 
 ```text
-did anything useful appear early?
+did visible DOM content appear early?
 ```
 
-But a fast FCP with a very late LCP can mean the user sees only a header/skeleton for too long.
+A fast FCP with late LCP may mean the user sees only a shell/skeleton for too long.
 
 ## Lighthouse is a lab tool
 
-The Next.js production checklist recommends Lighthouse as a simulated measurement paired with field data.
+The Next.js production checklist recommends Lighthouse as simulated measurement paired with field data.
 
-Run against a production build, preferably in a clean browser context.
+Run it against a production build and a clean browser context.
 
 Use it to inspect:
 
@@ -403,43 +368,41 @@ Use it to inspect:
 - render blocking
 - accessibility side effects
 
-Do not compare two random Lighthouse runs and call a 2-point change a regression.
+Do not treat a tiny score change from two random runs as a production regression.
 
 ## Stable synthetic testing
 
-To make lab tests meaningful:
+For comparisons, hold these constant:
 
 ```text
-same route
-same build mode
-same device profile
-same network profile
-same cache policy
-multiple runs
-median or distribution
+route
+build mode
+device profile
+network profile
+cache policy
 ```
 
-Record environmental changes when comparing results.
+Run multiple samples and compare a median/distribution rather than one run.
 
 ## Experimental Web Vitals attribution
 
 Current Next.js docs expose:
 
 ```ts
-experimental: {
-  webVitalsAttribution: ['CLS', 'LCP'],
+const nextConfig = {
+  experimental: {
+    webVitalsAttribution: ['CLS', 'LCP'],
+  },
 }
 ```
 
-This can add attribution detail for diagnosis.
+This can provide attribution details for diagnosis.
 
-At the current 16.2.12 baseline it remains **experimental** and should not become a mandatory production architecture dependency.
-
-Use it as a diagnostic option with stability expectations appropriate to an experimental API.
+At the current 16.2.12 baseline it remains **experimental** and should not become a required production architecture dependency.
 
 ## Browser Performance APIs
 
-For deeper investigations, browser APIs can help inspect:
+For deeper investigation, browser tooling/APIs can expose data from:
 
 ```text
 PerformanceNavigationTiming
@@ -449,11 +412,11 @@ PerformanceObserver
 long tasks / long animation frames where supported
 ```
 
-Prefer established performance libraries and browser tooling over reinventing metric algorithms manually.
+Prefer established libraries and browser tooling over reimplementing Web Vitals algorithms manually.
 
-## Correlate release and route
+## Correlate route and release
 
-A useful regression query:
+A useful regression query is:
 
 ```text
 LCP p75
@@ -463,30 +426,19 @@ release before = abc123
 release after = def456
 ```
 
-This is much stronger than:
+This is stronger than "the site feels slower today".
 
-```text
-site feels slower today
-```
-
-## Performance regression workflow
+## Regression workflow
 
 ```text
 alert / report
-  ↓
-identify metric and affected segment
-  ↓
-compare release boundary
-  ↓
-inspect resource/server/browser evidence
-  ↓
-reproduce in lab
-  ↓
-fix
-  ↓
-verify lab
-  ↓
-verify field distribution
+→ identify metric and affected segment
+→ compare release boundary
+→ inspect resource/server/browser evidence
+→ reproduce in lab
+→ fix
+→ verify lab
+→ verify field distribution
 ```
 
 ## Common mistakes
@@ -503,31 +455,31 @@ Lab scores can improve while real users regress.
 
 A traffic shift can change site-wide p75 without a code regression.
 
-### Sending telemetry from a huge Client Component
+### Reporting from a huge Client Component
 
-Keep performance reporting isolated and lightweight.
+Keep the Web Vitals island small.
 
-### Treating experimental attribution as stable
+### Treating attribution as stable
 
-Label it and isolate it.
+It is experimental at this baseline; label and isolate it.
 
 ## Interview questions
 
-### Why does Next.js recommend a separate Client Component for `useReportWebVitals`?
+### Why use a separate Client Component for `useReportWebVitals`?
 
-Because the hook requires a Client Component, but keeping it in a tiny component avoids unnecessarily expanding the client boundary of the root layout.
+The hook requires a Client Component, but a tiny reporting island avoids unnecessarily broadening the client boundary of the root layout.
 
-### What does p75 mean in Core Web Vitals evaluation?
+### What does p75 mean?
 
-The 75th percentile represents a value at or below which 75% of measured experiences fall. It captures user experience distribution better than a single run or simple average.
+It is the value at or below which 75% of measured experiences fall. It represents a distribution better than a single run or simple average.
 
-### What is the difference between lab and field performance data?
+### Field vs lab data?
 
-Lab data is controlled and reproducible; field data represents actual users, devices, networks, caches, and interactions. Use lab data to diagnose and field data to confirm real-world impact.
+Lab data is controlled and reproducible; field data represents real users, devices, networks, caches, and interactions. Use lab data to diagnose and field data to confirm impact.
 
 ## Exercise
 
-Instrument one route with a Web Vitals reporting component and design an event schema that supports:
+Design a Web Vitals event schema that supports:
 
 1. p75 by route
 2. mobile vs desktop
