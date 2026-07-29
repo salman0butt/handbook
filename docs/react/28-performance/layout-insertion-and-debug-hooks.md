@@ -4,37 +4,40 @@ description: Specialized React Hooks for pre-paint layout work, CSS-in-JS style 
 sidebar_position: 4
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `useLayoutEffect`, `useInsertionEffect`, and `useDebugValue`
 
-These Hooks solve specialized problems.
+These Hooks solve specialized problems. They should not become default substitutes for `useEffect` or ordinary logging.
 
-They should not become default substitutes for `useEffect` or ordinary logging.
-
-```text
-useEffect
-→ synchronize after commit, usually without blocking paint
-
-useLayoutEffect
-→ run after DOM commit but before browser repaint
-
-useInsertionEffect
-→ library-level style insertion before layout Effects
-
-useDebugValue
-→ expose useful custom Hook state in React DevTools
-```
+<VisualDiagram title="Three specialized responsibilities">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="useLayoutEffect" tone="orange">Read/update layout after DOM commit but before paint</DiagramNode>
+    <DiagramNode title="useInsertionEffect" tone="purple">CSS-in-JS library style insertion before layout Effects</DiagramNode>
+    <DiagramNode title="useDebugValue" tone="teal">Expose semantic custom-Hook state in DevTools</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## `useLayoutEffect`
 
-`useLayoutEffect` fires after React commits DOM changes and before the browser repaints.
+`useLayoutEffect` runs after React commits DOM changes and before the browser repaints.
 
 ```js
 useLayoutEffect(setup, dependencies);
 ```
 
-Use it when the UI must read layout and update again **before the user sees the intermediate result**.
+Use it when the user must never see the provisional layout.
 
-## Tooltip example
+## Tooltip measurement flow
 
 ```jsx
 function Tooltip() {
@@ -54,86 +57,40 @@ function Tooltip() {
 }
 ```
 
-Flow:
+<VisualDiagram title="Pre-paint layout correction">
+  <LifecycleBar items={[
+    { label: 'Render provisional position', tone: 'blue' },
+    { label: 'Commit DOM', tone: 'purple' },
+    { label: 'useLayoutEffect measures', tone: 'orange' },
+    { label: 'Synchronous state update / second render', tone: 'red' },
+    { label: 'Browser paints final position', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-```text
-render with provisional position
-   ↓
-DOM commit
-   ↓
-useLayoutEffect measures DOM
-   ↓
-state update
-   ↓
-second render
-   ↓
-browser paints final position
-```
-
-The user never sees the provisional position.
-
-## Why `useLayoutEffect` can hurt performance
-
-The browser cannot paint until layout Effects and synchronous updates from them finish.
-
-So this:
-
-```js
-useLayoutEffect(() => {
-  expensiveSynchronousWork();
-});
-```
-
-blocks visible progress.
-
-Use `useEffect` when the work does not have to happen before paint.
+The trade-off is clear: the user avoids a visible jump, but the browser must wait before painting.
 
 ## `useLayoutEffect` vs `useEffect`
 
-Use `useLayoutEffect` for:
+<DecisionTree
+  question="Does this synchronization need to finish before paint?"
+  items={[
+    { label: 'Yes — geometry/position must be correct before user sees it', value: 'useLayoutEffect may be justified' },
+    { label: 'No — subscription, analytics, timers, network, most integrations', value: 'Prefer useEffect' },
+    { label: 'The layout can be expressed with CSS instead', value: 'Avoid measurement Effect entirely' },
+  ]}
+/>
 
-- measuring element geometry before paint;
-- synchronously positioning overlays/tooltips;
-- reading layout that determines the immediately visible result;
-- certain imperative UI integrations requiring pre-paint coordination.
-
-Use `useEffect` for:
-
-- subscriptions;
-- analytics;
-- network synchronization;
-- timers;
-- most third-party integrations;
-- work that can happen after paint.
+Keep layout Effects minimal because they block visible progress.
 
 ## Server rendering
 
-Effects do not run during server rendering.
+Effects do not run during server rendering. Browser layout does not exist on the server.
 
-`useLayoutEffect` specifically depends on browser layout information, which does not exist on the server.
+If a component fundamentally depends on measured layout, consider a client-only boundary, a hydration-safe initial UI, an ordinary Effect when a visible adjustment is acceptable, or CSS architecture that removes the measurement.
 
-If a component fundamentally needs layout before it can render correctly, consider:
+## Strict Mode
 
-- making the component client-only;
-- rendering a hydration-safe fallback first;
-- replacing layout work with normal Effect work when visible jumping is acceptable;
-- redesigning the layout using CSS so measurement is unnecessary.
-
-## Strict Mode behavior
-
-Development Strict Mode performs an extra setup/cleanup cycle before the first real setup.
-
-That means layout Effect cleanup must mirror setup correctly.
-
-Bad:
-
-```js
-useLayoutEffect(() => {
-  window.addEventListener('resize', measure);
-}, []);
-```
-
-Better:
+Development Strict Mode performs an extra setup/cleanup cycle. Cleanup must mirror setup.
 
 ```js
 useLayoutEffect(() => {
@@ -144,20 +101,16 @@ useLayoutEffect(() => {
 
 ## Layout thrashing
 
-Repeatedly mixing DOM reads and writes can force browser layout recalculation.
+Alternating DOM reads and writes can repeatedly force layout calculation.
 
-Risky pattern:
+<VisualDiagram title="Batch reads and writes instead of forcing repeated layout">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Risky" tone="red">read width → write style → read height → write style</DiagramNode>
+    <DiagramNode title="Better" tone="green">collect required reads → compute → perform minimal writes</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-read width
-write style
-read height
-write style
-```
-
-Prefer grouping reads and minimizing synchronous DOM writes.
-
-React cannot eliminate browser layout cost for you.
+React cannot remove browser layout cost for you.
 
 ## `useInsertionEffect`
 
@@ -167,25 +120,16 @@ React cannot eliminate browser layout cost for you.
 useInsertionEffect(setup, dependencies);
 ```
 
-Its purpose is to insert styles before layout Effects need to read layout using those styles.
+Its job is to insert runtime styles before layout Effects need to measure layout using those styles.
 
-## Why this exists
+<VisualDiagram title="Why insertion timing exists">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Too late" tone="red">DOM update → layout measurement → style injected</DiagramNode>
+    <DiagramNode title="Insertion Effect" tone="green">style injection → layout Effects can measure with intended CSS</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Runtime CSS-in-JS can create a timing problem:
-
-```text
-DOM update
-   ↓
-layout measurement
-   ↓
-style inserted too late
-```
-
-The measurement can be wrong because the expected styles were not present yet.
-
-`useInsertionEffect` lets a styling library insert styles earlier in the commit process.
-
-## Example library Hook
+Example library Hook:
 
 ```js
 function useCSS(rule) {
@@ -197,170 +141,106 @@ function useCSS(rule) {
 }
 ```
 
-This is library infrastructure, not typical application code.
+This is library infrastructure, not typical application business logic.
 
-## Important `useInsertionEffect` caveats
+## Current `useInsertionEffect` caveats
 
-Current React guidance includes these constraints:
+React's current documentation states that:
 
 - it runs only on the client;
-- you cannot update state inside it;
+- state updates are not allowed inside it;
 - refs are not attached yet;
-- do not rely on the DOM already being updated at a particular moment;
-- cleanup/setup ordering differs from ordinary Effect batching.
+- you must not rely on the DOM having been updated at a specific moment;
+- cleanup/setup are interleaved one component at a time rather than globally batched like ordinary Effects.
 
-That makes it intentionally narrow.
+That intentionally makes it a narrow tool.
 
-## Prefer static CSS when possible
+## Prefer static CSS when practical
 
-React's docs recommend static extraction or ordinary CSS over runtime style injection when practical.
-
-Why?
-
-Runtime style insertion can trigger extra style recalculation and create performance overhead.
-
-Use `useInsertionEffect` when building infrastructure that truly needs runtime injection—not because it sounds like the “fastest Effect.”
+React recommends static extraction or normal CSS/inline styles over runtime `<style>` injection when possible. Runtime injection can force repeated style recalculation and is sensitive to lifecycle timing.
 
 ## `useDebugValue`
 
-`useDebugValue` gives custom Hooks meaningful labels in React DevTools.
+`useDebugValue` exposes semantic state for reusable custom Hooks in React DevTools.
 
 ```js
 function useOnlineStatus() {
   const online = useSyncExternalStore(
     subscribe,
     () => navigator.onLine,
-    () => true
+    () => true,
   );
 
   useDebugValue(online ? 'Online' : 'Offline');
-
   return online;
 }
 ```
 
-DevTools can then show a readable value instead of only the underlying primitive state.
+<VisualDiagram title="Debug values translate implementation into domain meaning">
+  <DiagramRow>
+    <DiagramNode title="Hook internals" tone="gray">subscriptions · refs · state</DiagramNode>
+    <DiagramArrow direction="right" label="useDebugValue" />
+    <DiagramNode title="DevTools label" tone="teal">Offline / Authenticated / Loading products</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## Best use case
+Best candidates are reusable public Hooks with non-obvious internal state.
 
-`useDebugValue` is most valuable in reusable custom Hooks where developers need to inspect a semantic state.
+## Deferred debug formatting
 
-Examples:
-
-```text
-useAuth()        → Authenticated as Alice
-useNetwork()     → Offline
-useQueryState()  → Loading products
-useFeatureFlag() → checkout-v2 enabled
-```
-
-## Deferred formatting
-
-Formatting debug state might be expensive.
-
-Instead of:
-
-```js
-useDebugValue(expensiveFormat(data));
-```
-
-use the formatter argument:
+If formatting is expensive:
 
 ```js
 useDebugValue(data, value => expensiveFormat(value));
 ```
 
-React DevTools can call the formatter only when the Hook is inspected.
+The formatter can be evaluated when DevTools inspects the Hook instead of on every render.
 
-This avoids formatting work on every render.
+## Performance comparison
 
-## Do not overuse `useDebugValue`
-
-A simple local Hook used once does not automatically need a debug label.
-
-Useful rule:
-
-```text
-public/reusable custom Hook
-+ non-obvious internal state
-→ consider useDebugValue
-```
-
-## Performance relationship
-
-These Hooks have very different performance implications.
-
-### `useLayoutEffect`
-
-Can block paint. Keep work minimal.
-
-### `useInsertionEffect`
-
-Exists to coordinate runtime styling infrastructure. Misuse can create fragile timing assumptions.
-
-### `useDebugValue`
-
-Usually cheap, but expensive formatting should be deferred.
+<DiagramGrid columns={3}>
+  <DiagramNode title="useLayoutEffect" tone="orange">Can block paint. Keep work tiny.</DiagramNode>
+  <DiagramNode title="useInsertionEffect" tone="purple">Coordinates runtime styling infrastructure.</DiagramNode>
+  <DiagramNode title="useDebugValue" tone="teal">Usually cheap; defer expensive formatting.</DiagramNode>
+</DiagramGrid>
 
 ## Common mistakes
 
-### Using `useLayoutEffect` because it “runs faster”
+- Using `useLayoutEffect` because it sounds faster.
+- Measuring layout every render without need.
+- Updating state from `useInsertionEffect`.
+- Using `useInsertionEffect` for product business logic.
+- Eagerly formatting expensive debug values.
 
-It does not make work cheaper. It makes the browser wait before painting.
+## Classification exercise
 
-### Measuring layout every render
-
-If the measurement is only needed after a specific change, express that through dependencies or architecture.
-
-### Updating state in `useInsertionEffect`
-
-Not supported.
-
-### Using `useInsertionEffect` for app business logic
-
-It is not an “earlier Effect.” It is specialized styling infrastructure.
-
-### Formatting debug values eagerly
-
-Use the formatter callback when formatting is expensive.
-
-## Exercise
-
-Classify each task:
-
-1. send analytics after route change;
-2. position a tooltip based on measured height before paint;
-3. insert runtime CSS rules for a styling library;
-4. subscribe to WebSocket messages;
-5. label a custom `useSession` Hook in DevTools.
-
-Expected directions:
-
-```text
-1 → useEffect
-2 → useLayoutEffect
-3 → useInsertionEffect
-4 → useEffect or external-store abstraction
-5 → useDebugValue
-```
+<DecisionTree
+  question="Which tool fits this job?"
+  items={[
+    { label: 'Analytics after navigation or WebSocket subscription', value: 'useEffect' },
+    { label: 'Measure tooltip geometry before paint', value: 'useLayoutEffect' },
+    { label: 'Inject CSS rules in a runtime styling library', value: 'useInsertionEffect' },
+    { label: 'Expose readable state for a reusable custom Hook', value: 'useDebugValue' },
+  ]}
+/>
 
 ## Interview questions
 
 ### Why can `useLayoutEffect` hurt performance?
 
-Because it and synchronous state updates from it run before the browser repaints, so excessive work blocks paint.
+It and synchronous updates from it run before repaint, delaying visible progress.
 
 ### What is `useInsertionEffect` for?
 
-Primarily CSS-in-JS library infrastructure that must insert styles before layout Effects read layout.
+Primarily CSS-in-JS infrastructure that must insert styles before layout Effects measure layout.
 
-### Can you update state from `useInsertionEffect`?
+### Can it update state?
 
 No.
 
 ### What does `useDebugValue` do?
 
-It exposes a readable value for a custom Hook in React DevTools, with optional deferred formatting.
+It exposes a semantic label/value for custom Hooks in React DevTools.
 
 ## References
 
