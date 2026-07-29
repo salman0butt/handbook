@@ -4,26 +4,22 @@ description: Compound components, controlled/uncontrolled APIs, render props, re
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Advanced Composition Patterns
 
-Patterns are tools for recurring design problems.
-
-They are not goals by themselves.
-
-A useful pattern should improve at least one of these:
-
-- ownership;
-- composition;
-- reuse;
-- testability;
-- API clarity;
-- isolation of complexity.
-
-If a pattern adds ceremony without solving a real problem, do not use it.
+Patterns are tools for recurring design problems. Use them only when they improve **ownership, composition, reuse, testability, API clarity, or isolation of complexity**.
 
 ## Prefer plain composition first
-
-Before introducing a special pattern, try ordinary children and props.
 
 ```jsx
 function Panel({ title, children }) {
@@ -36,11 +32,18 @@ function Panel({ title, children }) {
 }
 ```
 
-This is often enough.
+<DecisionTree
+  question="Do you need a more advanced pattern?"
+  items={[
+    { label: 'Children + props express the API clearly', value: 'Keep ordinary composition' },
+    { label: 'Several children coordinate one interaction model', value: 'Consider compound components' },
+    { label: 'Consumers need reusable stateful behavior', value: 'Consider a custom Hook' },
+    { label: 'Consumers need to customize transitions', value: 'Consider reducer/state-machine patterns' },
+    { label: 'A vendor/runtime contract should be isolated', value: 'Use an adapter boundary' },
+  ]}
+/>
 
 ## Compound components
-
-Compound components expose several coordinated child components under one conceptual API.
 
 ```jsx
 <Menu>
@@ -52,50 +55,24 @@ Compound components expose several coordinated child components under one concep
 </Menu>
 ```
 
-They are useful when:
+<VisualDiagram title="Compound components coordinate implicit shared behavior">
+  <DiagramStack>
+    <DiagramNode title="Menu root" tone="blue">owns open state + public contract</DiagramNode>
+    <DiagramArrow label="internal Context" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Trigger" tone="cyan">activation + aria state</DiagramNode>
+      <DiagramNode title="Content" tone="purple">presence + focus scope</DiagramNode>
+      <DiagramNode title="Items" tone="green">selection + keyboard navigation</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-- structure should remain flexible;
-- children share implicit state;
-- the library owns keyboard/focus semantics;
-- the consumer owns composition.
+Keep internal coordination private when consumers do not need it.
 
-## Internal Context for coordination
-
-A `Menu` can provide internal state:
-
-```text
-Menu
- ├── Trigger
- └── Content
-      ├── Item
-      └── Item
-```
-
-The Context might contain:
-
-```ts
-{
-  open,
-  setOpen,
-  activeItem,
-  registerItem
-}
-```
-
-Keep this internal if it is an implementation detail.
-
-The public API should remain the components and documented props.
-
-## Controlled + uncontrolled pattern
-
-Reusable primitives often support both ownership models.
+## Controlled and uncontrolled APIs
 
 ```jsx
-function Toggle({
-  pressed,
-  defaultPressed = false,
-  onPressedChange,
-}) {
+function Toggle({ pressed, defaultPressed = false, onPressedChange }) {
   const [internal, setInternal] = useState(defaultPressed);
   const isControlled = pressed !== undefined;
   const value = isControlled ? pressed : internal;
@@ -105,24 +82,21 @@ function Toggle({
     onPressedChange?.(next);
   }
 
-  return (
-    <button
-      aria-pressed={value}
-      onClick={() => setValue(!value)}
-    />
-  );
+  return <button aria-pressed={value} onClick={() => setValue(!value)} />;
 }
 ```
 
-Important rule:
+<VisualDiagram title="Ownership should stay stable for the component instance">
+  <DiagramRow>
+    <DiagramNode title="Controlled" tone="blue">Parent owns value</DiagramNode>
+    <DiagramArrow direction="right" label="or" />
+    <DiagramNode title="Uncontrolled" tone="green">Component owns value</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-> Decide ownership at the component instance level and keep it stable.
+Switching between the two modes during the same lifetime is usually a bug.
 
-Switching between controlled and uncontrolled modes during the component lifetime is usually a bug.
-
-## Reducer-based state machines
-
-When interactions have meaningful transitions, model actions explicitly.
+## Reducers model explicit transitions
 
 ```ts
 type State =
@@ -138,53 +112,56 @@ type Action =
   | { type: 'CLOSED' };
 ```
 
-This prevents impossible boolean combinations such as:
+<VisualDiagram title="State machine thinking prevents contradictory booleans">
+  <LifecycleBar items={[
+    { label: 'closed', tone: 'slate' },
+    { label: 'opening', tone: 'cyan' },
+    { label: 'open', tone: 'green' },
+    { label: 'closing', tone: 'orange' },
+  ]} />
+</VisualDiagram>
 
-```text
-isOpen = true
-isClosing = true
-isOpening = true
-```
-
-Reducers are useful when state transitions are part of the domain.
+The value of a reducer is not that it stores several fields; it is that **events and transitions become explicit**.
 
 ## State reducer pattern
 
-Some reusable libraries let consumers customize transitions by providing a reducer-like callback.
-
-Conceptually:
+Some reusable libraries allow consumers to intercept a proposed transition:
 
 ```jsx
 <Toggle
   stateReducer={(state, action, nextState) => {
-    if (action.type === 'toggle' && state.locked) {
-      return state;
-    }
-
+    if (action.type === 'toggle' && state.locked) return state;
     return nextState;
   }}
 />
 ```
 
-This can be powerful, but it increases API complexity.
+<VisualDiagram title="State reducer extension point">
+  <DiagramRow>
+    <DiagramNode title="Internal event" tone="blue">toggle</DiagramNode>
+    <DiagramArrow direction="right" label="proposes" />
+    <DiagramNode title="Next state" tone="cyan">default transition</DiagramNode>
+    <DiagramArrow direction="right" label="consumer policy" />
+    <DiagramNode title="Accepted state" tone="green">customized result</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Use it only when consumers genuinely need controlled transition customization.
+This is powerful but creates a much larger public API surface. Use it only when transition customization is a real requirement.
 
-## Render props
+## Hooks vs render props
 
-Render props pass a function that receives state/behavior.
+<DecisionTree
+  question="What is being reused?"
+  items={[
+    { label: 'Stateful behavior without owning render structure', value: 'Custom Hook' },
+    { label: 'A component owns lifecycle/structure and caller renders a region', value: 'Render prop can fit' },
+    { label: 'Only static structure differs', value: 'Children/composition is usually simpler' },
+  ]}
+/>
 
-```jsx
-<MousePosition>
-  {({ x, y }) => (
-    <Coordinates x={x} y={y} />
-  )}
-</MousePosition>
+```js
+const { x, y } = useMousePosition();
 ```
-
-Hooks replaced many old render-prop use cases, but the pattern is still useful when the render structure itself is part of the API.
-
-Example headless component:
 
 ```jsx
 <DataLoader>
@@ -196,37 +173,17 @@ Example headless component:
 </DataLoader>
 ```
 
-## Hooks vs render props
-
-Prefer a custom Hook when consumers need reusable behavior:
-
-```js
-const { x, y } = useMousePosition();
-```
-
-Prefer a render prop when a component owns lifecycle/structure and needs consumers to render a region based on supplied state.
+Hooks replaced many historical render-prop use cases, but render props are still valid when render structure itself is part of the API.
 
 ## Higher-order components
-
-HOCs wrap one component and return another.
 
 ```js
 const Enhanced = withPermissions(Component);
 ```
 
-Modern React usually favors Hooks and composition for new code.
+HOCs still matter in older codebases and some library/framework APIs. For new application architecture, Hooks and composition are often easier to type, debug, and compose.
 
-But HOCs remain important for:
-
-- maintaining older codebases;
-- framework integrations;
-- library APIs built around wrapper composition.
-
-Understand them even if you do not choose them first.
-
-## Adapter components
-
-Adapters isolate third-party API details.
+## Adapter components isolate vendor APIs
 
 ```jsx
 function ProductChart({ points }) {
@@ -239,284 +196,55 @@ function ProductChart({ points }) {
 }
 ```
 
-Benefits:
+<VisualDiagram title="Keep vendor details behind an application-owned contract">
+  <DiagramRow>
+    <DiagramNode title="Feature" tone="blue">domain language</DiagramNode>
+    <DiagramArrow direction="right" label="depends on" />
+    <DiagramNode title="App adapter" tone="green">stable contract</DiagramNode>
+    <DiagramArrow direction="right" label="translates" />
+    <DiagramNode title="Vendor SDK" tone="orange">third-party API</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-- product code uses domain language;
-- third-party replacement becomes easier;
-- configuration lives in one place;
-- tests can mock one adapter boundary.
-
-This is one of the most practical patterns in large applications.
-
-## Provider adapters
-
-Wrap vendor-specific providers too.
-
-Instead of every feature importing a vendor SDK:
-
-```text
-Feature
- → Analytics SDK
-```
-
-create:
-
-```text
-Feature
- → app analytics API
- → vendor adapter
-```
-
-Now the application controls the contract.
+The same pattern works for analytics, payments, maps, editors, and provider components.
 
 ## Headless behavior + styled presentation
 
-Separate behavior from visuals when multiple presentations reuse the same interaction model.
+<VisualDiagram title="Separate interaction rules from visual presentation when reuse demands it">
+  <DiagramStack>
+    <DiagramNode title="Headless behavior" tone="blue">state · keyboard · focus · ARIA · events</DiagramNode>
+    <DiagramArrow label="exposes contract" />
+    <DiagramGrid columns={2}>
+      <DiagramNode title="Presentation A" tone="purple">product design</DiagramNode>
+      <DiagramNode title="Presentation B" tone="green">another theme/product</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-useSelectState
-   ↓
-Headless Select behavior
-   ↓
-Brand A Select
-Brand B Select
-```
+Do not split behavior and presentation mechanically. Separation is valuable when multiple presentations genuinely share the same interaction contract.
 
-Do not split merely because “headless” is fashionable.
+## Pattern selection checklist
 
-The separation should enable real reuse.
-
-## Slot APIs
-
-Slots let consumers place content into named regions.
-
-Simple React composition is often enough:
-
-```jsx
-<PageLayout
-  sidebar={<Sidebar />}
-  header={<Header />}
->
-  <Content />
-</PageLayout>
-```
-
-Explicit slot props are useful when layout owns fixed regions.
-
-## Children-as-API
-
-`children` can be a strong abstraction when the component owns surrounding behavior but not content.
-
-Examples:
-
-- Error Boundary shell;
-- Suspense wrapper;
-- modal surface;
-- provider;
-- layout region.
-
-Avoid cloning arbitrary children to inject hidden behavior unless the contract is extremely clear.
-
-## Clone-element pattern
-
-`cloneElement` can modify a React element supplied by a consumer.
-
-This pattern can be fragile because it depends on child shape and prop merging.
-
-Prefer:
-
-- Context;
-- render props;
-- explicit props;
-- slot primitives;
-
-when those produce clearer contracts.
-
-## Callback refs as composition tools
-
-Callback refs are useful when a primitive must coordinate DOM ownership.
-
-```jsx
-function setNode(node) {
-  internalRef.current = node;
-  externalRef?.(node);
-}
-```
-
-A reusable component may need to merge an internal ref with a consumer ref.
-
-In React 19, callback ref cleanup can return a cleanup function.
-
-Be deliberate with ref composition because it crosses declarative/imperative boundaries.
-
-## Dependency injection with Context
-
-Context can inject an implementation into a subtree.
-
-Example:
-
-```jsx
-<AnalyticsProvider client={analyticsClient}>
-  <Checkout />
-</AnalyticsProvider>
-```
-
-The feature reads an abstract interface rather than importing a global singleton.
-
-This can improve testing and multi-tenant configuration.
-
-Context is acting as dependency propagation, not necessarily state storage.
-
-## Inversion of control
-
-A reusable primitive becomes more flexible when consumers control selected aspects.
-
-Example:
-
-```jsx
-<Table
-  rows={rows}
-  renderRow={(row) => <OrderRow order={row} />}
+<DecisionTree
+  question="What problem are you solving?"
+  items={[
+    { label: 'Coordinate related child primitives', value: 'Compound components + private Context' },
+    { label: 'Offer parent-owned or self-owned value', value: 'Controlled/uncontrolled API' },
+    { label: 'Model complex transitions', value: 'Reducer/state machine' },
+    { label: 'Reuse stateful behavior', value: 'Custom Hook' },
+    { label: 'Isolate third-party implementation', value: 'Adapter component/provider' },
+    { label: 'No recurring problem yet', value: 'Use plain React composition' },
+  ]}
 />
-```
 
-The table owns collection mechanics.
+## Architectural rule
 
-The product owns row rendering.
+<LifecycleBar items={[
+  { label: 'Start explicit', tone: 'blue' },
+  { label: 'Observe repetition', tone: 'cyan' },
+  { label: 'Name the shared concept', tone: 'purple' },
+  { label: 'Choose the smallest pattern', tone: 'orange' },
+  { label: 'Test the public contract', tone: 'green' },
+]} />
 
-Too much inversion, however, can make the component an empty abstraction.
-
-## Colocation vs centralization
-
-Patterns should respect change boundaries.
-
-Colocate:
-
-- feature-specific reducers;
-- feature-specific Hooks;
-- feature-specific adapters;
-- feature-specific tests.
-
-Centralize:
-
-- stable shared design primitives;
-- cross-cutting infrastructure;
-- genuinely shared domain contracts.
-
-Do not centralize code just because two files currently look similar.
-
-## Pattern selection guide
-
-### Need reusable behavior?
-
-Use a custom Hook.
-
-### Need flexible coordinated structure?
-
-Consider compound components.
-
-### Need parent-owned or internal ownership modes?
-
-Controlled/uncontrolled pattern.
-
-### Need explicit state transitions?
-
-Reducer/state-machine model.
-
-### Need to isolate a vendor?
-
-Adapter component/module.
-
-### Need consumer-controlled rendering?
-
-Composition/render prop/slot.
-
-### Maintaining older wrapper-based abstractions?
-
-Understand HOCs.
-
-## Performance implications
-
-Patterns change update boundaries.
-
-Example compound Context:
-
-```text
-Menu Context value changes
-   ↓
-all consumers may render
-```
-
-If the primitive has many high-frequency consumers, split state or use narrower subscriptions where appropriate.
-
-Do not assume a pattern is performance-neutral.
-
-## Avoid pattern stacking
-
-A component using:
-
-- HOC;
-- render prop;
-- compound Context;
-- state reducer;
-- controlled API;
-- slot system;
-
-all at once may be technically flexible but impossible to learn.
-
-Start with the smallest contract that solves today's requirements.
-
-## Public API test
-
-Before publishing a pattern-heavy component, ask:
-
-1. Can a consumer understand it from one example?
-2. Are ownership rules obvious?
-3. Are invalid states difficult to express?
-4. Does TypeScript guide correct usage?
-5. Is accessibility built in?
-6. Can implementation change without breaking consumers?
-7. Does the abstraction reduce code at call sites?
-
-If not, the pattern may be over-designed.
-
-## Exercise
-
-Design a reusable data table that supports:
-
-- controlled sorting;
-- uncontrolled column visibility;
-- custom cell rendering;
-- row selection;
-- pagination owned by the URL;
-- virtualization;
-- server data loading;
-- accessible keyboard navigation.
-
-Choose which responsibilities belong in:
-
-- the table primitive;
-- a custom Hook;
-- a feature adapter;
-- URL state;
-- server state.
-
-Explain which advanced patterns you intentionally **do not** use.
-
-## Interview questions
-
-### When are compound components useful?
-
-When several coordinated child components need shared behavior/state while consumers need flexible composition and structure.
-
-### Why are Hooks often preferred over HOCs in new code?
-
-Hooks compose behavior directly without adding wrapper components or prop injection layers, though HOCs remain valid in legacy/library contexts.
-
-### What is the adapter pattern useful for in React?
-
-It isolates third-party APIs behind an application-owned contract, reducing vendor coupling and centralizing configuration/lifecycle concerns.
-
-### What is the biggest risk of advanced patterns?
-
-Over-abstraction: flexible APIs can become harder to understand, type, debug, and maintain than the problem they solve.
+A pattern earns its complexity when it makes ownership and change easier to reason about than the simpler code it replaces.

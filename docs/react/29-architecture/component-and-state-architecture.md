@@ -4,503 +4,202 @@ description: Designing React boundaries around ownership, data flow, state categ
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Component and State Architecture
 
-Good React architecture makes the correct behavior easy to express.
-
-It aligns:
-
-- component boundaries;
-- state ownership;
-- data flow;
-- async boundaries;
-- loading/error boundaries;
-- testing boundaries;
-- server/client boundaries.
-
-The goal is not to create the most abstract component tree.
-
-The goal is to make change predictable.
+Good React architecture makes change predictable by aligning **ownership, data flow, async boundaries, failure boundaries, and runtime boundaries**.
 
 ## Architecture starts with ownership
 
-For every piece of state, ask:
+<VisualDiagram title="Every state decision starts with ownership">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Owner" tone="blue">Who is allowed to define the source of truth?</DiagramNode>
+    <DiagramNode title="Readers" tone="cyan">Which parts of the tree need the value?</DiagramNode>
+    <DiagramNode title="Writers" tone="purple">Which interactions are allowed to change it?</DiagramNode>
+    <DiagramNode title="Lifetime" tone="orange">Render, component, route, session, or persistent?</DiagramNode>
+    <DiagramNode title="Navigation" tone="green">Should reload/back/forward preserve it?</DiagramNode>
+    <DiagramNode title="Category" tone="slate">Local, URL, server, external, form, or derived?</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-Who owns it?
-Who reads it?
-Who writes it?
-How long should it live?
-Should it survive navigation?
-Is it local, URL, server, external, or derived?
-```
+Local UI state should usually stay local. Lift it only when coordination genuinely requires a common owner.
 
-A component tree is easier to maintain when ownership is obvious.
+<VisualDiagram title="Lift state only to the lowest common owner">
+  <DiagramStack>
+    <DiagramNode title="Checkout" tone="blue">Owns selected shipping method</DiagramNode>
+    <DiagramRow>
+      <DiagramNode title="ShippingMethod" tone="cyan">Reads + writes</DiagramNode>
+      <DiagramNode title="OrderSummary" tone="green">Reads</DiagramNode>
+    </DiagramRow>
+  </DiagramStack>
+</VisualDiagram>
 
-## Local state by default
+## State categories are architectural boundaries
 
-If only one small region needs the state, keep it local.
+<DecisionTree
+  question="What kind of state is this?"
+  items={[
+    { label: 'Computed completely from current props/state', value: 'Derive during render' },
+    { label: 'Used by one interaction region', value: 'Local component state' },
+    { label: 'Shared by a small subtree', value: 'Lift state or focused Context' },
+    { label: 'Shareable/bookmarkable/navigation-relevant', value: 'URL state' },
+    { label: 'Remote data with freshness/retry/invalidation', value: 'Server-state or framework data layer' },
+    { label: 'Lives outside React and exposes subscriptions', value: 'External store + useSyncExternalStore-compatible contract' },
+  ]}
+/>
 
-```jsx
-function AccordionItem() {
-  const [open, setOpen] = useState(false);
-  // ...
-}
-```
-
-Do not promote state globally “just in case.”
-
-Global scope creates coupling.
-
-## Lift only when coordination requires it
-
-If two siblings must agree:
-
-```text
-Checkout
- ├── ShippingMethod
- └── OrderSummary
-```
-
-then the closest shared owner may be `Checkout`.
-
-This preserves one source of truth.
+Do not duplicate one fact into several owners merely because different screens need it.
 
 ## Feature-oriented structure
 
-A scalable codebase often benefits from grouping by feature instead of by file type.
-
-Instead of:
-
-```text
-components/
-hooks/
-reducers/
-api/
-```
-
-consider:
+Grouping by feature can make ownership visible:
 
 ```text
 features/
   checkout/
     components/
     hooks/
-    api/
+    data/
     state/
+    tests/
   search/
     components/
     hooks/
-    api/
+    data/
 ```
 
-Shared primitives can live separately.
+Literal directory trees are useful here because the structure itself is the subject. The principle matters more than the exact folder names: **related code should evolve behind an explicit feature boundary**.
 
-This keeps related behavior close together.
-
-## Separate domain logic from view details
-
-A component should not automatically own every rule it displays.
-
-Example:
+## Separate domain logic from rendering
 
 ```js
-function calculateOrderTotal(lines, discount) {
-  // pure domain logic
+export function calculateOrderTotal(lines, discount) {
+  return applyDiscount(sumLines(lines), discount);
 }
 ```
 
-Then UI code can render the result.
+Pure domain rules should not require React to test or reuse them.
 
-Pure domain functions are easy to test without React.
+<VisualDiagram title="Keep domain rules below the UI boundary">
+  <DiagramRow>
+    <DiagramNode title="React feature" tone="blue">Events · state · loading · rendering</DiagramNode>
+    <DiagramArrow direction="right" label="calls" />
+    <DiagramNode title="Domain logic" tone="green">Pure rules · validation · calculations</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## Component responsibilities
+## Component boundaries should have a reason
 
-A useful component boundary often has one clear responsibility:
+Useful responsibilities include:
 
-- render a reusable UI primitive;
-- own a local interaction;
-- orchestrate a feature;
-- provide Context;
-- bridge to a third-party system;
-- define an async/loading boundary.
+- reusable semantic primitive;
+- local interaction owner;
+- feature orchestrator;
+- provider boundary;
+- third-party adapter;
+- async/loading/failure boundary.
 
-Avoid both extremes:
+<DecisionTree
+  question="Should this become a separate component?"
+  items={[
+    { label: 'It owns a meaningful interaction or lifecycle', value: 'Strong boundary' },
+    { label: 'It provides a reusable semantic/API contract', value: 'Strong boundary' },
+    { label: 'It isolates a failure, async, or vendor boundary', value: 'Strong boundary' },
+    { label: 'It only forwards props with no independent concept', value: 'Probably keep it together' },
+  ]}
+/>
 
-```text
-one 2,000-line component
-```
+Avoid both a 2,000-line component and dozens of wrappers with no architectural meaning.
 
-and
-
-```text
-40 tiny wrapper components with no meaningful boundary
-```
-
-## Container/presentational ideas without dogma
-
-The old “container vs presentational component” rule can still be useful as a mental model, but modern React mixes Hooks and composition more naturally.
-
-Useful separation:
-
-```text
-feature orchestration
-vs
-reusable rendering primitive
-```
-
-Not every component must fit a rigid category.
-
-## Custom Hooks as behavior boundaries
-
-A custom Hook can package reusable React behavior:
-
-```js
-function useCheckoutDraft(orderId) {
-  // state, subscriptions, actions
-}
-```
-
-Good custom Hooks usually expose a small domain-oriented API.
-
-Prefer:
+## Custom Hooks package behavior, not shared state
 
 ```js
 const { draft, updateQuantity, submit } = useCheckoutDraft(orderId);
 ```
 
-over exposing every internal setter and ref.
-
-## Context as dependency propagation
-
-Use Context when a dependency belongs to a subtree and prop drilling would obscure the API.
-
-Examples:
-
-- theme;
-- authenticated session;
-- feature-scoped reducer state;
-- locale;
-- design-system configuration.
-
-Context is not automatically the state owner.
-
-It can propagate a value owned elsewhere.
-
-## Split read/write APIs when useful
-
-For reducer architecture:
-
-```text
-CartStateContext
-CartDispatchContext
-```
-
-This can clarify dependencies and reduce accidental coupling.
-
-Consumers that only dispatch do not need to read the whole state value.
-
-## URL as architecture
-
-Route-relevant state belongs in navigation when users expect it to be shareable.
-
-Examples:
-
-```text
-/search?q=react&page=3
-/dashboard?range=30d
-/products?sort=price
-```
-
-Treating this purely as component state can break back/forward behavior and deep links.
-
-## Server state architecture
-
-Remote data should usually have a clear owner responsible for:
-
-- fetching;
-- caching;
-- retries;
-- invalidation;
-- optimistic updates;
-- consistency.
-
-Do not let every component invent its own fetch/cache protocol.
-
-Framework data layers, RSC, or dedicated server-state libraries can provide a consistent model.
-
-## Async boundaries
-
-Map asynchronous behavior to UI boundaries deliberately.
-
-```text
-Page
- ├── Header
- └── Suspense boundary
-      └── Results
-```
-
-A Suspense boundary defines a reveal unit.
-
-An Error Boundary defines a failure unit.
-
-A Transition defines an update-priority unit.
-
-Architecture improves when these boundaries match user experience.
-
-## Server and client boundaries
-
-With React Server Components, decide which code truly needs the client runtime.
-
-Server-friendly responsibilities:
-
-- data access;
-- secret-bearing integrations;
-- heavy transformation;
-- non-interactive rendering.
-
-Client responsibilities:
-
-- stateful interaction;
-- browser APIs;
-- event handlers;
-- layout measurements;
-- client subscriptions.
-
-Keep `'use client'` boundaries narrow when practical.
-
-## Avoid accidental client expansion
-
-If a high-level file is marked `'use client'`, everything imported through that client module graph may become part of the client bundle.
-
-Better architecture often moves the interactive island deeper:
-
-```text
-Server Page
- ├── Server ProductDetails
- └── Client AddToCartButton
-```
-
-rather than making the entire page a Client Component.
-
-## State machine thinking
-
-Complex UI often becomes clearer when states are explicit.
-
-Bad booleans:
-
-```js
-isLoading
-isError
-isSuccess
-isSaving
-```
-
-Impossible combinations may occur.
-
-Prefer a discriminated model:
-
-```ts
-type Status =
-  | { type: 'idle' }
-  | { type: 'loading' }
-  | { type: 'success'; data: Data }
-  | { type: 'error'; message: string };
-```
-
-Reducers work well when transitions matter.
-
-## Event-driven APIs
-
-Components are easier to reuse when APIs express user intent.
-
-Prefer:
-
-```jsx
-<Dialog onClose={handleClose} />
-```
-
-over leaking internal implementation details:
-
-```jsx
-<Dialog setInternalOpenState={setOpen} />
-```
-
-Prefer domain actions:
-
-```js
-addItem(productId)
-removeItem(productId)
-checkout()
-```
-
-over raw setters:
-
-```js
-setCart(...)
-```
-
-## Avoid prop tunneling via giant objects
-
-Bad:
-
-```jsx
-<Checkout config={appEverything} />
-```
-
-The component becomes coupled to unrelated fields.
-
-Prefer smaller explicit contracts.
-
-This also improves memoization and testing.
-
-## Boundaries for third-party integrations
-
-Wrap imperative libraries behind one React boundary.
-
-Example:
-
-```text
-MapPanel
-  ↓
-useMapInstance
-  ↓
-third-party map SDK
-```
-
-Keep lifecycle, refs, cleanup, and synchronization centralized.
-
-Do not scatter imperative calls across unrelated components.
-
-## Error architecture
-
-Errors should fail at meaningful product boundaries.
-
-Possible structure:
-
-```text
-AppErrorBoundary
- └── Route
-      ├── Sidebar
-      └── WidgetErrorBoundary
-           └── AnalyticsWidget
-```
-
-A chart failure should not necessarily destroy the entire application shell.
-
-## Loading architecture
-
-Likewise, loading boundaries should match reveal expectations.
-
-Do not place one giant Suspense boundary around the whole app if independent areas can reveal separately.
-
-Do not scatter dozens of tiny boundaries that create visual noise.
-
-## Data transformation placement
-
-Ask where expensive transformations belong.
-
-Options:
-
-- database query;
-- server function;
-- Server Component;
-- cached server layer;
-- client calculation;
-- worker.
-
-The nearest code location is not always the right execution location.
-
-## Dependency direction
-
-Feature code should usually depend on lower-level shared primitives, not the reverse.
-
-```text
-shared/button
-   ↑
-checkout/payment-form
-```
-
-Avoid shared primitives importing product-specific feature logic.
-
-This keeps reuse real.
-
-## Architecture smells
-
-### Giant Context
-
-One provider owns unrelated state and updates everything.
-
-### Prop drilling through many components that do not care
-
-May indicate Context/composition boundary is missing.
-
-### Context for one local child
-
-May be unnecessary abstraction.
-
-### Many Effects syncing React state to React state
-
-Often duplicated/derived state.
-
-### Components importing each other's internals
-
-Feature boundaries are leaking.
-
-### Shared folder becoming a dumping ground
-
-Only move code to shared when multiple consumers have a stable common abstraction.
-
-## Architecture review checklist
-
-For a feature, verify:
-
-1. state owners are clear;
-2. server/URL/local/external state are distinguished;
-3. domain logic can be tested independently;
-4. Context values are scoped by domain and frequency;
-5. async/loading/error boundaries match UX;
-6. client boundaries are no broader than necessary;
-7. third-party imperative code is isolated;
-8. component APIs express intent;
-9. no duplicated source of truth exists;
-10. shared abstractions are actually shared.
-
-## Exercise
-
-Design architecture for an ecommerce product page containing:
-
-- server-rendered product data;
-- image gallery interaction;
-- cart state shared with header;
-- URL-selected variant;
-- reviews loaded later;
-- recommendation carousel;
-- analytics integration;
-- Add to Cart optimistic state.
-
-For each responsibility, define:
-
-- owner;
-- state category;
-- server/client boundary;
-- Suspense/Error Boundary placement;
-- public component API.
-
-## Interview questions
-
-### What determines where state should live?
-
-The lowest owner that must coordinate all components reading or writing that state, while respecting its lifetime and category such as local, URL, server, or external state.
-
-### Why are narrow Client Component boundaries useful?
-
-They can reduce client JavaScript and keep server-only work out of the client module graph while preserving interactivity where needed.
-
-### When is a custom Hook a good abstraction?
-
-When multiple components need the same React behavior or when complex feature behavior benefits from a small domain-oriented API boundary.
-
-### What is an architecture smell involving Effects?
-
-Using Effects to synchronize duplicated React state that could be derived directly or updated at the event/reducer source.
+A custom Hook can reuse a stateful/synchronization process. Separate Hook calls still have separate state unless they subscribe to a shared owner.
+
+<VisualDiagram title="Custom Hook reuse does not imply shared ownership">
+  <DiagramRow>
+    <DiagramNode title="Checkout A" tone="blue">useCheckoutDraft()</DiagramNode>
+    <DiagramNode title="Checkout B" tone="purple">useCheckoutDraft()</DiagramNode>
+  </DiagramRow>
+  <DiagramArrow label="reuse behavior" />
+  <DiagramNode title="Shared implementation" tone="green">same Hook code · independent Hook state unless backed by a shared store</DiagramNode>
+</VisualDiagram>
+
+## Context distributes dependencies
+
+Context is useful when a dependency belongs to a subtree and explicit prop threading would obscure the API.
+
+<VisualDiagram title="Context distributes access; it does not decide ownership">
+  <DiagramStack>
+    <DiagramNode title="Actual owner" tone="blue">state · reducer · external store · server/session source</DiagramNode>
+    <DiagramArrow label="provides value" />
+    <DiagramNode title="Focused Provider" tone="purple">defines subtree scope</DiagramNode>
+    <DiagramArrow label="nearest provider lookup" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Reader A" tone="cyan">uses value</DiagramNode>
+      <DiagramNode title="Reader B" tone="cyan">uses value</DiagramNode>
+      <DiagramNode title="Dispatcher" tone="green">may only need commands</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
+
+For reducer architectures, separate state and dispatch Contexts when that clarifies dependencies or update surfaces.
+
+## URL and server state have different contracts
+
+<DiagramGrid columns={2}>
+  <DiagramNode title="URL state" tone="green">shareable · bookmarkable · back/forward · reload persistence</DiagramNode>
+  <DiagramNode title="Server state" tone="orange">freshness · cache · retries · invalidation · optimistic reconciliation</DiagramNode>
+</DiagramGrid>
+
+A search filter that belongs in `/search?q=react&page=3` should not exist only as hidden component state. Remote data should not be copied into ad-hoc global client state unless the client truly becomes its owner.
+
+## Async, failure, and priority boundaries should match UX
+
+<VisualDiagram title="Different React boundaries answer different product questions">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Suspense" tone="purple">What reveals together?</DiagramNode>
+    <DiagramNode title="Error Boundary" tone="red">What may fail independently?</DiagramNode>
+    <DiagramNode title="Transition" tone="cyan">What work may be non-urgent?</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+Place these around meaningful user experiences, not arbitrary file boundaries.
+
+## Server/client architecture
+
+<VisualDiagram title="Keep the client boundary as small as interaction requires">
+  <DiagramStack>
+    <DiagramNode title="Server-friendly work" tone="green">data access · secrets · heavy transformation · non-interactive rendering</DiagramNode>
+    <DiagramArrow label="serializable boundary" />
+    <DiagramNode title="Client island" tone="blue">state · events · Effects · browser APIs</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
+
+A `'use client'` boundary is a module-graph decision, not merely a rendering label. Keep server-only dependencies outside the client graph and pass only serializable data needed by the interactive region.
+
+## Architecture review loop
+
+<LifecycleBar items={[
+  { label: 'Identify owner', tone: 'blue' },
+  { label: 'Choose state category', tone: 'cyan' },
+  { label: 'Place component boundary', tone: 'purple' },
+  { label: 'Map async/failure UX', tone: 'orange' },
+  { label: 'Verify runtime/trust boundary', tone: 'red' },
+  { label: 'Test + observe', tone: 'green' },
+]} />
+
+A maintainable architecture makes ownership visible, keeps dependencies directional, and lets each boundary change for a clear reason.

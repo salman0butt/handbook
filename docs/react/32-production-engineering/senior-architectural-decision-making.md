@@ -4,199 +4,118 @@ description: A decision framework for state, rendering, data, boundaries, perfor
 sidebar_position: 4
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Senior React Architectural Decision-Making
 
-Senior React engineering is less about knowing one "best practice" and more about choosing the right trade-off for a specific system.
-
-Most difficult React decisions involve competing goals:
-
-- simplicity vs flexibility;
-- local ownership vs reuse;
-- fast delivery vs long-term maintainability;
-- server rendering vs client interactivity;
-- optimistic UX vs correctness risk;
-- abstraction vs explicit code;
-- performance vs complexity;
-- incremental migration vs rewrite.
-
-A strong decision explains **why this choice fits this context**.
+Senior engineering is not memorizing one best practice. It is choosing a trade-off that fits **constraints, ownership, failure modes, user impact, reversibility, and operational cost**.
 
 ## Start from constraints, not tools
 
-Weak question:
-
-> Should we use Context or Zustand?
-
-Better question:
-
-> What state is being shared, who owns it, how frequently does it update, where must it persist, and who needs to subscribe?
-
-Weak question:
-
-> Should we use Server Components?
-
-Better question:
-
-> Which work can remain server-only, what must be interactive, what data boundaries exist, and what framework/runtime constraints do we have?
-
-Tools come after requirements.
-
-## Use a decision frame
-
-For important architecture decisions, write down:
-
-```text
-Problem
-Constraints
-User impact
-Current failure mode
-Options
-Trade-offs
-Decision
-How we will validate it
-How we can reverse it
-```
-
-This prevents architecture discussions from becoming preference contests.
-
-## State decisions
-
-Ask these questions in order:
-
-### 1. Can it be derived?
-
-If yes, compute it during render.
-
-```jsx
-const total = items.reduce((sum, item) => sum + item.price, 0);
-```
-
-Do not store redundant derived state.
-
-### 2. Is it local UI state?
-
-Keep it near the component that owns it.
-
-```jsx
-const [open, setOpen] = useState(false);
-```
-
-### 3. Is it shared by a small subtree?
-
-Lift state or use focused Context.
-
-### 4. Is it workflow/transition state?
-
-A reducer or state-machine model may clarify transitions.
-
-### 5. Is it server data?
-
-Use a server/cache/data layer rather than duplicating remote truth as ad-hoc global client state.
-
-### 6. Is it navigation/shareable state?
-
-URL/search params may be the correct source of truth.
-
-### 7. Is it an external mutable store?
-
-Use `useSyncExternalStore`-compatible subscription semantics.
-
-## Rendering decisions
-
-Choose rendering architecture per route/feature, not ideology.
-
-### Client rendering is useful when
-
-- the feature is highly interactive;
-- SEO/initial HTML is unimportant;
-- deployment simplicity matters;
-- data is only available after authentication/client boot.
-
-### SSR/streaming is useful when
-
-- fast initial HTML matters;
-- metadata/SEO matters;
-- content can render on the server;
-- Suspense boundaries can stream useful shells/sections.
-
-### Server Components are useful when
-
-- server-only data access can remove client code;
-- the framework supports RSC correctly;
-- component work does not require client interactivity;
-- serializable client boundaries are acceptable.
-
-Do not convert interactive components to Server Components merely to reduce a bundle metric.
-
-## Client boundary decisions
-
-Every `'use client'` boundary expands the client module graph.
-
-Ask:
-
-- does this component need state, Effects, browser APIs, or event handlers?
-- can the interactive leaf be smaller?
-- are server-only dependencies accidentally pulled into the client architecture?
-- are props serializable?
-
-A common pattern:
-
-```text
-Server page
-├── server data/content
-├── server-rendered structure
-└── small ClientWidget
-```
-
-instead of marking the entire page client-side.
-
-## Effect decisions
-
-Before adding an Effect, classify the work.
-
-```text
-Derived from props/state?
-→ render
-
-Caused by user event?
-→ event handler
-
-External system synchronization?
-→ Effect
-
-DOM measurement before paint?
-→ rare layout Effect
-
-CSS-in-JS insertion infrastructure?
-→ useInsertionEffect
-```
-
-An Effect is not a generic "run code after React" tool.
-
-## Context decisions
-
-Context is useful when implicit tree-scoped input is genuinely part of the component environment.
-
-Examples:
-
-- theme;
-- locale;
-- authenticated session facade;
-- form/compound-component coordination.
-
-Avoid using Context as a default global store for frequently changing unrelated state.
-
-Ask:
-
-- how often does the value change?
-- how broad is the provider?
-- do all consumers need the same object?
-- can providers be split?
-- does this belong to server/cache/URL state instead?
-
-## Reducer decisions
-
-Use a reducer when state changes are easier to understand as explicit transitions.
+<VisualDiagram title="Tools come after the problem model">
+  <DiagramRow>
+    <DiagramNode title="Constraints" tone="blue">users · data · runtime · team · reliability · security</DiagramNode>
+    <DiagramArrow direction="right" label="shape" />
+    <DiagramNode title="Architecture options" tone="purple">state · rendering · boundaries · data · deployment</DiagramNode>
+    <DiagramArrow direction="right" label="then choose" />
+    <DiagramNode title="Tools" tone="green">Context · store · framework · library · APIs</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
+
+“Context or Zustand?” is weaker than asking who owns the state, who reads/writes it, how frequently it changes, how long it lives, and what persistence/navigation semantics it needs.
+
+## Use a repeatable decision frame
+
+<LifecycleBar items={[
+  { label: 'Problem', tone: 'red' },
+  { label: 'Constraints', tone: 'blue' },
+  { label: 'User impact', tone: 'cyan' },
+  { label: 'Options', tone: 'purple' },
+  { label: 'Trade-offs', tone: 'orange' },
+  { label: 'Decision', tone: 'green' },
+  { label: 'Validate + rollback', tone: 'slate' },
+]} />
+
+A written decision should make reversal and validation explicit, not merely name the chosen library.
+
+## State decision tree
+
+<DecisionTree
+  question="What kind of state is this?"
+  items={[
+    { label: 'Fully derived from existing inputs', value: 'Compute during render' },
+    { label: 'Local interaction state', value: 'Keep near the owning component' },
+    { label: 'Small subtree coordination', value: 'Lift state or focused Context' },
+    { label: 'Workflow with explicit events/transitions', value: 'Reducer/state-machine model' },
+    { label: 'Remote data', value: 'Framework/server-state/cache layer' },
+    { label: 'Navigation/shareable state', value: 'URL/search params' },
+    { label: 'External mutable source', value: 'useSyncExternalStore-compatible subscription' },
+  ]}
+/>
+
+Avoid redundant state when a value can be derived from one existing source of truth.
+
+## Rendering is a per-feature decision
+
+<DiagramGrid columns={3}>
+  <DiagramNode title="Client rendering" tone="blue">high interactivity · browser-only capability · client-owned runtime state</DiagramNode>
+  <DiagramNode title="SSR/streaming" tone="purple">initial HTML · metadata/SEO · streamed reveal</DiagramNode>
+  <DiagramNode title="Server Components" tone="green">server-only data/code · reduced client graph · serializable boundary</DiagramNode>
+</DiagramGrid>
+
+Do not choose one rendering mode ideologically for every route.
+
+## Keep Client boundaries narrow
+
+<VisualDiagram title="Push interaction to the smallest useful client island">
+  <DiagramStack>
+    <DiagramNode title="Server page" tone="green">data + non-interactive structure</DiagramNode>
+    <DiagramArrow label="serializable props" />
+    <DiagramNode title="Small ClientWidget" tone="blue">state · events · Effects · browser APIs</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
+
+Every `'use client'` boundary expands the client module graph. Check serialization and server-only dependencies at that seam.
+
+## Effect decision tree
+
+<DecisionTree
+  question="Why does this code need to run?"
+  items={[
+    { label: 'Derived from current props/state', value: 'Render' },
+    { label: 'Caused by explicit user interaction', value: 'Event handler / Action' },
+    { label: 'Synchronizes committed UI with external system', value: 'Effect' },
+    { label: 'Measures/updates layout before paint', value: 'Rare useLayoutEffect case' },
+    { label: 'CSS-in-JS infrastructure style insertion', value: 'useInsertionEffect' },
+  ]}
+/>
+
+An Effect is not a generic “run after React” escape hatch.
+
+## Context decision frame
+
+<DecisionTree
+  question="Does Context fit this dependency?"
+  items={[
+    { label: 'Tree-scoped environment like theme/locale/session facade', value: 'Often a good fit' },
+    { label: 'Compound component coordination', value: 'Often a good fit internally' },
+    { label: 'High-frequency unrelated global state', value: 'Prefer more selective ownership/store architecture' },
+    { label: 'Remote cache or URL truth', value: 'Keep ownership in the correct system instead' },
+  ]}
+/>
+
+Provider breadth and update frequency are architectural concerns, not only performance details.
+
+## Reducers are for transition logic
 
 ```ts
 type Action =
@@ -205,404 +124,120 @@ type Action =
   | { type: 'failed'; message: string };
 ```
 
-Do not use a reducer just because state has multiple fields.
+<VisualDiagram title="Reducer value comes from explicit transition ownership">
+  <DiagramRow>
+    <DiagramNode title="Domain event" tone="blue">submitted / succeeded / failed</DiagramNode>
+    <DiagramArrow direction="right" label="reducer" />
+    <DiagramNode title="Next state" tone="green">centralized transition rule</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-The value comes from centralizing transition logic and making invalid transitions easier to reason about.
+Multiple fields alone are not a reason to add a reducer.
 
-## Optimistic UI decisions
+## Optimistic UI is a risk decision
 
-Optimistic UI is a UX trade-off.
+<DecisionTree
+  question="Should this mutation be optimistic?"
+  items={[
+    { label: 'Low-risk reversible interaction', value: 'Often a good candidate' },
+    { label: 'Failure is common or rollback is confusing', value: 'Prefer pending/confirmed UI' },
+    { label: 'Money, permissions, destructive irreversible outcome', value: 'Be conservative; server confirmation may be safer' },
+    { label: 'Ordering/concurrency is unclear', value: 'Design reconciliation before optimistic projection' },
+  ]}
+/>
 
-Good candidates:
+Optimistic speed is not worth misleading users about irreversible outcomes.
 
-- likes/reactions;
-- low-risk list insertion;
-- toggles with straightforward rollback.
+## Suspense boundary placement follows reveal units
 
-Riskier candidates:
+<VisualDiagram title="Boundary granularity should match meaningful content groups">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Too high" tone="red">one slow widget replaces the whole screen</DiagramNode>
+    <DiagramNode title="Balanced" tone="green">related content reveals together</DiagramNode>
+    <DiagramNode title="Too low" tone="orange">many tiny fallbacks flicker independently</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-- destructive deletion;
-- money movement;
-- permission changes;
-- actions with ambiguous server outcomes.
+## Error Boundary placement follows recovery units
 
-Ask:
+<DecisionTree
+  question="Can this region fail while the rest stays useful?"
+  items={[
+    { label: 'Yes — route/widget/editor/thread can recover independently', value: 'Good Error Boundary candidate' },
+    { label: 'No — this leaf has no meaningful fallback/recovery', value: 'Do not wrap it only for symmetry' },
+  ]}
+/>
 
-1. how likely is failure?
-2. can rollback restore a trustworthy state?
-3. could optimistic UI mislead the user about irreversible consequences?
-4. how is request ordering handled?
+## Memoization decisions start with evidence
 
-## Suspense boundary decisions
+<DecisionTree
+  question="Why are you adding manual memoization?"
+  items={[
+    { label: 'Profiler found repeated expensive work', value: 'Targeted memo/useMemo may help' },
+    { label: 'Stable function/value identity is part of an API contract', value: 'useCallback/useMemo may be justified' },
+    { label: 'Style rule says every handler should be memoized', value: 'Do not add it mechanically' },
+    { label: 'React Compiler already optimizes the ordinary case', value: 'Measure before layering manual caches' },
+  ]}
+/>
 
-A Suspense boundary defines a reveal/coordination boundary.
+Correctness and architecture come before memoization complexity.
 
-Use product UX to place it.
+## Scheduling decisions separate urgency from cost
 
-Too high:
+<VisualDiagram title="Scheduling can improve responsiveness without reducing total work">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Urgent" tone="blue">typing · pressed state · direct manipulation</DiagramNode>
+    <DiagramNode title="Non-urgent" tone="purple">large result view · route/view transition</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-whole screen disappears for one slow widget
-```
+A Transition can make work interruptible; it does not turn a 200 ms calculation into a 20 ms calculation.
 
-Too low:
+## Server Function decisions keep server discipline
 
-```text
-dozen tiny skeletons flash independently
-```
+<VisualDiagram title="Convenient transport does not remove backend responsibilities">
+  <DiagramStack>
+    <DiagramNode title="Server Function call" tone="purple">network-accessible mutation boundary</DiagramNode>
+    <DiagramArrow label="must enforce" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Validation" tone="cyan">runtime input</DiagramNode>
+      <DiagramNode title="Authorization" tone="red">resource/action policy</DiagramNode>
+      <DiagramNode title="Reliability" tone="green">idempotency · errors · observability</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-Design around meaningful content groups and route transitions.
-
-## Error Boundary decisions
-
-Boundary placement asks:
-
-> What can fail independently while the rest of the experience remains useful?
-
-Good boundaries often align with:
-
-- routes;
-- dashboard widgets;
-- editors;
-- message threads;
-- optional integrations.
-
-Avoid boundaries around every leaf component.
-
-## Memoization decisions
-
-In React Compiler-era applications, start with measurement.
-
-Use manual memoization when:
-
-- profiling identifies meaningful repeated work;
-- an API requires stable identity;
-- you intentionally preserve identity for a dependency/child contract;
-- Compiler cannot optimize the relevant pattern.
-
-Do not add `useCallback` to every function as a style rule.
-
-## Transition decisions
-
-Use Transition scheduling when an update can be non-urgent.
-
-```text
-user typing
-→ urgent
-
-expensive result view
-→ can be Transition/deferred
-```
-
-Do not use Transition as a substitute for reducing huge CPU work.
-
-Scheduling changes responsiveness; it does not make an expensive algorithm cheap.
-
-## Server Function decisions
-
-Use Server Functions for server mutations in supported RSC frameworks when they improve the architecture.
-
-Still require:
-
-- runtime validation;
-- authentication;
-- authorization;
-- idempotency where needed;
-- business error modeling;
-- observability.
-
-Do not use Server Functions as an excuse to skip a service/domain layer for complex business logic.
+Complex business logic may still deserve a service/domain layer behind the Server Function adapter.
 
 ## Abstraction decisions
 
-Use the **rule of three carefully**, but not mechanically.
-
-Before abstracting, compare the repeated code's reason for change.
-
-Two forms may look identical but belong to different domains and evolve differently.
-
-A useful abstraction exists when consumers share a stable concept, not merely similar markup.
-
-## Custom Hook decisions
-
-Create a custom Hook when it names a reusable stateful/synchronization concept.
-
-Good:
-
-```js
-useOnlineStatus()
-useDocumentAutosave(documentId)
-useKeyboardShortcut(...)
-```
-
-Weak:
-
-```js
-useDashboardEverything()
-```
-
-A Hook should improve conceptual boundaries, not hide unrelated behavior.
-
-## Design-system API decisions
-
-Prefer APIs that encode valid states.
-
-Weak:
-
-```jsx
-<Button
-  isLink
-  destructive
-  iconOnly
-  loading
-  href={maybeHref}
+<DecisionTree
+  question="Should repeated code become an abstraction?"
+  items={[
+    { label: 'Consumers share one stable concept and reason to change', value: 'A shared abstraction may be valuable' },
+    { label: 'Markup only looks similar today', value: 'Wait; duplication can be cheaper than wrong coupling' },
+    { label: 'Abstraction hides ownership or creates many flags', value: 'Prefer explicit composition' },
+  ]}
 />
-```
 
-This allows many invalid combinations.
+## Migration decisions optimize risk, not novelty
 
-Stronger APIs may use variants or separate components:
+<DiagramGrid columns={2}>
+  <DiagramNode title="Incremental migration" tone="green">smaller blast radius · coexistence · measurable checkpoints</DiagramNode>
+  <DiagramNode title="Rewrite" tone="orange">clean slate but replaces known behavior with unproven behavior</DiagramNode>
+</DiagramGrid>
 
-```jsx
-<Button variant="danger">Delete</Button>
-<LinkButton href="/settings">Settings</LinkButton>
-<IconButton aria-label="Close" icon={<CloseIcon />} />
-```
+Choose based on unsupported dependencies, security, architecture constraints, testability, team capacity, and reversibility—not age alone.
 
-TypeScript can help encode the contract, but runtime accessibility still matters.
+## Senior decision loop
 
-## Build vs buy decisions
+<LifecycleBar items={[
+  { label: 'Name owner + constraint', tone: 'blue' },
+  { label: 'Model failure/UX', tone: 'red' },
+  { label: 'Compare options', tone: 'purple' },
+  { label: 'Choose reversible seam', tone: 'cyan' },
+  { label: 'Measure/validate', tone: 'orange' },
+  { label: 'Document consequences', tone: 'green' },
+]} />
 
-Before adopting a library, assess:
-
-- problem complexity;
-- maintenance activity;
-- React 19 compatibility;
-- TypeScript quality;
-- accessibility;
-- bundle/runtime cost;
-- server/RSC compatibility;
-- escape hatches;
-- migration cost if abandoned.
-
-For security-sensitive primitives such as complex dialogs, date pickers, or rich-text editors, a mature audited library may be safer than a rushed custom implementation.
-
-## Framework decisions
-
-React itself is a UI library.
-
-A production app often needs framework support for:
-
-- routing;
-- bundling;
-- SSR/RSC;
-- data loading;
-- mutations;
-- deployment.
-
-Choose based on:
-
-- hosting/runtime requirements;
-- team expertise;
-- rendering needs;
-- ecosystem maturity;
-- operational constraints;
-- migration path.
-
-Do not choose solely because a framework exposes the newest React feature first.
-
-## Migration vs rewrite decisions
-
-Prefer incremental migration when:
-
-- old and new can coexist;
-- behavior is complex and business-critical;
-- tests are incomplete;
-- delivery cannot pause.
-
-A rewrite becomes more defensible when:
-
-- core architecture prevents required product behavior;
-- dependencies are unsupported and inseparable;
-- migration layers would be more complex than replacement;
-- system boundaries allow safe parallel rollout.
-
-Even then, plan data compatibility, observability, rollback, and cutover.
-
-## Performance vs complexity decisions
-
-Every optimization has maintenance cost.
-
-A 2 ms improvement that adds a fragile cache may not be worth it.
-
-A 600 ms interaction improvement for a revenue-critical flow probably is.
-
-Use:
-
-```text
-user impact × frequency × confidence
-```
-
-as part of prioritization.
-
-## Reliability decisions
-
-For critical flows, design degradation.
-
-Examples:
-
-- payment widget unavailable → preserve cart and explain retry;
-- recommendations fail → checkout still works;
-- analytics fails → do not block interaction;
-- one dashboard chart crashes → other panels remain usable.
-
-Resilience is an architectural feature.
-
-## Security decisions
-
-If a decision affects a trust boundary, security outweighs convenience.
-
-Never trade away:
-
-- server authorization;
-- runtime validation;
-- secret protection;
-- safe HTML handling;
-- privacy redaction;
-
-for a simpler component API.
-
-## Reversibility matters
-
-Prefer decisions that are easy to change when uncertainty is high.
-
-Examples:
-
-- feature flag a risky rollout;
-- hide data layer behind a feature API;
-- migrate route-by-route;
-- use adapters around external stores;
-- avoid leaking framework-specific types across domain packages.
-
-Irreversible choices deserve more design work.
-
-## Decision records should include failure modes
-
-Do not write only:
-
-> We chose RSC because bundles will be smaller.
-
-Write:
-
-```text
-Expected benefit
-- lower client JS for content-heavy routes
-
-Risks
-- framework coupling
-- serialization constraints
-- server runtime cost
-- debugging complexity
-
-Mitigation
-- start with two routes
-- measure client JS + latency
-- preserve feature module boundaries
-```
-
-That is an engineering decision, not marketing copy.
-
-## Senior PR review questions
-
-When reviewing an important React change, ask:
-
-### State
-- Is there one source of truth?
-- Is state local enough?
-- Is any state merely derived?
-
-### Effects
-- Is this really synchronization?
-- Does cleanup mirror setup?
-- Are dependencies describing the real process?
-
-### Identity
-- Are keys stable and domain-correct?
-- Will state reset/preserve intentionally?
-
-### Rendering
-- Is this client/server boundary appropriate?
-- Does Suspense reveal at a meaningful UX boundary?
-
-### Failure
-- What happens when data/mutation/rendering fails?
-- Where does the user recover?
-
-### Accessibility
-- Are semantics, keyboard, focus, and announcements correct?
-
-### Security
-- What input is untrusted?
-- Where is authorization enforced?
-
-### Performance
-- Is there measured evidence?
-- Are we reducing work or merely moving it?
-
-### Operations
-- Can we observe, roll back, and disable this feature?
-
-## Architecture is a hypothesis
-
-Treat a design as a hypothesis:
-
-> Given these constraints, this structure should make the system easier to change and operate.
-
-Validate it with:
-
-- delivery speed;
-- defect rate;
-- performance;
-- incident frequency;
-- developer feedback;
-- migration cost;
-- product outcomes.
-
-When evidence changes, architecture can change too.
-
-## Interview questions
-
-### How do you choose between Context and an external store?
-
-Start from ownership, update frequency, subscription granularity, lifetime, persistence, and external-system needs. Context is tree-scoped implicit input, not automatically a state manager.
-
-### How do you decide Server vs Client Component?
-
-Keep work server-side when it needs no client interactivity and benefits from server-only access/bundle reduction; introduce client boundaries around interactive/browser-dependent behavior.
-
-### When do you optimize React rendering?
-
-After measuring a user-visible issue, identifying the expensive work, and choosing the smallest fix that addresses the actual bottleneck.
-
-### What makes an architecture senior-level?
-
-Not complexity. Clear trade-offs, correct boundaries, operability, security, reversibility, and an explicit reason the design fits the system.
-
-## Exercise
-
-Design a collaborative document editor.
-
-Decide and justify:
-
-- local vs shared state;
-- URL state;
-- server cache/data ownership;
-- Server vs Client Components;
-- autosave Effect architecture;
-- optimistic edits;
-- Error/Suspense boundaries;
-- permissions/authorization;
-- performance strategy for 20,000 nodes;
-- observability;
-- feature-flag rollout;
-- migration strategy from an existing class-based editor.
+A strong senior decision is understandable even to someone who would have chosen a different tool, because the constraints and trade-offs are explicit.

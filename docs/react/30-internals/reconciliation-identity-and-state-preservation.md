@@ -4,261 +4,136 @@ description: A senior-level mental model for how React matches trees, preserves 
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Reconciliation, Identity, and State Preservation
 
-React lets application code describe **what the UI should look like now**. React then has to compare that new description with the previous committed UI and decide what can be reused, what must change, and what must be removed.
+React compares a new render description with the previous committed React tree and decides what identities can be preserved, replaced, or removed.
 
-That comparison process is commonly called **reconciliation**.
+> **Conceptual model:** the stable application-facing rules matter more than private reconciler fields or exact heuristics.
 
-The most important senior-level lesson is not memorizing an internal diff algorithm. It is understanding the stable application-facing rules that fall out of reconciliation:
+## Reconciliation is not DOM diffing
 
-- component identity comes from **type + position + key**;
-- state is associated with a position in React's render tree;
-- changing identity resets state below that point;
-- keys are identity hints, not list indexes or DOM IDs;
-- rendering computes a candidate tree; committing applies accepted changes;
-- React may start rendering work that never commits.
+<VisualDiagram title="React reasons about the React tree before the renderer mutates the host">
+  <DiagramStack>
+    <DiagramGrid columns={2}>
+      <DiagramNode title="Previous committed React tree" tone="blue">accepted identities + state</DiagramNode>
+      <DiagramNode title="New render description" tone="cyan">elements returned by components</DiagramNode>
+    </DiagramGrid>
+    <DiagramArrow label="reconcile identities" />
+    <DiagramNode title="Accepted React work" tone="purple">reuse · replace · insert · remove</DiagramNode>
+    <DiagramArrow label="commit through renderer" />
+    <DiagramNode title="Host changes" tone="green">DOM / native platform mutations</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-> **Stable contract vs implementation detail**
->
-> The identity/state behavior documented by React is application-facing behavior. Internal data structures and exact reconciliation heuristics are implementation details and can change between React versions.
+A component can render without causing a DOM mutation, and state preservation depends on React identity rather than DOM resemblance.
 
-## Reconciliation is not "diffing the DOM"
+## Identity controls state preservation
 
-A common oversimplification is:
+<VisualDiagram title="Component identity is shaped by type, position, and key">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Type" tone="blue">Card vs Editor vs Profile</DiagramNode>
+    <DiagramNode title="Position" tone="purple">logical sibling/tree position</DiagramNode>
+    <DiagramNode title="Key" tone="green">explicit sibling identity</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-> React builds a virtual DOM, compares it with the real DOM, then patches differences.
+When the identity is preserved, React can preserve state for that subtree. When identity changes, state below that point is recreated.
 
-A better mental model is:
-
-```text
-previous committed React tree
-          +
-new render description
-          ↓
-React reconciliation
-          ↓
-accepted work
-          ↓
-commit to renderer
-          ↓
-DOM / native host changes
-```
-
-React first reasons about its own component/element tree. React DOM is one renderer that applies the resulting host updates to the browser DOM.
-
-That distinction matters because:
-
-- a component can render without causing a DOM mutation;
-- a component can be replaced even if similar-looking DOM is produced;
-- state preservation is based on React tree identity, not DOM node resemblance;
-- React Native shares reconciliation concepts without using the browser DOM.
-
-## Identity is the heart of state preservation
-
-React state does not conceptually live inside a JSX tag.
-
-Instead, React associates state with a component identity at a position in the render tree.
-
-Consider:
-
-```jsx
-function App({ showProfile }) {
-  return (
-    <main>
-      {showProfile ? <Profile /> : <Profile />}
-    </main>
-  );
-}
-```
-
-Even though there are two JSX expressions in the source, they occupy the same rendered position and have the same component type. React can treat them as the same component identity and preserve state.
-
-Now change the type:
-
-```jsx
-function App({ editing }) {
-  return (
-    <main>
-      {editing ? <Editor /> : <Profile />}
-    </main>
-  );
-}
-```
-
-`Editor` and `Profile` are different component types. The subtree identity changes, so state below that point resets.
-
-## Type matters
-
-When React sees the same component type in the same logical position, state can be preserved.
+## Same type + same position can preserve state
 
 ```jsx
 function Panel({ compact }) {
-  return compact ? (
-    <Card density="compact" />
-  ) : (
-    <Card density="comfortable" />
-  );
+  return compact
+    ? <Card density="compact" />
+    : <Card density="comfortable" />;
 }
 ```
 
-Both branches render `Card` in the same position.
+<VisualDiagram title="Changing props is not the same as changing identity">
+  <DiagramRow>
+    <DiagramNode title="Card" tone="blue">density="compact"</DiagramNode>
+    <DiagramArrow direction="right" label="props update" />
+    <DiagramNode title="Same Card identity" tone="green">density="comfortable" · state preserved</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Changing only props does not create a new component identity.
-
-```text
-Card density="compact"
-        ↓ props update
-Card density="comfortable"
-```
-
-The existing `Card` state remains associated with that identity.
-
-## Position matters
-
-React also cares where a child appears under its parent.
+## Different type resets the subtree
 
 ```jsx
-function Layout({ swap }) {
-  if (swap) {
-    return (
-      <>
-        <Sidebar />
-        <Editor />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Editor />
-      <Sidebar />
-    </>
-  );
+function App({ editing }) {
+  return <main>{editing ? <Editor /> : <Profile />}</main>;
 }
 ```
 
-Without stable keys, reordering sibling identities can cause React to associate state with positions in ways that do not match your domain intent.
+<VisualDiagram title="Type replacement creates a new subtree identity">
+  <DiagramRow>
+    <DiagramNode title="Profile" tone="blue">old local state</DiagramNode>
+    <DiagramArrow direction="right" label="different type" />
+    <DiagramNode title="Editor" tone="orange">new local state</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-This is one reason list keys are correctness tools, not merely performance hints.
+## Position matters among siblings
 
-## Keys are explicit identity
+Without stable keys, reordering sibling components can make identity follow position rather than domain meaning.
 
-A key lets you tell React which logical child a rendered element represents among siblings.
+<VisualDiagram title="Unkeyed sibling identity is position-sensitive">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Before" tone="blue">position 1: Editor · position 2: Sidebar</DiagramNode>
+    <DiagramNode title="After reorder" tone="orange">position 1: Sidebar · position 2: Editor</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+If those siblings represent durable domain entities, give React stable keys that represent those entities.
+
+## Keys are explicit sibling identity
 
 ```jsx
 {messages.map(message => (
-  <Message
-    key={message.id}
-    message={message}
-  />
+  <Message key={message.id} message={message} />
 ))}
 ```
 
-A good key is:
+<DecisionTree
+  question="Is this a good key?"
+  items={[
+    { label: 'Stable domain ID unique among siblings', value: 'Yes — preferred' },
+    { label: 'Array index for reorderable/insertable data', value: 'Risky — identity follows position' },
+    { label: 'Math.random() / freshly generated value', value: 'No — forces a new identity every render' },
+    { label: 'useId()', value: 'No — useId is for DOM relationships, not list identity' },
+  ]}
+/>
 
-- stable across renders;
-- unique among siblings;
-- derived from domain identity;
-- independent of presentation order.
-
-Good:
-
-```jsx
-key={message.id}
-```
-
-Usually bad for reorderable data:
-
-```jsx
-key={index}
-```
-
-Almost always bad:
-
-```jsx
-key={Math.random()}
-```
-
-A random key says:
-
-> This is a brand-new identity every render.
-
-That forces remounting and destroys local state.
-
-## Keys are scoped to siblings
-
-Keys do not need to be globally unique.
-
-This is fine:
-
-```jsx
-<ul>
-  {users.map(user => (
-    <UserRow key={user.id} user={user} />
-  ))}
-</ul>
-
-<ul>
-  {projects.map(project => (
-    <ProjectRow key={project.id} project={project} />
-  ))}
-</ul>
-```
-
-The two lists have independent sibling namespaces.
+Keys only need to be unique among siblings, not globally across the application.
 
 ## Keys can intentionally reset state
-
-Keys are useful outside lists too.
 
 ```jsx
 <Chat key={recipient.id} recipient={recipient} />
 ```
 
-Changing `recipient.id` gives the `Chat` subtree a new identity.
+<VisualDiagram title="Changing a key is an intentional identity reset">
+  <DiagramStack>
+    <DiagramNode title="Chat key=A" tone="blue">Toolbar state · draft state · preview state</DiagramNode>
+    <DiagramArrow label="key changes" />
+    <DiagramNode title="Chat key=B" tone="green">fresh subtree state</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-This is often cleaner than imperatively clearing many pieces of local state.
+Key placement is architectural: a key too high resets too much; a key too low can preserve state that belongs to the previous domain identity.
 
-Use this deliberately when the domain says:
-
-> This is no longer the same logical screen/component instance.
-
-Examples:
-
-- switching between users in an editor;
-- changing a form from one record to another;
-- resetting an onboarding flow;
-- restarting an embedded game/session;
-- resetting an Error Boundary via a new boundary key.
-
-## State reset is transitive through the subtree
-
-If React replaces a component identity, state below it is also recreated.
-
-```text
-OldEditor key=A
-├── Toolbar state
-├── Draft state
-└── Preview state
-
-key changes
-
-NewEditor key=B
-├── new Toolbar state
-├── new Draft state
-└── new Preview state
-```
-
-This makes key placement architectural.
-
-A key too high in the tree may reset more state than intended.
-
-A key too low may preserve stale state that should have been recreated.
-
-## Nested component definitions create new component types
-
-This is a classic identity bug:
+## Nested component definitions create unstable types
 
 ```jsx
 function Dashboard() {
@@ -271,231 +146,39 @@ function Dashboard() {
 }
 ```
 
-Every `Dashboard` render creates a new `SearchBox` function object.
-
-React sees a different component type and can reset the child subtree.
-
-Prefer:
-
-```jsx
-function SearchBox() {
-  const [query, setQuery] = useState('');
-  return <input value={query} onChange={e => setQuery(e.target.value)} />;
-}
-
-function Dashboard() {
-  return <SearchBox />;
-}
-```
-
-This also improves Compiler compatibility and static component identity.
-
-## Same DOM does not imply same React identity
-
-These components might produce visually identical markup:
-
-```jsx
-function A() {
-  return <button>Save</button>;
-}
-
-function B() {
-  return <button>Save</button>;
-}
-```
-
-But switching from `<A />` to `<B />` changes component identity.
-
-React does not preserve `A`'s component state just because the host output looks similar.
-
-## Same component identity does not imply no work
-
-State preservation and rendering are separate questions.
-
-A component can keep its identity and state while still re-rendering:
-
-```jsx
-<Card theme="dark" />
-// later
-<Card theme="light" />
-```
-
-The `Card` identity remains the same, but React may call the component again to calculate the updated output.
-
-Memoization can reduce some work, but it does not redefine component identity.
-
-## Bailouts are optimization, not identity semantics
-
-If React or React Compiler can prove work does not need to be repeated, it may skip some computation.
-
-You should not write correctness-sensitive logic that assumes:
-
-- a component always renders when its parent renders;
-- memoized calculations always execute;
-- an abandoned render commits;
-- a particular bailout path will always exist.
-
-Correct code must work whether React performs the optimization or not.
-
-## Reconciliation and immutability
-
-Immutability helps React and your own architecture answer:
-
-> Did this value change?
-
-Instead of mutating an object in place:
-
-```jsx
-user.name = 'Amina';
-setUser(user);
-```
-
-create a new state snapshot:
-
-```jsx
-setUser(prev => ({
-  ...prev,
-  name: 'Amina',
-}));
-```
-
-This preserves React's snapshot model and makes equality-based optimizations useful.
-
-## Reconciliation and controlled inputs
-
-Accidental identity changes are especially visible in forms.
-
-Symptoms include:
-
-- input text unexpectedly clears;
-- focus disappears;
-- cursor position resets;
-- local validation state vanishes;
-- a controlled field appears to "remount".
-
-Debugging checklist:
-
-1. Did the component type change?
-2. Did its key change?
-3. Did a parent key change?
-4. Was the component moved to a different sibling position?
-5. Is the component function defined inside another component?
-6. Is a list using unstable/index/random keys?
-
-## Reconciliation and Suspense
-
-Suspense adds another important distinction:
-
-```text
-render attempt
-  ↓
-may suspend
-  ↓
-React may retry later
-  ↓
-only committed result becomes visible
-```
-
-If a component suspends before its first successful mount, React can retry that work rather than preserving state from an uncommitted attempt.
-
-For already visible trees, Transitions and deferred values can let React preserve currently revealed content while preparing a new result.
-
-Do not reduce these behaviors to "React hides and shows DOM." The deeper model is that React is coordinating tree identity, pending work, and commits.
-
-## Reconciliation and Error Boundaries
-
-If rendering fails, React can abandon the failed work and let the nearest Error Boundary render fallback UI.
-
-Changing the Error Boundary's key is one common way to reset its local error state:
-
-```jsx
-<ErrorBoundary key={documentId} fallback={<CrashPanel />}>
-  <DocumentEditor id={documentId} />
-</ErrorBoundary>
-```
-
-The key communicates that a new document should get a fresh boundary identity.
-
-## Do not couple application code to internal Fiber fields
-
-Senior engineers should understand that modern React uses an internal Fiber architecture, but application code should never depend on internal fields such as:
-
-- fiber tags;
-- flags;
-- lane bitmasks;
-- alternate pointers;
-- effect lists;
-- internal update queues.
-
-These details are not public API.
-
-A useful mental model is enough:
-
-```text
-React maintains internal work records for tree nodes
-→ can compare previous and next work
-→ can schedule/retry/abandon render work
-→ commits accepted changes atomically
-```
-
-The next chapter goes deeper into that render-work architecture without turning implementation details into application contracts.
-
-## Production debugging pattern: identity before memoization
-
-When a UI unexpectedly resets or rerenders, engineers often start adding `memo`.
-
-That can hide the actual problem.
-
-Investigate in this order:
-
-```text
-1. Is identity correct?
-2. Is state owned at the correct level?
-3. Are keys stable?
-4. Are props/context changing unnecessarily?
-5. Is the render actually expensive?
-6. Only then consider memoization.
-```
-
-## Senior review questions
-
-### Why did this input reset?
-
-Look for identity changes: key, component type, parent key, or tree position.
-
-### Why is using the array index as a key risky?
-
-Because order and domain identity are different concepts. Reordering can cause state to follow a position rather than the logical item.
-
-### Does a key improve render performance?
-
-Its primary role is identity. A correct key can improve reconciliation quality, but keys should be chosen for correctness first.
-
-### Does React preserve state because the DOM node is reused?
-
-No. State is tied to React tree identity, not DOM resemblance.
-
-### Can React render work that never becomes visible?
-
-Yes. Concurrent rendering, Suspense, interruptions, and errors can produce render attempts that are abandoned before commit.
-
-## Exercise
-
-Build a reorderable list of editable rows.
-
-Requirements:
-
-1. each row has local draft state;
-2. rows can move up/down;
-3. drafts must follow the logical record;
-4. switching to a completely different dataset resets all drafts;
-5. explain where keys belong and why.
-
-Then intentionally replace stable IDs with array indexes and document the bug you observe.
-
-## References
-
-- https://react.dev/learn/preserving-and-resetting-state
-- https://react.dev/learn/rendering-lists
-- https://react.dev/learn/managing-state
-- https://react.dev/reference/rules/components-and-hooks-must-be-pure
+Each `Dashboard` render creates a new `SearchBox` function identity. Prefer stable module-level component definitions.
+
+## Render attempts and commits are different
+
+<VisualDiagram title="A rendered candidate is not necessarily the UI users see">
+  <LifecycleBar items={[
+    { label: 'Update requested', tone: 'blue' },
+    { label: 'Render candidate', tone: 'purple' },
+    { label: 'May suspend/restart/abandon', tone: 'orange' },
+    { label: 'Accepted work commits', tone: 'green' },
+  ]} />
+</VisualDiagram>
+
+This is why render must be pure and why render logs are not proof that a result committed.
+
+## Identity debugging checklist
+
+<DecisionTree
+  question="Why did local state reset unexpectedly?"
+  items={[
+    { label: 'Component type changed', value: 'Different identity — expected reset' },
+    { label: 'Sibling position/order changed', value: 'Inspect keys and tree structure' },
+    { label: 'Key changed', value: 'Verify whether reset is intentional' },
+    { label: 'Component defined inside another render', value: 'Move definition to stable module scope' },
+    { label: 'Whole ancestor remounted', value: 'Find the first identity change above the state owner' },
+  ]}
+/>
+
+## Senior mental model
+
+<DiagramGrid columns={2}>
+  <DiagramNode title="Stable contract" tone="green">type/position/key identity · state preservation/reset · render/commit distinction</DiagramNode>
+  <DiagramNode title="Implementation detail" tone="slate">exact internal diff heuristics · Fiber fields · flags · lane representation</DiagramNode>
+</DiagramGrid>
+
+Reason from the stable behavior React documents. Treat internal implementation details as a way to understand React—not as application dependencies.
