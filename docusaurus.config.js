@@ -17,10 +17,13 @@ const config = {
   },
 
   plugins: [
+    require.resolve('./plugins/handbook-ux'),
     [
       '@cmfcmf/docusaurus-search-local',
       {
         indexDocs: true,
+        indexDocSidebarParentCategories: 2,
+        includeParentCategoriesInPageTitle: true,
         indexBlog: false,
         indexPages: false,
         language: 'en',
@@ -41,7 +44,10 @@ const config = {
         },
         blog: false,
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: [
+            require.resolve('./src/css/custom.css'),
+            require.resolve('./src/css/handbook-ux.css'),
+          ],
         },
       },
     ],
@@ -57,20 +63,20 @@ const config = {
     navbar: {
       title: 'Developer Handbook',
       items: [
-        {to: '/docs/react/intro', label: 'React', position: 'left'},
-        {to: '/docs/nextjs/intro', label: 'Next.js', position: 'left'},
-        {to: '/docs/typescript/intro', label: 'TypeScript', position: 'left'},
-        {to: '/docs/javascript/intro', label: 'JavaScript', position: 'left'},
-        {to: '/docs/nodejs/intro', label: 'Node.js', position: 'left'},
+        {to: '/react', label: 'React', position: 'left', activeBaseRegex: '^/(react|docs/react)'},
+        {to: '/nextjs', label: 'Next.js', position: 'left', activeBaseRegex: '^/(nextjs|docs/nextjs)'},
+        {to: '/typescript', label: 'TypeScript', position: 'left', activeBaseRegex: '^/(typescript|docs/typescript)'},
+        {to: '/javascript', label: 'JavaScript', position: 'left', activeBaseRegex: '^/(javascript|docs/javascript)'},
+        {to: '/nodejs', label: 'Node.js', position: 'left', activeBaseRegex: '^/(nodejs|docs/nodejs)'},
         {
           label: 'More',
           position: 'left',
           items: [
-            {label: 'Databases', to: '/docs/databases/intro'},
-            {label: 'System Design', to: '/docs/system-design/intro'},
-            {label: 'DevOps', to: '/docs/devops/intro'},
-            {label: 'WordPress', to: '/docs/wordpress/intro'},
-            {label: 'AI Engineering', to: '/docs/ai-engineering/intro'},
+            {label: 'Databases', to: '/databases'},
+            {label: 'System Design', to: '/system-design'},
+            {label: 'DevOps', to: '/devops'},
+            {label: 'WordPress', to: '/wordpress'},
+            {label: 'AI Engineering', to: '/ai-engineering'},
           ],
         },
         {
@@ -86,18 +92,18 @@ const config = {
         {
           title: 'Handbooks',
           items: [
-            {label: 'React', to: '/docs/react/intro'},
-            {label: 'Next.js', to: '/docs/nextjs/intro'},
-            {label: 'JavaScript', to: '/docs/javascript/intro'},
-            {label: 'TypeScript', to: '/docs/typescript/intro'},
+            {label: 'React', to: '/react'},
+            {label: 'Next.js', to: '/nextjs'},
+            {label: 'JavaScript', to: '/javascript'},
+            {label: 'TypeScript', to: '/typescript'},
           ],
         },
         {
           title: 'Engineering',
           items: [
-            {label: 'System Design', to: '/docs/system-design/intro'},
-            {label: 'DevOps', to: '/docs/devops/intro'},
-            {label: 'AI Engineering', to: '/docs/ai-engineering/intro'},
+            {label: 'System Design', to: '/system-design'},
+            {label: 'DevOps', to: '/devops'},
+            {label: 'AI Engineering', to: '/ai-engineering'},
           ],
         },
         {
