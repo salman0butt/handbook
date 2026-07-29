@@ -5,9 +5,9 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: FINAL VALIDATION PENDING — Phases 00–24 are implemented and integrated; the final production build and published-site verification remain.**
+> **Status: COMPLETE — Phases 00–24 are implemented, integrated, production-build validated, published on GitHub Pages, and re-audited against the current stable Next.js App Router documentation as of July 29, 2026.**
 
-This page is the final release gate for the Next.js handbook. The curriculum is not declared complete until the integrated sidebar/reference state passes the production Docusaurus build and the published GitHub Pages site is verified.
+The Next.js handbook has passed both the official-document coverage audit and the educational-quality/release audit.
 
 ## Baseline history
 
@@ -27,7 +27,15 @@ This page is the final release gate for the Next.js handbook. The curriculum is 
 - Next.js 16.3: **preview/canary — not stable**
 - Stable curriculum remains on the **16.2 Active LTS** contract
 
-The final delta re-audit found no new stable release after the accumulated phase-by-phase official-document audits. Therefore the stable contracts already re-verified through Phases 00–24 remain the final baseline; preview/canary behavior is not promoted into stable teaching.
+The final delta re-audit found no new stable release after the accumulated phase-by-phase official-document audits. Therefore the stable contracts re-verified through Phases 00–24 remain the final baseline; preview/canary behavior is not promoted into stable teaching.
+
+## Final release evidence
+
+- Integrated Phase 00–24 sidebar/reference snapshot passed the repository's authoritative **Validate handbook build** workflow, run **#70**.
+- The `Build Docusaurus` job completed successfully, including dependency installation, the production handbook build and build-log upload.
+- Integration PR **#80** was squash-merged to `main` as `4f71b262c98ac8abb0f6b8a59f9a19115c6fcf12`.
+- The repository's Pages workflow builds every `main` push, uploads the Docusaurus `build` directory with `actions/upload-pages-artifact@v3`, and deploys it with `actions/deploy-pages@v4`.
+- A temporary verification-only PR **#81** ran a GitHub-hosted live-site smoke workflow after the integration merge. The smoke check fetched the published handbook and verified that the final **20 · Upgrades & Modern Migration** and **24 · Mock Interview Practice** sidebar labels were live. The verification PR was then closed without merging.
 
 ## Progress snapshot
 
@@ -145,8 +153,8 @@ Phase 24 provides timed practice for:
 - [x] Complete interview mastery.
 - [x] Complete interview question bank.
 - [x] Complete mock interview practice.
-- [ ] Run final integrated Docusaurus production build and resolve every sidebar/doc reference.
-- [ ] Verify the rendered GitHub Pages Next.js handbook after final integration merge.
+- [x] Run final integrated Docusaurus production build and resolve every sidebar/doc reference.
+- [x] Verify the rendered GitHub Pages Next.js handbook after final integration merge.
 
 ## Educational quality gate
 
@@ -167,6 +175,6 @@ migration strategy
 interview/system-design reasoning
 ```
 
-## Rule for declaring completion
+## Completion conclusion
 
-The final status changes to **COMPLETE** only after the integrated branch passes the authoritative GitHub Actions production build and the merged GitHub Pages site is verified. The final `api-coverage.md` must also remain fully justified against the stable 16.2.12 App Router baseline.
+The **Next.js App Router handbook is complete for the audited stable Next.js 16.2.12 baseline**. Future stable releases can reopen this audit as a maintenance cycle, but no currently identified stable in-scope phase or release gate remains unfinished.
