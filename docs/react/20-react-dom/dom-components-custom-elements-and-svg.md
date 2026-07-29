@@ -4,31 +4,37 @@ description: Cover common DOM props/events, custom attributes, dangerouslySetInn
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # React DOM components, custom elements, and SVG
 
-React's DOM renderer supports browser built-in HTML and SVG elements.
+React DOM translates React element descriptions into browser HTML/SVG nodes. The browser still owns semantics, layout, accessibility, native controls, network behavior, and low-level DOM rules.
 
-The important skill is not memorizing every tag. It is understanding where React's programming model differs from plain HTML and where browser behavior still matters.
+## The platform mental model
 
-## Mental model
+<VisualDiagram title="React renders into the browser platform">
+  <DiagramStack align="center">
+    <DiagramNode title="JSX" tone="blue">Declarative UI source</DiagramNode>
+    <DiagramArrow label="becomes" />
+    <DiagramNode title="React element descriptions" tone="purple" />
+    <DiagramArrow label="React DOM renderer" />
+    <DiagramNode title="HTML / SVG DOM nodes" tone="teal" />
+    <DiagramArrow label="browser owns semantics + behavior" />
+    <DiagramNode title="Layout, events, forms, accessibility, rendering" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-JSX
-   ↓
-React element description
-   ↓
-React DOM renderer
-   ↓
-browser DOM nodes
-   ↓
-browser behavior, accessibility, layout, events
-```
+React does not replace HTML semantics. Prefer native browser behavior whenever it already solves the interaction correctly.
 
-React is not a replacement for HTML semantics.
-
-It is a renderer and state-management model that works with the browser platform.
-
-## Built-in elements are lowercase
+## Built-in elements and component names
 
 ```jsx
 <div />
@@ -36,62 +42,42 @@ It is a renderer and state-management model that works with the browser platform
 <svg />
 ```
 
-Lowercase JSX names are treated as browser elements.
-
-Capitalized JSX names are treated as React components:
+Lowercase JSX names are browser elements. Capitalized names are React components:
 
 ```jsx
 <Button />
 ```
 
-This distinction is fundamental to JSX.
-
-## DOM prop naming
-
-React generally follows DOM property naming rather than raw HTML attribute spelling.
-
-Examples:
+## DOM prop conventions
 
 ```jsx
 <label htmlFor="email">Email</label>
 <input id="email" className="field" tabIndex={0} />
 ```
 
-Common differences include:
+<VisualDiagram title="JSX prop names usually follow DOM property conventions">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="HTML class" tone="slate">→ <code>className</code></DiagramNode>
+    <DiagramNode title="HTML for" tone="slate">→ <code>htmlFor</code></DiagramNode>
+    <DiagramNode title="HTML tabindex" tone="slate">→ <code>tabIndex</code></DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-HTML          React JSX
-class         className
-for           htmlFor
-tabindex      tabIndex
-```
-
-ARIA attributes keep their standard names:
+ARIA and data attributes keep their normal names:
 
 ```jsx
 <button aria-expanded={open}>Menu</button>
-```
-
-Data attributes also keep lowercase dash syntax:
-
-```jsx
 <div data-user-id={user.id} />
 ```
 
-## Boolean and numeric values
-
-JSX values are JavaScript expressions.
+Use JavaScript values directly rather than stringifying everything:
 
 ```jsx
 <button disabled={isSaving}>Save</button>
 <input maxLength={120} />
 ```
 
-Do not stringify values unnecessarily.
-
 ## Events
-
-React DOM provides event props such as:
 
 ```jsx
 <button onClick={handleClick}>Save</button>
@@ -99,23 +85,11 @@ React DOM provides event props such as:
 <div onPointerMove={handlePointerMove} />
 ```
 
-Event names use camelCase.
+Event props use camelCase, with capture variants such as `onClickCapture`.
 
-Capture variants add `Capture`:
+React's documented event behavior is the contract to program against. Do not assume every browser event maps one-to-one to browser bubbling details.
 
-```jsx
-<div onClickCapture={handleCapture} />
-```
-
-The earlier Events chapter covers propagation in depth.
-
-One React DOM detail worth remembering is that some events React exposes may bubble in React even if the corresponding browser event does not normally bubble the same way.
-
-Program against React's documented event behavior rather than assuming every browser event detail transfers unchanged.
-
-## `style`
-
-Inline styles use a JavaScript object:
+## Styling
 
 ```jsx
 <div
@@ -126,94 +100,54 @@ Inline styles use a JavaScript object:
 />
 ```
 
-Use inline styles when values are genuinely dynamic.
+Use inline styles for genuinely dynamic values. Static styling is usually easier to maintain through classes.
 
-For most static styling, classes are easier to cache, inspect, and maintain.
-
-```jsx
-<div className={isActive ? 'tab tab--active' : 'tab'} />
-```
-
-## Unknown/custom attributes
-
-React can pass custom attributes to built-in DOM elements.
-
-```jsx
-<div mycustomprop="value" />
-```
-
-For ordinary custom attributes, prefer lowercase names and avoid names beginning with `on`, since event-like names have different semantics.
-
-For application metadata, standard `data-*` attributes are usually clearer:
-
-```jsx
-<div data-feature="checkout" />
-```
-
-## `dangerouslySetInnerHTML`
-
-Sometimes an application already has an HTML string:
+## Raw HTML is a trust boundary
 
 ```jsx
 <div dangerouslySetInnerHTML={{ __html: html }} />
 ```
 
-The name is intentionally alarming.
+<VisualDiagram title="Normal JSX and raw HTML have different security contracts">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Normal JSX text" tone="green" eyebrow="SAFE DEFAULT">
+      Value → React escaping → DOM text/content
+    </DiagramNode>
+    <DiagramNode title="dangerouslySetInnerHTML" tone="red" eyebrow="TRUST BOUNDARY">
+      HTML string → bypass normal escaping → browser parses markup
+      <br />Sanitization and content policy become your responsibility.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Raw HTML bypasses React's normal escaping.
-
-If `html` contains untrusted content, it can create an XSS vulnerability.
-
-### Safe mental model
-
-```text
-normal JSX text
-React escapes content
-
-raw inner HTML
-React trusts the provided HTML string
-security becomes your responsibility
-```
-
-Never do this with unsanitized user input:
+Never feed unsanitized user or CMS HTML into this API.
 
 ```jsx
 <div dangerouslySetInnerHTML={{ __html: userComment }} />
 ```
 
-If raw HTML is required, sanitize at a trusted boundary with a well-maintained sanitizer and define an explicit content policy.
+When raw HTML is required, sanitize at a trusted boundary with a maintained sanitizer and explicit content policy.
 
-## Children and raw HTML are mutually exclusive
+Children and `dangerouslySetInnerHTML` are mutually exclusive: React needs one clear owner for an element's contents.
 
-Do not pass both children and `dangerouslySetInnerHTML` to the same element.
-
-React needs one clear source of DOM content ownership.
-
-## `contentEditable`
+## `contentEditable` creates competing ownership
 
 ```jsx
 <div contentEditable />
 ```
 
-When users directly edit DOM content, React's declarative children model and browser-owned editable DOM can conflict.
+A browser-editable subtree changes the DOM directly while React normally expects to derive child DOM from JSX.
 
-This is why rich-text editors usually have specialized architecture.
+<VisualDiagram title="Rich-text editors need one clear DOM owner">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React-controlled children" tone="purple">React computes and owns child DOM.</DiagramNode>
+    <DiagramNode title="Editable/browser/library-owned DOM" tone="orange">Browser/editor mutates child DOM directly.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-React warns when an editable element also has normal React children unless the library takes explicit responsibility for managing that content.
+Do not casually combine both ownership models. `suppressContentEditableWarning` exists for libraries that intentionally take responsibility; it does not repair an unclear architecture.
 
-Do not build a rich-text editor by casually adding `contentEditable` to a controlled React subtree.
-
-## `suppressContentEditableWarning`
-
-This escape hatch exists for libraries that intentionally manage editable DOM themselves.
-
-It is not a fix for a poorly designed editable component.
-
-## `suppressHydrationWarning`
-
-Server-rendered content is expected to match the initial client render.
-
-For a narrow intentionally different value, React can suppress a hydration warning:
+## Hydration warning escape hatch
 
 ```jsx
 <time suppressHydrationWarning>
@@ -221,93 +155,64 @@ For a narrow intentionally different value, React can suppress a hydration warni
 </time>
 ```
 
-Use this sparingly.
+Use `suppressHydrationWarning` only for narrow intentional differences. It suppresses a warning; it does not make a nondeterministic server/client render correct.
 
-It does not make the server/client mismatch conceptually correct; it only suppresses the warning for that element.
-
-Fix deterministic rendering when possible.
-
-## Refs
-
-Built-in DOM elements accept refs:
+## DOM refs
 
 ```jsx
 const inputRef = useRef(null);
-
 <input ref={inputRef} />
 ```
 
-After commit, the ref points to the DOM node.
-
-React 19 also supports cleanup-returning ref callbacks:
+After commit, the ref points to the DOM node. React 19 also supports callback-ref cleanup:
 
 ```jsx
 <div
   ref={node => {
     observe(node);
-
-    return () => {
-      unobserve(node);
-    };
+    return () => unobserve(node);
   }}
 />
 ```
-
-The Refs chapter covers this escape hatch in depth.
 
 ---
 
 # Custom elements
 
-Web Components/custom elements let browser-native component classes expose custom tags.
-
-A tag containing a dash is treated as a custom element:
+Web Components expose browser-native custom tags such as:
 
 ```jsx
 <user-avatar user-id="42" />
 ```
 
-A built-in element using `is` can also represent a custom element in browser-supported patterns.
+## Attributes and properties are different channels
 
-## Attributes vs properties
+<VisualDiagram title="A custom element may expose both markup attributes and JavaScript properties">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Attribute" tone="blue" eyebrow="MARKUP CHANNEL">
+      Serialized in markup · string-oriented · inspectable as an HTML attribute
+    </DiagramNode>
+    <DiagramNode title="Property" tone="purple" eyebrow="OBJECT CHANNEL">
+      Set on the element instance · can hold arbitrary JavaScript values · follows the custom element contract
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Custom elements can receive data through two different channels:
-
-```text
-attribute
-serialized into markup
-string-oriented
-
-property
-set on JavaScript element instance
-can hold arbitrary JS values
-```
-
-This difference matters when integrating React with Web Components.
-
-Example string attribute:
+String-oriented example:
 
 ```jsx
 <status-badge state="online" />
 ```
 
-Example non-string value:
+Rich JavaScript value:
 
 ```jsx
 <chart-view data={points} />
 ```
 
-React's custom-element behavior determines whether a value becomes an attribute or an element property based on the element/property contract.
+Read the Web Component's API instead of assuming every value should be serialized as an attribute.
 
-Do not assume every custom element consumes values the same way.
-
-Read the component's Web Component API.
-
-## Define properties early
-
-A custom element that expects rich property values should define those properties on its instance during construction.
-
-Conceptually:
+A custom element that expects rich property values should establish a stable property surface on its instance.
 
 ```js
 class ChartView extends HTMLElement {
@@ -318,13 +223,7 @@ class ChartView extends HTMLElement {
 }
 ```
 
-That gives the integration a clear property surface for arbitrary JavaScript values.
-
 ## Custom events
-
-Web Components commonly dispatch `CustomEvent` instances.
-
-React can listen using an `on`-prefixed event prop matching the custom event name.
 
 ```jsx
 <voice-player
@@ -334,45 +233,31 @@ React can listen using an `on`-prefixed event prop matching the custom event nam
 />
 ```
 
-When integrating with a third-party custom element, verify:
+When integrating a third-party custom element, verify event naming, case sensitivity, `detail` shape, bubbling/composed behavior, and cleanup requirements.
 
-- event name;
-- case sensitivity;
-- event detail shape;
-- bubbling/composed behavior;
-- cleanup requirements.
-
-## React wrapper components
-
-A wrapper can make a Web Component feel more React-native:
+## Wrapper components normalize boundaries
 
 ```jsx
 function VoicePlayer({ onSpeak, ...props }) {
-  return (
-    <voice-player
-      onspeak={onSpeak}
-      {...props}
-    />
-  );
+  return <voice-player onspeak={onSpeak} {...props} />;
 }
 ```
 
-A wrapper is useful when you need to normalize:
+<VisualDiagram title="A React wrapper is useful when it improves the application-facing contract">
+  <DiagramStack align="center">
+    <DiagramNode title="Application props/events" tone="blue" />
+    <DiagramArrow label="normalize" />
+    <DiagramNode title="React wrapper" tone="purple">Prop naming · event mapping · refs · accessibility defaults · property assignment</DiagramNode>
+    <DiagramArrow label="adapt" />
+    <DiagramNode title="Custom element API" tone="teal" />
+  </DiagramStack>
+</VisualDiagram>
 
-- prop names;
-- custom events;
-- refs;
-- accessibility defaults;
-- property assignment;
-- imperative methods.
-
-Do not wrap every custom element automatically. Add a wrapper when it creates a better application-facing API.
+Do not wrap automatically; wrap when the adapter creates a clearer or safer contract.
 
 ---
 
 # SVG in React
-
-React supports browser SVG elements:
 
 ```jsx
 function CheckIcon() {
@@ -384,11 +269,9 @@ function CheckIcon() {
 }
 ```
 
-SVG elements live in the SVG namespace even though they are written in JSX.
+SVG is still browser SVG, expressed through JSX.
 
-## Accessibility
-
-Decorative icon:
+Decorative graphic:
 
 ```jsx
 <svg aria-hidden="true" focusable="false">...</svg>
@@ -403,24 +286,9 @@ Meaningful graphic:
 </svg>
 ```
 
-The correct accessible pattern depends on whether the SVG conveys information.
+The accessibility pattern depends on whether the graphic communicates information.
 
-## Dynamic SVG values
-
-```jsx
-<circle
-  cx={50}
-  cy={50}
-  r={radius}
-  opacity={disabled ? 0.4 : 1}
-/>
-```
-
-React updates SVG attributes/properties from normal JSX expressions.
-
-## Do not reimplement browser semantics
-
-React supports browser elements, but it does not replace native semantics.
+## Prefer native semantics
 
 Prefer:
 
@@ -428,115 +296,89 @@ Prefer:
 <button>Save</button>
 ```
 
-over:
+over rebuilding a button from a generic element:
 
 ```jsx
 <div role="button" tabIndex={0}>Save</div>
 ```
 
-unless the custom behavior genuinely requires a non-button element.
-
-Native elements provide keyboard behavior, semantics, form integration, and accessibility behavior you otherwise need to recreate.
+Native controls already provide keyboard, semantic, form, focus, and accessibility behavior.
 
 ## DOM ownership boundaries
 
-React assumes it owns the DOM subtree it renders.
+React assumes it owns the DOM subtree it renders. Bugs appear when another system mutates the same nodes independently.
 
-Problems arise when another system mutates the same nodes React expects to manage.
+<VisualDiagram title="Two safe integration shapes">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React owns outer surface" tone="purple">
+      React container
+      <br />→ dedicated ref node
+      <br />→ third-party library exclusively owns inside that node
+    </DiagramNode>
+    <DiagramNode title="External system owns outer surface" tone="orange">
+      External container
+      <br />→ designated child mount point
+      <br />→ React root/portal exclusively owns that child surface
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Examples:
+Avoid both systems mutating the same child nodes.
 
-- jQuery plugin rewriting children;
-- map library moving React-owned nodes;
-- WYSIWYG editor changing DOM under React;
-- browser extension injecting into the root;
-- imperative library replacing child nodes.
+## Integration decision
 
-Safer integration patterns include:
-
-```text
-React owns container
-third-party library owns inside of dedicated ref node
-```
-
-or:
-
-```text
-third-party system owns container
-React portal/root owns a designated child surface
-```
-
-Avoid two systems independently mutating the same DOM nodes.
+<DecisionTree
+  question="Who should own this DOM region?"
+  items={[
+    { label: 'Plain UI React can model declaratively', value: 'Let React own it' },
+    { label: 'Imperative library needs a canvas/map/editor surface', value: 'Give it one dedicated ref-owned island' },
+    { label: 'Legacy/CMS system owns the page region', value: 'Mount a React root/portal into a designated child surface' },
+    { label: 'Both need to mutate the same nodes', value: 'Redesign the boundary — shared mutation is unstable' },
+  ]}
+/>
 
 ## Security checklist
 
-When rendering browser DOM:
-
-- keep user content as normal JSX text when possible;
-- sanitize any raw HTML;
+- keep untrusted content as normal JSX text when possible;
+- sanitize raw HTML;
 - validate URLs used in navigation/resource contexts;
-- do not trust custom-element event payloads blindly;
+- treat custom-element event payloads as untrusted input;
 - preserve semantic HTML;
-- avoid hiding hydration errors;
+- fix hydration errors rather than hiding them broadly;
 - avoid direct DOM mutation of React-owned children.
-
-## Common mistakes
-
-### Mistake: treating React prop names as raw HTML strings
-
-Use React's documented DOM prop conventions.
-
-### Mistake: using `dangerouslySetInnerHTML` for formatted text that could be JSX
-
-Prefer structured React nodes.
-
-### Mistake: trusting CMS HTML without sanitization
-
-Raw HTML is a security boundary.
-
-### Mistake: controlling rich text with ordinary React children and browser edits simultaneously
-
-Choose a specialized editor architecture.
-
-### Mistake: assume custom element values are always HTML attributes
-
-Web Components can expose JavaScript properties.
-
-### Mistake: replace semantic HTML with `div` + ARIA everywhere
-
-Use native browser semantics first.
 
 ## Exercise
 
-Build a page containing:
+Build a page containing a semantic form, decorative and meaningful SVGs, a custom `<rating-stars>` element behind a React wrapper, a sanitized CMS renderer, and a third-party chart that owns only one dedicated DOM island.
 
-1. a semantic accessible form;
-2. an inline SVG icon and a meaningful SVG chart;
-3. a custom `<rating-stars>` element wrapped by a React component;
-4. a sanitized CMS-content renderer;
-5. a dedicated DOM node owned by a third-party chart library without letting it rewrite React siblings.
-
-Explain the ownership boundary for each part.
+For each piece, document **who owns the DOM** and **where the trust boundary lives**.
 
 ## Interview questions
 
-**Junior:** Why does JSX use `className` and `htmlFor`?
+**Junior:** Why does JSX use names such as `className` and `htmlFor`?
 
-**Mid-level:** What is dangerous about `dangerouslySetInnerHTML`, and when is it justified?
+**Mid-level:** Why is `dangerouslySetInnerHTML` a security boundary?
 
-**Senior:** Explain how you would integrate React with a Web Component and a third-party imperative DOM library without creating competing DOM ownership.
+**Senior:** How would you integrate React, a Web Component, and an imperative DOM library without creating overlapping DOM ownership?
 
 ## Summary
 
-```text
-React DOM supports HTML + SVG
-browser semantics still matter
-raw HTML is a security boundary
-custom elements have attribute/property/event contracts
-React should have clear ownership of the DOM it renders
-```
+<VisualDiagram title="React DOM is an adapter to the browser, not a replacement for it">
+  <LifecycleBar
+    items={[
+      { label: 'Use semantic JSX', tone: 'blue' },
+      { label: 'React DOM maps it to platform nodes', tone: 'purple' },
+      { label: 'Respect trust + ownership boundaries', tone: 'orange' },
+      { label: 'Let the browser provide native behavior', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 ## References
 
-- https://react.dev/reference/react-dom/components
 - https://react.dev/reference/react-dom/components/common
+- https://react.dev/reference/react-dom/components
+- https://react.dev/reference/react-dom/components/form
+- https://react.dev/reference/react-dom/components/input
+- https://react.dev/reference/react-dom/components/select
+- https://react.dev/reference/react-dom/components/textarea
