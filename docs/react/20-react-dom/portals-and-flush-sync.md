@@ -4,52 +4,43 @@ description: Learn createPortal, React-tree event propagation, modal architectur
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Portals, `flushSync`, and React DOM escape hatches
 
-Most React applications should let React own rendering and scheduling.
+Most React code should let React choose **where work is scheduled** and let the normal component tree decide **who owns UI**.
 
-Two important React DOM APIs deliberately let you cross that default boundary:
+Two React DOM APIs intentionally cross those defaults:
 
-- `createPortal` changes **where DOM is physically placed** without changing the React ownership tree;
-- `flushSync` forces React to **synchronously commit updates** when an external system requires the DOM to be ready immediately.
+- `createPortal` changes **physical DOM placement** without changing React ownership;
+- `flushSync` creates a narrow **synchronous commit boundary** for an external integration that needs the DOM updated before control returns.
 
-Both are escape hatches. They solve real problems, but their value comes from using them narrowly.
+## React ownership and DOM placement are different trees
 
-## Mental model
+<VisualDiagram title="A portal changes placement, not ownership" subtitle="Context and React event propagation follow the React tree even when DOM nodes are mounted somewhere else.">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React tree" tone="purple" eyebrow="OWNERSHIP">
+      App → Card → Modal → Dialog
+      <br />Context flows through this path.
+      <br />React events bubble through this path.
+    </DiagramNode>
+    <DiagramNode title="DOM tree" tone="blue" eyebrow="PLACEMENT">
+      body → #root → card DOM
+      <br />body → portal target → dialog DOM
+      <br />CSS stacking and overflow depend on this tree.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-React tree answers:
-Who owns this UI?
-Which Context is visible?
-How do React events propagate?
-
-DOM tree answers:
-Where is this node physically mounted?
-Which CSS stacking/overflow constraints affect it?
-
-createPortal changes DOM placement,
-not React ownership.
-```
-
-And for `flushSync`:
-
-```text
-normal React update
-state change
-   ↓
-React schedules work
-   ↓
-render
-   ↓
-commit when appropriate
-
-flushSync
-callback
-   ↓
-React flushes required work now
-   ↓
-DOM is updated before next statement
-```
+That distinction is the entire portal mental model.
 
 ## `createPortal`
 
@@ -64,15 +55,22 @@ function Modal({ children }) {
 }
 ```
 
-`createPortal(children, domNode, key?)` returns a React node.
+`createPortal(children, domNode, key?)` returns a React node. The target DOM node must already exist.
 
-The target DOM node must already exist.
+<VisualDiagram title="Portal lifecycle">
+  <LifecycleBar
+    items={[
+      { label: 'Parent renders portal', tone: 'blue' },
+      { label: 'React ownership stays with parent', tone: 'purple' },
+      { label: 'DOM mounts in target node', tone: 'teal' },
+      { label: 'Context + React events still use React ancestry', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-The portal content is physically inserted into the target node, but logically remains a child of the React component that created the portal.
+### Why portals exist
 
-## Why portals exist
-
-Consider a modal rendered inside this layout:
+A modal rendered inside a clipped card can be visually trapped by overflow or stacking contexts.
 
 ```jsx
 <div className="card">
@@ -81,28 +79,9 @@ Consider a modal rendered inside this layout:
 </div>
 ```
 
-If `.card` has clipping or stacking-context styles, a modal rendered normally inside it may be visually trapped.
+A portal lets the modal remain conceptually owned by `Card` while placing the actual dialog DOM near `document.body`.
 
-A portal lets the modal remain owned by the same React component while rendering its DOM elsewhere:
-
-```text
-React tree
-App
-└── Card
-    ├── Toolbar
-    └── Modal
-        └── Dialog
-
-DOM tree
-body
-├── #root
-│   └── card DOM
-└── dialog DOM   ← portal target
-```
-
-This distinction is the key to understanding portals.
-
-## Context still works through portals
+## Context still works
 
 ```jsx
 const ThemeContext = createContext('light');
@@ -115,10 +94,6 @@ function App() {
   );
 }
 
-function Page() {
-  return <Modal />;
-}
-
 function Modal() {
   const theme = useContext(ThemeContext);
 
@@ -129,55 +104,42 @@ function Modal() {
 }
 ```
 
-Even though the dialog DOM is outside `#root`, it still sees `ThemeContext` because Context follows the **React tree**, not the DOM tree.
+The dialog can read the provider above `Page` because Context follows the **React tree**, not physical DOM ancestry.
 
-## Events bubble through the React tree
+## React events also follow React ownership
 
 ```jsx
 function Panel() {
-  function handleClick() {
-    console.log('panel clicked');
-  }
-
   return (
-    <div onClick={handleClick}>
-      {createPortal(
-        <button>Open</button>,
-        document.body
-      )}
+    <div onClick={() => console.log('panel clicked')}>
+      {createPortal(<button>Open</button>, document.body)}
     </div>
   );
 }
 ```
 
-Clicking the portal button can trigger the `div`'s React `onClick` handler even though the button is not physically inside that `div` in the DOM.
+Clicking the portal button can reach the React `onClick` on `Panel` even though the button is not inside that `div` in the DOM.
 
-### Debugging portal event bugs
+<DecisionTree
+  question="A portal click reached an unexpected parent handler. What should you inspect first?"
+  items={[
+    { label: 'Portal React ancestry', value: 'Find the logical React parent chain' },
+    { label: 'Ancestor handlers', value: 'Check which React ancestors listen to the event' },
+    { label: 'Interaction boundary', value: 'Stop propagation only when the UX contract requires it' },
+    { label: 'Ownership clarity', value: 'Move the portal higher if ownership is conceptually wrong' },
+  ]}
+/>
 
-When an event from a portal unexpectedly reaches a parent handler, ask:
+## Portals are only placement infrastructure
 
-1. Where is the portal in the **React tree**?
-2. Which React ancestors have event handlers?
-3. Should the portal stop propagation?
-4. Would moving the portal higher in the React tree make ownership clearer?
+A production modal still needs accessible behavior:
 
-Do not assume physical DOM ancestry determines React event propagation.
-
-## Modal architecture
-
-Portals solve positioning, but a production modal also needs behavioral correctness.
-
-A modal usually requires:
-
-- an accessible dialog role;
-- an accessible name;
+- dialog semantics and an accessible name;
 - focus movement into the dialog;
-- focus restoration when it closes;
-- Escape-key behavior;
+- focus restoration on close;
+- Escape-key handling;
 - background interaction management;
-- scroll locking where appropriate.
-
-Example structure:
+- scroll-locking where appropriate.
 
 ```jsx
 function Modal({ title, onClose, children }) {
@@ -198,11 +160,9 @@ function Modal({ title, onClose, children }) {
 }
 ```
 
-The portal is only the placement mechanism. Accessibility and interaction design remain your responsibility.
+## Integrating with non-React DOM
 
-## Portals into non-React DOM
-
-Portals are also useful when integrating React with an existing DOM container owned by another system.
+Portals can also project React content into a DOM container supplied by another system:
 
 ```jsx
 function MapPopup({ container, children }) {
@@ -211,27 +171,15 @@ function MapPopup({ container, children }) {
 }
 ```
 
-This pattern is useful for map popups, CMS-managed regions, legacy application shells, and embedded widgets.
+Useful examples include map popups, CMS slots, legacy shells, and embedded widgets.
 
-## Changing the target recreates content
-
-If a later render passes a different target DOM node, React recreates the portal content in the new location.
-
-That can affect local state and DOM continuity.
-
-Prefer a stable target unless moving the subtree is intentional.
-
-## What portals do not do
-
-Portals do not automatically provide global state, focus management, z-index correctness, animation coordination, scroll locking, or accessibility.
-
-They only change DOM placement while keeping React ownership.
+If the target DOM node changes, React recreates the portal content in the new location. Prefer stable targets unless moving the subtree is intentional.
 
 ---
 
 # `flushSync`
 
-`flushSync` forces React to synchronously flush updates made inside a callback.
+`flushSync` tells React that an external boundary requires the DOM to reflect an update synchronously.
 
 ```jsx
 import { flushSync } from 'react-dom';
@@ -240,24 +188,27 @@ flushSync(() => {
   setIsPrinting(true);
 });
 
-// By this line, the required DOM update has committed.
+// Required DOM update has committed by here.
 ```
 
-This is intentionally uncommon.
+## Normal scheduling vs synchronous integration
 
-## Default behavior is usually better
+<VisualDiagram title="Default scheduling should remain the normal path">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Normal React update" tone="green" eyebrow="DEFAULT">
+      State update → React schedules/render work → commit when appropriate.
+      <br />React keeps batching and prioritization freedom.
+    </DiagramNode>
+    <DiagramNode title="flushSync boundary" tone="orange" eyebrow="ESCAPE HATCH">
+      External callback → flushSync update → required DOM commits now → external system reads DOM.
+      <br />Scheduling flexibility is reduced.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-React normally batches and schedules work so it can prioritize urgent work and avoid blocking the browser unnecessarily.
+If everything involved is React-owned, you usually do **not** need `flushSync`.
 
-Calling `flushSync` removes some of that flexibility.
-
-Therefore the default rule is:
-
-> If everything involved is React-owned, you probably do not need `flushSync`.
-
-## Real use case: browser or third-party integration
-
-Some external APIs require the DOM to reflect a state change before the callback returns.
+## Real use case: browser integration
 
 ```jsx
 useEffect(() => {
@@ -281,119 +232,77 @@ useEffect(() => {
 }, []);
 ```
 
-The browser expects the page layout to be ready before opening the print dialog.
+The browser's print lifecycle may require the updated document layout before the callback finishes. That is an **external timing contract**, not a normal state-update pattern.
 
-This is an integration requirement, not a normal UI-update pattern.
+## `flushSync` is broader than one setter
 
-## `flushSync` can flush more than the callback
+React may need to flush other pending work to satisfy the synchronous boundary. It can also cause pending Effects or Suspense behavior to become observable sooner than expected.
 
-React may need to flush other pending updates to complete the requested synchronous work.
+<VisualDiagram title="Think in terms of DOM consistency, not setter execution">
+  <DiagramStack align="center">
+    <DiagramNode title="External system requires current DOM" tone="orange" />
+    <DiagramArrow label="enter synchronous boundary" />
+    <DiagramNode title="React flushes work needed for consistency" tone="purple" />
+    <DiagramArrow label="commit" />
+    <DiagramNode title="DOM is ready for external read" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-It may also run pending Effects and synchronously apply updates they contain.
+## What `flushSync` does not solve
 
-Think of `flushSync` as:
-
-> "Make the React DOM consistent with this required synchronous boundary now."
-
-not:
-
-> "Synchronously execute only this one setter."
-
-## Suspense interaction
-
-If a synchronous update causes a subtree to suspend, React may need to show a Suspense fallback immediately.
-
-This is another reason to avoid it as a general timing trick.
-
-## Do not call it during React rendering
-
-Do not call `flushSync` while React is already rendering, including from render logic, Effects, layout Effects, or class lifecycle methods.
-
-If an external system really requires synchronous DOM work, move that boundary to the external event or callback when possible.
-
-## `flushSync` is not a fix for stale state
-
-Wrong idea:
-
-```jsx
-flushSync(() => {
-  setCount(count + 1);
-});
-```
-
-This does not change React's state snapshot model.
-
-If the issue is stale state, use an updater:
+It does **not** change state snapshot or closure semantics:
 
 ```jsx
 setCount(c => c + 1);
 ```
 
-`flushSync` affects commit timing, not closure semantics.
+Use a functional updater for stale-state dependencies rather than forcing synchronous commits.
 
-## `flushSync` is not a performance optimization
+It is also not a performance optimization. Frequent synchronous flushing can block the main thread and remove React's scheduling flexibility.
 
-If a UI feels slow, forcing synchronous work usually makes the main thread **more** blocked.
+## Decision rule
 
-Profile first. The real solution may be reducing render work, memoization where justified, transitions, deferred values, virtualization, changing state ownership, or moving CPU-heavy work elsewhere.
-
-## Production decision rule
-
-Ask these questions before using `flushSync`:
-
-1. Is a non-React system reading the DOM immediately after this callback?
-2. Does that system require the updated DOM synchronously?
-3. Can the integration be redesigned to avoid that timing requirement?
-4. Have I measured the performance cost?
-5. Could this force a Suspense fallback or pending Effect unexpectedly?
-
-If the first two answers are not clearly yes, avoid it.
+<DecisionTree
+  question="Should this update use flushSync?"
+  items={[
+    { label: 'Only React-owned UI?', value: 'No — keep normal scheduling' },
+    { label: 'External system reads DOM immediately?', value: 'Maybe — verify it truly needs the updated DOM before return' },
+    { label: 'Integration can be redesigned?', value: 'Prefer redesign over synchronous flushing' },
+    { label: 'Requirement is unavoidable and measured?', value: 'Use one narrow flushSync boundary' },
+  ]}
+/>
 
 ## Common mistakes
 
-- building a modal without considering React-tree event propagation;
 - assuming portal children lose Context;
-- using portals as a substitute for clear component ownership;
-- calling `flushSync` after every state update;
+- reasoning about portal events only from DOM ancestry;
+- using portals as a substitute for clear ownership;
+- forcing every update through `flushSync`;
 - using `flushSync` to work around stale closures;
-- treating `flushSync` as a performance tool.
+- treating synchronous commits as a performance shortcut.
 
 ## Exercise
 
-Build a global confirmation dialog that:
+Build a global confirmation dialog that renders into `document.body`, inherits theme Context, handles backdrop clicks correctly, restores focus, and never uses `flushSync`.
 
-1. renders into `document.body` with `createPortal`;
-2. receives theme from Context above the portal;
-3. closes on backdrop click;
-4. does not close when clicking inside the dialog;
-5. restores focus to the triggering button;
-6. does not use `flushSync`.
-
-Then add a separate print-preview feature where a browser callback genuinely requires the DOM update before printing, and justify a single `flushSync` call.
+Then add a separate print-preview integration where the browser genuinely requires a DOM update before printing and justify one narrow `flushSync` call.
 
 ## Interview questions
 
-**Junior:** What problem does `createPortal` solve?
+**Junior:** What does `createPortal` change, and what does it preserve?
 
-**Mid-level:** Why can a click inside a portal trigger an `onClick` on an ancestor that is not its DOM ancestor?
+**Mid-level:** Why can a portal click reach a React ancestor that is not its DOM ancestor?
 
-**Senior:** When is `flushSync` justified, and why is frequent use a scheduling/performance smell?
+**Senior:** What external timing requirement would justify `flushSync`, and what scheduling/performance trade-off does it introduce?
 
 ## Summary
 
-```text
-createPortal:
-React ownership stays the same
-DOM placement changes
-Context still works
-React events follow the React tree
-
-flushSync:
-forces a synchronous commit boundary
-use only for external integration requirements
-can hurt performance
-can force Suspense fallbacks
-```
+<VisualDiagram title="React DOM escape hatches">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="createPortal" tone="blue">Changes DOM placement · preserves React ownership · preserves Context · React events follow React ancestry.</DiagramNode>
+    <DiagramNode title="flushSync" tone="orange">Forces a narrow synchronous commit boundary · justified by external DOM timing requirements · reduces scheduling flexibility.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## References
 

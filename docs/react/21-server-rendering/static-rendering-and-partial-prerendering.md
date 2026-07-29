@@ -4,65 +4,72 @@ description: Understand prerender, prerenderToNodeStream, postponed state, resum
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Static rendering, resume APIs, and partial pre-rendering
 
 Streaming SSR optimizes **request-time progressive delivery**.
 
-Static rendering solves a different problem:
+Static rendering optimizes a different problem: **do reusable rendering work ahead of the request**.
 
-> Generate reusable HTML ahead of time, often at build time or in a cached prerendering phase.
+React 19.2 also provides a bridge between those models: partial pre-rendering (PPR), where completed static work is stored and unfinished work can be resumed later.
 
-React's modern static APIs are Suspense-aware and can wait for data before completing static output.
+## Rendering strategy mental model
 
-## Mental model
+<VisualDiagram title="Static rendering and streaming SSR start at different times">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Streaming SSR" tone="blue" eyebrow="REQUEST TIME">
+      Request arrives → render now → send useful shell early → stream remaining regions later
+    </DiagramNode>
+    <DiagramNode title="Static rendering" tone="green" eyebrow="AHEAD OF TIME">
+      Render before request → wait for static result → store/cache output → serve reusable result later
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-Streaming SSR
-request arrives
-render now
-send shell early
-stream more HTML later
+## PPR bridges static and dynamic work
 
-Static rendering
-render ahead of time
-wait for static content
-store/cache HTML
-serve reusable result later
-```
+<VisualDiagram title="Partial pre-rendering reuses completed work and resumes unfinished regions later">
+  <LifecycleBar
+    items={[
+      { label: 'Prerender ahead of time', tone: 'blue' },
+      { label: 'Abort/postpone unfinished regions', tone: 'orange' },
+      { label: 'Store prelude + opaque postponed state', tone: 'purple' },
+      { label: 'Request arrives', tone: 'teal' },
+      { label: 'Resume unfinished work', tone: 'orange' },
+      { label: 'Stream dynamic remainder', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-React 19.2 also supports a more advanced bridge between static and dynamic rendering: **partial pre-rendering**.
-
-```text
-prerender as much as possible
-   ↓
-store completed HTML + postponed state
-   ↓
-request arrives later
-   ↓
-resume unfinished regions
-   ↓
-stream dynamic remainder
-```
-
-## `react-dom/static`
-
-React exposes static APIs from:
+## Static API families
 
 ```jsx
 import { prerender } from 'react-dom/static';
 ```
 
-For Node.js streams, use:
+For Node.js streams:
 
 ```jsx
 import { prerenderToNodeStream } from 'react-dom/static';
 ```
 
-Just like server streaming, the API choice should match the runtime.
+<VisualDiagram title="Match the static API to the runtime">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Web Streams" tone="blue"><code>prerender</code> → Web ReadableStream</DiagramNode>
+    <DiagramNode title="Node Streams" tone="purple"><code>prerenderToNodeStream</code> → Node.js stream</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## `prerender`
-
-Basic shape:
 
 ```jsx
 import { prerender } from 'react-dom/static';
@@ -72,20 +79,14 @@ const { prelude, postponed } = await prerender(<App />, {
 });
 ```
 
-`prelude` is a Web Stream containing static HTML.
+`prelude` contains the static HTML stream.
 
-`postponed` is either:
+`postponed` is:
 
-- `null` when the prerender completed fully;
-- an opaque, serializable postponed state when rendering was stopped before everything finished.
-
-That postponed state can later be resumed.
+- `null` when prerendering completed fully;
+- an opaque serializable continuation state when unfinished work was postponed.
 
 ## Static rendering waits for Suspense data
-
-This is a major difference from old string rendering.
-
-Suppose:
 
 ```jsx
 function ProductPage() {
@@ -100,47 +101,21 @@ function ProductPage() {
 }
 ```
 
-If `Reviews` suspends on a Suspense-enabled data source, `prerender` waits for the data to resolve before completing the static output.
+For a Suspense-enabled data source, `prerender` normally waits for the suspended content before resolving the completed static result.
 
-This makes it suitable for static generation where the final HTML should include the resolved content.
+<VisualDiagram title="prerender is not progressive browser streaming">
+  <DiagramStack align="center">
+    <DiagramNode title="Start static render" tone="blue" />
+    <DiagramArrow label="wait for static work" />
+    <DiagramNode title="Suspense-enabled data resolves" tone="purple" />
+    <DiagramArrow label="prerender completes" />
+    <DiagramNode title="Receive prelude for storage/serving" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-## Static rendering does not stream progressively to the user
+If the product goal is to show a user a shell while request-time work is still loading, use streaming SSR instead.
 
-Even though `prelude` is a stream object, the prerender Promise waits for the prerendering phase to finish before resolving normally.
-
-That means:
-
-```text
-prerender
-wait for static render completion
-   ↓
-receive prelude
-   ↓
-serve/store output
-```
-
-If your goal is to show a user a shell immediately while data is still loading, use streaming SSR instead.
-
-## Node: `prerenderToNodeStream`
-
-```jsx
-import { prerenderToNodeStream } from 'react-dom/static';
-
-const { prelude, postponed } = await prerenderToNodeStream(
-  <App />,
-  {
-    bootstrapScripts: ['/main.js'],
-  }
-);
-```
-
-The returned `prelude` is a Node.js stream.
-
-Use the dedicated Node API rather than Web Streams when running in Node for the intended performance model.
-
-## Aborting prerendering
-
-Static generation sometimes needs a time budget.
+## Aborting creates a PPR continuation boundary
 
 ```jsx
 const controller = new AbortController();
@@ -154,62 +129,42 @@ const { prelude, postponed } = await prerender(<App />, {
 });
 ```
 
-When aborted, React can preserve what finished and represent unfinished work through postponed state.
+When a prerender stops before every Suspense region completes, React can preserve the finished output and return postponed continuation state for unfinished work.
 
-That enables partial pre-rendering workflows.
-
-## What is partial pre-rendering?
-
-Partial pre-rendering, or PPR, combines reusable static work with request-time dynamic completion.
+## What PPR is buying you
 
 Imagine an ecommerce page:
 
-```text
-Product layout       static
-Product description  static
-Reviews summary      static/cached
-User cart count      request-specific
-Inventory message    request-specific
-Recommendation feed  request-specific
-```
+<VisualDiagram title="Static and request-specific regions have different reuse rules">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Reusable static work" tone="green">
+      Product layout · description · public cached content · stable marketing copy
+    </DiagramNode>
+    <DiagramNode title="Request-specific work" tone="orange">
+      User cart · permissions · personalized inventory/message · recommendations · request-bound data
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-A pure static page may be too stale.
+A pure static page may be too stale or unsafe. A pure request-time page may repeat work that could be reused. PPR lets the architecture preserve that distinction.
 
-A pure request-time SSR page repeats work that could have been done ahead of time.
+## Postponed state is opaque React-owned continuation data
 
-PPR aims for:
+<VisualDiagram title="Do not inspect or mutate postponed state">
+  <DiagramStack align="center">
+    <DiagramNode title="Prerendered tree" tone="blue" />
+    <DiagramArrow label="unfinished work remains" />
+    <DiagramNode title="Opaque postponed state" tone="purple">Serialize/store it as an artifact; do not depend on its internals.</DiagramNode>
+    <DiagramArrow label="later request" />
+    <DiagramNode title="Resume API receives the state" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-static shell + static regions
-prepared ahead of time
+Your infrastructure owns storage/versioning. React owns the continuation representation.
 
-request arrives
-resume only postponed/dynamic work
-stream remaining output
-```
+## Resume APIs
 
-## Postponed state
-
-The `postponed` value is deliberately opaque.
-
-Do not inspect or mutate it.
-
-Treat it as React-owned continuation state:
-
-```text
-prerender
-returns postponed state
-   ↓
-store safely
-   ↓
-resume API receives it later
-```
-
-Your infrastructure decides where to store it, but React decides its internal representation.
-
-## `resume`
-
-For Web Stream environments, React server APIs can resume a previously postponed prerender:
+Web Stream environments:
 
 ```jsx
 import { resume } from 'react-dom/server';
@@ -217,11 +172,7 @@ import { resume } from 'react-dom/server';
 const stream = await resume(<App />, postponedState, options);
 ```
 
-The resumed render produces the remaining request-time HTML as a Web Stream.
-
-## `resumeToPipeableStream`
-
-Node.js uses the dedicated Node stream API:
+Node.js:
 
 ```jsx
 import { resumeToPipeableStream } from 'react-dom/server';
@@ -233,248 +184,161 @@ const { pipe, abort } = await resumeToPipeableStream(
 );
 ```
 
-The same high-level idea applies:
+The goal is the same: skip completed prerendered work where React can, continue unfinished work, and stream the request-time remainder.
 
-- reuse completed prerendered work;
-- continue unfinished work;
-- stream the dynamic remainder.
+## Prerender and resume are one contract
 
-## Bootstrap options belong to prerender
+Some configuration belongs to the original prerender so the resumed render remains consistent with the static output. For example, bootstrap resource configuration belongs to the prerender stage rather than being independently reinvented during resume.
 
-Resume APIs do not simply repeat all prerender options.
+<VisualDiagram title="Resume is not an unrelated second render">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Prerender stage" tone="blue">Tree shape · build version · identifiers · bootstrap resources · completed static work</DiagramNode>
+    <DiagramNode title="Resume stage" tone="purple">Must continue a compatible logical tree and rendering configuration</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-For example, bootstrap script configuration belongs to the prerender phase so the static output and resumed output remain consistent.
+## Versioning postponed artifacts
 
-This is a reminder that prerender/resume are two stages of one rendering contract.
+A deployment can make old continuation state incompatible.
 
-## Identifier consistency
+<VisualDiagram title="Treat postponed state like versioned build output">
+  <LifecycleBar
+    items={[
+      { label: 'Build A prerenders', tone: 'blue' },
+      { label: 'Store prelude + postponed A', tone: 'purple' },
+      { label: 'Deploy build B', tone: 'orange' },
+      { label: 'Invalidate incompatible A continuation', tone: 'red' },
+      { label: 'Generate/resume with matching version', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-Generated IDs and other render-level identifiers must remain consistent across prerender and resume.
-
-Do not treat resumed rendering as an unrelated second render.
-
-The resumed work must match the original prerendered tree and configuration.
-
-## Stable tree requirement
-
-A PPR architecture assumes the logical React tree matches between prerender and resume.
-
-If application code, feature flags, locale, route configuration, or build artifacts change incompatibly, resuming old postponed state may become unsafe.
-
-Infrastructure therefore needs versioning and invalidation policy.
-
-Example:
-
-```text
-build version A
-prerender + postponed state A
-
-new deployment version B
-
-Do not blindly resume state A with tree B
-```
-
-Treat postponed artifacts like versioned build outputs.
+Do not blindly resume state from an incompatible tree, locale/configuration contract, or deployment version.
 
 ## Experimental continuation APIs
 
-React also exposes experimental static continuation APIs such as:
+React also documents experimental static continuation APIs such as:
 
 - `resumeAndPrerender`;
 - `resumeAndPrerenderToNodeStream`.
 
-These continue a previously postponed prerender into further static output rather than immediately switching to request-time streaming.
+They continue postponed work into further static output rather than switching immediately to request-time SSR streaming.
 
-Because the official React docs label these APIs experimental, this handbook treats them as **architecture awareness**, not default stable production APIs.
-
-Do not build a portability-critical abstraction on experimental APIs without pinning versions and understanding framework support.
+Because they are marked experimental, treat them as architecture awareness rather than a portability-critical stable contract.
 
 ## PPR vs streaming SSR
 
-```text
-Streaming SSR
-all rendering starts at request time
-can stream shell early
+<VisualDiagram title="PPR can feed into streaming rather than compete with it">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Streaming SSR" tone="blue">
+      All render work starts at request time.
+      <br />Useful shell can stream early.
+    </DiagramNode>
+    <DiagramNode title="PPR" tone="purple">
+      Some rendering happened earlier.
+      <br />Request resumes only unfinished/dynamic work.
+    </DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="PPR can resume into a streaming SSR response" />
+  <DiagramNode title="Reuse static work + progressively deliver dynamic remainder" tone="green" wide />
+</VisualDiagram>
 
-PPR
-some rendering happened earlier
-request resumes postponed work
-can avoid repeating completed static work
-```
+## PPR vs browser fetching
 
-They can work together.
+<VisualDiagram title="Dynamic work can finish on the server or after hydration in the browser">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Static HTML + client fetch" tone="orange">Serve static page → hydrate → browser requests dynamic data.</DiagramNode>
+    <DiagramNode title="PPR resume" tone="green">Serve/reuse static work → server resumes dynamic regions → stream server-rendered remainder.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-PPR may prepare the static shell ahead of time, then a resume API streams the remaining dynamic work on request.
+PPR can reduce client orchestration, but it requires stronger server infrastructure, storage/versioning, and framework/runtime integration.
 
-## PPR vs client-side fetching
-
-Another common architecture is:
-
-```text
-serve static HTML
-hydrate
-fetch dynamic data in browser
-```
-
-PPR instead allows more dynamic work to happen on the server and arrive as server-rendered HTML.
-
-Potential benefits include:
-
-- less client data orchestration;
-- useful HTML earlier;
-- reduced duplicate client/server fetching;
-- better integration with Suspense and streaming.
-
-Trade-offs include:
-
-- more sophisticated server infrastructure;
-- postponed-state storage/versioning;
-- tighter framework/runtime integration.
-
-## `renderToString`
-
-Legacy non-streaming rendering still exists:
+## Legacy/non-interactive rendering APIs
 
 ```jsx
 import { renderToString } from 'react-dom/server';
-
 const html = renderToString(<App />);
 ```
 
-It returns a string immediately based on what React can render in that model.
-
-It does not provide the modern Suspense-aware progressive/static behavior of the newer APIs.
-
-Use it for compatibility cases, not as the first choice for modern Suspense architecture.
-
-## `renderToStaticMarkup`
+`renderToString` is a compatibility path with limited Suspense/progressive behavior compared with modern APIs.
 
 ```jsx
 import { renderToStaticMarkup } from 'react-dom/server';
-
 const html = renderToStaticMarkup(<Email />);
 ```
 
-This is for **non-interactive HTML**.
+`renderToStaticMarkup` is for **non-interactive HTML** such as emails or generated documents. Do not use it for a page you intend to hydrate.
 
-The result is not intended to be hydrated into an interactive React app.
+## Static generation is also a cache/security decision
 
-Typical use cases:
+Static output is only reusable when every input that affects correctness is represented in the cache/invalidation contract.
 
-- emails;
-- static documents;
-- HTML generation where React is only a templating/render layer.
-
-Do not use it for an app you plan to hydrate.
-
-## Static generation and caching
-
-Static HTML is only useful if your invalidation strategy matches the data.
-
-Questions to answer:
-
-- how often does content change?
-- what makes a page stale?
-- can pages be regenerated incrementally?
-- is output personalized?
-- are locale and tenant part of the cache key?
-- do authorization rules permit sharing the cached output?
-
-React generates output; your application/framework decides cache policy.
-
-## Security and personalization
-
-Never accidentally cache personalized HTML as public static output.
-
-Inputs that often affect cache safety include:
+Important dimensions can include:
 
 - authenticated user;
 - organization/tenant;
-- locale;
-- currency;
-- feature flags;
+- locale and currency;
 - permissions;
-- request headers;
-- geolocation;
-- AB-test assignment.
+- feature flags;
+- request headers/geography;
+- AB-test assignment;
+- content version and freshness.
 
-Static rendering is an infrastructure decision, not merely a rendering API choice.
+Never publish personalized HTML as globally shared static output by accident.
+
+## Rendering strategy decision
+
+<DecisionTree
+  question="Which rendering direction fits the output contract?"
+  items={[
+    { label: 'Interactive request-time HTML with progressive loading', value: 'Streaming SSR' },
+    { label: 'Reusable Suspense-aware HTML generated ahead of time', value: 'prerender / prerenderToNodeStream' },
+    { label: 'Reuse static work but finish dynamic work per request', value: 'PPR with postponed state + resume' },
+    { label: 'Non-interactive HTML document', value: 'renderToStaticMarkup' },
+  ]}
+/>
 
 ## Common mistakes
 
-### Mistake: call `prerender` expecting progressive browser loading
-
-Use streaming SSR for request-time progressive loading.
-
-### Mistake: inspect postponed state
-
-It is opaque React-owned continuation data.
-
-### Mistake: resume old postponed state after incompatible deployment
-
-Version your render artifacts.
-
-### Mistake: use `renderToStaticMarkup` for a page that must hydrate
-
-Static markup is non-interactive output.
-
-### Mistake: publicly cache personalized output
-
-Cache keys and privacy boundaries must be designed explicitly.
-
-### Mistake: treat experimental continuation APIs as stable portability contracts
-
-Label them experimental and isolate usage behind framework/runtime support.
-
-## Production decision matrix
-
-| Goal | API direction |
-| --- | --- |
-| interactive request-time HTML with progressive loading | streaming SSR |
-| static Suspense-aware HTML generation | `prerender` / `prerenderToNodeStream` |
-| resume postponed static work on request | `resume` / `resumeToPipeableStream` |
-| non-interactive HTML | `renderToStaticMarkup` |
-| old compatibility path | `renderToString` |
+- calling `prerender` expecting user-facing progressive streaming before prerender completion;
+- inspecting or mutating postponed state;
+- resuming old continuation state after an incompatible deployment;
+- using `renderToStaticMarkup` for an app that must hydrate;
+- publicly caching personalized output;
+- treating experimental continuation APIs as stable portability contracts.
 
 ## Exercise
 
-Design three rendering strategies for a product page:
+Design three versions of a product page:
 
 1. fully static catalog page;
-2. streaming SSR product page;
-3. PPR page with static product content and request-time user cart/inventory.
+2. request-time streaming SSR page;
+3. PPR page with static product content and request-time cart/inventory.
 
-For each strategy, identify:
-
-- what runs ahead of time;
-- what runs per request;
-- what can be cached;
-- what must never be shared between users;
-- how hydration occurs.
+For each, document what runs ahead of time, what runs per request, what can be cached, what must never be shared, and where hydration begins.
 
 ## Interview questions
 
 **Junior:** What is the difference between static rendering and streaming SSR?
 
-**Mid-level:** Why does `prerender` wait for Suspense data instead of streaming fallbacks progressively?
+**Mid-level:** Why does `prerender` normally wait for Suspense data instead of progressively revealing it to a current user?
 
-**Senior:** Explain how postponed state, resume APIs, cache invalidation, deployment versioning, and personalization affect a production partial pre-rendering architecture.
+**Senior:** How do postponed state, deployment versioning, cache keys, personalization, and resume APIs shape a safe production PPR architecture?
 
 ## Summary
 
-```text
-prerender
-build static HTML and wait for Suspense data
-
-abort + postponed state
-preserve unfinished render continuation
-
-resume
-finish postponed work later
-
-PPR
-reuse static work + complete dynamic work per request
-```
+<VisualDiagram title="Static rendering and PPR in one lifecycle">
+  <LifecycleBar
+    items={[
+      { label: 'Prerender reusable work', tone: 'blue' },
+      { label: 'Store static prelude', tone: 'green' },
+      { label: 'Preserve opaque postponed state when needed', tone: 'purple' },
+      { label: 'Resume on matching request/build', tone: 'orange' },
+      { label: 'Stream dynamic remainder', tone: 'teal' },
+    ]}
+  />
+</VisualDiagram>
 
 ## References
 
