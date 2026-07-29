@@ -9,7 +9,7 @@ const handbooks = [
     title: 'React',
     description: 'Components, hooks, state, performance, architecture, internals, production engineering, and interview mastery.',
     status: 'Complete',
-    href: '/docs/react/intro',
+    href: '/react',
     featured: true,
   },
   {
@@ -17,7 +17,7 @@ const handbooks = [
     title: 'TypeScript',
     description: 'From type fundamentals to inference, generics, compiler reasoning, architecture, production engineering, and interview mastery.',
     status: 'Complete',
-    href: '/docs/typescript/intro',
+    href: '/typescript',
     featured: true,
   },
   {
@@ -25,57 +25,57 @@ const handbooks = [
     title: 'Next.js',
     description: 'App Router, Server Components, caching, security, testing, deployment, architecture, internals, and production operations.',
     status: 'Complete',
-    href: '/docs/nextjs/intro',
+    href: '/nextjs',
     featured: true,
   },
   {
     icon: 'JS',
     title: 'JavaScript',
     description: 'The language foundations behind modern frontend and backend development.',
-    status: 'Coming soon',
-    href: '/docs/javascript/intro',
+    status: 'Available',
+    href: '/javascript',
   },
   {
     icon: '⬢',
     title: 'Node.js',
     description: 'APIs, asynchronous systems, security, databases, testing, scalability, and backend design.',
-    status: 'Coming soon',
-    href: '/docs/nodejs/intro',
+    status: 'Available',
+    href: '/nodejs',
   },
   {
     icon: 'DB',
     title: 'Databases',
     description: 'SQL, modelling, indexes, transactions, query optimisation, and distributed data concepts.',
-    status: 'Coming soon',
-    href: '/docs/databases/intro',
+    status: 'Available',
+    href: '/databases',
   },
   {
     icon: 'SD',
     title: 'System Design',
     description: 'Scalability, caching, queues, storage, distributed systems, trade-offs, and design interviews.',
-    status: 'Coming soon',
-    href: '/docs/system-design/intro',
+    status: 'Available',
+    href: '/system-design',
   },
   {
     icon: '∞',
     title: 'DevOps',
     description: 'Docker, CI/CD, infrastructure, deployments, observability, and reliable delivery.',
-    status: 'Coming soon',
-    href: '/docs/devops/intro',
+    status: 'Available',
+    href: '/devops',
   },
   {
     icon: 'WP',
     title: 'WordPress',
     description: 'Core concepts, plugin engineering, Gutenberg, performance, security, and architecture.',
-    status: 'Coming soon',
-    href: '/docs/wordpress/intro',
+    status: 'Available',
+    href: '/wordpress',
   },
   {
     icon: 'AI',
     title: 'AI Engineering',
     description: 'LLMs, prompting, RAG, agents, LangChain, LangGraph, evaluation, and production AI systems.',
-    status: 'Coming soon',
-    href: '/docs/ai-engineering/intro',
+    status: 'Available',
+    href: '/ai-engineering',
   },
 ];
 
@@ -90,9 +90,7 @@ function HandbookCard({handbook}) {
       </div>
       <h3>{handbook.title}</h3>
       <p>{handbook.description}</p>
-      <span className={styles.cardLink}>
-        {handbook.status === 'Complete' ? 'Open handbook' : 'View handbook'} →
-      </span>
+      <span className={styles.cardLink}>Open learning path →</span>
     </Link>
   );
 }
@@ -109,14 +107,14 @@ export default function Home() {
             <h1 className={styles.heroTitle}>Learn deeply. Build confidently.</h1>
             <p className={styles.heroSubtitle}>
               Practical handbooks for software engineers — from first principles to production architecture,
-              debugging, trade-offs, and senior-level thinking. Use the search box in the top navigation to search
-              across the entire documentation library.
+              debugging, trade-offs, and senior-level thinking. Search the documentation library from the header
+              with ⌘K / Ctrl K or the / key.
             </p>
             <div className={styles.heroActions}>
-              <Link className="button button--primary button--lg" to="/docs/typescript/intro">
+              <Link className="button button--primary button--lg" to="/typescript">
                 Explore TypeScript
               </Link>
-              <Link className="button button--secondary button--lg" to="/docs/react/intro">
+              <Link className="button button--secondary button--lg" to="/react">
                 Explore React
               </Link>
               <Link
@@ -138,7 +136,7 @@ export default function Home() {
                 <span className={styles.kicker}>THE LIBRARY</span>
                 <h2>Developer Handbooks</h2>
               </div>
-              <p>React, TypeScript, and Next.js are complete; the remaining handbooks can grow independently without changing the navigation model.</p>
+              <p>Choose a handbook landing page, follow its learning path, then use global search whenever you need a fast reference.</p>
             </div>
             <div className={styles.grid}>
               {handbooks.map((handbook) => (
