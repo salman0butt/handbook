@@ -4,119 +4,53 @@ description: A senior React capstone covering live data, state ownership, extern
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Capstone — real-time operations dashboard
 
-This capstone combines the most important client-side React concerns in one system: live updates, dense UI, shared state, external systems, performance, accessibility, and operational failure handling.
-
-## Product brief
-
-Build an operations dashboard for a team monitoring live orders, incidents, devices, jobs, or transactions.
-
-Users should be able to:
-
-- view a high-volume live list;
-- filter and sort records;
-- search without blocking typing;
-- open a details panel;
-- update status;
-- receive live changes;
-- see connection health;
-- preserve useful filters in the URL;
-- recover from temporary failures;
-- use the main workflow entirely with a keyboard.
-
-The exact domain is flexible. The engineering constraints are not.
+Build an operations dashboard for live orders, incidents, devices, jobs, or transactions. Users should filter/search, open details, mutate status, receive live updates, understand connection health, preserve navigational filters, recover from failures, and complete the primary flow by keyboard.
 
 ## Architecture target
 
-```text
-Server/API
-   ↓
-request/cache layer
-   ↕
-live connection
-   ↓
-external store / data adapter
-   ↓
-feature state boundaries
-   ↓
-React UI
-```
+<VisualDiagram title="Keep transport, live subscriptions, feature state, and React UI as separate responsibilities">
+  <DiagramStack>
+    <DiagramNode title="Server / API" tone="green">authoritative records + permissions</DiagramNode>
+    <DiagramArrow label="request/cache + live events" />
+    <DiagramNode title="Data adapter / external store" tone="purple">normalize · subscribe · snapshot · reconnect</DiagramNode>
+    <DiagramArrow label="feature contract" />
+    <DiagramNode title="Feature ownership" tone="blue">selection · workflow · URL coordination</DiagramNode>
+    <DiagramArrow label="render" />
+    <DiagramNode title="React UI" tone="cyan">filters · table · details · mutation feedback</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-The key question is not "Which store library should I use?"
-
-The key question is:
-
-> Which system owns each value, and who should subscribe to it?
+The primary design question is: **which system owns each value, and who should subscribe to it?**
 
 ## State inventory
 
-Classify state before implementation.
+<DecisionTree
+  question="Which system owns this dashboard value?"
+  items={[
+    { label: 'Search/filter/date/sort that should survive history/share', value: 'URL' },
+    { label: 'Popover/editor/focus/draft state', value: 'Local UI state' },
+    { label: 'Selected record or bulk workflow', value: 'Feature-scoped client state' },
+    { label: 'Records/details/totals/permissions', value: 'Server/data-cache state' },
+    { label: 'Socket health/cursor/live snapshot', value: 'External live store' },
+  ]}
+/>
 
-### URL state
+Avoid one mega Context that mixes all update frequencies and ownership categories.
 
-Good candidates:
-
-- search query;
-- selected team;
-- date range;
-- sort order;
-- view mode.
-
-Why URL state?
-
-Because it benefits from:
-
-- deep links;
-- browser history;
-- refresh persistence;
-- shareability.
-
-### Local UI state
-
-Good candidates:
-
-- temporary popover state;
-- inline editor open state;
-- focused row;
-- draft text before submission.
-
-### Shared feature state
-
-Possible examples:
-
-- selected record;
-- bulk-selection model;
-- dashboard layout preference.
-
-Keep this feature-scoped unless other unrelated areas genuinely need it.
-
-### Server state
-
-Examples:
-
-- records;
-- detail payloads;
-- totals;
-- permissions;
-- status history.
-
-The server remains authoritative.
-
-### External live state
-
-Examples:
-
-- WebSocket connection state;
-- stream cursor;
-- latest external snapshot;
-- heartbeat status.
-
-This can be a good `useSyncExternalStore` exercise.
-
-## Live connection design
-
-Build a small adapter rather than letting components know connection details.
+## Live connection adapter
 
 ```ts
 type ConnectionState =
@@ -126,21 +60,19 @@ type ConnectionState =
   | { status: 'offline'; reason?: string };
 ```
 
-The adapter should expose:
+<VisualDiagram title="Components should consume a stable live-data contract">
+  <DiagramRow>
+    <DiagramNode title="WebSocket/EventSource" tone="orange">transport details</DiagramNode>
+    <DiagramArrow direction="right" label="adapter" />
+    <DiagramNode title="External store" tone="purple">subscribe · getSnapshot · normalize · reconnect</DiagramNode>
+    <DiagramArrow direction="right" label="React subscription" />
+    <DiagramNode title="UI" tone="green">connection state + records</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-- subscribe;
-- getSnapshot;
-- reconnect policy;
-- event normalization;
-- cleanup.
+This is a good `useSyncExternalStore` exercise when the live state truly exists outside React.
 
-React components should consume a stable interface rather than raw socket code.
-
-## Reconciliation challenge
-
-Live lists are a perfect place to demonstrate key correctness.
-
-Use real persistent record identity:
+## Identity under live reordering
 
 ```tsx
 {records.map(record => (
@@ -148,261 +80,101 @@ Use real persistent record identity:
 ))}
 ```
 
-Do not use array indexes if records can be inserted, removed, sorted, or filtered.
+Use persistent record IDs. Test that an inline editor stays attached to the same record while live events insert, remove, sort, or filter rows.
 
-Test that an inline editor stays attached to the correct record when new live events arrive.
-
-## Search responsiveness
-
-The search box should remain urgent.
-
-Possible architecture:
+## Responsive search
 
 ```tsx
 const [query, setQuery] = useState('');
 const deferredQuery = useDeferredValue(query);
 ```
 
-Use the immediate query for input state and the deferred value for expensive local filtering or result rendering.
+<VisualDiagram title="Separate input urgency from expensive downstream rendering">
+  <DiagramRow>
+    <DiagramNode title="query" tone="blue">urgent controlled input</DiagramNode>
+    <DiagramArrow direction="right" label="defer rendering value" />
+    <DiagramNode title="deferredQuery" tone="purple">large result tree may lag</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-If searching remotely, remember:
+Deferral does not cancel remote requests. The data layer still owns stale-response/cancellation behavior.
 
-- deferral does not cancel requests;
-- a data layer still needs stale-response handling;
-- transitions are scheduling tools, not networking tools.
+## Scaling the list
 
-## High-volume rendering
-
-Model the scaling problem explicitly.
-
-At small sizes, normal rendering may be enough.
-
-At large sizes, consider:
-
-- pagination;
-- windowing/virtualization;
-- server filtering;
-- server sorting;
-- selective subscriptions;
-- smaller row component boundaries.
+<DecisionTree
+  question="What is actually limiting the list?"
+  items={[
+    { label: 'Too many records transferred/filtered client-side', value: 'Server pagination/filtering/sorting' },
+    { label: 'Too many mounted DOM rows', value: 'Windowing/virtualization' },
+    { label: 'Every live tick updates broad consumers', value: 'Narrow subscriptions/state ownership' },
+    { label: 'Row rendering is measured as expensive', value: 'Optimize the verified row/update path' },
+  ]}
+/>
 
 Measure before choosing.
 
-## Context design
-
-Avoid one giant dashboard Context containing:
-
-```ts
-{
-  filters,
-  records,
-  selectedRecord,
-  theme,
-  permissions,
-  socketStatus,
-  notifications,
-  preferences,
-  dispatch,
-}
-```
-
-That creates broad coupling and broad update propagation.
-
-Better options include:
-
-- props for nearby relationships;
-- separate low-frequency Context values;
-- external subscriptions for high-frequency data;
-- URL ownership for navigational values;
-- server cache ownership for server data.
-
 ## Status mutation flow
 
-Build a status update such as:
+Model a status sequence such as `Open → Investigating → Resolved`.
 
-```text
-Open → Investigating → Resolved
-```
+<LifecycleBar items={[
+  { label: 'User intent', tone: 'blue' },
+  { label: 'Pending / optimistic projection', tone: 'purple' },
+  { label: 'Server validation + authorization', tone: 'red' },
+  { label: 'Canonical result', tone: 'green' },
+  { label: 'Reconcile / rollback', tone: 'orange' },
+  { label: 'Live event convergence', tone: 'cyan' },
+]} />
 
-Requirements:
+Protect duplicate submissions, runtime input validation, authorization, rollback, and accessible error feedback. The server record remains canonical.
 
-- authorization on the server/API boundary;
-- runtime validation;
-- pending UI;
-- optimistic feedback where appropriate;
-- rollback on failure;
-- duplicate-submit protection;
-- error message accessible to assistive technology.
+## Error and loading architecture
 
-### Optimistic state
+<VisualDiagram title="Different failures deserve different containment">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Data/live failure" tone="orange">local retry/reconnect UI</DiagramNode>
+    <DiagramNode title="Render failure" tone="red">feature-level Error Boundary</DiagramNode>
+    <DiagramNode title="Shell failure" tone="slate">root fallback only when app is unusable</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-The canonical server record remains authoritative.
+<VisualDiagram title="Keep a stable dashboard shell while independent regions load">
+  <DiagramStack>
+    <DiagramNode title="Dashboard shell" tone="blue">orientation + filters</DiagramNode>
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Summary" tone="cyan">independent reveal</DiagramNode>
+      <DiagramNode title="Results" tone="purple">table/list boundary</DiagramNode>
+      <DiagramNode title="Details" tone="green">record detail boundary</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-Optimistic UI is a temporary projection, not a second permanent source of truth.
+## Accessibility contract
 
-## Error architecture
+Connection health must not rely on color alone. Filters need visible labels. Row actions need meaningful names. Keyboard users must reach details and restore focus appropriately. Loading and live announcements should preserve orientation and avoid noisy live regions. A virtualized grid still needs a documented accessibility strategy.
 
-Separate failure classes.
+## Testing portfolio
 
-### Recoverable data failure
+<DiagramGrid columns={3}>
+  <DiagramNode title="Unit" tone="blue">reducers · event normalization · permissions · URL serialization</DiagramNode>
+  <DiagramNode title="Integration" tone="purple">filters · deferred search · details · optimistic success/rollback · reconnect · keyboard</DiagramNode>
+  <DiagramNode title="E2E" tone="green">primary mutation flow · reconnect · unauthorized mutation · keyboard-only journey</DiagramNode>
+</DiagramGrid>
 
-Example:
+## Performance investigation
 
-- detail request fails;
-- live connection temporarily disconnects.
+Intentionally create a broad live update, unstable row props, and expensive formatting, then follow an evidence loop:
 
-Usually show local retry UI.
+<LifecycleBar items={[
+  { label: 'Reproduce', tone: 'red' },
+  { label: 'Profile', tone: 'blue' },
+  { label: 'Find dominant cost', tone: 'orange' },
+  { label: 'Narrow ownership/work', tone: 'purple' },
+  { label: 'Measure again', tone: 'green' },
+]} />
 
-### Render failure
+## Production evidence
 
-Use an Error Boundary around a meaningful feature region.
+Instrument release IDs, connection failures, mutation failures, latency, retry/reconnect frequency, and trace IDs without logging sensitive record payloads.
 
-### Whole-shell failure
-
-Reserve root-level fallback for failures that truly make the app unusable.
-
-## Loading architecture
-
-Design reveal boundaries based on UX.
-
-```text
-Dashboard shell
-├── summary metrics
-├── filters
-└── results area
-    ├── table/list
-    └── details panel
-```
-
-The entire shell should not disappear because one details request suspends.
-
-Use nested boundaries where independent regions can reveal independently.
-
-## Accessibility requirements
-
-The project is not complete unless:
-
-- filters have visible labels;
-- connection status is understandable without color alone;
-- table/list semantics match the interaction model;
-- keyboard users can open and close details;
-- focus is restored after closing a dialog/panel when appropriate;
-- live error/status messages are announced selectively;
-- loading UI does not destroy orientation;
-- row actions have meaningful accessible names.
-
-For a virtualized grid, document the accessibility strategy carefully. Performance is not permission to remove semantics.
-
-## Testing plan
-
-### Unit tests
-
-Good candidates:
-
-- reducer transitions;
-- event normalization;
-- permission helper;
-- URL serialization.
-
-### Component/integration tests
-
-Cover:
-
-- filters changing visible records;
-- deferred search behavior;
-- opening details;
-- optimistic success;
-- optimistic rollback;
-- reconnect status;
-- keyboard flow;
-- Error Boundary fallback.
-
-### E2E tests
-
-Protect at least:
-
-1. filter → open record → mutate status;
-2. lost connection → reconnect → live state resumes;
-3. unauthorized mutation rejected;
-4. keyboard-only primary workflow.
-
-## Performance investigation exercise
-
-Introduce an intentional problem:
-
-- every live tick updates top-level Context;
-- every row receives a new callback/object;
-- expensive formatting happens on every row render.
-
-Then measure.
-
-A possible remediation sequence:
-
-```text
-broad top-level update
-      ↓
-identify affected subtree
-      ↓
-move ownership / narrow subscription
-      ↓
-re-profile
-      ↓
-consider memoization only if still justified
-```
-
-## Observability
-
-Instrument:
-
-- release/version identifier;
-- connection failures;
-- reconnect attempts;
-- mutation failures;
-- root caught/uncaught errors;
-- recoverable hydration errors if SSR is used;
-- slow interactions;
-- key business workflow failures.
-
-Do not log full user records blindly.
-
-Redact sensitive fields.
-
-## Incident simulation
-
-Create a scenario where a new release causes live updates to duplicate records.
-
-Write the investigation:
-
-1. symptom;
-2. impact;
-3. first mitigation;
-4. evidence gathered;
-5. root cause;
-6. fix;
-7. regression test;
-8. prevention.
-
-A senior answer should prefer restoring reliability before perfect diagnosis.
-
-## Architecture review questions
-
-Be ready to defend:
-
-1. Why is a value in the URL instead of Context?
-2. Why is live data in an external store instead of React state?
-3. What updates most frequently?
-4. Which subscriptions are intentionally narrow?
-5. Where can Suspense show fallback?
-6. How is an optimistic update reconciled with a live server event?
-7. What happens when events arrive out of order?
-8. What is the performance strategy at 100 rows? 10,000 rows?
-9. Where are authorization decisions enforced?
-10. What is the rollback plan for a broken release?
-
-## Completion standard
-
-The project is senior-quality when the architecture can be explained without saying:
-
-> "Because this library is popular."
-
-Every major choice should connect to ownership, correctness, UX, performance, security, or operational concerns.
+A strong capstone explains not merely that the dashboard works, but **why its ownership, subscription, failure, and scaling boundaries remain understandable under live production pressure**.
