@@ -4,19 +4,35 @@ description: Adopt React Compiler incrementally using compilation modes, gating,
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Compiler adoption, configuration, and directives
 
 React Compiler can be rolled out gradually. You do not need to enable it across an entire production application in one step.
 
-A safe migration strategy is:
+<VisualDiagram title="A safe Compiler rollout is incremental">
+  <LifecycleBar items={[
+    { label: 'Lint', tone: 'blue' },
+    { label: 'Fix correctness issues', tone: 'red' },
+    { label: 'Compile a controlled scope', tone: 'purple' },
+    { label: 'Test', tone: 'orange' },
+    { label: 'Profile', tone: 'teal' },
+    { label: 'Expand', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-```text
-lint → fix high-risk violations → compile a small scope → test → profile → expand
-```
+## Start with simple configuration
 
-## Default configuration
-
-For a React 19 application, the normal starting point is intentionally small:
+For React 19, the normal starting point is intentionally small:
 
 ```js
 module.exports = {
@@ -24,323 +40,203 @@ module.exports = {
 };
 ```
 
-The default React target is 19.
-
-Most projects should avoid advanced configuration until they have a concrete reason to change it.
+Most applications should avoid advanced configuration until a concrete rollout or compatibility need appears.
 
 ## Compilation modes
 
-Compiler configuration can control which functions are selected for optimization.
+React Compiler supports different selection strategies.
 
-Three important strategies are:
-
-- `infer` — compiler identifies likely components and Hooks;
-- `annotation` — only explicitly annotated functions are compiled;
-- `all` — broadly compile eligible functions.
+<VisualDiagram title="Compilation mode controls which eligible functions are compiled">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="infer" tone="green" eyebrow="DEFAULT SHAPE">Compiler identifies likely components and Hooks automatically.</DiagramNode>
+    <DiagramNode title="annotation" tone="orange" eyebrow="OPT IN">Only code explicitly marked with `'use memo'` is compiled.</DiagramNode>
+    <DiagramNode title="all" tone="purple" eyebrow="BROAD">Compile eligible functions broadly, with opt-out available where needed.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ### Infer mode
 
-This is the normal automatic model.
+```js
+[
+  'babel-plugin-react-compiler',
+  { compilationMode: 'infer' }
+]
+```
+
+Use normal React naming conventions so components and Hooks are recognisable to tooling.
+
+### Annotation mode
 
 ```js
 [
   'babel-plugin-react-compiler',
-  {
-    compilationMode: 'infer',
-  },
+  { compilationMode: 'annotation' }
 ]
 ```
 
-The compiler uses conventions such as PascalCase component names and `use`-prefixed Hook names.
-
-If a real component is named incorrectly, fix the naming convention instead of forcing compilation with a directive.
-
-## Annotation mode
-
-Annotation mode is useful for a cautious rollout:
-
-```js
-[
-  'babel-plugin-react-compiler',
-  {
-    compilationMode: 'annotation',
-  },
-]
-```
-
-Only functions explicitly marked with:
-
-```js
-'use memo';
-```
-
-are compiled.
-
-Example:
+Then opt selected functions in:
 
 ```jsx
 function ProductGrid({ products }) {
   'use memo';
 
-  return products.map((product) => (
+  return products.map(product => (
     <ProductCard key={product.id} product={product} />
   ));
 }
 ```
 
-This is useful when a large codebase wants to validate Compiler behavior feature by feature.
+Annotation mode is useful when a mature codebase wants to validate Compiler behavior feature by feature.
 
-## `"use memo"`
+## `'use memo'`
 
-`"use memo"` explicitly opts a function into Compiler optimization.
+`'use memo'` explicitly opts a function into compilation where the current mode supports that control.
 
-```jsx
-function Dashboard() {
-  'use memo';
+Use it sparingly. It is mainly useful for:
 
-  return <ExpensiveDashboard />;
-}
-```
+- annotation-mode rollout;
+- controlled experiments;
+- deliberate override of inference behavior.
 
-In most applications, you should not add it everywhere.
+<VisualDiagram title="Directives are local overrides, not the architecture">
+  <DiagramStack align="center">
+    <DiagramNode title="Project/compiler configuration" tone="blue">Defines normal policy</DiagramNode>
+    <DiagramArrow label="usually sufficient" />
+    <DiagramNode title="Directive" tone="orange">Narrow exception or rollout control</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-It is mainly useful when:
+## `'use no memo'`
 
-- using `annotation` mode;
-- testing Compiler on selected components;
-- overriding inference intentionally.
-
-The directive must appear at the beginning of the function body, before normal statements.
-
-## `"use no memo"`
-
-`"use no memo"` prevents React Compiler from optimizing the function.
+`'use no memo'` opts a function out of Compiler optimization.
 
 ```jsx
 function ThirdPartyBridge() {
   'use no memo';
-
   return <LegacyWidget />;
 }
 ```
 
-Use it as a temporary escape hatch when:
+This is useful for:
 
-- isolating a suspected Compiler-related bug;
-- integrating incompatible code;
-- migrating a component that violates the Rules of React;
-- waiting for a dependency upgrade.
+- isolating incompatible code;
+- debugging behavior differences;
+- temporarily excluding a known migration hotspot.
 
-It should not become permanent technical debt without explanation.
+Treat it as an escape hatch with an owner and reason—not a permanent way to ignore Rules-of-React violations.
 
-Good:
+## Function-level vs module-level directives
 
-```jsx
-function LegacyChart() {
-  'use no memo'; // TODO #482: remove after chart SDK v4 migration
-  return <Chart />;
-}
-```
+Directives can control individual functions or, where supported by the current Compiler contract, a module scope.
 
-Poor:
+<DiagramGrid columns={2}>
+  <DiagramNode title="Function-level" tone="teal">Best when one component/Hook needs an exception or controlled experiment.</DiagramNode>
+  <DiagramNode title="Module-level" tone="purple">Affects a broader file surface; use intentionally because blast radius is larger.</DiagramNode>
+</DiagramGrid>
 
-```jsx
-function LegacyChart() {
-  'use no memo';
-  return <Chart />;
-}
-```
+## Compiler diagnostics belong before rollout expansion
 
-## Module-level directives
+Modern `eslint-plugin-react-hooks` exposes Rules-of-React and Compiler-related diagnostics.
 
-Compiler directives can also be placed at module scope to affect functions in a file.
+<LifecycleBar items={[
+  { label: 'Lint finds violation / incompatible pattern', tone: 'red' },
+  { label: 'Understand the correctness issue', tone: 'orange' },
+  { label: 'Fix or isolate', tone: 'blue' },
+  { label: 'Compiler coverage increases safely', tone: 'green' },
+]} />
 
-```js
-'use memo';
+Do not add `'use no memo'` merely to silence a correctness bug.
 
-export function One() {}
-export function Two() {}
-```
+## Gating and staged exposure
 
-A function-level opt-out can still override a module-level opt-in where supported.
+A production rollout may enable Compiler output for a controlled user, route, package, or deployment segment depending on the surrounding build/deployment architecture.
 
-Use module directives carefully because they make compilation policy less local to each function.
+<VisualDiagram title="Rollout control should separate build readiness from user exposure">
+  <DiagramRow>
+    <DiagramNode title="Compiler-enabled build" tone="purple" />
+    <DiagramArrow direction="right" label="gating / release policy" />
+    <DiagramNode title="Controlled exposure" tone="orange" />
+    <DiagramArrow direction="right" label="observe" />
+    <DiagramNode title="Broader rollout" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
-## Directory-based rollout
+The exact gating mechanism depends on framework and deployment tooling.
 
-Large applications can compile only selected directories through their build configuration.
+## Do not use directives to fight conventions
 
-Conceptually:
+If a component is misnamed or a Hook does not follow React conventions, fix the design rather than forcing compilation with directives.
 
-```text
-src/legacy/     → not compiled yet
-src/new-ui/     → Compiler enabled
-src/checkout/   → Compiler enabled
-```
+The goal is maintainable React code that tooling can understand naturally.
 
-This is often easier to govern than sprinkling directives across hundreds of files.
+## Preserve manual memoization during migration
 
-## Runtime gating
+Do not combine “enable Compiler” and “remove every `useMemo`/`useCallback`/`memo`” into one change.
 
-The Compiler supports gating so an optimized version can be controlled through a feature flag.
+Split them:
 
-Conceptually:
+1. enable Compiler;
+2. verify behavior and diagnostics;
+3. measure performance;
+4. remove manual memoization separately where justified.
 
-```js
-[
-  'babel-plugin-react-compiler',
-  {
-    gating: {
-      source: 'compiler-flags',
-      importSpecifierName: 'isCompilerEnabled',
-    },
-  },
-]
-```
+This makes regressions easier to isolate.
 
-This is valuable for:
+## Decision guide
 
-- staged rollout;
-- A/B testing;
-- rapid rollback;
-- measuring production impact.
+<DecisionTree
+  question="Which rollout strategy fits the codebase?"
+  items={[
+    { label: 'Modern codebase with strong Rules-of-React compliance', value: 'Start with normal infer-mode integration' },
+    { label: 'Large legacy codebase / cautious adoption', value: 'Use lint + smaller scopes or annotation mode' },
+    { label: 'One incompatible component/library bridge', value: 'Temporarily opt out narrowly' },
+    { label: 'Need confidence before full exposure', value: 'Use release gating + profiling/observability' },
+  ]}
+/>
 
-A feature gate does not replace testing. It is a deployment-control mechanism.
+## Production rollout checklist
 
-## Target version
-
-React 19 is the default target:
-
-```js
-{ target: '19' }
-```
-
-React 17 and 18 need `react-compiler-runtime` plus a matching target:
-
-```bash
-npm install react-compiler-runtime@latest
-```
-
-```js
-{ target: '18' }
-```
-
-Use string major versions, not patch versions.
-
-## Configuration principle
-
-Treat Compiler configuration like infrastructure configuration:
-
-- keep it small;
-- version-control it;
-- review changes carefully;
-- validate it with lint tooling;
-- avoid undocumented project-specific switches.
-
-Compiler-aware ESLint rules include a `config` rule to detect invalid option names or values.
-
-## Diagnostics do not mean the whole build is unsafe
-
-When Compiler detects a pattern it cannot safely optimize, it can skip the affected component/Hook rather than breaking compilation of the entire application.
-
-This supports incremental cleanup.
-
-Think:
-
-```text
-Compiler diagnostic
-    ↓
-skip unsafe function
-    ↓
-continue compiling safe functions
-```
-
-not:
-
-```text
-one diagnostic
-    ↓
-all compiler adoption blocked
-```
-
-## Rollout strategy for a mature product
-
-### Stage 1 — lint only
-
-Install current `eslint-plugin-react-hooks` and surface Compiler-aware diagnostics before enabling optimization.
-
-### Stage 2 — low-risk feature
-
-Choose a well-tested feature with:
-
-- stable ownership;
-- good automated tests;
-- measurable interactions;
-- limited third-party complexity.
-
-### Stage 3 — production gate
-
-Enable Compiler for a small percentage of traffic if infrastructure permits.
-
-Measure:
-
-- errors;
-- render/interaction performance;
-- CPU time;
-- memory;
-- user-visible regressions.
-
-### Stage 4 — expand by domain
-
-Expand to additional feature directories rather than individual random components.
-
-### Stage 5 — remove temporary opt-outs
-
-Track every `"use no memo"` with an issue or migration reason.
+- current compiler/plugin versions are pinned;
+- eslint diagnostics are active in CI;
+- migration scope is explicit;
+- existing manual memoization is preserved initially;
+- tests cover behavior across compiled paths;
+- production monitoring can compare releases;
+- opt-outs have documented reasons;
+- rollout can be narrowed without reverting unrelated product work.
 
 ## Common mistakes
 
-### Starting in `all` mode on a legacy codebase
-
-A broad rollout is harder to debug when many unsupported patterns exist.
-
-### Using `"use memo"` as a performance superstition
-
-The directive is a compilation-control tool, not a magic “make faster” annotation.
-
-### Leaving `"use no memo"` forever
-
-Permanent opt-outs can hide Rules of React violations and reduce long-term optimization coverage.
-
-### Treating compiler percentage as the goal
-
-The goal is reliable performance improvement with correct behavior.
-
-## Exercise
-
-Design a Compiler rollout plan for a 200k-line React application with three domains:
-
-- checkout: high revenue risk, excellent tests;
-- admin: low risk, average tests;
-- legacy editor: many third-party integrations.
-
-Choose where to start, what compilation mode to use, what metrics to collect, and how to roll back safely.
+- enabling broad compilation and deleting manual memoization in the same change;
+- adding `'use memo'` everywhere;
+- using `'use no memo'` to hide impure code;
+- skipping ESLint diagnostics;
+- assuming Compiler coverage equals performance success;
+- rolling out without a comparison or rollback path.
 
 ## Interview questions
 
-**Why use `annotation` mode?**  
-To opt selected components/Hooks into compilation during incremental adoption.
+**Junior:** What does `'use memo'` do?
 
-**What is `"use no memo"` for?**  
-A temporary escape hatch that prevents Compiler optimization for a function or module.
+**Mid-level:** Why might annotation mode be useful in a mature codebase?
 
-**Should Compiler diagnostics block all adoption?**  
-No. Unsupported functions can be skipped while safe parts of the application continue to compile.
+**Senior:** Design a Compiler migration plan for a legacy application with third-party libraries, manual memoization, CI linting, and gradual production exposure.
+
+## Summary
+
+<VisualDiagram title="Compiler adoption is a controlled correctness-and-performance rollout">
+  <DiagramRow>
+    <DiagramNode title="Rules-compliant code" tone="blue" />
+    <DiagramArrow direction="right" label="configure" />
+    <DiagramNode title="Compiler scope" tone="purple" />
+    <DiagramArrow direction="right" label="test + profile + gate" />
+    <DiagramNode title="Safe production expansion" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
 ## References
 
-- https://react.dev/reference/react-compiler/configuration
-- https://react.dev/learn/react-compiler/incremental-adoption
+- https://react.dev/reference/react-compiler
 - https://react.dev/reference/react-compiler/directives
-- https://react.dev/reference/react-compiler/directives/use-memo
-- https://react.dev/reference/react-compiler/directives/use-no-memo
+- https://react.dev/reference/react-compiler/compiling-libraries
+- https://react.dev/reference/eslint-plugin-react-hooks
