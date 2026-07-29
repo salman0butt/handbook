@@ -4,47 +4,40 @@ description: Understand React Compiler 1.0 as a build-time optimizer, how to ins
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # React Compiler mental model and setup
 
-React Compiler is a **build-time optimizer** for React components and Hooks. Its main job is to apply memoization automatically when it can prove that doing so is safe.
+React Compiler is a **build-time optimizer** for React components and Hooks. Its main job is to apply memoization automatically when analysis proves reuse is safe.
 
-The key mental model is:
+<VisualDiagram title="The compiler optimizes source before runtime">
+  <LifecycleBar items={[
+    { label: 'React source', tone: 'blue' },
+    { label: 'Compiler analyzes data flow + mutability', tone: 'purple' },
+    { label: 'Safe memoization is generated', tone: 'teal' },
+    { label: 'Optimized JavaScript ships', tone: 'orange' },
+    { label: 'React runtime executes it normally', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-```text
-Your React source
-    ↓
-React Compiler analyzes component/Hook behavior
-    ↓
-Compiler inserts memoization where safe
-    ↓
-Optimized JavaScript runs in the browser/native runtime
-```
-
-It is not a runtime scheduler, not a state manager, and not a replacement for good component design.
-
-## Why the Compiler exists
-
-Before React Compiler, developers often used:
-
-- `React.memo`
-- `useMemo`
-- `useCallback`
-
-These APIs remain valid, but manually placing them everywhere is tedious and can be incorrect or unnecessary.
-
-React Compiler lets React infer many of these optimizations from the code itself.
+It is not a scheduler, state manager, cache server, or replacement for component architecture.
 
 ## Stable status
 
 React Compiler 1.0 is stable and production-ready. It works with React and React Native and can optimize components and Hooks without requiring an architectural rewrite.
 
-The compiler is optional. A React app does not require it to function.
+The compiler is optional: React works without it.
 
-## What it optimizes
-
-The compiler can reduce unnecessary work by preserving values or JSX when their reactive inputs have not changed.
-
-Conceptually:
+## What automatic memoization means
 
 ```jsx
 function ProductCard({ product }) {
@@ -53,244 +46,176 @@ function ProductCard({ product }) {
 }
 ```
 
-The compiler may transform this into code that reuses the previously computed result when `product` is unchanged.
+The compiler may preserve derived work or JSX when the relevant reactive inputs have not changed.
 
-You normally do not write that generated cache logic yourself.
+<VisualDiagram title="Memoization is input-aware reuse">
+  <DiagramRow>
+    <DiagramNode title="Reactive inputs" tone="blue">props · state · context · Hook values</DiagramNode>
+    <DiagramArrow direction="right" label="analyze dependencies" />
+    <DiagramNode title="Derived work" tone="purple">values · functions · JSX</DiagramNode>
+    <DiagramArrow direction="right" label="inputs unchanged?" />
+    <DiagramNode title="Reuse safe result" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
-## What it does not optimize away
+You normally do not write the generated memo cache code yourself.
 
-The compiler cannot turn inherently expensive external work into free work.
+## What the Compiler does not fix
 
-It does not:
+<DiagramGrid columns={2}>
+  <DiagramNode title="Compiler can reduce repeated render work" tone="green">Memoize expressions, values, functions, and component output when safe.</DiagramNode>
+  <DiagramNode title="Compiler cannot remove fundamental cost" tone="red">Network latency · slow databases · O(n²) algorithms · huge DOM trees · broken state ownership · hydration nondeterminism.</DiagramNode>
+</DiagramGrid>
 
-- reduce network latency;
-- eliminate database requests;
-- make an O(n²) algorithm O(n);
-- replace list virtualization;
-- remove unnecessary state architecture;
-- make impure render logic safe;
-- fix hydration mismatches caused by nondeterministic rendering.
-
-Memoization avoids **repeating work**. It does not change the complexity of the work itself.
+Memoization avoids **repeating** work. It does not change the complexity of the underlying work.
 
 ## Rules of React are the foundation
 
-Compiler optimizations rely on React's programming model.
+Compiler analysis relies on React's programming model:
 
-In particular:
-
-- rendering must be pure and idempotent;
+- render is pure and idempotent;
 - props/state are immutable snapshots;
-- Hooks must follow the Rules of Hooks;
-- refs should not be read or mutated during normal render logic;
-- components should have stable identities rather than being recreated every render.
+- Hooks follow stable call-order rules;
+- refs are not used as render-time mutable state;
+- component identities stay stable;
+- external side effects stay outside render.
 
-If the compiler detects unsupported or unsafe patterns, it can skip optimizing the affected component or Hook while continuing to optimize the rest of the application.
+<VisualDiagram title="Correct React code creates optimization freedom">
+  <DiagramStack align="center">
+    <DiagramNode title="Rules of React" tone="blue">Purity · immutability · Hook ordering · stable identities</DiagramNode>
+    <DiagramArrow label="makes analysis reliable" />
+    <DiagramNode title="Compiler proves reusable work" tone="purple" />
+    <DiagramArrow label="generates memoization" />
+    <DiagramNode title="Less repeated rendering cost" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-That means compiler adoption does **not** require fixing an entire codebase in one migration.
+When unsupported or unsafe patterns are found, the compiler can skip affected functions rather than requiring an all-or-nothing migration.
 
 ## Installation
-
-Install the compiler as a development dependency:
 
 ```bash
 npm install -D babel-plugin-react-compiler@latest
 ```
 
-For a basic Babel setup:
+Basic Babel configuration:
 
 ```js
 module.exports = {
-  plugins: [
-    'babel-plugin-react-compiler',
-    // other plugins
-  ],
+  plugins: ['babel-plugin-react-compiler'],
 };
 ```
 
-The compiler should run before transformations that would destroy the original source structure it needs to analyze.
+The compiler should run before transforms that destroy source structure it needs to analyse. Framework integrations may configure this for you.
 
 ## React version targeting
 
-React 19 is the default compiler target.
+React 19 is the default target.
 
 ```js
 [
   'babel-plugin-react-compiler',
-  {
-    target: '19',
-  },
+  { target: '19' }
 ]
 ```
 
-For React 17 or 18, install the runtime package:
+For React 17 or 18, use the compatible compiler runtime and matching target according to the current Compiler documentation.
 
-```bash
-npm install react-compiler-runtime@latest
-```
+## Verify that Compiler is actually running
 
-Then configure the matching target:
+Do not assume installation equals effective compilation.
 
-```js
-[
-  'babel-plugin-react-compiler',
-  {
-    target: '18',
-  },
-]
-```
+<DecisionTree
+  question="How do you verify Compiler adoption?"
+  items={[
+    { label: 'Build config includes Compiler/integration', value: 'Confirm transform is enabled' },
+    { label: 'ESLint reports Compiler/Rules diagnostics', value: 'Fix correctness issues first' },
+    { label: 'Compiled output/dev tooling shows memo caches', value: 'Confirm functions are being transformed' },
+    { label: 'Performance question remains', value: 'Measure with profiler and user-facing metrics' },
+  ]}
+/>
 
-React 19 includes the compiler runtime APIs directly.
+## Compiler does not mean “zero renders”
 
-## Vite and framework integrations
+A component can still render because:
 
-React Compiler can be integrated through supported build tools such as Babel, Vite, Metro, Rsbuild, and framework-specific integrations.
+- its own state changes;
+- context changes;
+- inputs genuinely change;
+- Suspense/retries happen;
+- Strict Mode development checks run;
+- concurrent rendering prepares work that may not commit.
 
-For frameworks such as Next.js or Expo, prefer the framework's documented compiler integration instead of manually copying a Babel configuration from another stack.
+The goal is not a magical render count. The goal is **less unnecessary repeated work while preserving React semantics**.
 
-Why?
+## Measure architecture before micro-optimizing
 
-Because the framework may:
+If a screen is slow, still inspect:
 
-- invoke the compiler through another transform pipeline;
-- manage plugin ordering;
-- ship first-class configuration;
-- integrate compiler diagnostics with its tooling.
+1. state ownership and render blast radius;
+2. DOM/list size and virtualization needs;
+3. expensive algorithms;
+4. network/data waterfalls;
+5. Suspense/loading architecture;
+6. client bundle size;
+7. browser main-thread work.
 
-## Verify that compilation is happening
+Compiler optimization is one layer in the performance stack.
 
-### React DevTools
+## Incremental adoption principle
 
-Compiled components can show a **Memo ✨** badge in React DevTools.
+<LifecycleBar items={[
+  { label: 'Enable modern eslint-plugin-react-hooks', tone: 'blue' },
+  { label: 'Fix high-risk correctness violations', tone: 'red' },
+  { label: 'Compile a controlled scope', tone: 'purple' },
+  { label: 'Run tests', tone: 'orange' },
+  { label: 'Profile and compare', tone: 'teal' },
+  { label: 'Expand gradually', tone: 'green' },
+]} />
 
-This is one of the easiest ways to confirm that a component has been optimized.
-
-### Build output
-
-Compiled code may contain imports such as:
-
-```js
-import { c as _c } from 'react/compiler-runtime';
-```
-
-for React 19.
-
-A compiler-generated memo cache may look conceptually like:
-
-```js
-const $ = _c(2);
-
-let value;
-if ($[0] !== input) {
-  value = expensiveCalculation(input);
-  $[0] = input;
-  $[1] = value;
-} else {
-  value = $[1];
-}
-```
-
-Do not hand-write compiler runtime code.
-
-## Compiler success is not the same as app success
-
-A compiler-enabled build can still have application bugs.
-
-You still need:
-
-- functional tests;
-- integration tests;
-- performance profiling;
-- production monitoring;
-- user-visible correctness checks.
-
-Treat Compiler adoption as a build-tool change that can affect performance and behavior around previously unsupported patterns.
-
-## Practical adoption sequence
-
-```text
-1. Upgrade lint tooling
-2. Fix high-risk Rules of React violations
-3. Enable Compiler in a controlled scope
-4. Verify compilation
-5. Run tests
-6. Profile real workloads
-7. Expand coverage gradually
-```
+You do not need to fix every legacy component before gaining value from Compiler.
 
 ## Common mistakes
 
-### Mistake: enabling Compiler to fix a slow algorithm
+- expecting the Compiler to fix impure render code;
+- measuring success only by render count;
+- deleting all manual memoization immediately;
+- assuming framework configuration is active without verification;
+- using Compiler to avoid fixing huge DOM trees or poor state scope;
+- ignoring ESLint diagnostics because the app “still works.”
 
-Compiler memoization can avoid repeated execution, but the algorithm may still be too expensive when it does run.
+## Production checklist
 
-Fix the algorithm first when appropriate.
-
-### Mistake: deleting all `useMemo` immediately
-
-Existing manual memoization can encode semantic stability assumptions, especially for Effect dependencies or third-party APIs.
-
-Do not mass-delete it just because the compiler is enabled.
-
-### Mistake: suppressing every diagnostic
-
-A skipped component is often safer than forcing compilation through an unsupported pattern.
-
-Use diagnostics to improve the codebase progressively.
-
-## Debugging checklist
-
-If a component is not compiled:
-
-1. confirm Compiler is installed and running;
-2. confirm the file is included by the build configuration;
-3. inspect ESLint diagnostics;
-4. check Rules of React violations;
-5. verify component/Hook naming conventions in infer mode;
-6. inspect React DevTools;
-7. temporarily isolate the component if needed.
-
-## Production guidance
-
-Compiler adoption should be measured by outcomes, not by percentage of components compiled.
-
-Good metrics include:
-
-- interaction latency;
-- render counts;
-- CPU time;
-- scripting time;
-- memory behavior;
-- bundle/build cost;
-- correctness/error rate.
-
-## Exercise
-
-Take a component that currently uses `React.memo`, `useMemo`, and `useCallback`.
-
-1. identify why each manual memo exists;
-2. enable the compiler for the component;
-3. verify it receives a Memo ✨ badge;
-4. profile before and after;
-5. remove manual memoization only if tests and profiling justify it.
+- Compiler version/configuration is pinned and reviewed;
+- current `eslint-plugin-react-hooks` rules are active;
+- CI builds the compiler-enabled path;
+- tests cover behavior, not implementation details;
+- profiling compares meaningful user interactions;
+- rollout can be narrowed or disabled if a compatibility issue appears;
+- Rules of React violations are treated as correctness issues, not performance trivia.
 
 ## Interview questions
 
-**What is React Compiler?**  
-A build-time optimizer that understands React's programming model and automatically adds memoization where safe.
+**Junior:** Is React Compiler a runtime feature?
 
-**Does React Compiler replace React's scheduler?**  
-No. Scheduling and compilation solve different problems.
+**Mid-level:** What does automatic memoization actually reuse?
 
-**Do all compiler diagnostics have to be fixed before adoption?**  
-No. Unsupported components can be skipped while other safe components remain compiled.
+**Senior:** How would you introduce React Compiler into a large React 19 codebase without conflating memoization gains with architectural performance problems?
 
-**Why do the Rules of React matter more with the Compiler?**  
-Because static optimization depends on predictable, pure, analyzable component behavior.
+## Summary
+
+<VisualDiagram title="Compiler is build-time optimization on top of correct React semantics">
+  <DiagramRow>
+    <DiagramNode title="Correct source" tone="blue" />
+    <DiagramArrow direction="right" label="static analysis" />
+    <DiagramNode title="Compiler" tone="purple" />
+    <DiagramArrow direction="right" label="memoized output" />
+    <DiagramNode title="Normal React runtime" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
 ## References
 
-- https://react.dev/learn/react-compiler/introduction
-- https://react.dev/learn/react-compiler/installation
-- https://react.dev/reference/react-compiler/target
+- https://react.dev/learn/react-compiler
+- https://react.dev/reference/react-compiler
 - https://react.dev/blog/2025/10/07/react-compiler-1
