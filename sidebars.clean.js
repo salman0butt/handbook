@@ -41,7 +41,11 @@ const nextjsItems = handbookRoot[1].items;
 const typescriptItems = handbookRoot[2].items;
 
 const category = (label, items, extra = {}) => ({type: 'category', label, items, ...extra});
-const nodeDoc = (id, label) => ({type: 'doc', id: `nodejs/${id}`, label});
+// Docusaurus treats a leading `NN-` filename segment as sidebar ordering metadata
+// and removes it from the generated document id. Keep ordered filenames while
+// referencing the actual resolved ids here.
+const resolveNodeDocId = (id) => id.replace(/(^|\/)\d+-/, '$1');
+const nodeDoc = (id, label) => ({type: 'doc', id: `nodejs/${resolveNodeDocId(id)}`, label});
 
 const nodejsItems = [
   category('Start Here', [
@@ -147,6 +151,7 @@ const nodejsItems = [
   ]),
   category('Interview Question Bank', [
     nodeDoc('interview-question-bank/00-overview', '320-Question Overview'),
+    nodeDoc('interview-question-bank/study-map', 'Questions → Study Chapters'),
     nodeDoc('interview-question-bank/01-core-runtime-modules-async', 'Q001–Q064 — Core Runtime, Modules & Async'),
     nodeDoc('interview-question-bank/02-streams-files-network-parallel', 'Q065–Q128 — Streams, Files, Networking & Parallelism'),
     nodeDoc('interview-question-bank/03-backend-data-security', 'Q129–Q192 — Backend, Data, Auth & Security'),

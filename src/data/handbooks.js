@@ -43,9 +43,9 @@ export const handbookData = {
     name: 'Node.js', icon: '⬢', status: 'Complete', intro: '/docs/nodejs/intro',
     description: 'A production Node.js handbook from runtime internals and async I/O to APIs, databases, security, distributed systems, platform engineering, projects, and interview mastery.',
     highlights: [
-      {label: 'Runtime', title: 'Event loop, libuv & streams', description: 'Reason about the main JavaScript thread, async I/O, scheduling, backpressure, workers, memory, networking, and Node internals.', href: '/docs/nodejs/05-event-loop'},
-      {label: 'Build', title: 'Production project ladder', description: 'Apply the runtime model in REST APIs, streaming processors, queues, WebSockets, workers, SDKs, services, modular monoliths, and the capstone platform.', href: '/docs/nodejs/projects/01-production-rest-api'},
-      {label: 'Master', title: '320 interview questions & mock rounds', description: 'Practice runtime mechanisms, backend architecture, security, incidents, migrations, distributed systems, live coding, and staff-level reasoning.', href: '/docs/nodejs/interview-question-bank/00-overview'},
+      {label: 'Runtime', title: 'Event loop, libuv & streams', description: 'Reason about the main JavaScript thread, async I/O, scheduling, backpressure, workers, memory, networking, and Node internals.', href: '/docs/nodejs/event-loop'},
+      {label: 'Build', title: 'Production project ladder', description: 'Apply the runtime model in REST APIs, streaming processors, queues, WebSockets, workers, SDKs, services, modular monoliths, and the capstone platform.', href: '/docs/nodejs/projects/production-rest-api'},
+      {label: 'Master', title: '320 interview questions & mock rounds', description: 'Practice runtime mechanisms, backend architecture, security, incidents, migrations, distributed systems, live coding, and staff-level reasoning.', href: '/docs/nodejs/interview-question-bank/overview'},
     ],
     studyPath: ['Runtime foundations', 'Async I/O & networking', 'Backend data & security', 'Production engineering', 'Distributed architecture', 'Projects & interview mastery'],
   },
