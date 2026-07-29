@@ -79,7 +79,7 @@ function ensureProgressBar() {
   };
 
   update();
-  window.removeEventListener('scroll', window.__handbookProgressHandler || (() => {}));
+  if (window.__handbookProgressHandler) window.removeEventListener('scroll', window.__handbookProgressHandler);
   window.__handbookProgressHandler = update;
   window.addEventListener('scroll', update, {passive: true});
 }
@@ -165,7 +165,8 @@ function ensureRelatedTopics() {
 
   if (handbook) {
     const home = document.createElement('a');
-    home.href = `${window.location.origin}${window.location.pathname.split('/docs/')[0]}/${handbook}`.replace(/([^:]\/)\/+/, '$1');
+    const basePrefix = window.location.pathname.split('/docs/')[0];
+    home.href = `${basePrefix}/${handbook}`;
     home.className = 'handbook-related-topics__card';
     home.innerHTML = `<span>Handbook overview</span><strong>${handbook.replace(/-/g, ' ')} learning path</strong>`;
     grid.appendChild(home);
@@ -229,6 +230,45 @@ function enhanceInterviewPages() {
   markdown.insertBefore(panel, markdown.firstChild?.nextSibling || markdown.firstChild);
 }
 
+function ensureSectionToggles() {
+  if (!window.location.pathname.includes('/docs/')) return;
+  const markdown = document.querySelector('.theme-doc-markdown');
+  if (!markdown) return;
+
+  const headings = Array.from(markdown.querySelectorAll(':scope > h2'));
+  headings.forEach((heading) => {
+    if (heading.dataset.handbookToggleAdded || heading.closest('.handbook-related-topics')) return;
+
+    const sectionNodes = [];
+    let node = heading.nextElementSibling;
+    while (node && node.tagName !== 'H2') {
+      sectionNodes.push(node);
+      node = node.nextElementSibling;
+    }
+
+    if (sectionNodes.length < 4) return;
+
+    heading.dataset.handbookToggleAdded = 'true';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'handbook-section-toggle';
+    button.textContent = 'Collapse section';
+    button.setAttribute('aria-expanded', 'true');
+    button.setAttribute('aria-label', `Collapse ${heading.textContent.trim()} section`);
+
+    button.addEventListener('click', () => {
+      const collapsed = button.getAttribute('aria-expanded') === 'false';
+      sectionNodes.forEach((element) => {
+        element.hidden = !collapsed;
+      });
+      button.setAttribute('aria-expanded', collapsed ? 'true' : 'false');
+      button.textContent = collapsed ? 'Collapse section' : 'Expand section';
+    });
+
+    heading.appendChild(button);
+  });
+}
+
 function initialiseHandbookUx() {
   installSearchShortcuts();
   setTimeout(ensureSearchHint, 150);
@@ -237,6 +277,7 @@ function initialiseHandbookUx() {
     ensureFallbackPaginator();
     ensureRelatedTopics();
     enhanceInterviewPages();
+    ensureSectionToggles();
   }, 200);
 }
 
