@@ -4,60 +4,45 @@ description: Learn Server Functions, the use server directive, Actions, serializ
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Server Functions, `'use server'`, and mutation boundaries
 
-Server Functions let Client Components call async functions that execute on the server.
+Server Functions let client code invoke async functions that execute on the server. Even when the syntax resembles a normal call, this is a **network and trust boundary**.
 
-They are a **network boundary**, even when the syntax looks like an ordinary function call.
+<VisualDiagram title="A Server Function call crosses the network">
+  <LifecycleBar items={[
+    { label: 'Client event / form submit', tone: 'blue' },
+    { label: 'Call Server Function reference', tone: 'teal' },
+    { label: 'Serialize arguments', tone: 'orange' },
+    { label: 'Network request', tone: 'purple' },
+    { label: 'Server validates + executes', tone: 'red' },
+    { label: 'Serialize result', tone: 'orange' },
+    { label: 'Client receives result', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-That mental model is essential for correctness and security.
-
-## Mental model
-
-```text
-client event or form submission
-   ↓
-call Server Function reference
-   ↓
-framework serializes arguments
-   ↓
-network request
-   ↓
-server executes async function
-   ↓
-server returns serializable result
-   ↓
-client receives result
-```
-
-Do not think:
-
-```text
-client imports function
-→ browser directly executes server code
-```
-
-That never happens.
+The browser never directly executes the server implementation.
 
 ## `'use server'`
-
-A Server Function can be declared inside server code:
 
 ```jsx
 async function createNote(formData) {
   'use server';
-
-  await db.notes.create({
-    title: formData.get('title'),
-  });
+  await db.notes.create({ title: formData.get('title') });
 }
 ```
 
-The directive marks the async function as callable from client code through the framework's server-function transport.
-
-## Module-level Server Functions
-
-A file can mark all exported async functions as Server Functions:
+A module can also mark exported async functions:
 
 ```jsx
 'use server';
@@ -65,48 +50,36 @@ A file can mark all exported async functions as Server Functions:
 export async function createNote(formData) {
   // ...
 }
-
-export async function deleteNote(id) {
-  // ...
-}
 ```
 
-This shape is useful when Client Components need to import server-callable actions.
+<VisualDiagram title="Do not confuse component execution with callable functions">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Server Component" tone="purple">Runs on the server through the RSC environment. No `'use server'` marker is required.</DiagramNode>
+    <DiagramNode title="Server Function" tone="orange">Async function marked for invocation through the server-function transport.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## `'use server'` is not a Server Component marker
+## Server Function vs Server Action
 
-Repeat this until it is automatic:
-
-```text
-Server Component
-no special 'use server' directive required
-
-'use server'
-marks Server Functions
-```
-
-Mixing these concepts leads to broken architecture discussions.
-
-## Server Functions are async
-
-Because the client/server call crosses a network boundary, Server Functions are async.
+A **Server Function** is a server-callable async function. A **Server Action** is a Server Function being used in an Action/mutation flow such as a form submission or Transition-backed operation.
 
 ```jsx
-'use server';
-
-export async function updateProfile(input) {
-  // ...
-}
+<form action={updateProfile}>...</form>
 ```
 
-Even if the server work itself is fast, the client still observes an asynchronous call.
+<VisualDiagram title="Function identity and Action usage are different ideas">
+  <DiagramRow>
+    <DiagramNode title="Server Function" tone="purple">Callable server command</DiagramNode>
+    <DiagramArrow direction="right" label="used in mutation UI" />
+    <DiagramNode title="Server Action" tone="green">Form/Action workflow with pending and result semantics</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## Forms are a first-class use case
+## Forms are a first-class boundary
 
 ```jsx
 async function requestUsername(formData) {
   'use server';
-
   const username = formData.get('username');
   await saveUsername(username);
 }
@@ -121,42 +94,9 @@ export default function Page() {
 }
 ```
 
-When a Server Function is passed to a form Action, React and the framework can integrate:
+Forms can integrate `FormData`, pending state, progressive enhancement, Actions, and result state. Native form semantics remain valuable even in advanced React applications.
 
-- `FormData`;
-- pending state;
-- progressive enhancement;
-- transitions;
-- returned results;
-- form reset behavior.
-
-The Modern React section already covers form Actions from the client-facing perspective.
-
-This chapter focuses on the server boundary.
-
-## Server Functions used as Actions
-
-A Server Function becomes a Server Action when it is used in an Action context such as:
-
-```jsx
-<form action={updateProfile}>...</form>
-```
-
-or when called inside a Transition for a mutation workflow.
-
-Not every Server Function is automatically a Server Action.
-
-The newer terminology is:
-
-```text
-Server Function
-server-callable async function
-
-Server Action
-Server Function used in an Action/mutation flow
-```
-
-## `useActionState` integration
+## `useActionState` on the client side
 
 ```jsx
 'use client';
@@ -180,17 +120,9 @@ export default function ProfileForm() {
 }
 ```
 
-The Server Function returns serializable application state, while `useActionState` exposes result/pending state to the Client Component.
+The server returns minimal serializable state; the client owns pending/result presentation.
 
-## Progressive enhancement
-
-Server Function forms can work before the client bundle has fully hydrated when the framework supports the corresponding progressive-enhancement flow.
-
-That improves resilience for forms because submission does not need to depend entirely on JavaScript readiness.
-
-This is one reason native form semantics remain important even in advanced React apps.
-
-## Outside forms: call in a Transition
+## Outside forms, coordinate mutations with Transitions
 
 ```jsx
 'use client';
@@ -207,45 +139,31 @@ export function LikeButton() {
     });
   }
 
-  return (
-    <button onClick={handleClick} disabled={isPending}>
-      Like
-    </button>
-  );
+  return <button onClick={handleClick} disabled={isPending}>Like</button>;
 }
 ```
 
-Server Functions called outside form Actions should participate in Transition-based mutation UI so pending/error/optimistic behavior can be coordinated.
+## Treat arguments as untrusted network input
 
-## Arguments cross the network
+TypeScript does not validate what arrives at the server boundary.
 
-Treat every argument as client-controlled input.
+<VisualDiagram title="Mutation security belongs inside the Server Function">
+  <DiagramStack align="center">
+    <DiagramNode title="Client-controlled arguments" tone="orange" />
+    <DiagramArrow label="runtime validation" />
+    <DiagramNode title="Authenticated actor" tone="blue" />
+    <DiagramArrow label="authorization against target resource" />
+    <DiagramNode title="Safe mutation" tone="purple" />
+    <DiagramArrow label="minimal serializable result" />
+    <DiagramNode title="Client UI" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
+
+A hidden button is never authorization.
 
 ```jsx
 'use server';
 
-export async function deleteProject(projectId) {
-  // projectId came from client-controlled data
-}
-```
-
-Do not trust it because TypeScript says `projectId: string`.
-
-Runtime validation and authorization are still required.
-
-## Security rule: authenticate and authorize inside the Server Function
-
-Bad:
-
-```jsx
-export async function deleteProject(projectId) {
-  await db.projects.delete(projectId);
-}
-```
-
-Better:
-
-```jsx
 export async function deleteProject(projectId) {
   const user = await requireUser();
   const project = await db.projects.find(projectId);
@@ -258,319 +176,109 @@ export async function deleteProject(projectId) {
 }
 ```
 
-The browser can call exposed Server Functions in ways your UI did not anticipate.
+## Serializable payloads
 
-UI visibility is not authorization.
+Arguments and results must fit React's supported serialization model. Send application data, not runtime machinery.
 
-## Hidden button ≠ protected operation
+<DiagramGrid columns={2}>
+  <DiagramNode title="Good payloads" tone="green">Primitives · arrays · plain supported objects · Dates · FormData · typed binary data · Server Function references</DiagramNode>
+  <DiagramNode title="Wrong payloads" tone="red">DOM events · database connections · arbitrary class instances · ordinary closures · secrets</DiagramNode>
+</DiagramGrid>
 
-This is never sufficient:
+Extract the value you need instead of forwarding browser event objects.
 
-```jsx
-{user.isAdmin && (
-  <button onClick={() => deleteUser(userId)}>
-    Delete user
-  </button>
-)}
-```
+## Reads and writes have different owners
 
-The server function itself must verify permission.
+<VisualDiagram title="Prefer query/command separation">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Server Component" tone="blue" eyebrow="READ">Read server data during render when the architecture supports it.</DiagramNode>
+    <DiagramNode title="Server Function" tone="purple" eyebrow="MUTATE">Validate, authorize, and perform a server-side command.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Client code is not a trust boundary.
+Server Functions are not a generic cached read API.
 
-## Validate input
+## Optimistic UI never weakens the server boundary
 
-```jsx
-'use server';
+<LifecycleBar items={[
+  { label: 'User submits intent', tone: 'blue' },
+  { label: 'Optimistic UI projects likely result', tone: 'orange' },
+  { label: 'Server Function validates + authorizes', tone: 'purple' },
+  { label: 'Persist / reject', tone: 'red' },
+  { label: 'Canonical data refreshes', tone: 'teal' },
+  { label: 'UI converges or rolls back', tone: 'green' },
+]} />
 
-export async function updateProfile(formData) {
-  const displayName = String(formData.get('displayName') ?? '');
+Optimistic state is a presentation guess, not authority.
 
-  if (displayName.length < 2 || displayName.length > 80) {
-    return { error: 'Invalid display name' };
-  }
+## Framework policy after mutation
 
-  // authorization + mutation
-}
-```
+Refreshing server-rendered data may involve route refresh, framework cache invalidation, tag/path revalidation, navigation, or client-cache updates. Those mechanisms belong to the framework/data layer, not React Server Functions themselves.
 
-For complex inputs, use a deliberate runtime schema/validation layer.
+## Distributed-system concerns still apply
 
-Types do not validate network input.
+A Server Function call can be retried, duplicated, delayed, or fail partway through. Sensitive operations may require:
 
-## Serializable arguments
+- idempotency keys;
+- database transactions;
+- timeout/retry policy;
+- duplicate-submission handling;
+- audit logs;
+- trace/request IDs.
 
-Server Function arguments and return values must fit React's supported serialization model.
+<DecisionTree
+  question="What should this mutation guarantee?"
+  items={[
+    { label: 'Payment / order / irreversible provisioning', value: 'Design idempotency explicitly' },
+    { label: 'Several related writes must succeed together', value: 'Use transaction semantics' },
+    { label: 'Expected validation failure', value: 'Return safe domain state' },
+    { label: 'Unexpected infrastructure failure', value: 'Throw + observe/recover through error architecture' },
+  ]}
+/>
 
-Common supported categories include:
+## CSRF and browser security
 
-- primitives;
-- arrays and supported iterables;
-- plain objects;
-- Dates;
-- FormData;
-- typed binary values;
-- Promises;
-- Server Function references.
+Server Functions use framework-managed transport, but normal web security remains relevant: allowed origins, cookies, CSRF protection, authentication, deployment topology, and secret handling.
 
-Do not pass arbitrary class instances or normal functions and expect them to survive the network boundary.
-
-## Event objects are not mutation payloads
-
-Wrong:
-
-```jsx
-<button onClick={event => saveEvent(event)} />
-```
-
-Browser event objects are not appropriate Server Function arguments.
-
-Extract the data you need:
-
-```jsx
-<button onClick={() => saveSelection(item.id)} />
-```
-
-## Return values should be UI-oriented and serializable
-
-Useful shape:
-
-```jsx
-return {
-  ok: false,
-  fieldErrors: {
-    email: 'Email is already registered',
-  },
-};
-```
-
-Avoid returning huge internal database objects or secrets.
-
-Ask:
-
-> What minimum result does the client need to render the next state?
-
-## Server Functions are not recommended as a generic read API
-
-Server Functions are primarily mutation-oriented.
-
-For reads in RSC architectures, Server Components can often read data directly.
-
-Frameworks may serialize mutation processing or apply other semantics that make Server Functions a poor substitute for general cached querying.
-
-Think:
-
-```text
-Server Component
-read server data during render
-
-Server Function
-perform server-side mutation / command
-```
-
-This resembles query/command separation.
-
-## Optimistic UI
-
-Server Functions pair naturally with `useOptimistic`:
-
-```text
-user performs mutation
-   ↓
-show optimistic state immediately
-   ↓
-call Server Function
-   ↓
-server validates + authorizes + persists
-   ↓
-canonical data refreshes
-   ↓
-optimistic state converges or rolls back
-```
-
-Never let optimistic UI weaken server validation.
-
-The optimistic state is only a presentation guess.
-
-## Revalidation is framework policy
-
-After a mutation, an application often needs to update server-rendered data.
-
-The mechanism may involve:
-
-- route refresh;
-- cache invalidation;
-- tag/path revalidation;
-- navigation;
-- client cache update.
-
-Those mechanisms are framework/data-layer features, not universal React core APIs.
-
-Keep this distinction explicit in architecture discussions.
-
-## Idempotency
-
-Network mutations can be retried or duplicated.
-
-For sensitive operations, design idempotency where appropriate.
-
-Examples:
-
-- payment creation;
-- email invitation;
-- order placement;
-- subscription mutation;
-- irreversible provisioning.
-
-A Server Function is still a distributed-system boundary.
-
-React syntax does not remove retry, timeout, or duplicate-request concerns.
-
-## Transactions
-
-If a mutation updates multiple related records, use database transaction semantics where necessary.
-
-Example:
-
-```text
-create order
-reserve inventory
-create payment intent
-write audit record
-```
-
-A React Server Function can orchestrate this, but database correctness is still a backend engineering problem.
-
-## Error design
-
-Separate expected domain failures from unexpected server failures.
-
-Expected:
-
-```jsx
-return {
-  error: 'Username is already taken',
-};
-```
-
-Unexpected:
-
-```jsx
-throw new Error('Database connection failed');
-```
-
-The UI may display expected validation errors inline while unexpected errors flow through error boundaries/framework error handling and observability.
-
-## Logging and observability
-
-A production Server Function should fit into normal backend observability:
-
-- request/trace IDs;
-- authenticated actor;
-- action name;
-- duration;
-- failure reason;
-- affected resource IDs;
-- audit logs where required.
-
-Do not log secrets or full sensitive payloads.
-
-## CSRF and framework security
-
-Server Functions are exposed through framework-managed transport.
-
-Understand the framework's security model for:
-
-- allowed origins;
-- CSRF protection;
-- cookies;
-- authentication;
-- deployment topology.
-
-Do not assume the existence of a React abstraction removes web security requirements.
-
-## Common mistakes
-
-### Mistake: trust client arguments
-
-Always validate and authorize on the server.
-
-### Mistake: treat hidden UI as permission enforcement
-
-UI is not a security boundary.
-
-### Mistake: use Server Functions for every read
-
-Use Server Components/data layers for read architecture where appropriate.
-
-### Mistake: return internal objects directly
-
-Return minimum serializable UI data.
-
-### Mistake: forget distributed-system behavior
-
-Timeouts, retries, duplicate submissions, transactions, and idempotency still matter.
-
-### Mistake: confuse Server Function with Server Component
-
-`'use server'` marks functions, not components.
+Understand the framework's concrete security model instead of assuming the abstraction removes browser threats.
 
 ## Production checklist
 
-For every Server Function:
+For each exposed Server Function:
 
-1. authenticate actor;
-2. authorize target operation;
-3. validate runtime input;
-4. sanitize/normalize data;
+1. authenticate the actor;
+2. authorize the target operation;
+3. validate and normalize runtime input;
+4. keep secrets/internal objects server-side;
 5. use transactions when needed;
-6. design idempotency for sensitive mutations;
-7. return minimal serializable result;
-8. log safely;
-9. refresh/invalidate canonical data through framework policy;
-10. test unauthorized direct calls, not only the visible UI path.
-
-## Exercise
-
-Build a Server Function for editing a project name.
-
-Requirements:
-
-- only project members with edit permission can call it;
-- input must be 2–80 characters;
-- duplicate names inside the same workspace are rejected;
-- return a field-level error for expected validation failures;
-- log unexpected database errors;
-- integrate with `useActionState` in a Client Component;
-- explain what happens if the browser calls the function with a project ID the UI never displayed.
+6. design idempotency for sensitive commands;
+7. return the minimum serializable UI result;
+8. log safely with request/actor/action context;
+9. refresh canonical data through framework policy;
+10. test unauthorized direct invocation, not only the visible UI path.
 
 ## Interview questions
 
-**Junior:** What does `'use server'` do?
+**Junior:** What does `'use server'` mark?
 
-**Mid-level:** Why must Server Function arguments be treated as untrusted input?
+**Mid-level:** Why must a Server Function validate and authorize arguments even when only an admin button calls it?
 
-**Senior:** Design a secure Server Function mutation architecture covering authorization, validation, idempotency, transactions, optimistic UI, error modeling, and cache/revalidation responsibilities.
+**Senior:** Design a Server Function for order placement that needs validation, authorization, idempotency, transactions, optimistic UI, revalidation, and observability.
 
 ## Summary
 
-```text
-Server Function
-async server-side callable boundary
-
-'use server'
-marks callable server functions
-not Server Components
-
-client call
-= network request
-= untrusted input
-= backend security rules still apply
-```
+<VisualDiagram title="Server Function = distributed mutation boundary">
+  <DiagramRow>
+    <DiagramNode title="Client intent" tone="blue" />
+    <DiagramArrow direction="right" label="serialize + network" />
+    <DiagramNode title="Server authority" tone="purple">Validate · authorize · persist</DiagramNode>
+    <DiagramArrow direction="right" label="safe result" />
+    <DiagramNode title="Canonical UI" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
 ## References
 
-- https://react.dev/reference/rsc/server-functions
 - https://react.dev/reference/rsc/use-server
+- https://react.dev/reference/rsc/server-functions
 - https://react.dev/reference/react/useActionState
-- https://react.dev/reference/react/useOptimistic
