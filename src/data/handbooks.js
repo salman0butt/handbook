@@ -40,14 +40,14 @@ export const handbookData = {
     studyPath: ['Language basics', 'Functions & objects', 'Async', 'Modules', 'Production patterns'],
   },
   nodejs: {
-    name: 'Node.js', icon: '⬢', intro: '/docs/nodejs/intro',
-    description: 'Backend JavaScript engineering with APIs, asynchronous systems, security, databases, testing, scalability, and production operations.',
+    name: 'Node.js', icon: '⬢', status: 'Complete', intro: '/docs/nodejs/intro',
+    description: 'A production Node.js handbook from runtime internals and async I/O to APIs, databases, security, distributed systems, platform engineering, projects, and interview mastery.',
     highlights: [
-      {title: 'Runtime & async I/O', description: 'Understand the Node process model, modules, event loop, streams, and asynchronous APIs.'},
-      {title: 'Backend systems', description: 'Build HTTP APIs, persistence layers, jobs, events, and service boundaries.'},
-      {title: 'Production engineering', description: 'Cover security, testing, observability, performance, deployment, and scaling.'},
+      {label: 'Runtime', title: 'Event loop, libuv & streams', description: 'Reason about the main JavaScript thread, async I/O, scheduling, backpressure, workers, memory, networking, and Node internals.', href: '/docs/nodejs/event-loop'},
+      {label: 'Build', title: 'Production project ladder', description: 'Apply the runtime model in REST APIs, streaming processors, queues, WebSockets, workers, SDKs, services, modular monoliths, and the capstone platform.', href: '/docs/nodejs/projects/production-rest-api'},
+      {label: 'Master', title: '320 interview questions & mock rounds', description: 'Practice runtime mechanisms, backend architecture, security, incidents, migrations, distributed systems, live coding, and staff-level reasoning.', href: '/docs/nodejs/interview-question-bank/overview'},
     ],
-    studyPath: ['Runtime', 'APIs', 'Persistence', 'Security & testing', 'Production'],
+    studyPath: ['Runtime foundations', 'Async I/O & networking', 'Backend data & security', 'Production engineering', 'Distributed architecture', 'Projects & interview mastery'],
   },
   databases: {
     name: 'Databases', icon: 'DB', intro: '/docs/databases/intro',
