@@ -4,269 +4,215 @@ description: Ship compiler-optimized libraries, debug skipped components, and va
 sidebar_position: 4
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Compiler libraries, debugging, and production rollout
 
-React Compiler affects both application teams and library authors. The operational question is not only **can this code compile?** but **how do we ship, verify, and support compiled code safely?**
+React Compiler affects both application teams and library authors. The operational question is not only **can this code compile?** but **how do we ship, verify, debug, and support compiled code safely?**
 
 ## Compiling libraries
 
-A React library can compile its own components before publishing.
+A library can compile its own React components before publishing.
 
-Benefits include:
+<VisualDiagram title="A compiled library owns its optimization before consumers install it">
+  <DiagramRow>
+    <DiagramNode title="Library source" tone="blue" />
+    <DiagramArrow direction="right" label="Compiler" />
+    <DiagramNode title="Published optimized package" tone="purple" />
+    <DiagramArrow direction="right" label="normal package API" />
+    <DiagramNode title="Consumer app" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
-- users receive optimized library code even if their app does not enable Compiler;
-- optimization behavior is consistent across consumers;
-- app teams do not need to compile your source themselves.
+Consumers should still see normal React components, Hooks, and JavaScript values—not compiler implementation details.
 
-Basic Babel setup:
+## Older React consumers
 
-```js
-module.exports = {
-  plugins: ['babel-plugin-react-compiler'],
-};
-```
+If a compiled library supports React versions below 19, follow the current Compiler guidance for the standalone runtime and target configuration.
 
-## Supporting React 17/18 consumers
+A library that claims support across React 17, 18, and 19 should test the compiled package across those supported majors instead of assuming one artifact behaves identically everywhere.
 
-If a compiled library supports React versions below 19, use the standalone runtime as a direct dependency:
+## Test source and published output
 
-```bash
-npm install react-compiler-runtime@latest
-```
+<VisualDiagram title="Library confidence needs more than source tests">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="Source tests" tone="blue">Behavior before build</DiagramNode>
+    <DiagramNode title="Compiled package tests" tone="purple">Published artifact</DiagramNode>
+    <DiagramNode title="Minimum React version" tone="orange">Compatibility floor</DiagramNode>
+    <DiagramNode title="Latest supported React" tone="green">Current integration</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-and configure the target version.
+For libraries, test the **package users actually install**.
 
-Example:
+## A skipped component is not automatically a bug
 
-```js
-[
-  'babel-plugin-react-compiler',
-  {
-    target: '18',
-  },
-]
-```
+Compiler may skip a function when it cannot safely optimize it.
 
-A library package might then expose peer support such as:
+<LifecycleBar items={[
+  { label: 'Function is not optimized', tone: 'orange' },
+  { label: 'Check Compiler is active', tone: 'blue' },
+  { label: 'Check component/Hook recognition', tone: 'teal' },
+  { label: 'Read ESLint diagnostics', tone: 'red' },
+  { label: 'Inspect incompatible syntax/library usage', tone: 'purple' },
+  { label: 'Fix or isolate', tone: 'green' },
+]} />
 
-```json
-{
-  "dependencies": {
-    "react-compiler-runtime": "^1.0.0"
-  },
-  "peerDependencies": {
-    "react": "^17 || ^18 || ^19"
-  }
-}
-```
+Do not treat “not compiled” as a correctness failure by itself. Treat the diagnostic as evidence to investigate.
 
-The compiler runtime is needed at runtime for React 17/18, so it should not be treated as a build-only dev dependency.
+## ESLint is the first diagnostic surface
 
-## Library testing matrix
+Modern `eslint-plugin-react-hooks` surfaces both Rules-of-React and Compiler-related diagnostics.
 
-A compiled library should test at least:
-
-```text
-source tests
-    +
-compiled package tests
-    +
-minimum supported React version
-    +
-latest supported React version
-```
-
-If you support React 17, 18, and 19, validate all three majors rather than assuming one compiled artifact behaves identically everywhere.
-
-## Preserve package boundaries
-
-Do not publish internal compiler implementation details as part of your public API.
-
-Your API contract should remain normal React components, Hooks, and JavaScript values.
-
-Consumers should not need to know whether your internal implementation uses generated memo caches.
-
-## Debugging a skipped component
-
-A skipped component is not automatically a bug.
-
-It often means the compiler detected a pattern it cannot safely optimize.
-
-Debugging sequence:
-
-```text
-1. Is Compiler running in this file?
-2. Is the function recognized as a component/Hook?
-3. Does ESLint report a Rules-of-React issue?
-4. Is there incompatible syntax/library usage?
-5. Is manual memoization preventing a safe transform?
-6. Does a temporary opt-out change behavior?
-```
-
-## ESLint as the first diagnostic surface
-
-`eslint-plugin-react-hooks` now exposes Compiler diagnostics.
-
-That is useful even before enabling Compiler in production.
-
-A component flagged by the linter can often be improved independently of optimization because many rules represent correctness problems:
+Typical issues include:
 
 - mutation during render;
-- impure APIs in render;
-- dynamic component definitions;
+- impure APIs during render;
+- dynamically recreated components;
 - invalid ref access;
 - unsupported syntax;
-- incompatible libraries.
+- incompatible libraries;
+- configuration/gating problems;
+- broken manual memoization assumptions.
 
-## Distinguish compile-time and runtime failures
+Many of these are correctness problems even without Compiler.
 
-### Compile-time diagnostic
+## Debugging behavior changes
 
-The compiler cannot safely transform a component.
+<DecisionTree
+  question="What changed after enabling Compiler?"
+  items={[
+    { label: 'Behavior bug in one component', value: 'Check Rules diagnostics and isolate with a narrow opt-out' },
+    { label: 'Performance did not improve', value: 'Profile the real bottleneck before changing config' },
+    { label: 'Library integration fails', value: 'Check identity/imperative contracts and compatibility' },
+    { label: 'Only production build differs', value: 'Test compiled artifact and build pipeline, not just dev source' },
+  ]}
+/>
 
-Typical result:
+A temporary `'use no memo'` can be useful as a diagnostic experiment, but document why it exists.
 
-- component is skipped;
-- application can still run;
-- other components may still compile.
+## Compare behavior before comparing speed
 
-### Runtime regression
+A safe rollout validates correctness first.
 
-The compiled app behaves incorrectly after optimization.
+<LifecycleBar items={[
+  { label: 'Baseline behavior tests', tone: 'blue' },
+  { label: 'Enable Compiler', tone: 'purple' },
+  { label: 'Run same tests', tone: 'orange' },
+  { label: 'Check production artifact', tone: 'teal' },
+  { label: 'Profile user interactions', tone: 'green' },
+]} />
 
-This requires a different workflow:
+If behavior changed, solve that before interpreting performance numbers.
 
-1. isolate the affected feature;
-2. compare compiled vs uncompiled behavior;
-3. add `"use no memo"` temporarily if needed;
-4. capture a minimal reproduction;
-5. inspect Rules of React violations and third-party interactions;
-6. file an upstream issue if the code is valid and the compiler is wrong.
+## Production observability
 
-## Temporary opt-out as a debugging tool
+Compiler rollout should fit normal release engineering.
 
-```jsx
-function ProblematicGrid() {
-  'use no memo';
+Useful signals include:
 
-  return <Grid />;
-}
-```
+- interaction latency;
+- React Profiler traces for known hotspots;
+- error rates;
+- hydration/runtime errors;
+- release/build identity;
+- browser/device segments;
+- bundle/runtime regressions.
 
-If disabling optimization fixes a regression, you have narrowed the problem—but you have not necessarily proven the compiler is at fault.
+Do not invent a Compiler-specific dashboard if existing performance/release telemetry already answers the question.
 
-The component may rely on invalid behavior that manual execution happened to preserve.
+## Gated rollout
 
-## Third-party library compatibility
+<VisualDiagram title="Production rollout should have a reversible exposure boundary">
+  <DiagramStack align="center">
+    <DiagramNode title="Compiled release" tone="purple" />
+    <DiagramArrow label="small controlled exposure" />
+    <DiagramNode title="Compare correctness + performance" tone="orange" />
+    <DiagramArrow label="healthy? expand" />
+    <DiagramNode title="Broader rollout" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-Some libraries rely on patterns incompatible with memoization or React's programming model.
+The exact gating system depends on your deployment environment.
 
-Compiler-aware linting can identify known incompatible library APIs and skip optimization around them.
+## Third-party libraries
 
-When this happens, evaluate:
+Some libraries rely on unusual mutation, identity, or rendering patterns that may be difficult for Compiler analysis.
 
-- whether a newer library version exists;
-- whether the library has a Compiler-compatible integration;
-- whether you can isolate the integration behind a small adapter;
-- whether temporary opt-out is acceptable.
+Do not immediately rewrite a stable integration. Instead:
 
-## Production rollout metrics
+1. isolate the bridge;
+2. inspect diagnostics;
+3. verify behavior with Compiler on/off;
+4. upgrade the library if a compatible release exists;
+5. keep any opt-out narrow and documented.
 
-Do not judge Compiler only by synthetic render counts.
+## Manual memoization during rollout
 
-Measure real product metrics:
+Existing `memo`, `useMemo`, and `useCallback` should generally remain during initial adoption. Removing them at the same time as enabling Compiler makes regressions harder to attribute.
 
-- Interaction to Next Paint / interaction latency;
-- CPU time during key workflows;
-- long tasks;
-- memory pressure;
-- error/crash rate;
-- user conversion/completion rates where relevant;
-- bundle size and build duration.
+Treat removal as a later, measured refactor.
 
-## A/B gating
+## Library and application responsibilities
 
-If your compiler configuration uses runtime gating, you can compare compiled and original code paths under production traffic.
-
-This is useful when the benefit is workload-dependent.
-
-For example, a dashboard with many stable props may benefit more than a page where every input changes each render.
-
-## Performance regression debugging
-
-Compiler can increase code size or add cache bookkeeping in places where the saved work is tiny.
-
-If a page gets slower:
-
-1. profile the compiled build;
-2. identify whether CPU time moved into cache bookkeeping, rendering, or elsewhere;
-3. compare the same interaction without Compiler;
-4. inspect generated output only after profiling points to a suspicious function;
-5. avoid broad conclusions from one component.
-
-## Do not optimize library source twice accidentally
-
-If a library publishes already-compiled output, application tooling generally should consume that published artifact as normal package code rather than trying to recompile arbitrary dependency internals.
-
-Document your package's support policy clearly.
-
-## Release strategy for a library
-
-A disciplined rollout:
-
-```text
-1. compile package in CI
-2. run full test matrix
-3. publish prerelease
-4. validate in example apps
-5. collect consumer feedback
-6. publish stable release
-```
+<DiagramGrid columns={2}>
+  <DiagramNode title="Library author" tone="blue">Compile/test the published artifact · define supported React versions · avoid exposing compiler internals · document compatibility.</DiagramNode>
+  <DiagramNode title="Application team" tone="green">Validate own build · monitor integrations · profile product flows · keep rollout/rollback policy.</DiagramNode>
+</DiagramGrid>
 
 ## Common mistakes
 
-### Shipping a runtime only as devDependency
+- testing only library source, not built output;
+- assuming skipped code means broken code;
+- silencing diagnostics with broad opt-outs;
+- deleting manual memoization during initial adoption;
+- measuring only synthetic render counts;
+- shipping Compiler broadly without release comparison;
+- exposing compiler-generated implementation details as public library API.
 
-React 17/18 consumers need the compiler runtime at runtime.
+## Production checklist
 
-### Testing only source code
-
-Your published compiled artifact is what users actually execute.
-
-### Assuming every skipped component is a failure
-
-Skipping is part of Compiler's safety model.
-
-### Leaving debug directives undocumented
-
-A permanent `"use no memo"` without rationale becomes invisible technical debt.
-
-## Exercise
-
-Imagine you maintain a component library supporting React 18 and 19.
-
-Design:
-
-- package dependencies;
-- compiler target strategy;
-- CI version matrix;
-- prerelease rollout;
-- rollback plan if consumers report a regression.
+1. Compiler and runtime targets match supported React versions.
+2. Published library artifacts are tested directly.
+3. ESLint/Compiler diagnostics run in CI.
+4. Third-party bridges have compatibility coverage.
+5. Existing memoization is preserved during first rollout.
+6. Production releases are comparable by build/release ID.
+7. User-facing performance is measured, not guessed.
+8. Narrow opt-outs have owners and removal plans.
 
 ## Interview questions
 
-**Why might a library compile its code before publishing?**  
-So consumers receive optimized behavior without configuring Compiler themselves.
+**Junior:** Is a component being skipped by Compiler necessarily a bug?
 
-**What extra requirement exists for React 17/18 compiled libraries?**  
-They need `react-compiler-runtime` and a matching compiler target.
+**Mid-level:** Why should a library test its compiled package instead of only source tests?
 
-**What does it mean if Compiler skips a component?**  
-The compiler could not safely optimize it; the component can still run normally.
+**Senior:** Design a safe Compiler rollout for a shared component library consumed by React 18 and React 19 applications with several imperative third-party integrations.
+
+## Summary
+
+<VisualDiagram title="Operational success = correct artifact + compatible integrations + measured rollout">
+  <DiagramRow>
+    <DiagramNode title="Compile" tone="purple" />
+    <DiagramArrow direction="right" label="test artifact" />
+    <DiagramNode title="Verify compatibility" tone="orange" />
+    <DiagramArrow direction="right" label="observe rollout" />
+    <DiagramNode title="Production confidence" tone="green" />
+  </DiagramRow>
+</VisualDiagram>
 
 ## References
 
 - https://react.dev/reference/react-compiler/compiling-libraries
-- https://react.dev/learn/react-compiler/debugging
+- https://react.dev/reference/react-compiler/directives
 - https://react.dev/reference/eslint-plugin-react-hooks
-- https://react.dev/reference/react-compiler/directives/use-no-memo
+- https://react.dev/blog/2025/10/07/react-compiler-1
