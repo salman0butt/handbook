@@ -4,525 +4,201 @@ description: Senior and staff React system-design exercises covering state, data
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # React system design and trade-off drills
 
-React system-design interviews are not about drawing dozens of boxes. They test whether you can choose boundaries under constraints and explain the consequences.
+System-design interviews test whether you can choose boundaries under constraints and explain the consequences—not whether you can draw the most boxes.
 
-Use this structure for almost every design prompt:
+## Reusable design method
 
-```text
-Requirements
-   ↓
-Constraints
-   ↓
-Ownership boundaries
-   ↓
-Data flow
-   ↓
-Rendering model
-   ↓
-Failure/loading model
-   ↓
-Performance
-   ↓
-Security/accessibility
-   ↓
-Testing/observability
-   ↓
-Trade-offs + alternatives
-```
+<LifecycleBar items={[
+  { label: 'Requirements', tone: 'blue' },
+  { label: 'Constraints', tone: 'cyan' },
+  { label: 'Ownership', tone: 'purple' },
+  { label: 'Data flow + rendering', tone: 'green' },
+  { label: 'Loading/failure', tone: 'orange' },
+  { label: 'Performance/security/a11y', tone: 'red' },
+  { label: 'Testing/observability/trade-offs', tone: 'slate' },
+]} />
 
-## Design prompt 1 — Search experience
+## Search experience
 
-Design search for a catalog with 100,000 products.
+For 100,000 products, clarify server/client search, latency, typo tolerance, URL/shareability, filters/sort, device constraints, and SEO/rendering requirements.
 
-### Clarify
+<VisualDiagram title="A scalable search path keeps ownership explicit">
+  <DiagramStack>
+    <DiagramNode title="URL query/filter state" tone="blue">shareable navigation truth</DiagramNode>
+    <DiagramArrow label="request" />
+    <DiagramNode title="Search/data layer" tone="purple">debounce/cancel/stale protection</DiagramNode>
+    <DiagramArrow label="server search/index + cache" />
+    <DiagramNode title="Result boundary" tone="green">Suspense/navigation/rendering</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-Ask:
+`useDeferredValue` may improve expensive result rendering; it does not reduce network requests.
 
-- client or server search?
-- latency expectations?
-- typo tolerance?
-- URL/shareability?
-- filters/sort?
-- mobile constraints?
-- SEO/server rendering requirements?
+## Infinite live activity feed
 
-### Possible architecture
+<DecisionTree
+  question="How should live + historical feed data scale?"
+  items={[
+    { label: 'Historical pages/cursors', value: 'Server-state pagination/cache' },
+    { label: 'High-frequency live events', value: 'Normalized external/live store with narrow subscriptions' },
+    { label: 'Thousands of rendered items', value: 'Windowing/virtualization' },
+    { label: 'Optimistic reactions', value: 'Temporary projection + canonical reconciliation' },
+  ]}
+/>
 
-```text
-URL query/filter state
-   ↓
-search request layer
-   ↓
-server search/index
-   ↓
-results cache
-   ↓
-Suspense/result boundary
-```
+Bound in-memory retention and design event ordering/reconnect semantics explicitly.
 
-Use local state for the text input if immediate editing behavior benefits from it, then synchronize/commit to URL based on the product interaction design.
+## Collaborative editor
 
-Potential tools:
-
-- debounce network requests;
-- `useDeferredValue` for expensive result rendering;
-- route/navigation transitions;
-- pagination/windowing;
-- stale-result protection.
-
-Do not claim `useDeferredValue` reduces network calls.
-
-## Design prompt 2 — Infinite activity feed
-
-Requirements:
-
-- live updates;
-- infinite history;
-- optimistic reactions;
-- reconnect after offline;
-- low-end mobile support.
-
-Discuss:
-
-- server state vs live external state;
-- windowing;
-- stable item keys;
-- event ordering;
-- optimistic conflict behavior;
-- scroll anchoring;
-- connection status accessibility;
-- caching/pagination cursor strategy.
-
-### Trade-off
-
-Appending every live event to one top-level React array may become expensive.
-
-Alternative:
-
-- normalized external store;
-- narrow row/item subscriptions;
-- paginated historical data;
-- bounded in-memory retention.
-
-## Design prompt 3 — Collaborative editor
-
-Requirements:
-
-- multiple users editing;
-- presence indicators;
-- local optimistic edits;
-- network interruption;
-- conflict resolution.
-
-React is only one layer.
-
-Important architecture areas:
-
-- CRDT/OT or backend conflict model;
-- external document store;
-- selective subscriptions;
-- local ephemeral selection/cursor state;
-- server authority/versioning;
-- presence as high-frequency external data;
-- error/reconnect states.
+<VisualDiagram title="React is one layer in collaborative consistency">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Document model" tone="green">durable remote truth / CRDT/OT/backend model</DiagramNode>
+    <DiagramNode title="Presence" tone="cyan">high-frequency external state</DiagramNode>
+    <DiagramNode title="Local interaction" tone="blue">selection · cursor · temporary UI</DiagramNode>
+    <DiagramNode title="Optimistic edits" tone="purple">pending projection</DiagramNode>
+    <DiagramNode title="Version/conflict" tone="red">reconciliation policy</DiagramNode>
+    <DiagramNode title="React UI" tone="orange">selective rendering/subscription</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 Do not try to solve distributed consistency with React state alone.
 
-## Design prompt 4 — Large admin table
-
-Features:
-
-- 50,000 records;
-- sorting/filtering;
-- row selection;
-- inline editing;
-- bulk actions;
-- permissions.
-
-Strong design:
-
-- server pagination/filtering for scale;
-- URL state for shareable filters;
-- stable IDs for row identity;
-- feature-owned selection state;
-- virtualization when useful;
-- optimistic edits with server validation;
-- accessible table/grid semantics based on interaction complexity.
-
-Performance questions:
-
-- what rerenders when one row changes?
-- what happens when live data arrives?
-- are callbacks/objects causing measurable cost?
-- is the bottleneck browser DOM size or React rendering?
-
-## Design prompt 5 — Multi-step onboarding
-
-Requirements:
-
-- save progress;
-- server validation;
-- conditional steps;
-- resume later;
-- analytics;
-- accessibility.
-
-Discuss:
-
-- URL/route per step vs local step state;
-- server-persisted draft;
-- form Action / mutation model;
-- runtime validation;
-- focus after errors/navigation;
-- idempotent save;
-- abandonment/resume.
-
-Avoid a single giant component with every field mounted forever.
-
-## Design prompt 6 — Notification system
-
-Requirements:
-
-- live notifications;
-- unread count;
-- toast feedback;
-- notification center;
-- mark read;
-- cross-tab sync.
-
-Potential architecture:
-
-```text
-server notifications
- + live channel
- + cross-tab channel
-       ↓
-normalized external/data store
-       ↓
-NotificationCenter + unread badge
-```
-
-A toast is transient UI. The notification record is durable server state. Do not confuse them.
-
-## Design prompt 7 — Design system for 20 teams
-
-Discuss:
-
-- primitives vs product components;
-- semantic/accessibility contracts;
-- token architecture;
-- ref support;
-- controlled/uncontrolled patterns;
-- compound APIs;
-- versioning/deprecations;
-- contract tests;
-- documentation;
-- migration tooling.
-
-### Trade-off drill
-
-Fully polymorphic `as` APIs provide flexibility but can:
-
-- complicate types;
-- weaken semantic guarantees;
-- create invalid combinations;
-- make testing harder.
-
-Use flexibility where product needs justify the cost.
-
-## Design prompt 8 — Analytics dashboard
-
-Requirements:
-
-- SSR shell;
-- expensive charts;
-- filters;
-- data refresh;
-- export;
-- permissions.
-
-Possible split:
-
-```text
-Server-rendered shell
-├── filters (Client)
-├── summary metrics (Server/streamed)
-└── charts (lazy Client islands)
-```
-
-Discuss:
-
-- server/client bundle cost;
-- chart library loading;
-- Suspense reveal order;
-- filter ownership;
-- expensive visualization scheduling;
-- cache freshness;
-- accessible data alternatives for visual charts.
-
-## Design prompt 9 — Chat application
-
-Requirements:
-
-- live messages;
-- optimistic send;
-- read receipts;
-- typing state;
-- history pagination;
-- offline reconnect.
-
-Separate:
-
-- durable message state;
-- ephemeral typing/presence;
-- optimistic pending sends;
-- connection state;
-- pagination history.
-
-High-frequency presence updates should not necessarily propagate through broad Context.
-
-## Design prompt 10 — Feature-flagged migration to RSC
-
-Existing app:
-
-- React SPA;
-- client data fetching;
-- large bundle;
-- many routes;
-- stable revenue-critical flows.
-
-Goal:
-
-Adopt server rendering/Server Components incrementally.
-
-Strong plan:
-
-1. measure current bottlenecks;
-2. choose a low-risk route;
-3. establish framework/server infrastructure;
-4. keep client boundaries around interactive features;
-5. move server-only reads where beneficial;
-6. verify hydration/telemetry;
-7. use feature flags/canary rollout;
-8. compare performance/error rates;
-9. expand only if evidence supports it.
-
-Do not migrate because RSC is "newer".
-
-## Trade-off drill — Context vs external store
-
-Choose Context when:
-
-- tree-scoped implicit input is useful;
-- update frequency is manageable;
-- most consumers care about the value;
-- ownership is clear.
-
-Consider external stores when:
-
-- data changes independently of React;
-- subscriptions need to be selective;
-- high-frequency updates would make broad Context costly;
-- multiple roots/non-React consumers may participate.
-
-## Trade-off drill — local state vs URL state
-
-Local state:
-
-- temporary UI intent;
-- no navigation/history semantics.
-
-URL state:
-
-- shareable;
-- bookmarkable;
-- back/forward aware;
-- reload-persistent.
-
-Do not put every checkbox in the URL, but do not hide navigation state in ephemeral component memory either.
-
-## Trade-off drill — controlled vs uncontrolled
-
-Controlled:
-
-- parent owns current value;
-- easy coordinated behavior;
-- more render involvement.
-
-Uncontrolled:
-
-- DOM/internal component owns transient value;
-- useful for forms and simpler primitives;
-- parent receives value through events/submission.
-
-Good design systems often support both through an explicit contract.
-
-## Trade-off drill — client vs server component
-
-Server Component benefits:
-
-- server-only data access;
-- reduced client JavaScript;
-- secret/server dependency isolation.
-
-Client Component benefits:
-
-- state;
-- Effects;
-- event-driven interactivity;
-- browser APIs.
-
-Do not move interactivity to the server just to reduce bundle size, and do not mark an entire route `'use client'` because one button needs state.
-
-## Trade-off drill — Suspense boundary placement
-
-Boundary too high:
-
-- large UI disappears into fallback.
-
-Boundary too low:
-
-- fragmented loading;
-- excessive reveal churn;
-- harder design consistency.
-
-Place boundaries around meaningful reveal groups.
-
-## Trade-off drill — one global store vs domain stores
-
-One global store may simplify discovery but can increase:
-
-- coupling;
-- accidental dependencies;
-- update breadth;
-- migration cost.
-
-Domain-owned state keeps responsibility local but requires clear cross-domain contracts.
-
-The right answer depends on product relationships, not team fashion.
-
-## Trade-off drill — rewrite vs incremental migration
-
-Rewrite can make sense when:
-
-- current system blocks required product behavior;
-- migration cost exceeds replacement cost;
-- boundaries are impossible to establish incrementally;
-- business can tolerate risk/time.
-
-Incremental migration is often safer because it preserves:
-
-- production learning;
-- working behavior;
-- gradual rollback;
-- revenue continuity.
-
-## Staff-level drill — organization architecture
-
-Question:
-
-> Five teams frequently break each other because they share one giant component library and one global store. What would you change?
-
-Strong answer should address:
-
-- domain ownership;
-- public module contracts;
-- design-system scope;
-- state ownership boundaries;
-- dependency direction;
-- contract tests;
-- migration sequencing;
-- governance without blocking teams.
-
-Do not answer only with a monorepo tool.
-
-## Staff-level drill — performance regression after migration
-
-A new architecture reduces client JavaScript by 30% but increases server latency and route error rate.
-
-Discuss:
-
-- user-perceived metrics, not bundle size alone;
-- server capacity;
-- cache behavior;
-- request waterfalls;
-- error classification;
-- rollback criteria;
-- whether benefits outweigh operational cost.
-
-Architecture is multi-dimensional.
-
-## System-design answer template
-
-Use this in interviews:
-
-### 1. Requirements
-
-Functional + non-functional.
-
-### 2. State/data ownership
-
-List categories and sources of truth.
-
-### 3. Component/domain boundaries
-
-Show where responsibilities live.
-
-### 4. Data/mutation flow
-
-Show reads, writes, validation, authority.
-
-### 5. Rendering model
-
-CSR/SSR/RSC/static/streaming choices.
-
-### 6. Loading/error behavior
-
-Suspense, expected errors, Error Boundaries.
-
-### 7. Accessibility
-
-Keyboard, names, focus, announcements.
-
-### 8. Performance
-
-Update scope, bundle, network, lists, scheduling.
-
-### 9. Security
-
-Trust boundaries, authn/authz, XSS, secrets.
-
-### 10. Testing/observability
-
-How will you prove and operate it?
-
-### 11. Trade-offs
-
-Name rejected alternatives.
-
-### 12. Evolution
-
-How will this scale or migrate later?
-
-## Final practice prompts
-
-Design each in 30–45 minutes:
-
-1. ecommerce storefront;
-2. project-management board;
-3. trading dashboard;
-4. collaborative document editor;
-5. social feed;
-6. support ticket console;
-7. analytics platform;
-8. design-system platform;
-9. multi-tenant admin portal;
-10. offline-first field application.
-
-For every design, explicitly state:
-
-> What is React responsible for here, and what belongs to the network, backend, browser, data layer, or organizational architecture?
-
-That boundary awareness is one of the clearest signals of senior React engineering.
+## Large admin table
+
+Use server pagination/filtering for scale, URL state for shareable filters, stable IDs, feature-owned selection, virtualization when measured, optimistic edits with server validation, and accessible table/grid semantics appropriate to the interaction model.
+
+<DecisionTree
+  question="What is the table bottleneck?"
+  items={[
+    { label: 'Data volume/request cost', value: 'Server paging/filtering' },
+    { label: 'DOM node volume/scrolling', value: 'Virtualization/windowing' },
+    { label: 'One row update rerenders everything', value: 'Narrow ownership/subscriptions/component boundaries' },
+    { label: 'Browser layout dominates', value: 'Fix DOM/CSS layout rather than React memoization' },
+  ]}
+/>
+
+## Multi-step onboarding
+
+<LifecycleBar items={[
+  { label: 'Route/step identity', tone: 'blue' },
+  { label: 'Form draft', tone: 'cyan' },
+  { label: 'Server-persisted progress', tone: 'purple' },
+  { label: 'Runtime validation', tone: 'red' },
+  { label: 'Accessible navigation/errors', tone: 'orange' },
+  { label: 'Resume/idempotent save', tone: 'green' },
+]} />
+
+Avoid mounting one giant form forever merely because the workflow is multi-step.
+
+## Notification system
+
+<VisualDiagram title="Durable notifications and transient toast UI are different state categories">
+  <DiagramStack>
+    <DiagramNode title="Server notifications + live/cross-tab channels" tone="green">durable records/events</DiagramNode>
+    <DiagramArrow label="normalize" />
+    <DiagramNode title="Data/external store" tone="purple">unread state + records</DiagramNode>
+    <DiagramArrow label="project" />
+    <DiagramGrid columns={2}>
+      <DiagramNode title="Notification center" tone="blue">durable UI view</DiagramNode>
+      <DiagramNode title="Toast" tone="orange">temporary feedback</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
+
+## Design system for many teams
+
+Discuss semantic/accessibility contracts, primitives vs product components, tokens, refs, controlled/uncontrolled APIs, compound/headless patterns, versioning, contract tests, documentation, migration tooling, and ownership.
+
+<DecisionTree
+  question="Should a shared primitive expose maximum polymorphism?"
+  items={[
+    { label: 'Product genuinely needs multiple semantic hosts', value: 'Maybe, with tested type/a11y constraints' },
+    { label: 'Flexibility mainly creates invalid combinations', value: 'Prefer explicit semantic variants' },
+    { label: 'Need is product-specific', value: 'Keep it in the feature wrapper' },
+  ]}
+/>
+
+## Analytics dashboard
+
+<VisualDiagram title="Split server-friendly shell/data from expensive client visualization">
+  <DiagramStack>
+    <DiagramNode title="Server-rendered shell" tone="green">initial context + read-only summary</DiagramNode>
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Filters" tone="blue">client interaction</DiagramNode>
+      <DiagramNode title="Summary metrics" tone="green">server/streamed</DiagramNode>
+      <DiagramNode title="Charts" tone="purple">lazy client islands + accessible data alternative</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
+
+Discuss chart bundle cost, Suspense reveal, filter ownership, cache freshness, expensive rendering, and non-visual alternatives for chart information.
+
+## Chat application
+
+Separate durable message history, ephemeral typing/presence, optimistic pending sends, connection state, and pagination history. High-frequency presence should not automatically broadcast through broad Context.
+
+## Feature-flagged migration to RSC
+
+<LifecycleBar items={[
+  { label: 'Measure current bottleneck', tone: 'blue' },
+  { label: 'Pick low-risk route', tone: 'cyan' },
+  { label: 'Establish server infrastructure', tone: 'purple' },
+  { label: 'Keep interactive client islands', tone: 'orange' },
+  { label: 'Move beneficial server reads', tone: 'green' },
+  { label: 'Canary + compare telemetry', tone: 'red' },
+  { label: 'Expand only with evidence', tone: 'slate' },
+]} />
+
+Do not migrate because a technology is newer.
+
+## Common trade-off drills
+
+<DecisionTree
+  question="Context or external store?"
+  items={[
+    { label: 'Tree-scoped, manageable frequency, broad consumers', value: 'Context may fit' },
+    { label: 'Independent/high-frequency state with selective consumers', value: 'External store may fit' },
+  ]}
+/>
+
+<DecisionTree
+  question="Local state or URL?"
+  items={[
+    { label: 'Temporary UI intent with no navigation semantics', value: 'Local state' },
+    { label: 'Shareable/bookmarkable/back-forward state', value: 'URL' },
+  ]}
+/>
+
+<DecisionTree
+  question="Optimistic or confirmed mutation UX?"
+  items={[
+    { label: 'Low-risk reversible action', value: 'Optimistic may improve UX' },
+    { label: 'High-impact/destructive/money/permission action', value: 'Prefer stronger confirmation semantics' },
+  ]}
+/>
+
+## What the interviewer is evaluating
+
+<DiagramGrid columns={3}>
+  <DiagramNode title="Ownership" tone="blue">one source of truth per concern</DiagramNode>
+  <DiagramNode title="Boundaries" tone="purple">execution · async · failure · trust</DiagramNode>
+  <DiagramNode title="Scale" tone="orange">data · DOM · subscriptions · bundles</DiagramNode>
+  <DiagramNode title="Correctness" tone="red">authorization · races · conflicts</DiagramNode>
+  <DiagramNode title="Experience" tone="green">loading · accessibility · responsiveness</DiagramNode>
+  <DiagramNode title="Operations" tone="slate">tests · telemetry · rollout · reversibility</DiagramNode>
+</DiagramGrid>
+
+A strong system-design answer makes alternatives explicit and explains why the chosen boundary is appropriate for the stated constraints.
