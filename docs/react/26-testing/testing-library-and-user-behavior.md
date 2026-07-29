@@ -4,58 +4,80 @@ description: Build reliable React tests with Testing Library, semantic queries, 
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Testing React Through User Behavior
 
-A React test is strongest when it describes what a user can observe and do rather than reproducing component implementation details.
+A React test is strongest when it protects what a user can **perceive and do**, not private implementation details.
 
-> **Mental model:** render the UI, interact through public behavior, then assert on observable output.
+<VisualDiagram title="The default component-test contract">
+  <DiagramRow>
+    <DiagramNode title="Render" tone="blue">Real component tree</DiagramNode>
+    <DiagramArrow direction="right" label="find semantically" />
+    <DiagramNode title="Interact" tone="purple">Click · type · keyboard · focus</DiagramNode>
+    <DiagramArrow direction="right" label="observe" />
+    <DiagramNode title="Assert" tone="green">DOM state users can experience</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-This does not mean implementation details are forbidden everywhere. It means component tests should default to the same interface users and assistive technologies experience: roles, names, labels, text, state, focus, and visible outcomes.
+This keeps tests aligned with roles, names, labels, text, focus, pending states, validation, and visible outcomes.
 
-## 1. Test behavior, not React internals
+## Test behavior, not React internals
 
-Weak test goals:
+Weak goals include asserting a private state variable changed, a Hook ran exactly once, or a child was shallow-rendered with a specific internal prop.
 
-- assert a private state variable became `true`;
-- assert a specific Hook ran exactly once;
-- inspect internal component instances;
-- shallow-render a child boundary and assert wiring only.
+Strong goals include:
 
-Better goals:
+- a dialog appears after activating its trigger;
+- the submit button becomes disabled while work is pending;
+- validation feedback is associated with the field;
+- focus returns after closing a modal;
+- a successful mutation changes the visible list.
 
-- a dialog appears after the user activates "Open settings";
-- the submit button becomes disabled while submission is pending;
-- validation feedback is associated with the invalid field;
-- focus returns to the trigger after a dialog closes;
-- a successful mutation updates the visible list.
+<DecisionTree
+  question="What should this component test assert?"
+  items={[
+    { label: 'A user-visible DOM state or interaction changed', value: 'Assert the observable behavior' },
+    { label: 'A reusable pure reducer/selector has important domain rules', value: 'Unit-test that pure logic separately' },
+    { label: 'Only a private Hook variable or render count changed', value: 'Usually do not make that the contract' },
+  ]}
+/>
 
-## 2. Testing Library's philosophy
-
-React Testing Library renders React components into a DOM test environment and provides queries and helpers oriented around user-observable behavior.
+## Testing Library's philosophy
 
 ```tsx
 import { render, screen } from '@testing-library/react';
 
 it('renders the account name', () => {
   render(<AccountCard name="Aisha" />);
-
   expect(screen.getByRole('heading', { name: 'Aisha' })).toBeInTheDocument();
 });
 ```
 
-The important part is not the library syntax. It is the choice to query the heading by semantic role and accessible name.
+The important part is the semantic query, not the library syntax.
 
-## 3. Query priority
+## Query priority
 
-Testing Library recommends queries that resemble how users and assistive technologies find elements.
-
-A practical preference order is:
-
-1. semantic role + accessible name;
-2. label text for form controls;
-3. placeholder/text/display value where appropriate;
-4. alt text for images;
-5. test IDs as a last-resort implementation hook.
+<VisualDiagram title="Prefer queries that follow the accessibility surface">
+  <DiagramStack>
+    <DiagramNode title="1 · Role + accessible name" tone="green">button, heading, dialog, navigation</DiagramNode>
+    <DiagramArrow label="if no suitable role" />
+    <DiagramNode title="2 · Label" tone="teal">forms and named controls</DiagramNode>
+    <DiagramArrow label="then contextual text" />
+    <DiagramNode title="3 · Text / placeholder / display value / alt" tone="blue">when semantically appropriate</DiagramNode>
+    <DiagramArrow label="last resort" />
+    <DiagramNode title="4 · Test ID" tone="orange">structural hook with no meaningful user-facing selector</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 Prefer:
 
@@ -63,49 +85,27 @@ Prefer:
 screen.getByRole('button', { name: 'Save profile' });
 ```
 
-Over:
+over:
 
 ```tsx
 screen.getByTestId('save-button');
 ```
 
-The semantic query checks more of the real UI contract.
+## `getBy`, `queryBy`, and `findBy`
 
-## 4. `getBy`, `queryBy`, and `findBy`
-
-### `getBy...`
-
-Use when the element should exist now.
-
-```tsx
-const button = screen.getByRole('button', { name: 'Submit' });
-```
-
-A missing or ambiguous match throws immediately.
-
-### `queryBy...`
-
-Use when asserting absence.
+<DiagramGrid columns={3}>
+  <DiagramNode title="getBy" tone="green">Should exist now. Missing or ambiguous matches throw.</DiagramNode>
+  <DiagramNode title="queryBy" tone="orange">Use primarily when asserting absence.</DiagramNode>
+  <DiagramNode title="findBy" tone="teal">Should appear asynchronously; await the semantic result.</DiagramNode>
+</DiagramGrid>
 
 ```tsx
+screen.getByRole('button', { name: 'Submit' });
 expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-```
-
-Do not use `queryBy` merely to avoid useful query failures.
-
-### `findBy...`
-
-Use when the element should appear asynchronously.
-
-```tsx
 const alert = await screen.findByRole('alert');
 ```
 
-A `findBy` query combines a semantic query with waiting behavior.
-
-## 5. Role + accessible name is powerful
-
-Consider:
+## Accessible names are part of behavior
 
 ```tsx
 <button aria-label="Delete invoice">
@@ -113,42 +113,31 @@ Consider:
 </button>
 ```
 
-Test:
-
 ```tsx
 screen.getByRole('button', { name: 'Delete invoice' });
 ```
 
-If the accessible name disappears, the test fails—exactly the kind of regression users of assistive technology would experience.
+If the name disappears, the test fails in the same area where assistive-technology users would lose the control's meaning.
 
-## 6. Prefer visible labels for forms
-
-```tsx
-render(
-  <label>
-    Email
-    <input type="email" />
-  </label>,
-);
-
-const input = screen.getByRole('textbox', { name: 'Email' });
-```
-
-or:
+## Prefer visible labels for forms
 
 ```tsx
-const input = screen.getByLabelText('Email');
+<label>
+  Email
+  <input type="email" />
+</label>
 ```
 
-Testing by label encourages the same form association required for accessibility.
+```tsx
+screen.getByRole('textbox', { name: 'Email' });
+// or
+screen.getByLabelText('Email');
+```
 
-## 7. User interactions should resemble user behavior
-
-With `@testing-library/user-event`:
+## Interact the way users do
 
 ```tsx
 const user = userEvent.setup();
-
 render(<LoginForm />);
 
 await user.type(screen.getByLabelText('Email'), 'aisha@example.com');
@@ -156,35 +145,19 @@ await user.type(screen.getByLabelText('Password'), 'correct horse battery staple
 await user.click(screen.getByRole('button', { name: 'Sign in' }));
 ```
 
-User-event interactions model higher-level browser/user behavior better than directly invoking component callbacks.
+<VisualDiagram title="Why user-event is usually stronger than calling handlers">
+  <DiagramRow>
+    <DiagramNode title="User intent" tone="blue">keyboard / pointer behavior</DiagramNode>
+    <DiagramArrow direction="right" label="browser-like interaction" />
+    <DiagramNode title="Rendered wiring" tone="purple">DOM event → React handler</DiagramNode>
+    <DiagramArrow direction="right" label="result" />
+    <DiagramNode title="Visible contract" tone="green">focus · state · output</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Use `fireEvent` when you specifically need lower-level event dispatch behavior that user-event does not model or when testing a rare event directly.
+Use `fireEvent` when you specifically need lower-level event dispatch that `user-event` does not model.
 
-## 8. Do not call event handlers manually
-
-Avoid:
-
-```tsx
-const props = {
-  onSave: vi.fn(),
-};
-
-const component = renderSomethingAndReachIntoInternals();
-component.props.onSave();
-```
-
-Prefer:
-
-```tsx
-await user.click(screen.getByRole('button', { name: 'Save' }));
-expect(onSave).toHaveBeenCalled();
-```
-
-This tests the actual wiring between rendered behavior and the callback.
-
-## 9. Assertions should describe observable state
-
-Useful examples:
+## Assert observable state
 
 ```tsx
 expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
@@ -194,27 +167,20 @@ expect(screen.getByRole('alert')).toHaveTextContent('Email is required');
 expect(screen.getByRole('tab', { name: 'Billing' })).toHaveAttribute('aria-selected', 'true');
 ```
 
-DOM matchers make tests read like UI contracts.
-
-## 10. Test controlled components through the parent contract
+## Controlled components: test through the parent contract
 
 ```tsx
 function ControlledHarness() {
   const [value, setValue] = useState('');
-
   return <SearchBox value={value} onValueChange={setValue} />;
 }
 ```
 
-Then test typing and the visible value.
+Type into the field and assert the visible value. Do not mutate props or private state directly.
 
-Do not mutate props or internal state directly to simulate controlled updates.
+## Custom Hooks: test at the most meaningful boundary
 
-## 11. Test custom Hooks through meaningful behavior
-
-If a Hook exists only to support a component, prefer testing it through that component.
-
-For reusable Hook libraries, a Hook-specific harness can be appropriate.
+If a Hook exists only to support a component, prefer testing through that component. For reusable Hook libraries, a harness is appropriate.
 
 ```tsx
 function DisclosureHarness() {
@@ -229,124 +195,80 @@ function DisclosureHarness() {
 }
 ```
 
-This still asserts on observable behavior.
-
-## 12. Providers belong in test infrastructure
-
-Create a reusable render helper for application-level providers:
+## Providers belong in test infrastructure
 
 ```tsx
 function renderApp(ui: React.ReactElement) {
   return render(
     <ThemeProvider>
-      <RouterProvider router={router}>
-        {ui}
-      </RouterProvider>
+      <RouterProvider router={router}>{ui}</RouterProvider>
     </ThemeProvider>,
   );
 }
 ```
 
-Avoid one giant test wrapper that hides which dependencies a feature actually needs.
+Keep helpers honest about which providers a feature actually needs.
 
-For provider-required Hooks, include a test proving the expected error occurs outside the provider when that runtime guard is part of the public contract.
-
-## 13. Test reducer logic directly when it is valuable pure logic
-
-Reducers are pure transition functions:
+## Pure reducers can have direct unit tests
 
 ```tsx
 expect(reducer({ count: 0 }, { type: 'increment' })).toEqual({ count: 1 });
 ```
 
-Then separately test the component behavior that dispatches actions.
+<VisualDiagram title="These tests protect different failure modes">
+  <DiagramRow>
+    <DiagramNode title="Reducer test" tone="blue">Domain transition is correct</DiagramNode>
+    <DiagramNode title="Component test" tone="purple">User action dispatches and renders correctly</DiagramNode>
+    <DiagramNode title="Browser test" tone="green">Critical journey works in the real platform</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-This is not redundant:
+## Mock boundaries, not the application
 
-- reducer tests verify state transition rules;
-- component tests verify user behavior and integration.
+Good test-double boundaries include network transport, clocks, randomness, unsupported browser APIs, and expensive third-party integrations.
 
-## 14. Mock boundaries, not everything
+Avoid mocking React itself, every child, every custom Hook, or every module in a feature. Excessive mocking creates confidence in a fake architecture.
 
-Good candidates for test doubles:
+<DecisionTree
+  question="Should this dependency be mocked?"
+  items={[
+    { label: 'External network/platform/clock boundary', value: 'Usually a good controlled test double' },
+    { label: 'Simple real child/provider needed by the behavior', value: 'Prefer keeping it real' },
+    { label: 'Third-party integration is expensive or unavailable in the environment', value: 'Mock the integration boundary, not React internals' },
+  ]}
+/>
 
-- network boundary;
-- clock/time;
-- random/UUID source when deterministic output matters;
-- browser API not implemented by the test environment;
-- expensive third-party integration.
+## Network behavior should include failure states
 
-Avoid mocking:
+A network-backed component should exercise loading, success, error, retry, cancellation where relevant, and optimistic behavior.
 
-- React itself;
-- simple child components just to isolate a parent;
-- every custom Hook;
-- all modules in a feature.
+## Snapshot tests are specialized
 
-Excessive mocking creates tests of your mocks instead of your application.
+Large snapshots are easy to approve without understanding the change. Prefer targeted semantic assertions unless the serialized output itself is the behavior you intend to protect.
 
-## 15. Network tests
+## Test IDs can be legitimate
 
-Prefer mocking the network boundary instead of replacing your entire data layer with hand-written function mocks.
+Use a `data-testid` when no meaningful semantic selector exists—for example a canvas marker or purely structural rendering hook. Do not add one automatically to every element.
 
-Then the component can still exercise:
+## Strict Mode
 
-- request state;
-- loading UI;
-- success rendering;
-- error rendering;
-- retry behavior;
-- optimistic updates.
+Strict Mode can expose purity, Effect, ref, and cleanup assumptions.
 
-The exact network-mocking tool depends on the project, but the architectural principle remains the same.
-
-## 16. Snapshot tests are a specialized tool
-
-Large snapshots are easy to approve without understanding changes.
-
-Use them only when the serialized output itself is the behavior you intentionally want to protect.
-
-For normal UI behavior, targeted assertions are usually clearer:
-
-```tsx
-expect(screen.getByRole('heading', { name: 'Orders' })).toBeVisible();
-expect(screen.getAllByRole('row')).toHaveLength(6);
-```
-
-## 17. Test IDs are sometimes legitimate
-
-A `data-testid` can be appropriate when:
-
-- the element has no meaningful semantic query;
-- you are selecting a purely structural rendering marker;
-- a canvas or visualization needs a stable test hook;
-- the accessibility surface is tested separately.
-
-Do not add test IDs automatically to every component.
-
-## 18. Strict Mode and tests
-
-Strict Mode can expose assumptions around render purity, Effects, refs, and cleanup.
-
-Tests should not rely on exact Effect call counts when the real contract is an observable result.
-
-Weak:
+Weak when call count is not the product contract:
 
 ```tsx
 expect(connect).toHaveBeenCalledTimes(1);
 ```
 
-Better when possible:
+Stronger:
 
 ```tsx
 expect(screen.getByText('Connected')).toBeVisible();
 ```
 
-If call counts are genuinely part of an external protocol contract, assert them deliberately and account for the environment.
+When protocol call counts genuinely matter, assert them deliberately and account for the test environment.
 
-## 19. Accessibility assertions are part of behavior testing
-
-Examples:
+## Accessibility assertions are behavior assertions
 
 ```tsx
 expect(screen.getByRole('button', { name: 'Close dialog' })).toBeVisible();
@@ -356,83 +278,37 @@ expect(screen.getByLabelText('Password')).toHaveAttribute(
 );
 ```
 
-A semantic testing strategy naturally catches many accessibility regressions earlier.
+Semantic tests improve accessibility confidence, but automated tests do not replace keyboard, screen-reader, contrast, and real-browser review for complex widgets.
 
-Automated checks are helpful but do not replace keyboard testing, screen-reader testing, or design review for complex widgets.
+## Test names should describe contracts
 
-## 20. Common mistakes
+Good:
 
-### Querying by CSS class
+- `shows validation feedback when email is empty`;
+- `returns focus to the trigger after closing the dialog`;
+- `keeps previous results visible while new search is pending`;
+- `announces a failed save through an alert`.
 
-```tsx
-container.querySelector('.primary-button');
-```
+Avoid names such as `sets isOpen to true` or `calls useEffect` when those are only implementation details.
 
-This couples the test to styling rather than behavior.
+## Review checklist
 
-### Using `queryBy` for everything
-
-It weakens failure messages and hides ambiguity.
-
-### Calling callbacks instead of interacting with UI
-
-This skips the actual rendered contract.
-
-### Mocking children by default
-
-This turns integration bugs into false confidence.
-
-### Asserting internal state
-
-Users observe UI, not Hook variables.
-
-### Using one giant happy-path test
-
-Prefer focused behavior tests with clear failure causes.
-
-## 21. Test naming
-
-Good test names describe behavior:
-
-```text
-shows validation feedback when email is empty
-returns focus to the trigger after closing the dialog
-keeps the previous results visible while the new search is pending
-announces a failed save through an alert
-```
-
-Avoid names tied to implementation:
-
-```text
-sets isOpen to true
-calls useEffect
-runs handleSubmit
-```
-
-## Exercise
-
-Write tests for a profile form that:
-
-- has visible labels;
-- validates required fields;
-- submits through a user interaction;
-- disables the submit button while pending;
-- shows success text after completion;
-- focuses the first invalid field on failure;
-- never queries by class name or private state.
-
-Explain which assertions also protect accessibility behavior.
+1. Can the test locate important UI by role/name or label?
+2. Does interaction happen through rendered behavior?
+3. Are assertions user-observable?
+4. Are mocks placed at real boundaries?
+5. Are failure/pending states covered where relevant?
+6. Does focus/accessibility behavior have protection?
+7. Would an internal refactor leave the test valid if behavior did not change?
 
 ## Interview questions
 
 1. What does it mean to test React through user behavior?
 2. Why is `getByRole` often stronger than `getByTestId`?
 3. When should you use `getBy`, `queryBy`, and `findBy`?
-4. Why are user-event interactions preferable to manually invoking handlers?
+4. Why is `user-event` usually preferable to manually invoking handlers?
 5. Which boundaries are reasonable to mock?
-6. When is a direct reducer unit test useful alongside component tests?
-7. What are the weaknesses of large snapshot tests?
-8. How can semantic Testing Library queries improve accessibility confidence?
+6. Why can a reducer unit test and component test both be valuable?
 
 ## References
 
