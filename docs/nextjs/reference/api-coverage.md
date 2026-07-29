@@ -7,7 +7,7 @@ description: Living coverage map from the current Next.js App Router documentati
 
 This is the handbook's living completeness contract against the **current stable Next.js App Router documentation**.
 
-**Baseline re-verified: July 28, 2026 — Next.js 16.2.12 (`latest`, 16.x Active LTS).**
+**Baseline re-verified: July 29, 2026 — Next.js 16.2.12 (`latest`, 16.x Active LTS).**
 
 Next.js 16.3 remains preview/canary at this snapshot and is not taught as stable.
 
@@ -30,11 +30,11 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | --- | --- | --- |
 | App Router | ✅ | Primary and only router taught |
 | Pages Router | ⛔ | Intentionally excluded except migration/history context |
-| Next.js 16.2 stable behavior | 🟠 | Core routing, data, caching, mutations, HTTP, Proxy, rendering, metadata/SEO, resources, security, error handling, observability, and debugging complete; later phases own performance/testing/ops/architecture/migration/project depth |
+| Next.js 16.2 stable behavior | 🟠 | Core routing, data, caching, mutations, HTTP, Proxy, rendering, metadata/SEO, resources, security, errors, observability, debugging, and performance complete; later phases own testing/ops/architecture/internals/migration/project depth |
 | Next.js 16.3 preview/canary | 🧪 | Track but do not teach as stable until promoted to npm `latest` |
 | React 19.2 stable APIs | 🟠 | React handbook owns React depth; Next.js explains framework integration |
 | React Canary exposed by App Router | 🟠 | Covered only where stable Next.js docs establish a supported framework contract |
-| Vercel/platform-specific behavior | 🟡 | Must remain clearly labeled and separate from Next.js core |
+| Vercel/platform-specific behavior | 🟠 | Platform-specific examples are labelled; deployment/platform depth is Phase 17 |
 
 ## Curriculum progress
 
@@ -55,7 +55,7 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | 12 · Images, Fonts & Scripts | ✅ |
 | 13 · Authentication, Authorization & Security | ✅ |
 | 14 · Errors, Observability & Debugging | ✅ |
-| 15 · Performance | 🟡 |
+| 15 · Performance | ✅ |
 | 16 · Testing | 🟡 |
 | 17 · Deployment & Production Operations | 🟡 |
 | 18 · Architecture & Large Applications | 🟡 |
@@ -72,32 +72,33 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Linking and Navigating | ✅ | Phase 03 |
 | Server and Client Components | ✅ | Phase 04 |
 | Fetching Data | ✅ | Phase 05 |
-| Cache Components | ✅ | Phase 06; rendering depth 10 |
+| Cache Components | ✅ | Phase 06; rendering depth 10; performance depth 15 |
 | Caching and Revalidating | ✅ | Phase 06 |
 | Mutating Data / Server Functions | ✅ | Phase 07 |
 | Route Handlers | ✅ | Phase 08 |
 | Proxy | ✅ | Phase 09 |
-| Streaming / Suspense rendering | ✅ | Phase 10 |
+| Streaming / Suspense rendering | ✅ | Phase 10; performance depth 15 |
 | Metadata and OG Images | ✅ | Phase 11 |
-| Image Optimization | ✅ | Phase 12 |
-| Font Optimization | ✅ | Phase 12 |
-| Script / third-party loading | ✅ | Phase 12; experimental helpers labeled 🧪 |
+| Image Optimization | ✅ | Phase 12; LCP/network depth 15 |
+| Font Optimization | ✅ | Phase 12; CLS/resource depth 15 |
+| Script / third-party loading | ✅ | Phase 12; performance depth 15; experiments labelled 🧪 |
 | Authentication / application security | ✅ | Phase 13 |
 | Error Handling | ✅ | Phase 14 |
-| Deploying | 🟠 | Runtime implications introduced; full Phase 17 |
+| Performance / production optimization | ✅ | Phase 15 |
+| Deploying | 🟠 | Runtime implications through 15; full Phase 17 |
 | Upgrading | 🟠 | Baseline introduced; deep Phase 20 |
 
 ## Routing & File Conventions
 
-| API / convention | Status | Handbook location / notes |
+| API / convention | Status | Notes |
 | --- | --- | --- |
 | `app/` route tree | ✅ | Phases 01–02 |
 | `page`, `layout`, multiple root layouts | ✅ | Phase 02 |
 | `template` | ✅ | Phase 02 |
-| `loading` | ✅ | Phase 02 semantics; rendering depth 10 |
-| `error` | ✅ | Phase 02 baseline; full boundary/recovery model Phase 14 |
-| `global-error` | ✅ | Root-layout recovery and document-shell ownership Phase 14 |
-| `not-found` | ✅ | Phase 02 baseline; control-flow/status/noindex depth Phase 14 |
+| `loading` | ✅ | Phase 02 semantics; rendering depth 10; performance boundary design 15 |
+| `error` | ✅ | Phase 02 baseline; full boundary/recovery model 14 |
+| `global-error` | ✅ | Root-layout recovery Phase 14 |
+| `not-found` | ✅ | Phase 02; control-flow/status/noindex depth 14 |
 | `global-not-found` | 🧪 | Experimental at current baseline |
 | `default` | ✅ | Phase 02 |
 | `route` | ✅ | Phase 08 |
@@ -106,46 +107,43 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | async `params` | ✅ | Phases 02 / 08 / 11 / 13 |
 | `generateStaticParams`, `dynamicParams` | ✅ | Phases 02 / 06 / 08 |
 | Route Groups / Private Folders | ✅ | Phase 02 |
-| Parallel / Intercepting Routes | ✅ | Phase 02; navigation/render depth 03/10 |
-| `favicon.ico`, `icon`, `apple-icon` | ✅ | Phase 11 |
-| generated icon / social image conventions | ✅ | Phase 11 |
-| `manifest`, `robots`, `sitemap` | ✅ | Phase 11 |
-| `unauthorized.js` / `forbidden.js` | 🧪 | Experimental auth interrupts; Phase 13 labels non-production baseline |
-| `instrumentation.ts` / `instrumentation.js` | ✅ | Phase 14 server observability |
-| `instrumentation-client.ts` / `.js` | ✅ | Phase 14 pre-hydration browser observability |
+| Parallel / Intercepting Routes | ✅ | Phase 02; delivery depth 10 |
+| metadata file conventions | ✅ | Phase 11 |
+| `unauthorized.js` / `forbidden.js` | 🧪 | Experimental auth interrupts; Phase 13 |
+| `instrumentation.ts` | ✅ | Phase 14 |
+| `instrumentation-client.ts` | ✅ | Phase 14 |
 
 ## Navigation & URL State
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| `<Link>` / prefetching | ✅ | Phase 03 |
-| `useRouter`, `router.refresh`, `router.prefetch` | ✅ | Phase 03 |
+| `<Link>` / prefetching | ✅ | Phase 03; bandwidth/latency trade-off Phase 15 |
+| `useRouter`, `router.refresh`, `router.prefetch` | ✅ | Phase 03; delivery/performance depth 10/15 |
 | `usePathname`, `useSearchParams`, `useParams` | ✅ | Phase 03 |
 | selected layout segment hooks | ✅ | Phase 03 |
 | `useLinkStatus` | ✅ | Phase 03 |
-| `redirect`, `permanentRedirect` | ✅ | Phases 03 / 07–09 / 13; thrown control-flow/debugging depth Phase 14 |
-| native History API / back-forward / hash / scroll / focus | ✅ | Phase 03 |
+| `redirect`, `permanentRedirect` | ✅ | Phases 03 / 07–09 / 13–14 |
+| native History API / scroll / focus | ✅ | Phase 03 |
 | redirect allow-lists / open-redirect protection | ✅ | Phases 03 / 08 / 13 |
-| route/search params as untrusted input | ✅ | Phases 02–03; security depth 13 |
-| hard vs soft navigation diagnostic distinction | ✅ | Phase 10 behavior; incident/debug depth Phase 14 |
+| hard vs soft navigation distinction | ✅ | Phase 10 behavior; debugging 14; performance 15 |
 
-## Server & Client Component Boundaries
+## Server & Client Components
 
 | Concept / API | Status | Notes |
 | --- | --- | --- |
-| Server Components default | ✅ | Phase 04 |
-| `'use client'` module graph | ✅ | Phase 04; security audit depth 13 |
+| Server Components default | ✅ | Phase 04; client-JS performance depth 15 |
+| `'use client'` module graph | ✅ | Phase 04; security 13; bundle/runtime cost 15 |
 | Server → Client composition | ✅ | Phase 04 |
-| serializable props / minimal DTOs | ✅ | Phase 04; secure DTO depth 13 |
-| context/provider placement | ✅ | Phase 04; auth-context limits Phase 13 |
-| third-party/browser-only integration | ✅ | Phase 04; third-party trust 12–13 |
-| `server-only` / `client-only` | ✅ | Phase 04; secret/data-boundary depth 13 |
-| environment poisoning prevention | ✅ | Phase 04; secrets depth 13 |
-| RSC payload / HTML / hydration | ✅ | Phase 10 |
-| private-data exclusion from RSC/client props | ✅ | Phase 13 |
-| Server Component production error sanitization | ✅ | Phase 14 |
-| `error.digest` correlation | ✅ | Phase 14 |
-| experimental React taint integration | 🧪 | Defense in depth only; Phase 13 |
+| serializable props / minimal DTOs | ✅ | Phase 04; security 13; payload performance 15 |
+| provider placement | ✅ | Phase 04 |
+| third-party/browser-only integration | ✅ | Phase 04; resource/runtime depth 12/15 |
+| `server-only` / `client-only` | ✅ | Phase 04; secrets 13 |
+| RSC payload / HTML / hydration | ✅ | Phase 10; cost separation Phase 15 |
+| Server Components do not hydrate | ✅ | Phases 10 / 15 |
+| Client Component visible-before-interactive model | ✅ | Phase 10; interaction performance 15 |
+| production Server Component error sanitization | ✅ | Phase 14 |
+| React Compiler integration | ✅ | Stable Next config integration covered Phase 15; React internals live in React handbook |
+| React Compiler annotation mode / `use memo` / `use no memo` | ✅ | Phase 15 integration context |
 
 ## Data Fetching & Secure Data Access
 
@@ -153,18 +151,18 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | --- | --- | --- |
 | async Server Components / server data ownership | ✅ | Phase 05 |
 | server `fetch` | ✅ | Phases 05–06 |
-| direct DB/ORM/SDK access | ✅ | Phase 05; DAL/security depth 13 |
-| avoid own Route Handler hop from Server Component | ✅ | Phases 05 / 08 |
-| parallel/sequential fetching / waterfalls | ✅ | Phase 05 |
-| N+1 / batching / bounded fan-out | ✅ | Phase 05 |
-| React `cache` request/render memoization | ✅ | Phase 05; session/DAL dedupe 13 |
+| direct DB/ORM/SDK access | ✅ | Phase 05; security 13; performance 15 |
+| avoid own Route Handler hop from Server Component | ✅ | Phases 05 / 08; latency depth 15 |
+| parallel/sequential fetching / waterfalls | ✅ | Phase 05; performance depth 15 |
+| N+1 / batching / bounded fan-out | ✅ | Phase 05; capacity depth 15 |
+| preload / start-early-await-late | ✅ | Phase 05; critical-path depth 15 |
+| React `cache` request/render memoization | ✅ | Phases 05–06; server performance 15 |
 | external status/schema validation | ✅ | Phase 05 |
-| timeout/retry/failure translation baseline | ✅ | Phase 05; failure-contract/incident depth 14 |
-| Data Access Layer | ✅ | Phase 13 authoritative security boundary |
-| DTO projection / field-level exposure | ✅ | Phases 04–05; security depth 13 |
+| timeout/retry/failure translation | ✅ | Phases 05 / 14; capacity/retry budgets 15 |
+| Data Access Layer | ✅ | Phase 13 |
+| DTO projection / field-level exposure | ✅ | Phase 13; payload cost 15 |
 | tenant/resource-scoped queries | ✅ | Phase 13 |
-| IDOR/BOLA prevention model | ✅ | Phase 13 |
-| secure upstream header/token forwarding | ✅ | Phases 08–09; security depth 13 |
+| DB query/pool/tail-latency performance model | ✅ | Phase 15 |
 
 ## Caching, Rendering & Revalidation
 
@@ -178,379 +176,215 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | `'use cache'`, `cacheLife`, `cacheTag` | ✅ | Phase 06 |
 | `revalidateTag`, `updateTag`, `revalidatePath`, `refresh` | ✅ | Phases 06–07 |
 | `connection()` | ✅ | Phase 06 |
-| `unstable_noStore`, `unstable_cache` migration context | ⚠️ | Phase 06 |
+| previous unstable cache APIs | ⚠️ | Migration context Phase 06 |
 | `'use cache: private'` | 🧪 | Experimental |
 | remote/custom cache handlers | ✅ | Phase 06; ops depth 17 |
-| partial prerendering via Cache Components | ✅ | Phases 06 / 10 |
-| Client Router Cache | ✅ | Phase 06 |
-| cache isolation / tenant-user keys | ✅ | Phase 06 baseline; security depth 13 |
-| permission freshness / private cache threat model | ✅ | Phase 13 |
-| cache incident layer identification | ✅ | Phase 06 baseline; production incident depth Phase 14 |
-| nonce CSP dynamic-rendering implication | ✅ | Phases 09 / 13 |
+| partial prerendering via Cache Components | ✅ | Phases 06 / 10; shell/perceived-performance depth 15 |
+| Client Router Cache | ✅ | Phase 06; navigation performance 15 |
+| cache isolation / tenant-user keys | ✅ | Phase 06 baseline; security 13 |
+| cache hit/miss/stale/revalidation performance model | ✅ | Phase 15 |
+| cache stampede / miss-path capacity reasoning | ✅ | Phase 15 architecture baseline |
+| nonce CSP dynamic-rendering implication | ✅ | Phases 09 / 13; performance trade-off 15 |
 
 ## Mutations, Forms & Server Functions
 
 | Area | Status | Notes |
 | --- | --- | --- |
 | Server Functions / Server Actions terminology | ✅ | Phase 07 |
-| `'use server'` inline/module level | ✅ | Phase 07 |
-| forms / `FormData` / `bind` / `formAction` | ✅ | Phase 07 |
-| progressive enhancement | ✅ | Phase 07 |
+| `'use server'` | ✅ | Phase 07 |
+| forms / `FormData` / progressive enhancement | ✅ | Phase 07 |
 | `useActionState`, `useFormStatus`, `useOptimistic` | ✅ | Phase 07 |
-| expected Action errors as returned state | ✅ | Phase 07 baseline; failure taxonomy depth Phase 14 |
-| validation / mass-assignment prevention | ✅ | Phase 07 baseline; security depth 13 |
-| authentication / resource authorization per action | ✅ | Phase 13 |
-| action POST + Origin/Host protections | ✅ | Phase 07 baseline; security depth 13 |
-| `serverActions.allowedOrigins` | ✅ | Phase 13 |
-| action body-size/upload architecture | ✅ | Phases 07–08; abuse/upload depth 13 |
-| secure action IDs / dead code elimination | ✅ | Phase 13 framework defense in depth |
-| closure encryption security model | ✅ | Phase 13 |
-| `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | ✅ | Phase 13 multi-instance context |
-| mutation concurrency / transactions / idempotency / outbox | ✅ | Phase 07 |
-| mutation failure telemetry / surface naming | ✅ | Phase 14 |
+| expected Action errors as returned state | ✅ | Phases 07 / 14 |
+| validation / authorization / CSRF defenses | ✅ | Phases 07 / 13 |
+| action body-size/upload architecture | ✅ | Phases 07–08 / 13 |
+| concurrency / transactions / idempotency / outbox | ✅ | Phase 07 |
+| mutation critical-path performance | ✅ | Phase 15 baseline |
 | action testing automation | 🟡 | Phase 16 |
 
 ## Route Handlers & HTTP
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| `route.ts`, supported methods, 405, automatic OPTIONS | ✅ | Phase 08 |
+| methods / 405 / automatic OPTIONS | ✅ | Phase 08 |
 | Request / Response / NextRequest / NextResponse | ✅ | Phase 08 |
 | async params / `RouteContext` | ✅ | Phase 08 |
-| JSON/form/text/binary bodies | ✅ | Phase 08 |
-| content type / schema / body-size validation | ✅ | Phase 08; abuse depth 13 |
-| one-read body / clone | ✅ | Phase 08 |
+| request body formats / one-read body | ✅ | Phase 08 |
 | files / downloads / streams | ✅ | Phase 08 |
-| GET not cached by default | ✅ | Phase 08 current behavior |
-| Cache Components Route Handler behavior | ✅ | Phase 08 |
+| GET caching behavior / Cache Components | ✅ | Phase 08 |
 | HTTP cache vs Next cache | ✅ | Phase 08 |
-| CORS / preflight | ✅ | Phase 08; security depth 13 |
-| cookie-auth CSRF model | ✅ | Phase 13 |
-| protected handler 401/403 authorization | ✅ | Phase 13 |
-| expected 4xx vs unexpected 5xx failure contract | ✅ | Phase 14 |
-| stable public error codes / safe 500 body | ✅ | Phase 14 |
-| webhooks / raw signatures / replay / dedupe | ✅ | Phase 08 baseline; security depth 13 |
-| callbacks / open redirects | ✅ | Phase 08 baseline; auth/security depth 13 |
-| rate limits / timeouts / resource bounds | ✅ | Phase 08 baseline; abuse depth 13 |
-| SSRF-safe outbound HTTP | ✅ | Phase 13 |
-| upload/object-storage capability architecture | ✅ | Phase 08 baseline; security depth 13 |
+| CORS / CSRF / authorization | ✅ | Phases 08 / 13 |
+| webhooks / callbacks / uploads / rate limits | ✅ | Phases 08 / 13 |
+| safe HTTP failure envelopes | ✅ | Phase 14 |
+| server latency/body/concurrency/capacity performance | ✅ | Phase 15 |
 
 ## Proxy & Request Pipeline
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| `proxy.ts` current convention | ✅ | Phase 09 |
-| `middleware.ts` rename/migration | ⚠️ | Phase 09 semantics; Phase 20 playbook |
-| request execution order | ✅ | Phase 09 |
-| matcher string/array/object / `has` / `missing` | ✅ | Phase 09 |
-| prefetch/static-asset exclusions | ✅ | Phase 09 |
-| `NextResponse.next()` | ✅ | Phase 09 |
-| request-header forwarding / response-header safety | ✅ | Phase 09 |
+| `proxy.ts` convention / request order | ✅ | Phase 09 |
+| `middleware.ts` migration | ⚠️ | Phase 09; deep Phase 20 |
+| matchers / `has` / `missing` / prefetch filters | ✅ | Phase 09 |
+| `NextResponse.next()` / request header forwarding | ✅ | Phase 09 |
 | redirects / rewrites / RSC-safe rewrites | ✅ | Phase 09 |
-| localization / tenancy routing | ✅ | Phase 09 baseline; secure tenant auth Phase 13 |
-| optimistic auth gating | ✅ | Phase 09; full auth model 13 |
+| localization / tenancy routing | ✅ | Phase 09; security 13 |
+| optimistic auth gating | ✅ | Phases 09 / 13 |
 | Proxy not sole authorization boundary | ✅ | Phase 13 |
-| Node.js runtime / performance constraints | ✅ | Phase 09 |
-| `waitUntil` | ✅ | Phase 09; not durable queue |
-| Proxy test helpers | 🧪 | Experimental; Phase 09 |
-| forwarded-header trust model | ✅ | Phase 13 |
-| Proxy failure classification / request-front-door observability | ✅ | Phase 14 |
+| Node runtime / `waitUntil` | ✅ | Phase 09 |
+| Proxy test helpers | 🧪 | Experimental |
+| matcher/front-door latency budget | ✅ | Phase 09 baseline; performance review 15 |
 
 ## Rendering, Suspense & Navigation Delivery
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| RSC payload / HTML / hydration | ✅ | Phase 10 |
-| hard vs soft navigation | ✅ | Phases 03 / 10; debugging depth 14 |
-| `loading.tsx` / manual Suspense | ✅ | Phase 10 |
-| progressive streaming | ✅ | Phase 10 |
-| Cache Components shells / dynamic holes | ✅ | Phase 10 |
+| RSC payload / HTML / hydration | ✅ | Phase 10; cost measurement 15 |
+| hard vs soft navigation | ✅ | Phases 03 / 10 / 15 |
+| `loading.tsx` / manual Suspense | ✅ | Phase 10; boundary performance design 15 |
+| progressive streaming | ✅ | Phase 10; perceived vs total work distinction 15 |
+| Cache Components shells / dynamic holes | ✅ | Phase 10; performance depth 15 |
 | Promise streaming / React `use()` | ✅ | Phase 10 |
-| Client Component hydration / visible-before-interactive | ✅ | Phase 10 |
-| streamed errors / retries / buffering | ✅ | Phase 10; incident depth 14 |
-| streamed not-found status caveat | ✅ | Phase 14 |
-| hydration mismatch production diagnosis | ✅ | Phase 10 baseline; debugging depth 14 |
-| auth checks in preserved layouts caveat | ✅ | Phase 13 |
-| protected/private output serialization model | ✅ | Phase 13 |
+| hydration mismatch diagnosis | ✅ | Phases 10 / 14 |
+| streamed not-found/status behavior | ✅ | Phase 14 |
+| RSC payload size / client-prop minimization | ✅ | Phase 15 |
+| infrastructure buffering impact on streaming | ✅ | Phase 10 baseline; performance diagnosis 15 |
 
-## Metadata & SEO
+## Metadata, Images, Fonts, Scripts & Browser Resources
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| static `metadata` / `generateMetadata` | ✅ | Phase 11 |
-| inheritance / shallow merging / file precedence | ✅ | Phase 11 |
-| titles / descriptions / canonical / alternates / `metadataBase` | ✅ | Phase 11 |
-| Open Graph / Twitter / generated images | ✅ | Phase 11 |
-| icons / manifest | ✅ | Phase 11 |
-| robots / sitemap / `generateSitemaps` | ✅ | Phase 11 |
-| JSON-LD / script-context-safe serialization | ✅ | Phase 11; XSS depth 13 |
-| viewport APIs | ✅ | Phase 11 |
-| streaming metadata / HTML-limited bots | ✅ | Phase 11 |
-| `notFound()` injected `noindex` behavior | ✅ | Phase 14 |
-| metadata private-data exclusion | ✅ | Phase 13 |
+| Metadata API / social / robots / sitemap / JSON-LD | ✅ | Phase 11 |
+| metadata performance / crawler timing | ✅ | Phase 11 baseline; performance integration 15 |
+| `next/image` geometry / responsive candidates / placeholders | ✅ | Phase 12 |
+| Image `preload` | ✅ | Current Next.js 16 API; LCP strategy Phase 15 |
+| Image `priority` | ⚠️ | Deprecated in Next.js 16 |
+| image source/security/cache controls | ✅ | Phase 12; security 13 |
+| LCP image discovery/priority/candidate diagnosis | ✅ | Phase 15 |
+| `next/font` Google/local / variable/static / fallbacks | ✅ | Phase 12 |
+| font preload / metric adjustment / CLS diagnosis | ✅ | Phases 12 / 15 |
+| `next/script` strategies | ✅ | Phase 12; critical-path strategy 15 |
+| third-party/analytics consent/trust | ✅ | Phases 12–13 |
+| third-party performance inventory / facades / long-task reasoning | ✅ | Phase 15 |
+| resource hints / origin/connection/request-waterfall reasoning | ✅ | Phases 11–12; performance depth 15 |
+| `inlineCss` | 🧪 | Experimental; measured first-load vs cache-reuse trade-off Phase 15 |
+| `@next/third-parties` | 🧪 | Experimental at current baseline |
+| Script `worker` strategy | 🧪 | Experimental and not App Router production baseline |
 
-## Images
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| `next/image` source/geometry/responsive semantics | ✅ | Phase 12 |
-| `fill`, `sizes`, `srcset`, placeholders | ✅ | Phase 12 |
-| `preload` | ✅ | Current Next.js 16 API |
-| `priority` | ⚠️ | Deprecated in Next.js 16 |
-| `quality` / `images.qualities` | ✅ | Phase 12 |
-| `remotePatterns` / `localPatterns` | ✅ | Phase 12 |
-| `images.domains` | ⚠️ | Deprecated in favor of `remotePatterns` |
-| private/local IP blocking | ✅ | Phase 12; SSRF context Phase 13 |
-| redirect/source-response/disk-cache limits | ✅ | Phase 12 |
-| SVG protections | ✅ | Phase 12 baseline; active-content depth 13 |
-| authenticated source/custom loader architecture | ✅ | Phase 12; SSRF/open-proxy depth 13 |
-| `getImageProps`, `<picture>`, art direction | ✅ | Phase 12 |
-| static export image strategy | ✅ | Phase 12 |
-| image incident debugging / cache-source-CDN diagnosis | ✅ | Phase 12 baseline; production workflow 14 |
-
-## Fonts
+## Authentication, Sessions & Security
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| `next/font/google`, `next/font/local` | ✅ | Phase 12 |
-| variable/static fonts / weights / styles / subsets | ✅ | Phase 12 |
-| `display`, fallbacks, metric adjustment | ✅ | Phase 12 |
-| preload scope / CSS variables / design tokens | ✅ | Phase 12 |
-| multilingual font ownership | ✅ | Phase 12 |
-| CSP/cross-origin font considerations | ✅ | Phase 12 baseline; security depth 13 |
-| font failure / preload / CLS diagnostic pipeline | ✅ | Phase 12 baseline; incident observability Phase 14 |
-
-## Scripts & Third Parties
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| `next/script` strategies and route/layout scope | ✅ | Phase 12 |
-| inline script IDs / lifecycle callbacks | ✅ | Phase 12 |
-| `beforeInteractive`, `afterInteractive`, `lazyOnload` | ✅ | Phase 12 |
-| `worker` strategy | 🧪 | Experimental and not an App Router production primitive |
-| nonce / CSP integration | ✅ | Phase 12 baseline; strict CSP depth 13 |
-| analytics pageviews / consent / data minimization | ✅ | Phase 12 baseline; privacy/security depth 13 |
-| tag-manager supply-chain trust | ✅ | Phase 13 |
-| third-party failure isolation / facades | ✅ | Phase 12 |
-| third-party browser error classification | ✅ | Phase 14 |
-| `@next/third-parties` | 🧪 | Experimental at 16.2.12 snapshot |
-
-## Authentication, Sessions & Authorization
-
-| Area | Status | Handbook location / notes |
-| --- | --- | --- |
-| authentication vs session management vs authorization | ✅ | Phase 13 |
-| authentication library/provider recommendation | ✅ | Phase 13 |
-| sign-up / sign-in form Server Action model | ✅ | Phase 13 |
-| server-side credential input validation | ✅ | Phase 13 |
-| password hashing/storage architecture | ✅ | Phase 13 provider/library-oriented guidance |
-| OAuth/OIDC callbacks / state / PKCE concept | ✅ | Phase 13 |
-| safe post-auth redirects | ✅ | Phase 13 |
-| verification / reset / magic-link lifecycle | ✅ | Phase 13 |
-| MFA / step-up / re-authentication architecture | ✅ | Phase 13 |
-| stateless sessions | ✅ | Phase 13 |
-| database sessions | ✅ | Phase 13 |
-| session renewal / expiry / rotation / revocation | ✅ | Phase 13 |
-| multi-device / logout-all model | ✅ | Phase 13 |
-| secure cookie attributes | ✅ | Phase 13 |
-| async `cookies()` read/write boundaries | ✅ | Phases 07–09; auth depth 13 |
-| optimistic Proxy checks | ✅ | Phases 09 / 13 |
-| secure DAL authorization | ✅ | Phase 13 |
-| layouts not sufficient as sole auth boundary | ✅ | Phase 13 |
-| page / leaf-component auth checks | ✅ | Phase 13 |
-| client auth context limitations | ✅ | Phase 13 |
-| resource/tenant authorization | ✅ | Phase 13 |
-| RBAC plus ownership/relationship policy | ✅ | Phase 13 |
-| 401 vs 403 / optional 404 hiding policy | ✅ | Phase 13 |
-| auth failure/security-event observability | ✅ | Phase 13 schema baseline; implementation architecture Phase 14 |
-| `unauthorized()`, `forbidden()`, `authInterrupts` | 🧪 | Experimental, not recommended production baseline |
-
-## Browser & Application Security
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| CSRF mental model | ✅ | Phase 13 |
-| Server Action Origin/Host protection | ✅ | Phase 13 |
-| Route Handler cookie-CSRF strategy | ✅ | Phase 13 |
-| CORS is not authentication | ✅ | Phases 08 / 13 |
-| XSS / React escaping / dangerous sinks | ✅ | Phase 13 |
-| HTML/rich-content sanitization boundary | ✅ | Phase 13 |
-| URL/javascript-scheme validation | ✅ | Phase 13 |
-| CSP | ✅ | Phase 13 |
-| per-request CSP nonce via Proxy | ✅ | Phases 09 / 13 |
-| nonce CSP → dynamic rendering | ✅ | Phase 13 |
-| static CSP headers | ✅ | Phase 13 |
-| CSP SRI | 🧪 | Experimental webpack-only App Router feature |
-| third-party script/tag-manager trust | ✅ | Phase 13 |
-| framing / `frame-ancestors` / form/base restrictions | ✅ | Phase 13 |
-| broader security headers | ✅ | Phase 13 baseline; deployment enforcement depth 17 |
-| telemetry redaction / header-body minimization | ✅ | Phase 14 |
-
-## Secrets & Data Exposure
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| environment variables server-only by default | ✅ | Phase 13 |
-| `NEXT_PUBLIC_` browser/build-time exposure | ✅ | Phase 13 |
-| `.env*` source-control policy | ✅ | Phase 13 |
-| `server-only` privileged module guard | ✅ | Phases 04 / 13 |
-| Client Component/RSC serialization leaks | ✅ | Phase 13 |
-| Server Action return-value exposure | ✅ | Phase 13 |
-| Route Handler response minimization | ✅ | Phase 13 |
-| metadata/log/URL/analytics data exposure | ✅ | Phase 13 |
-| observability request/header/body redaction | ✅ | Phase 14 |
-| secret rotation model | ✅ | Phase 13 |
-| multi-tenant provider-secret authorization | ✅ | Phase 13 |
-| React taint APIs | 🧪 | Experimental defense in depth, not replacement for DTOs |
-
-## SSRF, Uploads, Webhooks & Abuse
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| server-side URL/SSRF threat model | ✅ | Phase 13 |
-| allow-listed outbound targets / redirect validation | ✅ | Phase 13 |
-| private network / metadata target protection | ✅ | Phase 13 |
-| image optimizer SSRF controls | ✅ | Phases 12 / 13 |
-| upload media/type/size/path threat model | ✅ | Phase 13 |
-| direct object-storage upload capability | ✅ | Phases 08 / 13 |
-| active SVG / isolated serving strategy | ✅ | Phases 12 / 13 |
-| quarantine/scanning architecture | ✅ | Phase 13 baseline |
-| webhook raw signature verification | ✅ | Phases 08 / 13 |
-| webhook replay / dedupe / idempotency | ✅ | Phases 07–08 / 13 |
-| application/platform rate limiting | ✅ | Phases 08–09 / 13 |
-| distributed rate-limit storage | ✅ | Phase 13 |
-| fail-open/fail-closed policy | ✅ | Phase 13 |
-| body/time/concurrency/cost bounds | ✅ | Phase 13 |
-| SQL/NoSQL/command/path injection baseline | ✅ | Phase 13 |
-| API key generation/scope/revocation model | ✅ | Phase 13 |
-| abuse/security event observability boundary | ✅ | Phase 13 baseline; telemetry architecture 14 |
-
-## Security Auditing & Threat Modeling
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| assets / actors / entry points / trust boundaries | ✅ | Phase 13 |
-| `use client` security audit | ✅ | Phase 13 |
-| `use server` security audit | ✅ | Phase 13 |
-| dynamic params / Proxy / Route Handler audit | ✅ | Phase 13 |
-| DAL/database access audit | ✅ | Phase 13 |
-| cache-security review | ✅ | Phase 13 |
-| auth lifecycle review | ✅ | Phase 13 |
-| security event/audit-log schema baseline | ✅ | Phase 13; observability implementation 14 |
-| incident runbooks for secret/authz/XSS/credential abuse | ✅ | Phase 13 |
-| dependency/supply-chain baseline | ✅ | Phase 13; ops depth 17 |
-| framework patch policy | ✅ | Phase 13; upgrade depth 20 |
+| auth vs session vs authorization | ✅ | Phase 13 |
+| provider/library recommendation | ✅ | Phase 13 |
+| password / OAuth/OIDC / recovery / MFA | ✅ | Phase 13 |
+| stateless/database session lifecycle | ✅ | Phase 13 |
+| secure cookie attributes / renewal / rotation / revocation | ✅ | Phase 13 |
+| optimistic Proxy checks vs secure DAL checks | ✅ | Phase 13 |
+| RBAC + ownership/resource/tenant authorization | ✅ | Phase 13 |
+| CSRF / XSS / CSP / secrets | ✅ | Phase 13 |
+| SSRF / uploads / webhooks / rate limits / API keys | ✅ | Phase 13 |
+| security auditing / threat modeling | ✅ | Phase 13 |
+| auth/session lookup performance and request dedupe | ✅ | Phase 15 without weakening authorization |
+| `unauthorized()`, `forbidden()`, `authInterrupts` | 🧪 | Experimental, not production baseline |
+| React taint APIs | 🧪 | Defense in depth only |
 
 ## Errors, Observability & Debugging
 
 | Area / API | Status | Notes |
 | --- | --- | --- |
-| expected errors vs uncaught exceptions | ✅ | Phase 14 |
-| expected Server Action failures as returned state | ✅ | Phase 14, building on Phase 07 |
-| expected HTTP/domain failures vs 5xx exceptions | ✅ | Phase 14 |
-| framework control flow vs application exception | ✅ | Phase 14 |
-| `error.tsx` nested route boundaries | ✅ | Phase 14 |
-| `global-error.tsx` root-layout recovery | ✅ | Phase 14 |
-| `error.reset()` stable recovery model | ✅ | Phase 14 |
-| production Server Component error sanitization | ✅ | Phase 14 |
-| `error.digest` client/server correlation | ✅ | Phase 14 |
-| same-segment layout boundary caveat | ✅ | Phase 14 |
-| Client Component event-handler failure ownership | ✅ | Phase 14 |
-| `notFound()` / `not-found.tsx` | ✅ | Phase 14 depth |
-| `notFound()` injected `noindex` | ✅ | Phase 14 |
-| streamed not-found 200 vs non-streamed 404 semantics | ✅ | Phase 14 |
-| `redirect()` / `permanentRedirect()` thrown control flow | ✅ | Phase 14 |
-| narrow `try/catch` around framework signals | ✅ | Phase 14 |
-| `unstable_rethrow` | 🧪 | Explicitly unstable; not production-first structure |
-| `unstable_catchError` | 🧪 | Experimental; stable route boundary remains baseline |
-| `unstable_retry` | 🧪 | Experimental recovery API |
-| Route Handler safe failure envelopes / machine codes | ✅ | Phase 14 |
-| Server Action/Route Handler/Client/Proxy failure contracts | ✅ | Phase 14 |
-| timeout, retry-storm, cancellation, race-control reasoning | ✅ | Phase 14 baseline; performance/ops depth later |
-| `after()` for non-blocking logging/analytics | ✅ | Stable; Phase 14; not durable queue |
-| `after()` behavior on error/redirect/notFound outcomes | ✅ | Phase 14 |
-| `instrumentation.ts` / `register()` | ✅ | Stable server initialization; Phase 14 |
-| runtime-specific instrumentation / `NEXT_RUNTIME` | ✅ | Phase 14 |
-| `onRequestError` | ✅ | Stable server request-error hook; Phase 14 |
-| `onRequestError` route type/path/render context | ✅ | Phase 14 |
-| structured server logs / request IDs / trace IDs / release IDs | ✅ | Phase 14 |
-| `instrumentation-client.ts` | ✅ | Pre-hydration browser instrumentation; Phase 14 |
-| global browser error capture | ✅ | Phase 14 |
-| unhandled promise rejection capture | ✅ | Phase 14 |
-| `onRouterTransitionStart` | ✅ | Phase 14 |
-| hard vs soft navigation breadcrumbs | ✅ | Phase 14 |
-| browser telemetry privacy / sampling / release skew | ✅ | Phase 14 |
-| `useReportWebVitals` reporting pipeline baseline | ✅ | Phase 14 pipeline; metric interpretation Phase 15 |
-| OpenTelemetry built-in integration model | ✅ | Phase 14 |
-| `@vercel/otel` convenience integration | ✅ | Phase 14; provider-neutral distinction explicit |
-| manual Node OpenTelemetry SDK setup | ✅ | Phase 14 runtime-specific context |
-| custom spans / trace propagation | ✅ | Phase 14 |
-| logs vs metrics vs traces vs error events | ✅ | Phase 14 |
-| sampling / exporters / Collector architecture | ✅ | Phase 14 |
-| source-map release correlation | ✅ | Phase 14 |
-| `productionBrowserSourceMaps` | ✅ | Phase 14; public-serving trade-off documented |
-| `next info` / `next info --verbose` | ✅ | Phase 14 diagnostics |
-| `next build --debug` | ✅ | Phase 14 diagnostics |
-| `next build --debug-prerender` | ✅ | Phase 14; diagnostic artifact, not normal deploy |
-| `next build --debug-build-paths` | ✅ | Phase 14 targeted build debugging |
-| Node inspector via `NODE_OPTIONS` | ✅ | Phase 14 controlled debugging |
-| next.config `logging` | ✅ | Phase 14; development debugging, not production log architecture |
-| cache-layer incident diagnosis | ✅ | Phase 14 |
-| streaming/proxy/runtime incident diagnosis | ✅ | Phase 14 |
-| SLI / SLO / error-budget architecture | ✅ | Phase 14 |
-| actionable alerts / ownership / runbooks | ✅ | Phase 14 |
-| release/region/runtime correlation | ✅ | Phase 14 |
-| telemetry redaction / retention / deduplication | ✅ | Phase 14 |
-| provider outage / observability failure policy | ✅ | Phase 14 |
+| expected failures vs uncaught exceptions vs control flow | ✅ | Phase 14 |
+| `error.tsx` / `global-error.tsx` / stable `reset()` | ✅ | Phase 14 |
+| Server Component error sanitization / digest | ✅ | Phase 14 |
+| `notFound()` / redirects / streamed status behavior | ✅ | Phase 14 |
+| per-surface Server Action / Route Handler / Client / Proxy failure contracts | ✅ | Phase 14 |
+| stable `after()` | ✅ | Phase 14; not durable queue |
+| `instrumentation.ts` / `register()` | ✅ | Phase 14 |
+| `onRequestError` | ✅ | Phase 14 |
+| `instrumentation-client.ts` / `onRouterTransitionStart` | ✅ | Phase 14 |
+| browser error/unhandled-rejection capture | ✅ | Phase 14 |
+| OpenTelemetry / custom spans / trace propagation | ✅ | Phase 14 |
+| source maps / `next info` / build debug flags / inspector | ✅ | Phase 14 |
+| SLI/SLO/error budgets / alerts / runbooks | ✅ | Phase 14 |
+| `unstable_catchError`, `unstable_retry`, `unstable_rethrow` | 🧪 | Experimental/unstable; stable boundary baseline retained |
 
 ## Performance
 
-| Area | Status | Notes |
+| Area / API | Status | Notes |
 | --- | --- | --- |
-| data waterfalls / N+1 | ✅ | Phase 05 |
-| cache architecture | ✅ | Phase 06 |
-| mutation critical path | ✅ | Phase 07 baseline |
-| HTTP/Proxy critical path | ✅ | Phases 08–09 baseline |
-| RSC/hydration timing separation | ✅ | Phase 10 baseline |
-| metadata/crawler critical path | ✅ | Phase 11 baseline |
-| image/font/script resource performance | ✅ | Phase 12 baseline |
-| auth/session lookup cost / Proxy optimistic-check rationale | ✅ | Phase 13 baseline |
-| security-vs-performance CSP nonce trade-off | ✅ | Phase 13 |
-| latency/error-rate telemetry foundation | ✅ | Phase 14 |
-| Web Vitals / profiling / budgets / RUM | 🟠 | Reporting pipeline exists; deep Phase 15 |
-| bundle/server/client cost measurement | 🟡 | Phase 15 |
+| measurement → diagnosis → change → measurement loop | ✅ | Phase 15 |
+| route/user-journey performance budgets | ✅ | Phase 15 |
+| field vs lab data | ✅ | Phase 15 |
+| Core Web Vitals LCP / INP / CLS | ✅ | Phase 15 |
+| p75 field evaluation | ✅ | Phase 15 |
+| supporting TTFB / FCP / legacy FID context | ✅ | Phase 15 |
+| `useReportWebVitals` | ✅ | Phase 14 pipeline baseline; full RUM design Phase 15 |
+| stable callback / duplicate-report avoidance | ✅ | Phase 15 |
+| RUM route/release/device segmentation | ✅ | Phase 15 |
+| privacy-safe performance telemetry | ✅ | Phases 14–15 |
+| Lighthouse production-like lab testing | ✅ | Phase 15 |
+| `experimental.webVitalsAttribution` | 🧪 | Experimental diagnostic option; not production baseline |
+| Server Component client-JS reduction | ✅ | Phase 15 |
+| `'use client'` bundle-cost review | ✅ | Phase 15 |
+| App Router client lazy loading / `next/dynamic` / `React.lazy` | ✅ | Phase 15 |
+| interaction-triggered `import()` | ✅ | Phase 15 |
+| `ssr: false` constraints/trade-offs | ✅ | Phase 04 baseline; performance depth 15 |
+| Server Component dynamic-import/client splitting caveat | ✅ | Phase 15 current-doc nuance |
+| Turbopack `next experimental-analyze` | 🧪 | Experimental analyzer; Phase 15 |
+| `@next/bundle-analyzer` | ✅ | Webpack analyzer path; Phase 15 |
+| `experimental.optimizePackageImports` | 🧪 | Experimental; built-in optimized library context Phase 15 |
+| `serverExternalPackages` performance context | ✅ | Advanced server bundle/cold-start trade-off Phase 15 |
+| Next.js `reactCompiler` integration | ✅ | Phase 15 |
+| manual memoization vs compiler/evidence | ✅ | Phase 15 |
+| hydration / visible-before-interactive cost | ✅ | Phases 10 / 15 |
+| INP input-handler-render-paint decomposition | ✅ | Phase 15 |
+| React `useTransition` / `useDeferredValue` responsiveness integration | ✅ | Phase 15; React API depth in React handbook |
+| list/DOM virtualization and bounded DOM reasoning | ✅ | Phase 15 |
+| browser layout/paint/animation/event-frequency reasoning | ✅ | Phase 15 |
+| memory profiling / long-lived soft-navigation sessions | ✅ | Phase 15 |
+| image/font/CSS/script network critical path | ✅ | Phase 15 |
+| third-party performance governance | ✅ | Phase 15 |
+| compression/cache/origin/redirect waterfall diagnosis | ✅ | Phase 15 |
+| database query/pool/connection performance | ✅ | Phase 15 |
+| upstream timeout/retry/capacity reasoning | ✅ | Phase 15 |
+| cold/warm runtime startup model | ✅ | Phase 15 baseline; deployment mechanics Phase 17 |
+| p50/p95/p99 tail-latency reasoning | ✅ | Phase 15 |
+| concurrency/backpressure/load-shedding concepts | ✅ | Phase 15 baseline; production ops Phase 17 |
+| Chrome/browser performance traces | ✅ | Phase 15 workflow |
+| React Profiler role | ✅ | Phase 15 integration; React profiler depth in React handbook |
+| bundle before/after regression workflow | ✅ | Phase 15 |
+| memory/CPU profiling workflow | ✅ | Phase 15 |
+| CI performance/bundle budget concepts | ✅ | Phase 15; automated test implementation Phase 16 |
+| performance SLOs / release canary comparison | ✅ | Phase 15 architecture review |
+| security/reliability/capacity performance trade-offs | ✅ | Phase 15 |
 
 ## Testing & Production
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| production Docusaurus build validation | ✅ | Handbook workflow through Phase 13; Phase 14 gated by current PR CI |
+| production Docusaurus build validation | ✅ | Handbook workflow through Phase 14; Phase 15 gated by current PR CI |
 | component/data/cache/action/API/Proxy scenarios | 🟠 | Failure cases defined; automation Phase 16 |
-| hard/soft navigation and streaming/hydration tests | 🟠 | Defined Phase 10; automation Phase 16 |
-| metadata/resource smoke matrices | ✅ | Phases 11–12 specifications; automation Phase 16 |
-| auth lifecycle/security regression matrix | ✅ | Phase 13 specification; automation Phase 16 |
-| cross-tenant authorization tests | ✅ | Phase 13 specification; automation Phase 16 |
-| CSRF/XSS/SSRF/webhook/upload/rate-limit test cases | ✅ | Phase 13 specification; automation Phase 16 |
-| error-boundary/reset/global-error test matrix | ✅ | Phase 14 specification; automation Phase 16 |
-| Route Handler/action failure-contract test matrix | ✅ | Phase 14 specification; automation Phase 16 |
-| server/client instrumentation smoke tests | ✅ | Phase 14 specification; automation Phase 16 |
-| observability runbook/alert validation model | ✅ | Phase 14 baseline; ops automation later |
-| Node/self-hosting/serverless/adapters | 🟠 | Runtime implications introduced; full Phase 17 |
+| hard/soft navigation and streaming/hydration tests | 🟠 | Behavior defined; automation Phase 16 |
+| metadata/resource smoke matrices | ✅ | Phases 11–12 specification; automation Phase 16 |
+| auth/security regression matrices | ✅ | Phase 13 specification; automation Phase 16 |
+| error/instrumentation test matrices | ✅ | Phase 14 specification; automation Phase 16 |
+| Web Vitals/RUM validation matrix | ✅ | Phase 15 specification; automated enforcement Phase 16 |
+| bundle-size/performance-budget CI design | ✅ | Phase 15 design; automation Phase 16 |
+| synthetic performance regression workflow | ✅ | Phase 15 design; automation Phase 16 |
+| Node/self-hosting/serverless/adapters | 🟠 | Runtime/capacity implications introduced; full Phase 17 |
 
 ## Deployment & Operations
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| `next build` / `next start` | 🟠 | Phase 01 baseline; production-debug usage Phase 14; full ops 17 |
-| reverse proxy / Docker / self-hosting | 🟠 | Runtime/security implications 08–14; full 17 |
+| `next build` / `next start` | 🟠 | Baseline Phase 01; production debug/performance use 14–15; full ops 17 |
+| reverse proxy / Docker / self-hosting | 🟠 | Runtime/security/performance implications through 15; full 17 |
 | environment configuration / runtime env | 🟠 | Security semantics Phase 13; ops depth 17 |
-| multi-instance caches / Server Action key consistency | 🟠 | Phases 06 / 13; ops depth 17 |
-| DB connection/serverless constraints | ✅ | Phase 08 baseline; ops depth 17 |
-| queues/outbox/durable side effects | 🟠 | Phases 07–08 / 13; durability distinction Phase 14; ops 17 |
-| object storage / signed uploads-downloads | 🟠 | Phases 08 / 12–13; ops implementation 17 |
-| WAF/CDN/rate-limit ownership | 🟠 | Security architecture Phase 13; deployment depth 17 |
-| secret management / rotation operations | 🟠 | Security policy Phase 13; operations depth 17 |
-| telemetry Collector/exporter deployment | 🟠 | Architecture Phase 14; full deployment ownership Phase 17 |
+| multi-instance caches / action keys | 🟠 | Phases 06 / 13; ops depth 17 |
+| DB connection/serverless constraints | ✅ | Baseline 08; performance capacity depth 15; ops depth 17 |
+| queues/outbox/durable side effects | 🟠 | Phase 07; durability distinction 14; ops 17 |
+| object storage / signed uploads-downloads | 🟠 | Phases 08 / 12–13; ops 17 |
+| WAF/CDN/rate-limit ownership | 🟠 | Security 13; performance context 15; deployment depth 17 |
+| telemetry Collector/exporter deployment | 🟠 | Architecture 14; full deployment ownership 17 |
+| CDN/compression/stream-buffering verification | 🟠 | Performance diagnosis Phase 15; implementation/operations Phase 17 |
 | rollback / health / graceful shutdown / CI-CD | 🟡 | Phase 17 |
 
 ## Architecture & Internals
@@ -558,29 +392,30 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | Area | Status | Notes |
 | --- | --- | --- |
 | route/layout/URL ownership | ✅ | Phases 02–03 |
-| server/client module ownership | ✅ | Phase 04 |
-| server data/dependency ownership | ✅ | Phase 05 |
+| server/client module ownership | ✅ | Phase 04; performance boundary 15 |
+| server data/dependency ownership | ✅ | Phase 05; performance critical path 15 |
 | cache freshness/invalidation ownership | ✅ | Phase 06 |
-| mutation/action boundary ownership | ✅ | Phase 07 |
+| mutation/action ownership | ✅ | Phase 07 |
 | HTTP endpoint ownership | ✅ | Phase 08 |
 | request-front-door ownership | ✅ | Phase 09 |
 | rendering/delivery ownership | ✅ | Phase 10 |
 | metadata/public URL identity | ✅ | Phase 11 |
-| browser resource ownership | ✅ | Phase 12 |
+| browser resource ownership | ✅ | Phase 12; performance depth 15 |
 | identity/session/authorization ownership | ✅ | Phase 13 |
 | failure/recovery/telemetry ownership | ✅ | Phase 14 |
+| performance budget/cost ownership | ✅ | Phase 15 |
 | shared DAL/domain-command pattern | ✅ | Phases 07–08 / 13 |
-| feature/vertical-slice architecture | 🟠 | Examples through 14; deep Phase 18 |
-| monorepos/shared packages | 🟠 | Runtime/security boundaries introduced; deep 18 |
-| multi-tenancy | ✅ | Security isolation Phase 13; large-app architecture Phase 18 |
-| RSC/build internals | 🟠 | Mental models through 14; deep 19 |
+| feature/vertical-slice architecture | 🟠 | Examples through 15; deep Phase 18 |
+| monorepos/shared packages | 🟠 | Package/runtime boundaries introduced; deep 18 |
+| multi-tenancy | ✅ | Security isolation 13; performance query/cache context 15; large-app architecture 18 |
+| RSC/build internals | 🟠 | Mental models through 15; deep 19 |
 
 ## Upgrades & Migration
 
 | Area | Status | Notes |
 | --- | --- | --- |
 | App Router upgrade workflow | 🟠 | Phase 01 / deep 20 |
-| client-heavy SPA → server-first migration | 🟠 | Phases 04–14; deep 20 |
+| client-heavy SPA → server-first migration | 🟠 | Phases 04–15; deep 20 |
 | previous cache model → Cache Components | 🟠 | Phase 06; deep 20 |
 | old standalone PPR/dynamicIO/useCache flags | ⚠️ | Migration-only |
 | old GET Route Handler cached-by-default assumptions | ⚠️ | Phase 08 teaches current behavior |
@@ -590,44 +425,50 @@ A topic becomes ✅ only after the handbook teaches the useful mental model, cur
 | `images.domains` | ⚠️ | Prefer `remotePatterns` |
 | `onLoadingComplete` | ⚠️ | Prefer `onLoad` |
 | `next/legacy/image` | ⚠️ | Migration-only |
-| auth experiments (`authInterrupts`, taint) | 🧪 | Do not treat as stable migration target |
-| unstable error helpers | 🧪 | Do not migrate stable `error.tsx`/`reset()` architecture solely to experimental APIs |
+| auth experiments | 🧪 | Do not treat as stable migration target |
+| unstable error helpers | 🧪 | Stable `error.tsx`/`reset()` remains baseline |
+| experimental performance knobs/analyzers | 🧪 | Do not make migration correctness depend on analyzer/attribution/inline CSS/optimizePackageImports experiments |
 | Pages Router / Pages API Routes | ⛔ | Outside handbook scope except contextual comparison |
 
 ## Phase 10 completion note
 
-Phase 10 is complete for stable App Router rendering delivery: RSC/HTML/hydration, hard vs soft navigation, Suspense/loading, Cache Components shells/dynamic holes, `use()` Promise streaming, Client Component hydration, streamed failures, and rendering diagnostics/design review.
+Phase 10 is complete for stable App Router rendering delivery: RSC/HTML/hydration, hard vs soft navigation, Suspense/loading, Cache Components shells/dynamic holes, Promise streaming, Client Component hydration, streamed failures, and rendering design review.
 
 ## Phase 11 completion note
 
-Phase 11 is complete for stable metadata and SEO behavior: Metadata API ownership/merging, canonical/alternate URL identity, social metadata and generated images, icons/manifests, robots/sitemaps, JSON-LD, viewport, streaming metadata, Cache Components interactions, and production crawler/SEO architecture.
+Phase 11 is complete for stable metadata and SEO behavior: Metadata API ownership/merging, canonical/alternate identity, social metadata and images, icons/manifests, robots/sitemaps, JSON-LD, viewport, streaming metadata, Cache Components interactions, and SEO architecture.
 
 ## Phase 12 completion note
 
-Phase 12 is complete for stable resource optimization: modern `next/image`, image security/cache controls, responsive delivery, static-export strategy, `next/font`, `next/script`, third-party/analytics architecture, resource hints, and production resource debugging/design review.
+Phase 12 is complete for stable resource optimization: modern `next/image`, image security/cache controls, responsive delivery, static-export strategy, `next/font`, `next/script`, third-party/analytics architecture, resource hints, and production resource debugging.
 
 ## Phase 13 completion note
 
-Phase 13 is complete for stable App Router authentication, authorization, and application-security architecture: identity/session/authorization separation; provider/library ownership; authentication flows; secure session lifecycle; server-only DAL/DTO authorization; tenant/resource isolation; Server Action/Route Handler/Proxy security; CSRF/XSS/CSP/secrets; SSRF/uploads/webhooks/rate limits; and threat modeling/auditing/incident response.
+Phase 13 is complete for stable authentication, authorization, and application security: identity/session/authorization separation; authentication flows; secure sessions; DAL/DTO authorization; tenant/resource isolation; Server Action/Route Handler/Proxy security; CSRF/XSS/CSP/secrets; SSRF/uploads/webhooks/rate limits; and threat modeling/incident response.
 
 ## Phase 14 completion note
 
-Phase 14 is complete for stable App Router error handling, observability, and production debugging because it teaches:
+Phase 14 is complete for stable error handling, observability, and production debugging: expected vs unexpected failures, route/global boundaries, framework control flow, surface-specific failure contracts, `after()`, server/client instrumentation, `onRequestError`, OpenTelemetry, source maps/CLI debugging, SLOs/alerts/runbooks, and telemetry privacy/deduplication.
 
-- expected failures vs uncaught exceptions vs framework control flow, including Server Action return-state errors and explicit Route Handler HTTP failure contracts
-- `error.tsx`, nested boundary placement, `global-error.tsx`, stable `reset()`, production Server Component error sanitization and digest correlation
-- `notFound()` / `not-found.tsx`, injected `noindex`, streaming status-code timing, redirects, and safe handling of thrown framework control flow
-- Server Action, Route Handler, Server Component, Client Component, Proxy, integration, timeout/retry/race, and post-response failure ownership
-- stable `after()` as non-blocking response-lifecycle work while explicitly distinguishing it from durable background-job architecture
-- `instrumentation.ts`, `register()`, runtime-specific setup, stable `onRequestError`, route/render context, safe structured logging, request/trace/release correlation, redaction, and duplicate-report prevention
-- `instrumentation-client.ts`, pre-hydration setup, global browser errors, unhandled promise rejections, `onRouterTransitionStart`, navigation breadcrumbs, browser privacy, sampling, and source-map/release identity
-- provider-neutral OpenTelemetry architecture, `@vercel/otel` convenience, manual runtime-specific SDK setup, custom spans, trace propagation, metrics/logs/traces, sampling, collectors/exporters, and telemetry failure policy
-- production-mode diagnosis with `next info`, `next build --debug`, `--debug-prerender`, `--debug-build-paths`, Node inspector, source-map strategy, hard-vs-soft navigation analysis, cache/stream/Proxy evidence, and incident workflows
-- SLI/SLO/error-budget design, actionable alerts, runbooks, release/region/runtime correlation, retention, privacy, deduplication, and senior observability architecture review
+Experimental error helpers remain labelled 🧪 and do not replace the stable production baseline.
 
-Experimental `unstable_catchError`, `unstable_retry`, and `unstable_rethrow` remain labeled 🧪 and do not replace the stable production baseline.
+## Phase 15 completion note
 
-Phase 15 now owns Performance depth. Testing automation, deployment operations, large-application architecture, internals, migration, projects, and interview systems remain later phases.
+Phase 15 is complete for production performance engineering because it teaches:
+
+- a whole-system critical-path model spanning network/CDN/server/data/RSC/HTML/resources/hydration/interaction, with route-level budgets and measurement-first optimization
+- current Core Web Vitals LCP/INP/CLS, p75 field interpretation, TTFB/FCP supporting signals, RUM segmentation, privacy-safe telemetry, Lighthouse/lab workflows, and `useReportWebVitals`
+- server/RSC performance: dependency graphs, waterfalls, bounded parallelism, direct data access, request memoization vs persistent caching, hit/miss analysis, Cache Components shells, Suspense streaming, payload minimization, dynamic-request placement, and auth/DB/upstream latency
+- client JavaScript performance: narrow `'use client'` boundaries, server-side transformations, route-specific bundle analysis, App Router lazy loading, interaction-triggered imports, `ssr: false` trade-offs, stable React Compiler integration, and evidence-driven memoization
+- hydration/INP runtime performance: long tasks, render blast radius, state placement, transitions/deferred values, bounded DOM/list virtualization, layout/animation/event work, long-lived soft-navigation memory, and browser/React profiling
+- resource/network performance: LCP image discovery/candidates, font/CLS behavior, CSS/script critical paths, third-party governance/facades, hints, compression, caching, origins, redirects, and cold-vs-warm waterfalls
+- backend/capacity performance: database query/pool latency, upstream deadlines, retry budgets, CPU/memory, cold starts, body buffering, backpressure, cache stampedes, tail latency, and region/path reasoning
+- production diagnosis: Performance/Network panels, React Profiler, bundle analysis, traces, CPU/memory profiles, release bisect, stable experiment methodology, CI budget design, and incident runbooks
+- senior architecture review: user-journey SLOs, critical-path classification, server-vs-browser and render-vs-stream-vs-defer decisions, cache correctness, reliability/capacity trade-offs, canary comparisons, ownership, and regression governance
+
+Experimental performance facilities including Turbopack `experimental-analyze`, `webVitalsAttribution`, `inlineCss`, and `optimizePackageImports` remain labelled 🧪 rather than being taught as required production primitives.
+
+Phase 16 now owns automated Testing depth. Deployment operations, large-application architecture, internals, migration, projects, and interview systems remain later phases.
 
 ## Completion rule
 
