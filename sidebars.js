@@ -145,6 +145,17 @@ const nextjsItems = [
     'nextjs/deployment-and-production-operations/health-readiness-scaling-databases-queues-and-background-work',
     'nextjs/deployment-and-production-operations/ci-cd-migrations-rollbacks-observability-and-incident-operations',
     'nextjs/deployment-and-production-operations/static-export-adapters-platforms-and-production-design-review',
+  ], { collapsed: true }),
+  category('18 · Architecture & Large Applications', [
+    'nextjs/architecture-and-large-applications/architecture-mental-model-boundaries-ownership-and-dependency-direction',
+    'nextjs/architecture-and-large-applications/project-structure-colocation-route-groups-and-vertical-slices',
+    'nextjs/architecture-and-large-applications/domain-dal-commands-dtos-and-server-client-boundaries',
+    'nextjs/architecture-and-large-applications/monorepos-shared-packages-design-systems-and-build-boundaries',
+    'nextjs/architecture-and-large-applications/multitenancy-routing-data-cache-jobs-and-isolation-architecture',
+    'nextjs/architecture-and-large-applications/bff-apis-integrations-events-jobs-and-service-boundaries',
+    'nextjs/architecture-and-large-applications/feature-flags-configuration-state-and-cross-cutting-governance',
+    'nextjs/architecture-and-large-applications/multi-zones-microfrontends-team-ownership-and-independent-delivery',
+    'nextjs/architecture-and-large-applications/reference-architecture-adrs-governance-and-large-app-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
