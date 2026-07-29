@@ -4,318 +4,160 @@ description: A structured React interview rehearsal system with timed rounds, in
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Mock Interview Practice
 
-This section turns the handbook into an **interview simulator**.
+The Question Bank builds breadth. Mock interviews build pressure handling, prioritization, communication, debugging, and decision-making under time constraints.
 
-The question bank is for breadth. Mock interviews are for pressure, prioritization, explanation quality, and decision-making under time constraints.
+## What a mock trains
 
-## What this section trains
+<VisualDiagram title="Interview performance is knowledge under pressure">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Interpret" tone="blue">identify what is actually being tested</DiagramNode>
+    <DiagramNode title="Explain" tone="cyan">short answer → mental model → example</DiagramNode>
+    <DiagramNode title="Reason" tone="purple">trade-offs · uncertainty · clarifying questions</DiagramNode>
+    <DiagramNode title="Debug" tone="orange">evidence before guesses</DiagramNode>
+    <DiagramNode title="Code" tone="green">state · semantics · edge cases · testability</DiagramNode>
+    <DiagramNode title="Classify" tone="slate">React vs JS vs browser vs network vs backend</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-A strong interview performance is more than knowing the answer.
+## Conceptual answer structure
 
-You must be able to:
+<LifecycleBar items={[
+  { label: 'Direct answer', tone: 'blue' },
+  { label: 'Mental model', tone: 'cyan' },
+  { label: 'Small example', tone: 'purple' },
+  { label: 'Trade-off / failure', tone: 'orange' },
+  { label: 'Production application', tone: 'green' },
+]} />
 
-- identify what the interviewer is really testing;
-- give the short answer first;
-- explain the mental model accurately;
-- support the answer with production examples;
-- discuss trade-offs instead of claiming one universal solution;
-- debug from evidence instead of guessing;
-- communicate uncertainty cleanly;
-- ask good clarifying questions;
-- write code while narrating decisions;
-- recognize when the problem is React, JavaScript, browser behavior, networking, backend design, or architecture;
-- adjust depth based on the interview level.
-
-## The interview answer structure
-
-For most conceptual questions, use this structure:
-
-```text
-1. DIRECT ANSWER
-2. MENTAL MODEL
-3. SMALL EXAMPLE
-4. TRADE-OFF / FAILURE MODE
-5. PRODUCTION APPLICATION
-```
-
-Example:
-
-**Question:** Why can `setCount(count + 1)` three times still produce only one increment?
-
-**Good answer shape:**
-
-1. Each render sees state as a snapshot.
-2. All three handlers close over the same `count` value from that render.
-3. React queues the updates and batches them.
-4. If the next state depends on previous queued state, use a functional updater.
-5. This matters in event handlers, async callbacks, and reusable update helpers.
+Do not spend five minutes on history before answering the question.
 
 ## Scoring dimensions
 
-Score every mock interview from **1 to 5** in each category.
+Score each dimension from **1–5**:
 
 | Score | Meaning |
 | --- | --- |
-| 1 | Incorrect, unsafe, or unable to proceed |
-| 2 | Partial knowledge but major gaps |
-| 3 | Correct working answer with limited depth |
-| 4 | Strong senior-level answer with trade-offs and production reasoning |
-| 5 | Staff-level clarity: correct, scoped, evidence-driven, and architecturally aware |
+| 1 | incorrect, unsafe, or unable to proceed |
+| 2 | partial knowledge with major gaps |
+| 3 | correct working answer with limited depth |
+| 4 | strong senior answer with trade-offs and production reasoning |
+| 5 | staff-level clarity: correct, scoped, evidence-driven, architecturally aware |
 
-### 1. Correctness
+<VisualDiagram title="Score the dimensions separately so weakness is diagnosable">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Correctness" tone="blue">React behavior is accurate</DiagramNode>
+    <DiagramNode title="Mental model" tone="cyan">can explain why</DiagramNode>
+    <DiagramNode title="Communication" tone="purple">direct, structured, scoped</DiagramNode>
+    <DiagramNode title="Debugging" tone="orange">evidence → hypothesis → verification</DiagramNode>
+    <DiagramNode title="Trade-offs" tone="green">constraints and alternatives</DiagramNode>
+    <DiagramNode title="Code quality" tone="slate">ownership · a11y · races · tests</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Can you explain React behavior accurately?
+Common correctness traps include treating Effects as lifecycle callbacks, Context as a complete state manager, Suspense as a fetch API, concurrency as parallel JavaScript, RSC as SSR, TypeScript as runtime validation, or Compiler as removing identity/performance reasoning.
 
-Watch for errors such as:
+## Debugging process
 
-- treating Effects as lifecycle callbacks;
-- saying Context is a state manager;
-- saying Suspense fetches data;
-- saying concurrency means parallel JavaScript execution;
-- treating Server Components as SSR;
-- assuming TypeScript validates runtime input;
-- saying React Compiler removes all need for identity awareness.
+<LifecycleBar items={[
+  { label: 'Reproduce', tone: 'red' },
+  { label: 'Classify symptom', tone: 'orange' },
+  { label: 'Collect evidence', tone: 'blue' },
+  { label: 'Form hypothesis', tone: 'purple' },
+  { label: 'Isolate variable', tone: 'cyan' },
+  { label: 'Confirm root cause', tone: 'slate' },
+  { label: 'Fix + regression test', tone: 'green' },
+]} />
 
-### 2. Mental models
+Strong candidates do not immediately rewrite the code.
 
-Can you explain **why** React behaves that way?
+## Trade-off reasoning
 
-Core mental models expected repeatedly:
+<DecisionTree
+  question="Does your answer sound universal?"
+  items={[
+    { label: 'Always use Context/Redux/memo/RSC/etc.', value: 'Add ownership, frequency, latency, failure, team, and rollout constraints' },
+    { label: 'One option is preferred for stated constraints', value: 'Explain why and name a plausible alternative' },
+    { label: 'You can state what would change your decision', value: 'Strong senior signal' },
+  ]}
+/>
 
-- state is a snapshot;
-- keys define identity among siblings;
-- rendering is calculation, commit changes the host environment;
-- Effects synchronize with external systems;
-- refs are mutable escape hatches;
-- reducers model state transitions;
-- Context distributes values;
-- Suspense is a readiness/reveal boundary;
-- transitions mark non-urgent rendering work;
-- React Compiler is a build-time optimizer;
-- Server Components and SSR solve different problems.
+## Timed modes
 
-### 3. Communication
+<VisualDiagram title="Choose a round that matches the target role">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="30 min screen" tone="blue">fundamentals · Hooks/state · debugging/coding · questions</DiagramNode>
+    <DiagramNode title="60 min senior" tone="purple">mental models · state architecture · performance/debugging · design</DiagramNode>
+    <DiagramNode title="90 min deep round" tone="green">architecture · live debugging · system design · leadership</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Do you answer the question before expanding?
+## Solo practice loop
 
-A weak answer often starts with five minutes of history.
+<LifecycleBar items={[
+  { label: 'Choose unseen prompt', tone: 'blue' },
+  { label: 'Start timer', tone: 'cyan' },
+  { label: 'Answer/code aloud', tone: 'purple' },
+  { label: 'Score by dimension', tone: 'orange' },
+  { label: 'Study weak model', tone: 'red' },
+  { label: 'Retry later', tone: 'green' },
+]} />
 
-A stronger pattern is:
+Recording yourself is useful because communication problems are hard to notice while speaking.
 
-> “The short answer is X. The reason is Y. Here is an example. The main caveat is Z.”
+## Interviewer/AI practice behavior
 
-### 4. Debugging process
+A useful interviewer asks one question at a time, interrupts vague claims, requests examples, changes one requirement, challenges assumptions, asks for production consequences, and does not reveal the answer immediately.
 
-Strong candidates do not immediately rewrite code.
+## Pressure chains
 
-They usually:
+<VisualDiagram title="Practice chains, not isolated definitions">
+  <LifecycleBar items={[
+    { label: 'What is useEffect?', tone: 'blue' },
+    { label: 'When should you not use it?', tone: 'cyan' },
+    { label: 'Why can it loop?', tone: 'purple' },
+    { label: 'How do you debug production?', tone: 'orange' },
+    { label: 'What does Strict Mode expose?', tone: 'red' },
+    { label: 'Can architecture remove the Effect?', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-```text
-reproduce
-  ↓
-classify the symptom
-  ↓
-collect evidence
-  ↓
-form hypotheses
-  ↓
-isolate variables
-  ↓
-confirm root cause
-  ↓
-fix
-  ↓
-add regression protection
-```
+## Candidate questions also communicate level
 
-### 5. Trade-off reasoning
-
-Avoid answers like:
-
-- “Always use Context.”
-- “Never use memo.”
-- “Redux is better.”
-- “Server Components are always faster.”
-- “useEffect is bad.”
-
-Senior answers depend on:
-
-- ownership;
-- update frequency;
-- latency;
-- failure modes;
-- team boundaries;
-- observability;
-- accessibility;
-- testability;
-- rollout and reversibility.
-
-### 6. Code quality
-
-For coding rounds, score:
-
-- correctness;
-- state ownership;
-- naming;
-- accessibility;
-- race handling;
-- cleanup;
-- error states;
-- edge cases;
-- unnecessary Effects;
-- unnecessary abstractions;
-- testability.
-
-## Timed interview modes
-
-### 30-minute screen
-
-Use for:
-
-- recruiter technical screens;
-- mid-level React roles;
-- fast company qualification rounds.
-
-Typical structure:
-
-```text
-5 min   fundamentals
-10 min  Hooks/state/rendering
-10 min  debugging or coding
-5 min   candidate questions
-```
-
-### 60-minute senior React round
-
-```text
-10 min  React mental models
-15 min  Hooks/state architecture
-15 min  performance/debugging
-15 min  coding/design exercise
-5 min   candidate questions
-```
-
-### 90-minute deep technical round
-
-```text
-15 min  React fundamentals under pressure
-20 min  architecture/state/data flow
-20 min  live debugging
-20 min  system design
-10 min  leadership/trade-offs
-5 min   candidate questions
-```
-
-## How to run a mock interview alone
-
-Do not read the answer first.
-
-For each prompt:
-
-1. start a timer;
-2. answer aloud;
-3. write code if requested;
-4. record the answer if possible;
-5. compare against the evaluation rubric;
-6. mark weak areas;
-7. retry the same prompt 24–48 hours later.
-
-## How to run with another person or AI interviewer
-
-The interviewer should:
-
-- ask only one question at a time;
-- interrupt vague answers with follow-ups;
-- request examples;
-- introduce one changing requirement;
-- challenge unsupported assumptions;
-- ask for production consequences;
-- avoid immediately revealing the answer.
-
-## Pressure-question patterns
-
-Interviewers frequently deepen a basic question like this:
-
-```text
-What is useEffect?
-       ↓
-When should you not use it?
-       ↓
-What causes an infinite loop?
-       ↓
-How would you debug one in production?
-       ↓
-How does Strict Mode change what you observe?
-       ↓
-How would you redesign the feature to remove the Effect?
-```
-
-Practice chains, not isolated definitions.
-
-## Candidate-question score
-
-The questions you ask interviewers also communicate seniority.
-
-Strong examples:
-
-- How is frontend architecture ownership divided across teams?
-- What production problems are currently hardest for the frontend team?
-- How do you measure frontend performance and regressions?
-- How are design-system changes governed?
-- How does the team decide between local state, server state, URL state, and shared client state?
-- What does a strong first six months look like for this role?
+Ask about architecture ownership, current production problems, performance measurement, design-system governance, state/data decisions, team expectations, and what strong impact looks like in the first months.
 
 ## Readiness thresholds
 
-### Mid-level ready
+<DecisionTree
+  question="Which level are you ready to rehearse under pressure?"
+  items={[
+    { label: 'Consistent 3+ on fundamentals/Hooks/forms/testing/debugging', value: 'Mid-level ready' },
+    { label: 'Consistent 4+ on ownership, Effects, concurrency, performance, a11y, production debugging', value: 'Senior ready' },
+    { label: '4+ plus platform, migration, observability, security, rollout, organizational trade-offs', value: 'Lead/staff ready' },
+  ]}
+/>
 
-You can consistently score **3+** on fundamentals, Hooks, state, forms, testing, and normal debugging.
+## Continuous practice loop
 
-### Senior ready
+<LifecycleBar items={[
+  { label: 'Question bank', tone: 'blue' },
+  { label: 'Mock interview', tone: 'purple' },
+  { label: 'Score weakness', tone: 'red' },
+  { label: 'Return to handbook', tone: 'cyan' },
+  { label: 'Repeat round', tone: 'orange' },
+  { label: 'Change constraints / raise level', tone: 'green' },
+]} />
 
-You can consistently score **4+** on:
-
-- state ownership;
-- Effect design;
-- performance diagnosis;
-- concurrency/Suspense reasoning;
-- testing strategy;
-- production debugging;
-- accessibility;
-- architecture trade-offs.
-
-### Lead/staff ready
-
-You can score **4+** while also reasoning about:
-
-- multiple teams;
-- public contracts;
-- migration sequencing;
-- observability;
-- platform constraints;
-- security boundaries;
-- failure isolation;
-- rollout and rollback;
-- organizational trade-offs.
-
-## Practice loop
-
-```text
-question bank
-    ↓
-mock interview
-    ↓
-score weak dimensions
-    ↓
-return to handbook chapter
-    ↓
-repeat the same interview
-    ↓
-change constraints
-    ↓
-run a harder level
-```
-
-The goal is not memorized wording. The goal is a stable mental model that survives follow-up questions.
+The target is not a memorized perfect answer. It is reliable reasoning that survives follow-ups, changing requirements, and time pressure.

@@ -4,235 +4,179 @@ sidebar_position: 6
 description: A lead and staff-level mock interview focused on architecture, platform strategy, migration, governance, observability, and technical leadership.
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Lead / Staff React Architecture Interview
 
-This round evaluates whether you can improve systems larger than a single feature or team.
+This round evaluates whether you can improve systems larger than one feature or team.
 
 ## Interview plan
 
-```text
-0–15 min   architecture diagnosis
-15–35 min  platform/system design
-35–50 min  migration strategy
-50–65 min  performance/reliability governance
-65–80 min  organizational trade-offs
-80–90 min  leadership scenarios
-```
+<LifecycleBar items={[
+  { label: '0–15 diagnose architecture', tone: 'blue' },
+  { label: '15–35 platform/system design', tone: 'cyan' },
+  { label: '35–50 migration', tone: 'purple' },
+  { label: '50–65 reliability/performance', tone: 'orange' },
+  { label: '65–80 org trade-offs', tone: 'red' },
+  { label: '80–90 leadership', tone: 'green' },
+]} />
 
 ## Architecture diagnosis
 
-### Scenario
+Scenario: 12 teams, one global store, hundreds of shared components, shared-package regressions, slow local development, duplicated fetching, inconsistent accessibility, no performance budgets, and inconsistent telemetry.
 
-A React application has:
+<DecisionTree
+  question="What do you change first?"
+  items={[
+    { label: 'Rewrite immediately', value: 'Weak — establish evidence first' },
+    { label: 'Map dependencies/ownership/incidents/performance/adoption', value: 'Strong first move' },
+    { label: 'Prioritize by leverage and reversibility', value: 'Then choose enabling boundaries' },
+  ]}
+/>
 
-- 12 frontend teams;
-- one shared global store;
-- 400+ shared components;
-- frequent regressions after shared-package releases;
-- slow local development;
-- duplicated fetching logic;
-- inconsistent accessibility;
-- no frontend performance budgets;
-- inconsistent error telemetry.
+<VisualDiagram title="A staff diagnosis maps both software and organization">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Dependencies" tone="blue">feature/package graph</DiagramNode>
+    <DiagramNode title="Ownership" tone="cyan">teams + public contracts</DiagramNode>
+    <DiagramNode title="Reliability" tone="red">incidents + regressions</DiagramNode>
+    <DiagramNode title="Performance" tone="orange">field baselines + bottlenecks</DiagramNode>
+    <DiagramNode title="Quality" tone="purple">a11y + tests + consistency</DiagramNode>
+    <DiagramNode title="Delivery" tone="green">build/release/change failure rate</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-**Question:** What do you change first?
+## Platform design
 
-Strong staff answer does **not** propose a rewrite.
+Potential platform ownership includes app shell, routing conventions, auth/session primitives, telemetry SDK, design system, accessibility contracts, boundary patterns, data-access conventions, flags, test utilities, build/deploy tooling, and performance guardrails.
 
-It should first establish evidence:
+<VisualDiagram title="Platform creates paved roads; product teams own domain behavior">
+  <DiagramRow>
+    <DiagramNode title="Platform" tone="slate">reusable capabilities + standards</DiagramNode>
+    <DiagramArrow direction="right" label="enables" />
+    <DiagramNode title="Product teams" tone="blue">business workflows + domain decisions</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-- dependency graph;
-- ownership map;
-- change failure rate;
-- shared-package coupling;
-- performance baselines;
-- common incident classes;
-- design-system adoption gaps;
-- data/state ownership inconsistencies.
-
-Then prioritize changes by leverage and reversibility.
-
-## Platform design prompt
-
-Design a frontend platform for multiple product teams.
-
-Possible platform responsibilities:
-
-- application shell;
-- routing conventions;
-- authentication/session boundary;
-- observability SDK;
-- design-system primitives;
-- accessibility contracts;
-- error/loading boundary patterns;
-- API/data access conventions;
-- feature flagging;
-- testing utilities;
-- build/deploy tooling;
-- performance budgets.
-
-### Follow-up
-
-**What should the platform team *not* own?**
-
-Strong answer avoids centralizing domain logic. Product teams should retain ownership of business behavior and feature-specific decisions within well-defined platform contracts.
+A platform anti-pattern is absorbing feature logic merely because central ownership appears cleaner.
 
 ## Migration scenario
 
-A large React 17 application must move to modern React while continuing weekly releases.
+A React 17 application must modernize while shipping weekly.
 
-Candidate should discuss:
+<LifecycleBar items={[
+  { label: 'Characterize behavior', tone: 'blue' },
+  { label: 'Audit dependencies', tone: 'cyan' },
+  { label: 'Modernize root/removed APIs', tone: 'purple' },
+  { label: 'Use Strict Mode findings', tone: 'orange' },
+  { label: 'Migrate incrementally', tone: 'slate' },
+  { label: 'Observe production', tone: 'red' },
+  { label: 'Rollback/expand', tone: 'green' },
+]} />
 
-- characterization tests;
-- dependency compatibility audit;
-- root API migration;
-- Strict Mode findings;
-- legacy Context/refs/test tooling;
-- incremental package/feature migration;
-- compiler adoption as a separate decision;
-- production telemetry;
-- rollback strategy;
-- avoiding simultaneous architecture rewrite + version migration unless justified.
+Treat Compiler adoption or major architecture rewrites as separate decisions unless evidence justifies combining them.
 
 ## Shared state governance
 
-**Question:** How would you stop every team from adding more state to the global store?
-
-Strong answer can include:
-
-- published state taxonomy;
-- local/URL/server/external/shared-client categories;
-- architectural review for global ownership;
-- selective subscription patterns;
-- feature-module boundaries;
-- examples and tooling;
-- migration plan for existing over-globalized state.
+<DecisionTree
+  question="How do you stop the global store from becoming the default?"
+  items={[
+    { label: 'Ban one library', value: 'Insufficient — ownership problem remains' },
+    { label: 'Publish state taxonomy and examples', value: 'Create default decision rules' },
+    { label: 'Require review for truly global ownership', value: 'Control blast radius' },
+    { label: 'Migrate legacy state behind feature seams', value: 'Reduce centralization incrementally' },
+  ]}
+/>
 
 ## Design-system governance
 
-Scenario:
+When teams bypass shared components, distinguish missing primitives from rigid APIs, adoption problems, process issues, and domain-specific needs.
 
-Teams bypass the design system because shared components are too rigid.
-
-Ask:
-
-- how do you determine whether the problem is adoption, API design, process, or missing primitives?
-- when should a component be primitive, compound, headless, or feature-owned?
-- how do you evolve contracts without breaking dozens of teams?
-
-Strong answers include:
-
-- usage data;
-- RFC/ADR process;
-- deprecation windows;
-- codemods where useful;
-- accessibility tests;
-- versioning/change communication;
-- escape hatches with governance.
+<VisualDiagram title="Evolve shared contracts without trapping product teams">
+  <LifecycleBar items={[
+    { label: 'Collect usage/evidence', tone: 'blue' },
+    { label: 'RFC/ADR', tone: 'cyan' },
+    { label: 'Design accessible contract', tone: 'purple' },
+    { label: 'Version/deprecate', tone: 'orange' },
+    { label: 'Codemod/migrate', tone: 'green' },
+    { label: 'Measure adoption/regressions', tone: 'slate' },
+  ]} />
+</VisualDiagram>
 
 ## Reliability scenario
 
-A release causes a 5% increase in blank-page sessions, but no single error dominates.
+A release increases blank-page sessions by 5%, with no dominant error.
 
-Staff-level investigation:
+<VisualDiagram title="Triage the release across failure dimensions">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Release" tone="blue">compare baseline/new version</DiagramNode>
+    <DiagramNode title="Root errors" tone="red">caught/uncaught/recoverable</DiagramNode>
+    <DiagramNode title="Assets" tone="orange">chunk/network/version skew</DiagramNode>
+    <DiagramNode title="Hydration" tone="purple">recoverable mismatch segments</DiagramNode>
+    <DiagramNode title="Third parties" tone="slate">SDK/provider failure</DiagramNode>
+    <DiagramNode title="Flags/segments" tone="cyan">browser · locale · device · experiment</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-- release correlation;
-- root-level error telemetry;
-- chunk-loading/network failures;
-- hydration recoverable errors;
-- browser/locale/device segmentation;
-- third-party failures;
-- feature flags;
-- rollback/disable criteria;
-- source maps and traces.
+Define rollback/disable criteria before chasing every individual symptom.
 
 ## Performance governance
 
-**Question:** How do you make frontend performance an organizational capability instead of one optimization sprint?
+<LifecycleBar items={[
+  { label: 'Representative journeys', tone: 'blue' },
+  { label: 'Field metrics', tone: 'cyan' },
+  { label: 'Budgets/guardrails', tone: 'purple' },
+  { label: 'CI/regression checks', tone: 'orange' },
+  { label: 'Ownership dashboards', tone: 'green' },
+  { label: 'Exception/escalation process', tone: 'slate' },
+]} />
 
-Strong answer:
+Performance becomes an organizational capability when measurements and ownership persist after the optimization sprint.
 
-- define representative user journeys;
-- collect field metrics;
-- set budgets/guardrails;
-- integrate regression checks into CI where appropriate;
-- use ownership dashboards;
-- profile before optimization;
-- establish bundle/data/render cost visibility;
-- create escalation process for exceptions;
-- review architecture causing repeated regressions.
+## Server Components prompt
 
-## Server Components architecture prompt
+Leadership wants organization-wide RSC adoption because “it improves performance.”
 
-A company wants to adopt Server Components across all products because leadership heard they improve performance.
+<DecisionTree
+  question="How should a staff engineer respond?"
+  items={[
+    { label: 'Adopt everywhere', value: 'Challenge the unsupported premise' },
+    { label: 'Identify measured bottlenecks and target benefits', value: 'Start from product constraints' },
+    { label: 'Assess framework/server/cache/serialization/testing costs', value: 'Model adoption cost' },
+    { label: 'Pilot a suitable route and compare telemetry', value: 'Evidence-driven rollout' },
+  ]}
+/>
 
-Strong answer should challenge the premise:
+## Shared component conflict
 
-- identify current bottlenecks;
-- distinguish RSC from SSR;
-- assess framework/tooling compatibility;
-- consider server/client boundaries and serialization;
-- consider caching/data ownership;
-- migration complexity;
-- team knowledge;
-- observability/testing changes;
-- pilot in a suitable area before organization-wide policy.
+Two teams need incompatible behavior from one shared table.
 
-## Organizational scenario
-
-Two teams need incompatible changes to the same shared table component.
-
-Weak answer:
-
-> “Make the component support both.”
-
-Strong answer asks:
-
-- are both needs truly primitive concerns?
-- should shared behavior be decomposed?
-- should feature-specific wrappers own differences?
-- would a headless primitive reduce coupling?
-- what is the long-term public contract?
+<DecisionTree
+  question="Must the shared component support both requirements?"
+  items={[
+    { label: 'Both needs are stable primitive behavior', value: 'Maybe evolve/decompose the shared contract' },
+    { label: 'Differences are domain-specific', value: 'Feature wrappers should own them' },
+    { label: 'Shared state/behavior can be headless', value: 'Separate behavioral primitive from presentation when justified' },
+  ]}
+/>
 
 ## Leadership questions
 
-1. Tell me about an architecture decision you reversed.
-2. How do you disagree with another senior engineer?
-3. How do you balance local team speed with platform consistency?
-4. How do you decide when technical debt becomes a roadmap item?
-5. How do you mentor engineers without becoming a decision bottleneck?
-6. What should require an RFC vs an ordinary pull request?
-7. How do you handle a migration that teams keep postponing?
-8. How do you measure whether a platform investment actually worked?
+Practice decisions you reversed, disagreement with senior peers, platform consistency vs team speed, debt prioritization, mentoring without bottlenecks, RFC thresholds, delayed migrations, and measuring platform value.
 
 ## Staff scoring signals
 
-### Strong
+<DiagramGrid columns={2}>
+  <DiagramNode title="Strong" tone="green">diagnose before prescribe · explicit ownership · reversible migrations · telemetry · organizational cost · rollout/deprecation plans</DiagramNode>
+  <DiagramNode title="Weak" tone="red">quick rewrites · architecture=folders · centralized decisions · no success metrics · migration cost ignored</DiagramNode>
+</DiagramGrid>
 
-- diagnoses before prescribing;
-- makes ownership explicit;
-- separates platform from domain concerns;
-- prefers incremental/reversible migrations;
-- uses telemetry and measurable outcomes;
-- understands organizational cost as part of architecture;
-- creates paved roads without blocking legitimate exceptions;
-- plans deprecation and rollout, not just target architecture.
-
-### Weak
-
-- proposes rewrites quickly;
-- treats architecture as folder structure;
-- centralizes all decisions;
-- cannot define success metrics;
-- ignores migration cost;
-- optimizes technical elegance over team/product constraints.
-
-## Final exercise
-
-Give the candidate this statement:
-
-> “We need one standard React architecture for every frontend team.”
-
-Ask them to respond.
-
-A strong staff answer should seek **standard principles and contracts** while allowing domain-specific implementation choices where variation is useful.
+The final challenge—“one standard React architecture for every team”—should lead to **standard principles and contracts with justified local variation**, not one frozen implementation for every domain.

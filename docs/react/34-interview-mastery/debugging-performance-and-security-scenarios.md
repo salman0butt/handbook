@@ -4,104 +4,66 @@ description: Senior React scenario drills that test diagnosis, evidence gatherin
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Debugging, performance, and security scenarios
 
-Senior interviews often stop asking "What does this Hook do?" and instead ask:
+Senior interviews increasingly ask **what do you do next?** rather than asking for API definitions.
 
-> Something is broken. What do you do next?
+## Scenario-answer method
 
-A good scenario answer should usually follow:
+<LifecycleBar items={[
+  { label: 'Clarify symptom', tone: 'blue' },
+  { label: 'Assess impact', tone: 'red' },
+  { label: 'Reproduce', tone: 'cyan' },
+  { label: 'Gather evidence', tone: 'purple' },
+  { label: 'Form hypotheses', tone: 'orange' },
+  { label: 'Change one variable', tone: 'slate' },
+  { label: 'Verify + prevent', tone: 'green' },
+]} />
 
-```text
-Clarify symptom
-   ↓
-Assess impact
-   ↓
-Reproduce
-   ↓
-Gather evidence
-   ↓
-Form hypotheses
-   ↓
-Change one variable
-   ↓
-Verify
-   ↓
-Prevent regression
-```
+For an active incident, mitigation or rollback may come before complete diagnosis.
 
-For production incidents, mitigation may come before complete diagnosis.
+## Slow input with thousands of results
 
-## Scenario 1 — Input feels slow
+Do not begin with “add `useMemo` and `useCallback`.”
 
-A search input becomes laggy when 5,000 results are visible.
+<DecisionTree
+  question="Why is typing slow?"
+  items={[
+    { label: 'Every keypress renders thousands of rows', value: 'Virtualization / narrower update scope' },
+    { label: 'Filtering calculation dominates', value: 'Algorithm/server filtering/targeted memoization after measurement' },
+    { label: 'Results are expensive but non-urgent', value: 'Deferred value / Transition scheduling' },
+    { label: 'Browser layout/paint dominates', value: 'Fix DOM/CSS/layout cost, not React memoization' },
+  ]}
+/>
 
-### Weak answer
+Scheduling can improve responsiveness without reducing the total CPU cost.
 
-> Add `useMemo` and `useCallback`.
+## Broad Context rerenders
 
-### Strong investigation
+A provider mixing user, theme, notifications, live prices, permissions, and commands may create broad coupling.
 
-Ask:
+<VisualDiagram title="Fix ownership/subscription scope before memoizing symptoms">
+  <DiagramRow>
+    <DiagramNode title="High-frequency live value" tone="red">updates multiple times/sec</DiagramNode>
+    <DiagramArrow direction="right" label="broadcast through mega Context" />
+    <DiagramNode title="Many consumers reconsider" tone="orange">broad update surface</DiagramNode>
+    <DiagramArrow direction="right" label="redesign" />
+    <DiagramNode title="Focused contexts / external selectors" tone="green">narrow subscriptions</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-- does every keystroke render all 5,000 rows?
-- is expensive filtering happening synchronously?
-- are row components doing expensive formatting?
-- is state owned too high?
-- is virtualization appropriate?
-- does the result render need to be urgent?
-
-Measure with React DevTools/Performance Tracks.
-
-Possible solutions:
-
-- `useDeferredValue` for expensive downstream rendering;
-- `useTransition` for non-urgent result updates;
-- virtualization;
-- server-side search/filtering;
-- move state closer to the input if unrelated regions render;
-- targeted memoization only after evidence.
-
-Key point:
-
-Scheduling can improve responsiveness, but it does not remove CPU work.
-
-## Scenario 2 — Context causes broad rerenders
-
-A provider contains:
-
-```ts
-{
-  user,
-  theme,
-  notifications,
-  livePrices,
-  permissions,
-  setTheme,
-  dismissNotification,
-}
-```
-
-Live prices update multiple times per second.
-
-### Diagnosis
-
-The problem may be architectural, not simply missing `useMemo`.
-
-Questions:
-
-- do all consumers need live prices?
-- should high-frequency data be an external store subscription?
-- can Context values be split by domain/update frequency?
-- can state remain local?
-
-Strong solution:
-
-Narrow update propagation first. Memoization comes later if profiling still shows value.
-
-## Scenario 3 — Effect repeatedly reconnects WebSocket
-
-Code:
+## Effect repeatedly reconnects
 
 ```tsx
 useEffect(() => {
@@ -110,164 +72,84 @@ useEffect(() => {
 }, [roomId, options]);
 ```
 
-`options` is created inline every render.
+If `options` is recreated every render, the dependency changes by identity. Prefer deriving stable primitive dependencies or creating the object inside the Effect when that matches semantics. Do not delete dependencies to silence the linter.
 
-### Investigation
+## Fetch race
 
-`Object.is` sees a new object identity every render, so the Effect resynchronizes.
+<VisualDiagram title="Request ordering is a data-layer concern">
+  <DiagramRow>
+    <DiagramNode title="Request A" tone="orange">started first · finishes late</DiagramNode>
+    <DiagramNode title="Request B" tone="blue">started later · should own current screen</DiagramNode>
+    <DiagramArrow direction="right" label="stale A must not overwrite B" />
+    <DiagramNode title="Cancellation/version check" tone="green">AbortController · request ID · data library</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Possible fixes depend on semantics:
+A Transition does not solve stale network responses.
 
-- create the options inside the Effect from primitive dependencies;
-- move stable configuration outside the component;
-- memoize only if stable identity is genuinely the contract;
-- split reactive and non-reactive Effect logic.
+## State appears on the wrong row
 
-Do not remove dependencies to silence the linter.
+If editable rows use `key={index}`, sorting can move component state to a different logical record. Use stable domain identity such as `key={record.id}`.
 
-## Scenario 4 — Fetch race
+## Form submits twice
 
-User selects A, then B quickly.
+<VisualDiagram title="UI duplicate prevention and backend correctness are separate layers">
+  <DiagramRow>
+    <DiagramNode title="Frontend pending state" tone="blue">reduces repeated user intent</DiagramNode>
+    <DiagramArrow direction="right" label="not sufficient" />
+    <DiagramNode title="Server idempotency/transaction" tone="red">protects correctness</DiagramNode>
+    <DiagramArrow direction="right" label="verify" />
+    <DiagramNode title="Repeated-submit tests" tone="green">regression contract</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-A's request finishes after B and overwrites the UI.
+## Optimistic update conflicts with live server event
 
-### Strong answer
+<DecisionTree
+  question="How do optimistic and live state converge?"
+  items={[
+    { label: 'Server returns revision/version', value: 'Use version-aware reconciliation' },
+    { label: 'Conflict can be automatically rebased', value: 'Define deterministic merge policy' },
+    { label: 'Conflict is ambiguous/user-significant', value: 'Surface conflict and restore canonical state' },
+    { label: 'No canonical owner is defined', value: 'Fix architecture before UI behavior' },
+  ]}
+/>
 
-This is request ordering/cancellation, not a React rendering bug.
+## Hydration mismatch only in production
 
-Options:
+Investigate time/timezone, randomness, browser-only APIs, locale, server/client feature flags, session snapshots, invalid HTML, and third-party DOM mutation.
 
-- `AbortController`;
-- request ID/version check;
-- framework/data library stale-result handling;
-- route/data-layer cancellation.
+<VisualDiagram title="Hydration mismatch means two initial snapshots disagree">
+  <DiagramRow>
+    <DiagramNode title="Server HTML" tone="blue">snapshot A</DiagramNode>
+    <DiagramArrow direction="right" label="hydrate" />
+    <DiagramNode title="First client render" tone="purple">snapshot B</DiagramNode>
+    <DiagramArrow direction="right" label="difference" />
+    <DiagramNode title="Mismatch/recovery" tone="red">find cause before suppressing warning</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-A transition does not solve stale network responses.
+## Suspense fallback replaces whole page
 
-## Scenario 5 — State appears on the wrong row
+Boundary placement may be too high, navigation may not use Transition semantics, nested reveal structure may be missing, or identity may intentionally reset. Design reveal groups from UX.
 
-An editable table is sorted and the wrong row retains editing state.
+## Lazy chunk fails after deployment
 
-Check keys.
+<VisualDiagram title="Chunk failure can be a deployment version-skew problem">
+  <DiagramRow>
+    <DiagramNode title="Old client runtime" tone="orange">references old hashed chunk</DiagramNode>
+    <DiagramArrow direction="right" label="new deploy removed asset" />
+    <DiagramNode title="Chunk load failure" tone="red">route cannot load</DiagramNode>
+    <DiagramArrow direction="right" label="operational fix" />
+    <DiagramNode title="Asset retention + recovery" tone="green">immutable assets · reload UX · deployment strategy</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-If rows use:
+## Memory grows over time
 
-```tsx
-key={index}
-```
+Check missing subscription/timer/listener cleanup, third-party teardown, unbounded caches, retained closures, and detached DOM. Reproduce repeated mount/unmount, inspect heap retention after GC, and verify cleanup invariants.
 
-sorting changes which logical record occupies each position.
-
-Use stable domain identity:
-
-```tsx
-key={record.id}
-```
-
-Explain that keys participate in state identity, not only rendering performance.
-
-## Scenario 6 — Form submits twice
-
-A user double-clicks checkout and two mutations reach the backend.
-
-Frontend pending state helps UX but is not a full correctness boundary.
-
-Strong answer includes:
-
-- disable/prevent repeated intent in UI where appropriate;
-- server-side idempotency strategy;
-- transactional backend behavior;
-- duplicate request handling;
-- tests for repeated submit.
-
-Client controls alone are not enough.
-
-## Scenario 7 — Optimistic update conflicts with server event
-
-The UI optimistically marks an item resolved. A live server event says another user reassigned it.
-
-Questions:
-
-- what is canonical?
-- does the server return a version/revision?
-- how are conflicts represented?
-- should the optimistic projection be rebased or replaced?
-
-Strong architecture keeps server authority clear and makes conflict behavior explicit.
-
-## Scenario 8 — Hydration mismatch only in production
-
-Symptoms:
-
-- server renders one value;
-- browser initially renders another;
-- warning appears only for some users.
-
-Investigate:
-
-- current time/timezone;
-- random values;
-- browser-only APIs;
-- locale differences;
-- feature flags differing server/client;
-- user/session data snapshots;
-- invalid HTML nesting;
-- third-party DOM mutation.
-
-Do not reach for `suppressHydrationWarning` before identifying the cause.
-
-## Scenario 9 — Suspense fallback replaces whole page
-
-Navigation to a slow nested route causes the entire app to flash to a root spinner.
-
-Possible causes:
-
-- boundary too high;
-- navigation not marked as transition by routing layer;
-- nested reveal structure missing;
-- new content identity intentionally resetting boundary.
-
-Strong answer designs boundaries around UX reveal groups.
-
-## Scenario 10 — Lazy chunk fails after deployment
-
-A user has old HTML/client runtime and requests a code-split chunk removed by a new deploy.
-
-Discuss:
-
-- immutable hashed assets;
-- asset retention window;
-- error boundary around lazy route;
-- reload/recovery UX;
-- deployment strategy;
-- service worker/version interactions.
-
-This is a deployment/system-design problem, not only a `lazy()` problem.
-
-## Scenario 11 — Memory grows over time
-
-Potential causes:
-
-- subscription cleanup missing;
-- timers not cleared;
-- retained event listeners;
-- third-party library teardown missing;
-- application cache without eviction;
-- closures retaining large objects;
-- detached DOM through imperative integrations.
-
-Investigation:
-
-1. reproduce over repeated mount/unmount;
-2. use browser memory tools;
-3. inspect Effect cleanup;
-4. test Strict Mode behavior;
-5. isolate third-party integration;
-6. verify heap retention after GC.
-
-## Scenario 12 — Infinite Effect loop
-
-Common pattern:
+## Infinite Effect loop
 
 ```tsx
 useEffect(() => {
@@ -275,219 +157,44 @@ useEffect(() => {
 }, [items]);
 ```
 
-Ask first: should this be derived during render instead?
-
-If the Effect updates a dependency every time, it can create a loop.
-
-Do not "fix" by deleting the dependency blindly.
-
-## Scenario 13 — `memo` did not help
-
-Possible reasons:
-
-- props change every render;
-- Context consumed by the component changes;
-- component render was not expensive;
-- child state causes its own render;
-- parent bottleneck is elsewhere;
-- comparison cost offsets savings;
-- compiler already handles equivalent work.
-
-Measure before/after.
-
-## Scenario 14 — UI is fast locally, slow in production
-
-Compare environments:
-
-- realistic data volume;
-- network latency;
-- production build vs dev instrumentation;
-- device CPU;
-- third-party scripts;
-- hydration/server latency;
-- cache hit rate;
-- feature flags;
-- analytics/error tooling.
-
-Local performance is not production performance.
-
-## Scenario 15 — Error Boundary logs too many duplicates
-
-Possible sources:
-
-- root callback plus boundary logging same error;
-- retries/re-renders;
-- Strict Mode development behavior;
-- multiple telemetry integrations.
-
-Define one reporting policy:
-
-```text
-Boundary → recovery UX
-Root callbacks → global classification
-Telemetry adapter → deduplication/correlation
-```
-
-Avoid leaking PII in component props or error context.
-
-## Scenario 16 — Server Function vulnerability
-
-Client invokes a Server Function with:
-
-```ts
-{ userId: 'victim', role: 'admin' }
-```
-
-The function trusts arguments and updates the database.
-
-Strong answer:
-
-- authenticate from server session/request context;
-- authorize operation against trusted identity;
-- validate all arguments;
-- ignore client claims of privilege;
-- use transactional constraints where appropriate;
-- log security-relevant failure without sensitive payloads.
-
-Treat Server Functions as externally callable mutation endpoints.
-
-## Scenario 17 — Raw HTML product description
-
-Product descriptions arrive from a CMS and are inserted with `dangerouslySetInnerHTML`.
-
-Threat:
-
-XSS if the HTML is attacker-controlled or improperly sanitized.
-
-Strong answer discusses:
-
-- trusted source model;
-- sanitization at a controlled boundary;
-- Content Security Policy where appropriate;
-- avoiding arbitrary inline script/event attributes;
-- testing malicious payloads;
-- never considering TypeScript a sanitizer.
-
-## Scenario 18 — Authorization hidden in UI only
-
-The Delete button is hidden for non-admins, but the API accepts delete requests from anyone.
-
-Correct model:
-
-```text
-UI permission
-= user experience
-
-Server authorization
-= security boundary
-```
-
-The server must reject unauthorized requests regardless of rendered UI.
-
-## Scenario 19 — Sensitive data appears in telemetry
-
-A form error logger sends the whole state object, including email, address, and tokens.
-
-Fix the telemetry architecture:
-
-- allowlist fields;
-- redact secrets;
-- avoid full request/form payloads;
-- classify sensitive data;
-- define retention/access controls;
-- test logging behavior.
-
-Observability must respect trust boundaries.
-
-## Scenario 20 — Legacy React upgrade breaks behavior
-
-A large application uses:
-
-- `ReactDOM.render`;
-- legacy Context;
-- string refs;
-- old testing utilities;
-- class lifecycles with hidden side effects.
-
-Strong migration plan:
-
-1. add characterization tests;
-2. upgrade in supported increments;
-3. use codemods for mechanical changes;
-4. replace removed root APIs;
-5. migrate legacy Context/ref patterns;
-6. inspect lifecycle semantics rather than mechanically converting to Effects;
-7. validate production behavior and telemetry;
-8. remove temporary compatibility layers.
-
-## Production incident framework
-
-When the interviewer asks about a live incident, structure the answer around:
-
-### 1. Impact
-
-Who is affected? How severely? Is data integrity at risk?
-
-### 2. Mitigation
-
-Possible actions:
-
-- rollback;
-- disable feature flag;
-- route traffic away;
-- degrade optional feature;
-- stop harmful mutation;
-- restore previous asset set.
-
-### 3. Evidence
-
-Use:
-
-- logs;
-- error telemetry;
-- traces;
-- performance captures;
-- release diff;
-- feature flags;
-- user/session correlation;
-- reproduction.
-
-### 4. Root cause
-
-Explain the causal chain, not merely the line that threw.
-
-### 5. Prevention
-
-Add:
-
-- regression test;
-- guardrail;
-- better monitoring;
-- architectural fix;
-- runbook update.
-
-## Interview exercise
-
-For each scenario above, answer in this template:
-
-```text
-Symptom:
-
-Impact:
-
-First evidence I would collect:
-
-Top 3 hypotheses:
-
-How I would isolate them:
-
-Most likely fix:
-
-How I would verify the fix:
-
-Regression test:
-
-Production prevention:
-```
-
-The goal is to demonstrate a debugging process that is **evidence-driven, risk-aware, and production-minded**.
+Ask first whether the value should be derived during render. Do not “fix” the loop by hiding a real dependency.
+
+## `memo` did not help
+
+<DecisionTree
+  question="Why did memoization fail to improve UX?"
+  items={[
+    { label: 'Props/Context still change', value: 'Skip cannot occur; inspect identity/update source' },
+    { label: 'Render was cheap', value: 'Optimization target was irrelevant' },
+    { label: 'Comparison cost offsets render savings', value: 'Remove/customize only with evidence' },
+    { label: 'Bottleneck is network/browser/Effect/server', value: 'Fix the dominant layer' },
+    { label: 'Compiler already handles equivalent ordinary work', value: 'Avoid duplicate complexity' },
+  ]}
+/>
+
+## Fast locally, slow in production
+
+Compare realistic data, network, device CPU, production build, third-party scripts, hydration/server latency, cache state, feature flags, and observability instrumentation.
+
+## Security scenario method
+
+<VisualDiagram title="Client behavior never replaces server trust checks">
+  <LifecycleBar items={[
+    { label: 'Identify caller-controlled input', tone: 'red' },
+    { label: 'Validate runtime shape', tone: 'orange' },
+    { label: 'Authenticate identity', tone: 'blue' },
+    { label: 'Authorize resource/action', tone: 'purple' },
+    { label: 'Perform mutation safely', tone: 'green' },
+    { label: 'Log only safe context', tone: 'slate' },
+  ]} />
+</VisualDiagram>
+
+## What a strong scenario answer sounds like
+
+<DiagramGrid columns={3}>
+  <DiagramNode title="Evidence" tone="blue">measure/reproduce before prescribing</DiagramNode>
+  <DiagramNode title="Classification" tone="purple">React vs browser vs network vs backend vs deployment</DiagramNode>
+  <DiagramNode title="Prevention" tone="green">tests · telemetry · architecture · rollout changes</DiagramNode>
+</DiagramGrid>
+
+The goal is not to name the most React APIs. It is to isolate the actual failure and choose the smallest change that addresses its real cause.
