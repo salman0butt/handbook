@@ -1,0 +1,38 @@
+name: Final TypeScript Pages verification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/typescript-final-pages-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Verify final published TypeScript audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live final audit and handbook
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check() {
+            local url="$1"
+            local expected="$2"
+            local body
+            for attempt in $(seq 1 12); do
+              if body="$(curl --fail --silent --show-error --location "$url")" && grep -Fqi "$expected" <<<"$body"; then
+                echo "Verified: $url -> $expected"
+                return 0
+              fi
+              echo "Attempt $attempt: waiting for published marker '$expected' at $url"
+              sleep 5
+            done
+            echo "Verification failed: $url -> $expected"
+            return 1
+          }
+
+          check 'https://salman0butt.github.io/handbook/docs/typescript/intro' 'TypeScript Developer Handbook'
+          check 'https://salman0butt.github.io/handbook/docs/typescript/reference/final-completeness-audit' 'Status: COMPLETE'
