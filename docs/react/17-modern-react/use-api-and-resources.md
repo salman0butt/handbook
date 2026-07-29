@@ -4,24 +4,36 @@ description: Understand React's use API for context and Promises, Suspense inter
 sidebar_position: 5
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # The `use` API and Suspense resources
 
-React 19 includes the `use` API:
+React includes the `use` API:
 
 ```jsx
 const value = use(resource);
 ```
 
-It can read:
+It can read a Context object or a Promise that participates in Suspense.
 
-- a Context object;
-- a Promise that participates in Suspense.
+<VisualDiagram title="What use reads" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Context" tone="cyan">Read the nearest matching provider value.</DiagramNode>
+    <DiagramNode title="Promise" tone="purple">Read a cached Promise; suspend while it is pending.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-`use` is unusual because it is not exactly like ordinary Hooks, and it should not be taught as a generic replacement for data-fetching libraries.
+`use` is unusual: it is not a normal Hook, and it should not be taught as a generic data-fetching library.
 
 ## `use(context)`
-
-You can read a Context value with `use`:
 
 ```jsx
 import {use} from 'react';
@@ -33,13 +45,7 @@ function Button() {
 }
 ```
 
-This overlaps with `useContext`, but `use` has different calling rules.
-
-## `use` can be called conditionally
-
-Ordinary Hooks must be called unconditionally at the top level.
-
-`use` can be called inside conditions and loops when reading a resource.
+Unlike ordinary Hooks, `use` can be called in conditions and loops when reading a supported resource:
 
 ```jsx
 function Message({showTheme}) {
@@ -52,19 +58,9 @@ function Message({showTheme}) {
 }
 ```
 
-Do not generalize this exception to other Hooks.
-
-Bad conclusion:
-
-> “React Hooks can now be called conditionally.”
-
-Correct conclusion:
-
-> `use` has special rules; normal Hooks still follow the Rules of Hooks.
+Do not generalize this exception to `useState`, `useEffect`, or other normal Hooks.
 
 ## `use(promise)`
-
-`use` can read a Promise:
 
 ```jsx
 function Product({productPromise}) {
@@ -73,7 +69,7 @@ function Product({productPromise}) {
 }
 ```
 
-If the Promise is pending, the component suspends and React looks for the nearest Suspense boundary.
+Wrap the reader in Suspense:
 
 ```jsx
 <Suspense fallback={<ProductSkeleton />}>
@@ -81,75 +77,46 @@ If the Promise is pending, the component suspends and React looks for the neares
 </Suspense>
 ```
 
-Mental model:
+<VisualDiagram title="Promise read outcome" subtitle="The resource state determines which boundary participates.">
+  <DiagramStack align="center">
+    <DiagramNode title="Render component" tone="blue" />
+    <DiagramArrow label="use(promise)" />
+    <DiagramGrid columns={3}>
+      <DiagramNode title="Fulfilled" tone="green">Return the resolved value and continue rendering.</DiagramNode>
+      <DiagramNode title="Pending" tone="purple">Suspend and reveal the nearest Suspense fallback.</DiagramNode>
+      <DiagramNode title="Rejected" tone="red">Error propagates toward the nearest Error Boundary.</DiagramNode>
+    </DiagramGrid>
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-render Product
-   ↓
-use(promise)
-   ↓
-promise pending?
-  ├─ no → return value
-  └─ yes → suspend
-           ↓
-     nearest Suspense fallback
-```
+This gives loading, success, and failure a declarative boundary model.
 
-## Rejected Promises
+## Promise identity must be stable
 
-If the Promise rejects, the error can flow to the nearest Error Boundary.
-
-```text
-pending Promise → Suspense
-rejected Promise → Error Boundary
-fulfilled Promise → render value
-```
-
-This creates a declarative relationship between loading, error, and successful content.
-
-## Do not create a new Promise every render
-
-Bad:
+Do not create a new Promise during every render:
 
 ```jsx
 function Product({id}) {
-  const product = use(fetch(`/api/products/${id}`)); // ❌ new Promise each render
+  const product = use(fetch(`/api/products/${id}`)); // ❌ uncached Promise
   return <h1>{product.name}</h1>;
 }
 ```
 
-Promises read by `use` need stable/cached identity.
+<VisualDiagram title="Why uncached Promises keep suspending" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Render creates Promise A', tone: 'orange' },
+      { label: 'Suspend', tone: 'purple' },
+      { label: 'Retry creates Promise B', tone: 'orange' },
+      { label: 'Suspend again', tone: 'purple' },
+      { label: 'No stable resource identity', tone: 'red' },
+    ]}
+  />
+</VisualDiagram>
 
-Better architectures get the Promise from:
+Promises passed to `use` should come from a Suspense-compatible cache, framework/data layer, Server Component, or another architecture that preserves resource identity.
 
-- a Suspense-aware cache;
-- a framework data layer;
-- a Server Component;
-- a library designed to integrate with Suspense.
-
-## Why Promise identity matters
-
-If render creates a new Promise every time:
-
-```text
-render
- → Promise A
- → suspend
-render again
- → Promise B
- → suspend
-render again
- → Promise C
- → suspend
-```
-
-React never gets a stable resource to finish reading.
-
-The Promise is part of resource identity.
-
-## A tiny cache example
-
-For learning purposes:
+## Tiny cache example for learning
 
 ```jsx
 const cache = new Map();
@@ -164,80 +131,53 @@ function getProduct(id) {
 
   return cache.get(id);
 }
-```
 
-Then:
-
-```jsx
 function Product({id}) {
   const product = use(getProduct(id));
   return <h1>{product.name}</h1>;
 }
 ```
 
-This illustrates stable Promise identity.
+This demonstrates stable Promise identity only. A production cache needs invalidation, deduplication, garbage collection, retries, authorization, server/client semantics, and more.
 
-Do **not** treat this toy `Map` as production cache architecture. Production caching requires policies for invalidation, deduplication, garbage collection, errors, retries, authorization, and server/client behavior.
+## React primitive vs data layer
 
-## React primitive vs data framework
+<VisualDiagram title="React does not become your whole data architecture" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React core" tone="purple">`use(Promise)` · Suspense · Error Boundaries · rendering coordination.</DiagramNode>
+    <DiagramNode title="Framework / data library" tone="orange">Fetching policy · cache lifetime · invalidation · preloading · mutations · retries · server/client transfer.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-React provides the primitive:
-
-```text
-use(Promise)
-+
-Suspense
-```
-
-It does not automatically provide a complete server-state architecture.
-
-Frameworks and data libraries may add:
-
-- request caching;
-- route loaders;
-- streaming;
-- invalidation;
-- mutation coordination;
-- deduplication;
-- preloading;
-- server/client transfer;
-- error recovery.
-
-This distinction matters when comparing React core with tools such as framework loaders or query libraries.
+`use` reads a resource. It does not decide how that resource should be fetched, refreshed, invalidated, or persisted.
 
 ## Server-to-client Promise flow
 
-A modern server architecture may create a Promise on the server and pass it to a Client Component, where `use` reads it.
+An RSC-capable architecture may create or obtain a Promise on the server, pass it through a supported boundary, and read it in a Client Component.
 
-Conceptually:
+<VisualDiagram title="Server-created resource consumed on the client" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Server Component" tone="orange">Creates or obtains a Promise.</DiagramNode>
+    <DiagramArrow label="pass supported resource" />
+    <DiagramNode title="Client Component" tone="blue">Calls `use(promise)` during render.</DiagramNode>
+    <DiagramArrow label="pending work" />
+    <DiagramNode title="Suspense / streaming / hydration" tone="purple">Framework and React coordinate how the boundary reveals.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-Server Component
-  creates/obtains Promise
-       ↓
-passes resource across supported boundary
-       ↓
-Client Component
-  use(promise)
-       ↓
-Suspense coordinates streaming/hydration
-```
+Exact serialization and server behaviour depend on the RSC-capable framework.
 
-Exact serialization and Server Component behavior depend on an RSC-capable framework.
-
-We cover that deeply in the Server Components phase.
-
-## `use` with context vs `useContext`
+## `use(context)` vs `useContext`
 
 Both can read Context.
 
-Use `useContext` when ordinary Hook structure is natural:
+Use `useContext` when ordinary top-level Hook structure is natural:
 
 ```jsx
 const theme = useContext(ThemeContext);
 ```
 
-Use `use` when its conditional/resource-oriented calling behavior is specifically useful:
+Use `use` when its resource-oriented or conditional calling behaviour is specifically useful:
 
 ```jsx
 if (shouldReadTheme) {
@@ -245,35 +185,29 @@ if (shouldReadTheme) {
 }
 ```
 
-Do not refactor working `useContext` code merely because `use` exists.
+Do not refactor stable `useContext` code merely because `use` exists.
 
-## Do not read Promise internals manually
+## Do not bypass `use`
 
-Avoid patterns such as:
+Avoid manually inspecting Promise internals:
 
 ```jsx
 if (promise.status === 'fulfilled') {
-  return promise.value;
+  return promise.value; // ❌ bypasses React's resource read
 }
 ```
 
-Pass the resource to `use` and let React coordinate it:
+Use:
 
 ```jsx
 const value = use(promise);
 ```
 
-Bypassing React's resource read can interfere with Suspense behavior and tooling.
+Let React coordinate Suspense and tooling around the resource.
 
-## Suspense is not “catch any Promise anywhere”
+## Suspense is not “catch every Promise”
 
-A common misconception is:
-
-> “If I fetch in `useEffect`, Suspense will show the fallback.”
-
-No.
-
-This does not make Suspense wait for the Effect fetch:
+This does not make Suspense wait for an Effect fetch:
 
 ```jsx
 useEffect(() => {
@@ -281,39 +215,27 @@ useEffect(() => {
 }, []);
 ```
 
-Suspense coordinates supported suspending resources such as:
-
-- lazy-loaded code;
-- Promises read with `use`;
-- framework/library data sources designed for Suspense.
-
-Effects happen after commit and are a different mechanism.
+Effects run after commit. Suspense coordinates supported suspending resources such as lazy-loaded code, Promises read with `use`, and framework/library data sources designed for Suspense.
 
 ## Preloading
 
-A resource can be started before the component needs to read it.
+A resource can start before the component needs to read it.
 
-Conceptually:
+<VisualDiagram title="Preload before navigation" compact>
+  <LifecycleBar
+    items={[
+      { label: 'User signals likely intent', tone: 'blue' },
+      { label: 'Data layer starts resource', tone: 'orange' },
+      { label: 'User navigates', tone: 'purple' },
+      { label: 'Component calls use(resource)', tone: 'cyan' },
+      { label: 'Resource is already pending or fulfilled', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
-```text
-hover link
-  ↓
-start resource
-  ↓
-user navigates
-  ↓
-use(resource)
-  ↓
-already pending or fulfilled
-```
+The data/cache layer owns starting the resource; `use` owns reading it during render.
 
-This can reduce time spent showing fallback UI.
-
-The cache/data layer owns the resource-starting API; `use` owns reading the resource during render.
-
-## Error handling architecture
-
-A mature Suspense resource tree usually considers both loading and failure boundaries.
+## Loading and error boundaries
 
 ```jsx
 <ErrorBoundary fallback={<ProductError />}>
@@ -323,86 +245,39 @@ A mature Suspense resource tree usually considers both loading and failure bound
 </ErrorBoundary>
 ```
 
-Think in boundaries:
+<VisualDiagram title="Boundary responsibilities" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Suspense Boundary" tone="purple">Expected waiting state.</DiagramNode>
+    <DiagramNode title="Error Boundary" tone="red">Failed rendering/resource state.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-Suspense Boundary
-→ expected waiting state
-
-Error Boundary
-→ failed rendering/resource state
-```
-
-## Granularity matters
-
-One giant Suspense boundary around the entire app can produce poor UX.
-
-Prefer boundaries around meaningful reveal units:
-
-```jsx
-<Page>
-  <Header />
-  <Suspense fallback={<SummarySkeleton />}>
-    <Summary />
-  </Suspense>
-  <Suspense fallback={<TableSkeleton />}>
-    <OrdersTable />
-  </Suspense>
-</Page>
-```
-
-This lets already available content remain visible.
+Boundary granularity matters. Prefer meaningful reveal units rather than one giant fallback around the whole app.
 
 ## `use` and concurrency
 
-Suspending render work participates in React's concurrent rendering model.
-
-That is why `use` should be understood alongside:
-
-- Suspense;
-- Transitions;
-- `useDeferredValue`;
-- streaming;
-- selective hydration;
-- Server Components.
-
-This chapter establishes the resource-reading primitive. The next phase goes deeper into concurrency.
-
-## Common mistakes
-
-### Creating Promises during render
-
-Use a cache/framework/resource layer with stable Promise identity.
-
-### Treating `use` as a fetch function
-
-`use` reads a resource; it does not itself decide how data should be fetched, cached, retried, or invalidated.
-
-### Assuming Effect fetches trigger Suspense
-
-They do not.
-
-### Calling ordinary Hooks conditionally because `use` can
-
-`use` is a special exception.
-
-### Building a homemade production cache from the tutorial `Map`
-
-The simple cache demonstrates identity only. Real caches need lifecycle and invalidation strategy.
+Suspending render work participates in React's concurrent rendering model. Learn `use` alongside Suspense, Transitions, `useDeferredValue`, streaming, selective hydration, and Server Components.
 
 ## Production decision guide
 
-```text
-Need server data?
-   ↓
-Does framework/data layer already own loading/cache?
-  ├─ yes → use its supported pattern
-  └─ no
-       ↓
-Are you intentionally building Suspense integration?
-  ├─ no → conventional async/server-state architecture may be simpler
-  └─ yes → stable resource + use + Suspense + error boundaries
-```
+<DecisionTree
+  question="Should I build around use(Promise)?"
+  items={[
+    { label: 'Framework/data layer already owns data loading and cache?', value: 'Use its supported pattern' },
+    { label: 'Need a conventional client/server-state flow only?', value: 'Suspense integration may be unnecessary' },
+    { label: 'Intentionally building Suspense-compatible resource reading?', value: 'Stable resource + use + Suspense + Error Boundary' },
+    { label: 'Creating Promise directly during render?', value: 'Redesign around cached resource identity' },
+  ]}
+/>
+
+## Common mistakes
+
+- Creating uncached Promises during render.
+- Treating `use` as a fetch/cache/invalidation system.
+- Assuming Effect-based fetches trigger Suspense.
+- Calling ordinary Hooks conditionally because `use` can be conditional.
+- Reading Promise internals instead of passing the Promise to `use`.
+- Treating a tutorial `Map` as production cache architecture.
 
 ## Interview questions
 
