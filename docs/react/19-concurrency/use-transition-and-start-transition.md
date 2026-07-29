@@ -4,11 +4,19 @@ description: Deep mental model for non-blocking React updates, interruption, pen
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `useTransition` and `startTransition` deep dive
 
-Transitions let React treat some state updates as **non-urgent**.
-
-That means React can keep the interface responsive while work for the next UI happens in the background.
+Transitions let React treat some state updates as **non-urgent** so urgent interactions can stay responsive while the next UI prepares.
 
 ```jsx
 const [isPending, startTransition] = useTransition();
@@ -20,31 +28,26 @@ function selectTab(nextTab) {
 }
 ```
 
-The central mental model is:
+<VisualDiagram title="Urgent and Transition updates express different priorities">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Urgent update" tone="blue" eyebrow="RESPOND NOW">
+      Typing, pressed state, focus, drag position, direct control feedback.
+    </DiagramNode>
+    <DiagramNode title="Transition update" tone="purple" eyebrow="CAN PREPARE">
+      Navigation, expensive tab content, large filtered views, heavy presentation changes.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-urgent update      → user expects immediate visible response
-Transition update  → React may render it in the background and interrupt/restart it
-```
+Transitions do not create threads, workers, or delayed timers. They change how React schedules rendering work.
 
-Transitions do not create threads, workers, or parallel JavaScript execution. They change how React prioritizes and schedules rendering work.
-
-## `useTransition`
+## `useTransition` vs standalone `startTransition`
 
 ```jsx
-import { useTransition } from 'react';
-
 const [isPending, startTransition] = useTransition();
 ```
 
-You get:
-
-- `isPending` — whether Transition work associated with this Hook is pending;
-- `startTransition` — a function that marks eligible state updates as Transition updates.
-
-## `startTransition`
-
-React also exports standalone `startTransition`:
+`useTransition` gives local pending state plus a Transition starter.
 
 ```jsx
 import { startTransition } from 'react';
@@ -54,15 +57,9 @@ startTransition(() => {
 });
 ```
 
-Use standalone `startTransition` when you cannot call a Hook or do not need local pending state.
-
-For example, a router or data library may need to mark an update as non-urgent outside a component.
+Standalone `startTransition` is useful outside component Hook scope or when pending state is managed elsewhere.
 
 ## The callback runs immediately
-
-A common misconception is that React delays calling the callback.
-
-It does not.
 
 ```jsx
 startTransition(() => {
@@ -71,42 +68,33 @@ startTransition(() => {
 });
 ```
 
-The callback executes immediately. React marks eligible state updates scheduled synchronously while that callback runs as Transition updates.
+<VisualDiagram title="startTransition does not delay the callback">
+  <DiagramStack align="center">
+    <DiagramNode title="Call startTransition" tone="blue" />
+    <DiagramArrow label="callback executes immediately" />
+    <DiagramNode title="Eligible state setters are marked as Transition updates" tone="purple" />
+    <DiagramArrow label="React schedules resulting render with lower urgency" />
+    <DiagramNode title="Background rendering may be interrupted" tone="orange" />
+  </DiagramStack>
+</VisualDiagram>
 
-## Rendering may happen in the background
+## Rendering is interruptible
 
-The state update is recorded, but React can work on the resulting render with lower urgency.
+If urgent work arrives while React prepares a Transition render, React can prioritize the urgent work and later resume or restart the background work.
 
-If a more urgent update arrives, React may interrupt the Transition render.
+<LifecycleBar
+  items={[
+    { label: 'Start expensive Transition render', tone: 'purple' },
+    { label: 'User types', tone: 'blue' },
+    { label: 'Urgent input render wins', tone: 'green' },
+    { label: 'Obsolete work may be abandoned', tone: 'red' },
+    { label: 'Transition restarts with latest state', tone: 'purple' },
+  ]}
+/>
 
-```text
-start expensive Transition render
-→ user types
-→ urgent input render takes priority
-→ React resumes or restarts Transition work with latest state
-```
-
-This is why render functions must stay pure.
-
-React may call them without committing the result.
-
-## Transitions are interruptible
-
-Suppose a chart is rendering from a new filter selection.
-
-```jsx
-startTransition(() => {
-  setFilter(nextFilter);
-});
-```
-
-If the user changes the filter again before the first render commits, React can abandon obsolete work and render the newest request.
-
-The user does not need to wait for every intermediate render.
+This is why rendering must remain pure: a render can happen without committing.
 
 ## Transitions cannot control text inputs
-
-Do not place the state update controlling a text input inside a Transition.
 
 Bad:
 
@@ -118,8 +106,6 @@ function handleChange(event) {
 }
 ```
 
-The controlled input value should update urgently.
-
 Good:
 
 ```jsx
@@ -128,228 +114,115 @@ function handleChange(event) {
 }
 ```
 
-Then defer expensive dependent UI with `useDeferredValue`, or trigger a separate Transition for downstream state.
+Then defer expensive dependent presentation with `useDeferredValue`, or update separate downstream state inside a Transition.
 
-## Pending state is feedback, not blocking
+## Pending state is feedback, not a global lock
 
 ```jsx
 const [isPending, startTransition] = useTransition();
-
-return (
-  <button
-    aria-busy={isPending}
-    onClick={() => {
-      startTransition(() => {
-        setTab('reports');
-      });
-    }}
-  >
-    Reports
-  </button>
-);
 ```
 
-The point is not to disable the whole interface while pending.
-
-One advantage of Transitions is that users can continue interacting.
+<VisualDiagram title="A pending Transition should keep the interface understandable">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Current UI" tone="green">Can remain usable.</DiagramNode>
+    <DiagramNode title="Pending feedback" tone="orange">Shows that the action/navigation was accepted.</DiagramNode>
+    <DiagramNode title="Next UI" tone="purple">Prepares without blocking unrelated urgent work.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Transitions and Suspense
 
-A Transition can prevent already revealed content from being replaced by a Suspense fallback during a non-urgent update.
+A Transition can prevent already revealed content from being replaced by an unwanted fallback while the new UI prepares.
 
-That is especially useful for navigation and tab changes.
+<VisualDiagram title="Suspense behavior during a non-urgent update">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Without Transition" tone="red">Old page → fallback → new page.</DiagramNode>
+    <DiagramNode title="With Transition" tone="green">Old page + pending feedback → new page.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-without Transition:
-old page → spinner → new page
+New nested boundaries can still reveal their own local fallbacks after the next shell commits.
 
-with Transition:
-old page + pending feedback → new page
-```
+## Async Transition Actions and `await`
 
-New nested Suspense boundaries can still reveal their own fallback.
-
-## Transition does not mean “wait for everything”
-
-A Transition coordinates the update, but it is not a generic transaction that blocks until every network request in your application finishes.
-
-Suspense-aware work and Action semantics matter.
-
-Design pending state around the actual user operation.
-
-## Async Transition Actions
-
-Modern React supports async functions passed to Transition starters.
+Modern React accepts async Actions passed to Transition starters.
 
 ```jsx
 startTransition(async () => {
   await saveDraft();
+
   startTransition(() => {
     setStatus('saved');
   });
 });
 ```
 
-Current React has an important limitation: state updates scheduled after an `await` may need another `startTransition` wrapper to be marked as Transition updates.
+Current React has an important limitation: state updates after an `await` need another `startTransition` wrapper to be marked as Transition updates.
 
-Treat this as current API behavior, not a conceptual requirement of asynchronous programming.
+<VisualDiagram title="Transition scope across await">
+  <DiagramStack align="center">
+    <DiagramNode title="Outer Transition Action starts" tone="purple" />
+    <DiagramArrow label="await async work" />
+    <DiagramNode title="Async boundary" tone="orange">React currently loses Transition marking for later setters.</DiagramNode>
+    <DiagramArrow label="wrap post-await setter again" />
+    <DiagramNode title="Nested startTransition" tone="purple" />
+    <DiagramArrow label="final state remains non-urgent" />
+    <DiagramNode title="Commit next UI" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-## Why the post-`await` wrapper exists
-
-Transition context is associated with the synchronous execution around an Action.
-
-After control leaves through `await`, React currently cannot always infer that later updates belong to the same Transition.
-
-So this:
-
-```jsx
-startTransition(async () => {
-  await submit();
-  setStatus('done');
-});
-```
-
-may require:
-
-```jsx
-startTransition(async () => {
-  await submit();
-
-  startTransition(() => {
-    setStatus('done');
-  });
-});
-```
-
-Always verify current React documentation before relying on this detail because it is a known limitation intended to improve over time.
+This is current API behavior and a documented limitation, not a general JavaScript rule.
 
 ## Multiple ongoing Transitions
 
-Current React may batch multiple ongoing Transitions together.
+React currently may batch multiple ongoing Transitions together. `isPending` is therefore not a request identifier or fine-grained transaction record.
 
-This means `isPending` is not a fine-grained transaction identifier for every request in a complex application.
+If you need request-specific ordering, cancellation, retries, or mutation identity, model those in the data layer.
 
-If you need request-specific ordering, cancellation, or mutation identity, model that explicitly in your data layer.
+## Render priority is not network consistency
 
-## Request ordering is a separate concern
+<VisualDiagram title="A Transition cannot solve stale response ordering">
+  <DiagramStack align="center">
+    <DiagramNode title="Request A starts" tone="blue" />
+    <DiagramArrow label="then" />
+    <DiagramNode title="Request B starts" tone="purple" />
+    <DiagramArrow label="B returns first" />
+    <DiagramNode title="Newer B result" tone="green" />
+    <DiagramArrow label="A returns later" />
+    <DiagramNode title="Older A must not overwrite B" tone="red" />
+  </DiagramStack>
+</VisualDiagram>
 
-Transitions can make rendering interruptible, but they do not automatically solve stale network responses.
+Use request IDs, cancellation, mutation ordering, or framework/data-layer primitives for consistency.
 
-Imagine:
+## Transition vs related tools
 
-```text
-request A starts
-request B starts later
-B returns first
-A returns last
-```
+<VisualDiagram title="Choose the tool that matches the problem">
+  <DiagramGrid columns={4}>
+    <DiagramNode title="Transition" tone="purple">Prioritize React rendering for an update you initiate.</DiagramNode>
+    <DiagramNode title="useDeferredValue" tone="teal">Let one consumer lag behind an already-changing value.</DiagramNode>
+    <DiagramNode title="Debounce" tone="orange">Delay when work starts.</DiagramNode>
+    <DiagramNode title="Web Worker" tone="blue">Move suitable computation to another thread.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-If your code blindly commits both responses, A can overwrite newer B data.
+A Transition has no fixed timer and does not rate-limit network requests or arbitrary computation.
 
-Solutions may include:
+## Render cost still matters
 
-- request IDs;
-- AbortController;
-- framework/data-library mutation ordering;
-- Action-based abstractions that preserve operation semantics.
+Transitions change priority, not cost. If rendering is expensive, you may still need better state placement, memoization, virtualization, smaller DOM, better algorithms, or off-main-thread computation.
 
-Do not confuse render priority with network consistency.
+## Event, Effect, and Action ownership
 
-## `useTransition` vs standalone `startTransition`
-
-Use `useTransition` when the component needs pending state:
-
-```jsx
-const [isPending, startTransition] = useTransition();
-```
-
-Use standalone `startTransition` when:
-
-- you are outside React component Hook scope;
-- pending state is managed elsewhere;
-- a library needs to mark updates as non-urgent.
-
-## Transition vs debounce
-
-They solve different problems.
-
-Debounce:
-
-```text
-wait before starting work
-```
-
-Transition:
-
-```text
-start React work now, but schedule rendering as non-urgent
-```
-
-A Transition has no fixed timer.
-
-React may begin rendering immediately, then interrupt if urgent work appears.
-
-## Transition vs throttle
-
-Throttle limits how often a function runs.
-
-Transitions do not rate-limit events or requests.
-
-They prioritize rendering.
-
-## Transition vs Web Worker
-
-A Web Worker can move JavaScript computation to another thread.
-
-A Transition does not.
-
-If your render performs huge synchronous calculations, marking an update as a Transition may improve responsiveness through interruptible React rendering, but it does not magically move arbitrary CPU work off the main thread.
-
-## Transition vs `useDeferredValue`
-
-Use a Transition when you control the state update:
-
-```jsx
-startTransition(() => setPage(nextPage));
-```
-
-Use `useDeferredValue` when you receive a value and want a dependent subtree to lag behind:
-
-```jsx
-const deferredQuery = useDeferredValue(query);
-```
-
-Typical mental model:
-
-```text
-Transition      → defer an update you initiate
-Deferred value  → defer consumption of a value you already have
-```
-
-## Transition and memoization
-
-A Transition changes priority, not render cost.
-
-If a subtree is expensive because it recomputes unnecessary work on every render, you may still need architectural fixes, memoization, virtualization, or data-shape improvements.
-
-Do not use Transitions to hide inefficient rendering without understanding the cause.
-
-## Render purity becomes more important
-
-Because Transition rendering can be interrupted and restarted, rendering must remain free of externally visible side effects.
-
-Bad:
-
-```jsx
-function Report({ id }) {
-  analytics.log('rendered report', id);
-  return <div>{id}</div>;
-}
-```
-
-Render may happen more than once without commit.
-
-External synchronization belongs in Effects or event/Action logic depending on why it occurs.
+<DecisionTree
+  question="Where should this work happen?"
+  items={[
+    { label: 'User intent causes the operation', value: 'Event / Action logic' },
+    { label: 'UI must synchronize with external system after commit', value: 'Effect' },
+    { label: 'Update is expensive but non-urgent', value: 'Transition around the relevant state update' },
+    { label: 'Render contains side effects', value: 'Move them out; render must stay pure' },
+  ]}
+/>
 
 ## Production example: tab switch
 
@@ -375,90 +248,51 @@ function Tabs() {
 }
 ```
 
-Design questions:
+Design whether the tab indicator is urgent, whether old panel content remains visible, where pending feedback appears, and which nested regions may reveal independently.
 
-- should the selected tab indicator update urgently or with the content?
-- should old content stay visible?
-- where should pending feedback appear?
-- should a new nested panel show its own fallback?
+## Common mistakes
 
-Transitions are a UX tool as much as a scheduler API.
+- wrapping every update in a Transition;
+- transitioning controlled input state;
+- treating `isPending` as a network request object;
+- expecting Transitions to fix very expensive rendering without profiling;
+- confusing render priority with request ordering;
+- performing side effects during render.
 
-## Common mistake: wrapping everything
-
-If every state update is a Transition, you erase the distinction between urgent and non-urgent work.
-
-Ask whether the user expects immediate visual confirmation.
-
-Urgent examples:
-
-- typing;
-- checkbox state;
-- pressed state;
-- direct drag position;
-- focus-related UI.
-
-Good Transition candidates:
-
-- route navigation;
-- tab content changes;
-- expensive filtering after urgent input state;
-- switching large analytical views.
-
-## Common mistake: expecting `isPending` to identify a network request
-
-`isPending` tells you Transition work is pending. It is not a request object with IDs, retries, cancellation, and response ordering.
-
-## Common mistake: assuming slow rendering is acceptable forever
-
-Transitions improve responsiveness but do not remove the need to profile.
-
-If an expensive subtree takes seconds to render, fix the rendering architecture too.
-
-## Debugging Transition behavior
-
-Ask:
+## Debugging checklist
 
 1. Which setter is inside the Transition?
-2. Is the input itself accidentally controlled by Transition state?
-3. Is the expensive work actually caused by another urgent state update?
-4. Does Suspense activate during the update?
-5. Is `isPending` shown in useful UI?
-6. Are post-`await` state updates correctly marked?
-7. Are stale network responses being handled separately?
-8. Is rendering pure enough to be restarted safely?
+2. Is input/control state accidentally non-urgent?
+3. Does expensive work come from another urgent update?
+4. Does Suspense activate?
+5. Is pending feedback useful?
+6. Are post-`await` setters wrapped correctly?
+7. Are request-ordering problems handled separately?
+8. Is rendering safe to interrupt and restart?
 
 ## Exercise
 
-Build a tabbed analytics screen with a deliberately slow chart.
-
-1. Implement normal synchronous tab state.
-2. Observe delayed interactions.
-3. Wrap tab changes in `useTransition`.
-4. Add a pending indicator.
-5. Add Suspense around a lazy chart.
-6. While one tab is rendering, immediately choose another tab.
-7. Explain which work React may abandon and restart.
+Build a slow analytics tab screen. Compare synchronous tab state to Transition-based tab changes, add pending feedback and a lazy/Suspense chart, then rapidly switch tabs and explain which render work React may abandon.
 
 ## Interview questions
 
-**Beginner:** What is the difference between an urgent update and a Transition update?
+**Beginner:** What is the difference between an urgent and Transition update?
 
 **Intermediate:** Why can't a Transition control a text input value?
 
-**Senior:** How do rendering interruption, Suspense fallback preservation, async request ordering, and pending UX interact during a route navigation?
+**Senior:** How do interruption, Suspense preservation, async ordering, and pending UX interact during route navigation?
 
 ## Summary
 
-```text
-Transitions mark state updates as non-urgent.
-They do not create threads or timers.
-Transition rendering can be interrupted and restarted.
-Text input control stays urgent.
-useTransition provides pending state; startTransition can work outside Hook scope.
-Suspense and Transitions coordinate to avoid unwanted fallback replacement.
-Network request ordering remains a separate responsibility.
-```
+<VisualDiagram title="Transition mental model">
+  <DiagramStack align="center">
+    <DiagramNode title="Mark eligible update as non-urgent" tone="purple" />
+    <DiagramArrow label="React prepares it in background" />
+    <DiagramNode title="Urgent work may interrupt" tone="blue" />
+    <DiagramArrow label="obsolete work can be abandoned" />
+    <DiagramNode title="Latest valid result commits" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## References
 

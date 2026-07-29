@@ -4,6 +4,16 @@ description: Learn React lazy loading, dynamic imports, Suspense fallbacks, modu
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `lazy` and code splitting
 
 `lazy` lets React defer loading a component's code until that component is rendered for the first time.
@@ -22,31 +32,36 @@ export default function App() {
 }
 ```
 
-The mental model is:
+<VisualDiagram title="lazy, dynamic import, and Suspense have different jobs">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="dynamic import()" tone="blue" eyebrow="BUNDLER / MODULE">
+      Creates an async module loading boundary.
+    </DiagramNode>
+    <DiagramNode title="lazy" tone="purple" eyebrow="REACT COMPONENT">
+      Turns that async module into a component React can render.
+    </DiagramNode>
+    <DiagramNode title="Suspense" tone="orange" eyebrow="REVEAL UX">
+      Defines what users see while the code is not ready.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-normal import → load code as part of the current bundle graph
-lazy import   → create a code boundary that can load later
-Suspense      → define what the user sees while that code is unavailable
-```
+## What happens on first render?
 
-## `lazy` returns a component
+<LifecycleBar
+  items={[
+    { label: 'Render lazy component', tone: 'blue' },
+    { label: 'Run loader', tone: 'purple' },
+    { label: 'Module pending → suspend', tone: 'orange' },
+    { label: 'Nearest fallback shows', tone: 'gray' },
+    { label: 'Module resolves', tone: 'teal' },
+    { label: 'Retry + commit component', tone: 'green' },
+  ]}
+/>
 
-```jsx
-const Chart = lazy(() => import('./Chart.js'));
-```
+React caches the loader Promise and resolved module value for that lazy component definition, so the same loader is not expected to run on every later render.
 
-You render `Chart` like any other component.
-
-```jsx
-<Chart data={data} />
-```
-
-When React first tries to render it, the loader runs. If the module is not ready, rendering suspends until the Promise resolves.
-
-## The module must expose the component as `default`
-
-The loader Promise should resolve to an object whose `.default` is a valid component type.
+## The module needs a default component export
 
 ```js
 // ReportsPage.js
@@ -55,13 +70,11 @@ export default function ReportsPage() {
 }
 ```
 
-Then:
-
 ```jsx
 const ReportsPage = lazy(() => import('./ReportsPage.js'));
 ```
 
-If your module only has named exports, use a deliberate adapter module or Promise mapping rather than hiding a messy module boundary throughout the application.
+If a module only has named exports, use a deliberate adapter rather than spreading special Promise mapping throughout the app.
 
 ## Declare lazy components at module scope
 
@@ -84,27 +97,24 @@ export default function Editor() {
 }
 ```
 
-Creating the lazy component inside another component creates a new component type during rendering and can reset state unexpectedly.
+<VisualDiagram title="Component identity must stay stable">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Module-scope lazy definition" tone="green">
+      Same component type across renders → normal state preservation rules apply.
+    </DiagramNode>
+    <DiagramNode title="lazy created during render" tone="red">
+      New component type may be created → state can reset unexpectedly.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-The general React identity rule still applies:
-
-> Component types should be stable across renders.
-
-## `lazy` caches the loader result
-
-React caches both the Promise returned by the loader and its resolved module value, so React does not call the same lazy loader repeatedly after it has resolved.
-
-This means the fallback usually appears during the first unresolved load, not every time you re-render the already loaded component.
-
-## Lazy loading is not the same as conditional rendering
+## Lazy loading is not conditional rendering
 
 ```jsx
 {showChart ? <Chart /> : null}
 ```
 
-Conditional rendering decides whether a component exists in the current UI.
-
-If `Chart` is statically imported, its code may already be in the application bundle even while `showChart` is false.
+Conditional rendering decides whether the component exists in the current UI. If `Chart` is statically imported, its code may already be in the bundle.
 
 ```jsx
 import Chart from './Chart.js';
@@ -112,25 +122,39 @@ import Chart from './Chart.js';
 
 With `lazy`, the code itself can be deferred.
 
-## Code splitting should follow meaningful product boundaries
+## Choose product boundaries, not tiny components
 
-Common boundaries include:
+Strong candidates include routes, large editors, analytics views, admin-only features, heavy visualization tools, rare modals, and optional integrations.
 
-- routes;
-- large editors;
-- analytics dashboards;
-- admin-only features;
-- infrequently used modals;
-- expensive visualization libraries;
-- optional integrations.
+<DecisionTree
+  question="Is this a useful lazy boundary?"
+  items={[
+    { label: 'Large feature, not needed immediately', value: 'Strong candidate' },
+    { label: 'Route many users may never visit', value: 'Strong candidate' },
+    { label: 'Tiny component always needed above the fold', value: 'Usually keep eager' },
+    { label: 'Split creates extra sequential discovery', value: 'Reconsider or preload' },
+  ]}
+/>
 
-Less useful boundaries include tiny components that are always needed immediately.
+## Code splitting can create waterfalls
 
-Splitting every component can create more network and scheduling overhead than it saves.
+Bad splitting can defer too much work sequentially.
 
-## Route-level splitting
+<VisualDiagram title="A code-split waterfall still costs time">
+  <DiagramStack align="center">
+    <DiagramNode title="Load route JS" tone="blue" />
+    <DiagramArrow label="route renders and discovers" />
+    <DiagramNode title="Load chart JS" tone="purple" />
+    <DiagramArrow label="chart discovers" />
+    <DiagramNode title="Load editor JS" tone="orange" />
+    <DiagramArrow label="finally ready" />
+    <DiagramNode title="Interactive feature" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-A route is often a strong lazy boundary because the user may never visit every route in one session.
+Good production architecture asks what can load in parallel, what should be prefetched, what belongs on the critical path, and whether the extra chunk boundary is worth its scheduling/network overhead.
+
+## Route-level and feature-level splitting
 
 ```jsx
 const HomePage = lazy(() => import('./pages/HomePage.js'));
@@ -138,43 +162,17 @@ const BillingPage = lazy(() => import('./pages/BillingPage.js'));
 const AdminPage = lazy(() => import('./pages/AdminPage.js'));
 ```
 
-A router can coordinate route transitions with Suspense and Transitions so the old page remains usable while the next route's code/data becomes ready.
-
-## Feature-level splitting
-
 ```jsx
 const AdvancedReportBuilder = lazy(
   () => import('./reports/AdvancedReportBuilder.js')
 );
 ```
 
-This is useful when a large feature is only opened by a small portion of users.
+Routes are often strong boundaries because users may never visit every route. Feature boundaries work when large code is only needed after a specific interaction.
 
-## Lazy loading does not automatically make an app fast
+## Suspense fallback design
 
-A split bundle still has to be downloaded, parsed, and executed eventually.
-
-Bad splitting can cause waterfalls:
-
-```text
-load route JS
-→ discover chart JS
-→ load chart JS
-→ discover editor JS
-→ load editor JS
-```
-
-Good production architecture considers:
-
-- which code is critical for first interaction;
-- which code can load in parallel;
-- which code should be prefetched before likely navigation;
-- which bundle sizes justify another boundary;
-- how cache reuse behaves across routes.
-
-## Suspense fallback design for code loading
-
-Avoid a giant page-level spinner for a small lazy panel.
+Avoid a giant page spinner for a small lazy panel.
 
 ```jsx
 <DashboardShell>
@@ -184,141 +182,102 @@ Avoid a giant page-level spinner for a small lazy panel.
 </DashboardShell>
 ```
 
-This preserves useful surrounding UI.
+<VisualDiagram title="Keep useful surrounding UI outside the lazy region">
+  <DiagramStack align="center">
+    <DiagramNode title="Dashboard shell stays visible" tone="green" />
+    <DiagramArrow label="local boundary owns loading" />
+    <DiagramNode title="Chart skeleton" tone="gray" />
+    <DiagramArrow label="chunk becomes ready" />
+    <DiagramNode title="Revenue chart" tone="purple" />
+  </DiagramStack>
+</VisualDiagram>
 
-## Lazy errors belong to Error Boundaries
+## Failed lazy imports are errors
 
-If the dynamic import Promise rejects, React throws the rejection so the nearest Error Boundary can handle it.
+If the import Promise rejects, the nearest Error Boundary should own recovery.
 
-For example, deployment mismatches can cause a browser to request an old chunk filename that no longer exists.
+Chunk failures can happen because of deployment mismatches, stale HTML, CDN issues, or offline conditions. A robust app may need local recovery UI, retry, a controlled refresh path, and monitoring.
 
-A robust application may need a recovery strategy such as:
+## Prefetching complements lazy loading
 
-- Error Boundary UI;
-- retry;
-- controlled page refresh when a chunk is stale;
-- monitoring chunk-load failures.
+`lazy` answers **what can load later**. Prefetch/preload answers **when to begin fetching likely future code before render requires it**.
 
-## State identity and lazy components
+<VisualDiagram title="Split less now, preload selectively later">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="lazy" tone="purple">Remove code from the initial requirement.</DiagramNode>
+    <DiagramNode title="preload / prefetch" tone="teal">Start likely future code before the interaction needs it.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Once loaded, a lazy component participates in React identity rules like other component types.
-
-Keys, position, and component type still decide whether state is preserved.
-
-`lazy` is not a special state store.
-
-## Prefetching likely code
-
-Code splitting answers **what may load later**.
-
-Prefetching answers **when we can start loading it before it is required**.
-
-For example, an application might prefetch a settings route when the user hovers or focuses its navigation link.
-
-The exact mechanism depends on your bundler/router/framework. React DOM also exposes resource loading APIs such as `preloadModule` and `preinitModule`, covered in the Modern React chapter.
-
-## Preload vs lazy
-
-These are complementary ideas:
-
-```text
-lazy → don't require this code as part of initial rendering
-preload/prefetch → begin fetching likely future code before render needs it
-```
-
-Do not preload everything, or you erase the bandwidth benefit of splitting.
+React DOM exposes APIs such as `preloadModule` and `preinitModule`; routers and frameworks may provide their own prefetch mechanisms. Preloading everything defeats the bandwidth benefit of splitting.
 
 ## Bundler responsibility
 
-React's `lazy` API expresses runtime component loading, but your bundler creates the chunks.
-
-Vite, webpack, Rollup-based systems, and frameworks may create different chunk graphs.
-
-Production debugging often requires inspecting build output, not only React code.
-
-## Common mistake: tiny boundaries everywhere
-
-If every icon, button, and card is lazy, you may produce many requests and loading states without meaningful startup savings.
-
-Split by user journey and bundle cost.
-
-## Common mistake: lazy-loading critical above-the-fold UI
-
-If the user always needs the hero, navigation, and primary call to action immediately, making them lazy can delay the first useful experience.
-
-## Common mistake: ignoring navigation feedback
-
-A lazy route may not show a root fallback during a Transition because React can preserve already revealed content.
-
-That makes a pending indicator important:
-
-```jsx
-const [isPending, startTransition] = useTransition();
-```
-
-Users need to know their navigation click was accepted even while the previous screen remains visible.
-
-## Common mistake: declaring `lazy` inside render
-
-This is one of the most important `lazy` mistakes because it affects component identity and state.
-
-Always prefer stable module-scope declarations.
-
-## Debugging code splitting
+React expresses runtime loading, but the bundler creates the actual chunk graph. Production debugging often requires inspecting generated bundles and browser network activity, not only React source code.
 
 Inspect:
 
-- browser Network panel;
-- generated chunk sizes;
-- duplicate dependencies across chunks;
+- chunk sizes;
+- duplicate dependencies;
 - request waterfalls;
-- cache headers;
-- chunk-load errors;
-- whether a route is loaded before it is actually needed;
-- whether a boundary causes unnecessary visual replacement.
+- cache behavior;
+- chunk-load failures;
+- code loaded before it is needed;
+- fallback replacement caused by boundary placement.
+
+## Navigation and pending feedback
+
+A lazy route can prepare inside a Transition while the current route remains visible.
+
+<VisualDiagram title="Suspense-aware navigation can avoid destructive route replacement">
+  <DiagramStack align="center">
+    <DiagramNode title="Current route visible" tone="green" />
+    <DiagramArrow label="navigation Transition starts" />
+    <DiagramNode title="Next route chunk prepares" tone="purple" />
+    <DiagramArrow label="show stable pending feedback" />
+    <DiagramNode title="Next route ready → commit" tone="blue" />
+  </DiagramStack>
+</VisualDiagram>
+
+If old content stays visible, users still need feedback that their navigation was accepted.
 
 ## Production decision framework
 
-Before adding `lazy`, answer:
+Before adding `lazy`, ask:
 
-1. Is this feature large enough to split?
+1. Is the feature large enough to split?
 2. Is it needed on the first user journey?
 3. How likely is the user to open it?
-4. Can we predict that interaction and prefetch?
-5. Where should the Suspense boundary live?
-6. What happens if loading fails?
-7. Will splitting create a request waterfall?
+4. Can likely navigation preload it?
+5. Where should Suspense live?
+6. What happens if the chunk fails?
+7. Does the split introduce a waterfall?
 
 ## Exercise
 
-Take a dashboard with Home, Reports, Billing, and Admin routes.
-
-1. Statically import all four routes.
-2. Measure the initial bundle.
-3. Convert Reports, Billing, and Admin to `lazy`.
-4. Add route-level Suspense.
-5. Add a navigation pending indicator.
-6. Inspect the Network panel and explain the new loading sequence.
+Take Home, Reports, Billing, and Admin routes. Measure an eager build, lazy-load the less common routes, add Suspense and pending navigation UI, then inspect the resulting Network waterfall and bundle graph.
 
 ## Interview questions
 
 **Beginner:** What does `lazy` do?
 
-**Intermediate:** Why should `lazy(() => import(...))` normally be declared outside component functions?
+**Intermediate:** Why should a lazy component normally be declared outside component functions?
 
-**Senior:** How do you choose code-splitting boundaries without creating network waterfalls or destroying perceived navigation performance?
+**Senior:** How do you choose code-splitting boundaries without creating network waterfalls or damaging perceived navigation performance?
 
 ## Summary
 
-```text
-lazy creates a deferred component-code boundary.
-Suspense provides the loading/reveal boundary.
-Declare lazy components at module scope.
-Split meaningful product areas, not every component.
-Code splitting can reduce initial work but can create waterfalls.
-Prefetching and lazy loading are complementary.
-Error Boundaries handle failed lazy imports.
-```
+<VisualDiagram title="Code-splitting mental model">
+  <DiagramStack align="center">
+    <DiagramNode title="Choose a meaningful product boundary" tone="blue" />
+    <DiagramArrow label="defer its code" />
+    <DiagramNode title="lazy + dynamic import" tone="purple" />
+    <DiagramArrow label="coordinate readiness" />
+    <DiagramNode title="Suspense + pending/error UX" tone="orange" />
+    <DiagramArrow label="optimize critical path" />
+    <DiagramNode title="Parallel loading, caching, selective prefetch" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## References
 
