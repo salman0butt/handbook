@@ -123,6 +123,17 @@ const nextjsItems = [
     'nextjs/performance/backend-runtime-database-memory-and-capacity-performance',
     'nextjs/performance/profiling-debugging-and-performance-regression-workflows',
     'nextjs/performance/performance-architecture-budgets-and-design-review',
+  ], { collapsed: true }),
+  category('16 · Testing', [
+    'nextjs/testing/testing-mental-model-pyramid-boundaries-and-risk',
+    'nextjs/testing/vitest-jest-react-testing-library-and-component-testing',
+    'nextjs/testing/server-components-data-cache-and-revalidation-testing',
+    'nextjs/testing/server-actions-route-handlers-proxy-and-http-testing',
+    'nextjs/testing/authentication-authorization-security-and-multitenant-testing',
+    'nextjs/testing/suspense-streaming-navigation-hydration-and-browser-testing',
+    'nextjs/testing/playwright-cypress-e2e-accessibility-and-production-testing',
+    'nextjs/testing/test-data-mocking-flakiness-ci-and-performance-regression',
+    'nextjs/testing/testing-architecture-release-gates-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
