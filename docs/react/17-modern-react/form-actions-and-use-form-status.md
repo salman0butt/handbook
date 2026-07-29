@@ -4,21 +4,28 @@ description: Learn React 19 function-valued form actions, automatic form behavio
 sidebar_position: 3
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Form Actions and `useFormStatus`
 
 React 19 extends the browser `<form>` model so the `action` prop can be a function.
 
-That gives forms a React-aware mutation lifecycle without requiring every form to manually wire:
+<VisualDiagram title="From manual submit plumbing to a form Action" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Manual onSubmit flow" tone="slate">`preventDefault` → set submitting → call async work → catch → clear submitting.</DiagramNode>
+    <DiagramNode title="Function Action flow" tone="purple">Browser form semantics + `FormData` + React Action lifecycle + local pending state.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-onSubmit
-preventDefault
-setSubmitting(true)
-try/catch
-setSubmitting(false)
-```
-
-The browser form remains important. React adds coordination around it.
+The browser form remains important. React adds coordination around it rather than replacing it.
 
 ## Function-valued `action`
 
@@ -40,29 +47,17 @@ function ProfileForm() {
 
 When the form submits, React calls the function with `FormData`.
 
-This is different from the traditional string URL form action:
+This differs from a traditional URL action:
 
 ```html
 <form action="/checkout" method="post">
 ```
 
-React supports both browser-native URL actions and function Actions, but they represent different programming models.
+Both are valid browser/React models, but they mean different things.
 
 ## Keep native form semantics
 
-A function Action does not mean you should abandon semantic HTML.
-
-Keep:
-
-- `<form>`;
-- `<label>`;
-- `name` attributes;
-- correct input types;
-- submit buttons;
-- browser validation where appropriate;
-- server validation for trust boundaries.
-
-Example:
+A function Action is not a reason to abandon semantic HTML. Keep labels, `name` attributes, appropriate input types, submit buttons, browser validation where useful, and server validation for trust boundaries.
 
 ```jsx
 <form action={signupAction}>
@@ -74,13 +69,11 @@ Example:
 
 ## Why `name` matters
 
-`FormData` is built from successful form controls identified by `name`.
+`FormData` is created from successful form controls identified by `name`:
 
 ```jsx
 <input name="email" />
 ```
-
-Then:
 
 ```jsx
 async function signupAction(formData) {
@@ -88,36 +81,24 @@ async function signupAction(formData) {
 }
 ```
 
-An input without `name` may be visually present but absent from `FormData`.
+An input can be visible while still being absent from `FormData` if it is not represented as a successful named form control.
 
-## Form Actions and `useActionState`
+## Form Actions + `useActionState`
 
 The Action returned by `useActionState` can be passed directly to a form:
 
 ```jsx
-import {useActionState} from 'react';
-
-const initialState = {
-  message: null,
-  error: null,
-};
+const initialState = {message: null, error: null};
 
 async function submit(previousState, formData) {
   const email = formData.get('email');
 
   if (!email) {
-    return {
-      message: null,
-      error: 'Email is required',
-    };
+    return {message: null, error: 'Email is required'};
   }
 
   await saveEmail(email);
-
-  return {
-    message: 'Saved',
-    error: null,
-  };
+  return {message: 'Saved', error: null};
 }
 
 function NewsletterForm() {
@@ -137,17 +118,17 @@ function NewsletterForm() {
 }
 ```
 
-This pattern combines:
-
-```text
-browser form data
-+
-Action execution
-+
-Action result state
-+
-pending state
-```
+<VisualDiagram title="What the form workflow combines" compact>
+  <LifecycleBar
+    items={[
+      { label: 'Browser collects FormData', tone: 'blue' },
+      { label: 'Action runs', tone: 'purple' },
+      { label: 'Pending state is available', tone: 'orange' },
+      { label: 'Action returns result state', tone: 'green' },
+      { label: 'UI renders outcome', tone: 'cyan' },
+    ]}
+  />
+</VisualDiagram>
 
 ## `useFormStatus`
 
@@ -157,7 +138,7 @@ pending state
 import {useFormStatus} from 'react-dom';
 ```
 
-It returns information about the latest submission of the nearest parent form:
+It returns status information for the latest submission of the nearest parent form:
 
 ```jsx
 const {
@@ -170,8 +151,6 @@ const {
 
 ## Pending submit button
 
-A common pattern is to make the submit button its own component:
-
 ```jsx
 function SubmitButton() {
   const {pending} = useFormStatus();
@@ -182,11 +161,7 @@ function SubmitButton() {
     </button>
   );
 }
-```
 
-Then place it inside the form:
-
-```jsx
 function ContactForm({action}) {
   return (
     <form action={action}>
@@ -199,9 +174,19 @@ function ContactForm({action}) {
 
 ## Critical placement rule
 
-`useFormStatus` tracks a **parent** form.
+`useFormStatus` tracks a **parent** form, not a form returned by the same component.
 
-This does not work:
+<VisualDiagram title="useFormStatus lookup" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="Parent <form>" tone="purple" wide>Owns the submission being tracked.</DiagramNode>
+    <DiagramArrow label="contains" />
+    <DiagramNode title="SubmitButton" tone="blue">Calls `useFormStatus()`.</DiagramNode>
+    <DiagramArrow label="reads latest parent submission" />
+    <DiagramNode title="pending · data · method · action" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
+
+This will not track the form rendered by the same component:
 
 ```jsx
 function Form() {
@@ -215,77 +200,50 @@ function Form() {
 }
 ```
 
-The Hook is called before the returned `<form>` exists as its parent in the React tree.
+Extract a descendant component instead.
 
-Extract a child:
+## Submitted data
 
-```jsx
-function SubmitButton() {
-  const {pending} = useFormStatus();
-  return <button disabled={pending}>Save</button>;
-}
-
-function Form() {
-  return (
-    <form action={save}>
-      <SubmitButton />
-    </form>
-  );
-}
-```
-
-## Reading the submitted data
-
-`useFormStatus` can expose the `FormData` currently being submitted:
+`data` exposes the `FormData` currently being submitted:
 
 ```jsx
 function StatusMessage() {
   const {pending, data} = useFormStatus();
 
-  if (!pending || !data) {
-    return null;
-  }
+  if (!pending || !data) return null;
 
   return <p>Saving {data.get('displayName')}…</p>;
 }
 ```
 
-This can make pending UI more informative than a generic spinner.
+This often produces better feedback than a generic spinner.
 
 ## `method` and `action`
 
-The returned status also contains form submission metadata.
+The status object also includes form submission metadata:
 
 ```jsx
 const status = useFormStatus();
-
 status.method;
 status.action;
 ```
 
-For function Actions, `status.action` can reference the function used by the parent form. If the form uses a URI action instead, this field is not the same model.
+For function Actions, `status.action` can reference the function used by the parent form.
 
 ## `useActionState` pending vs `useFormStatus` pending
 
-Both can expose pending state, but their scope differs.
+<VisualDiagram title="Pending state has different owners" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="useActionState isPending" tone="purple">Pending state for Actions dispatched by that Hook.</DiagramNode>
+    <DiagramNode title="useFormStatus pending" tone="blue">Pending state for the nearest parent form submission.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-useActionState isPending
-  → pending state for that Hook's dispatched Actions
+Use the abstraction that owns the UI concern. A design-system submit button often fits `useFormStatus` because it does not need to know which Action Hook produced the form Action.
 
-useFormStatus pending
-  → pending state for the nearest parent form submission
-```
+## Multiple intents with `formAction`
 
-Use the abstraction that owns the UI concern.
-
-A form-level design-system submit button often fits `useFormStatus` well because it does not need to know which Action Hook produced the form Action.
-
-## `formAction` on buttons
-
-HTML supports controls that override a form's action. React can also use function Actions there.
-
-Conceptually:
+A button can override a form's Action:
 
 ```jsx
 <form action={saveAction}>
@@ -294,71 +252,30 @@ Conceptually:
 </form>
 ```
 
-This lets related operations share fields while representing distinct user intents.
+This can represent distinct user intents over the same fields. Keep authorization, validation, confirmation, and recovery requirements specific to each operation.
 
-Use this carefully when actions have significantly different confirmation, validation, or authorization requirements.
+## Validation and trust boundaries
 
-## Expected validation errors
+<VisualDiagram title="Client feedback vs server authority" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Client validation" tone="cyan">Fast feedback · required fields · formatting · local UX.</DiagramNode>
+    <DiagramNode title="Server validation" tone="red">Authorization · ownership · allowed values · business rules · security-sensitive constraints.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-A common pattern is returning validation state from `useActionState`:
+Browser/client validation improves UX; it is not a security boundary.
 
-```jsx
-async function createAccount(previousState, formData) {
-  const username = formData.get('username');
-
-  if (typeof username !== 'string' || username.length < 3) {
-    return {
-      success: false,
-      fieldErrors: {
-        username: 'Use at least 3 characters',
-      },
-    };
-  }
-
-  await saveAccount({username});
-
-  return {
-    success: true,
-    fieldErrors: {},
-  };
-}
-```
-
-Then render errors near the relevant field and provide an accessible summary where appropriate.
-
-## Client validation does not replace server validation
-
-Never treat browser validation as a security boundary.
-
-```text
-client validation
-→ faster feedback
-
-server validation
-→ authoritative trust boundary
-```
-
-The server must still validate:
-
-- authorization;
-- allowed values;
-- ownership;
-- business rules;
-- security-sensitive constraints.
+Expected validation errors can be returned as structured `useActionState` state and rendered near the relevant field.
 
 ## Controlled vs browser-owned fields
 
-React 19 Actions do not make controlled inputs obsolete.
-
-Choose based on interaction needs.
-
-Browser-owned field:
+React Actions do not make controlled inputs obsolete.
 
 ```jsx
 <input name="email" defaultValue={initialEmail} />
 ```
 
-Controlled field:
+A browser-owned field can remain simple until submission.
 
 ```jsx
 const [email, setEmail] = useState(initialEmail);
@@ -370,77 +287,56 @@ const [email, setEmail] = useState(initialEmail);
 />
 ```
 
-Use controlled state when rendering must react to every edit. Use browser-owned values when the form can remain simpler until submission.
+Use controlled state when rendering must react to every edit.
 
-## Form reset behavior
+## Reset behaviour
 
-Function Action forms can reset uncontrolled form controls after successful Action completion in relevant React form flows.
+Successful function-Action form flows can reset uncontrolled browser-owned controls. Controlled values remain driven by React state and must be updated by their owner.
 
-Do not confuse that with resetting controlled state. Controlled values are still driven by React state and must be updated by their owner.
-
-This distinction is another reason to know who owns each form value.
+That difference is another reason to make ownership explicit.
 
 ## Progressive enhancement
 
-When React Server Components, Server Functions, and framework support are involved, form Actions can participate in progressive enhancement so a form can still submit before hydration completes.
+With React Server Components, Server Functions, and framework support, form Actions can participate in progressive enhancement so a form can submit before hydration completes.
 
-That capability depends on the server/framework environment.
+A client-only Vite application should not pretend it has Server Function semantics merely because it uses `<form action={fn}>`.
 
-A client-only Vite application should not pretend it has Server Function semantics just because it uses `<form action={fn}>`.
+## Production responsibility map
 
-## Accessibility
-
-Pending forms should communicate state without destroying context.
-
-Useful techniques include:
-
-- disabling only the relevant submit control when duplicate submission is unsafe;
-- changing button text to a meaningful pending label;
-- using `aria-live` for submission result messages when appropriate;
-- associating field errors with inputs;
-- preserving focus intentionally after errors;
-- avoiding inaccessible custom div-based controls.
+<VisualDiagram title="Production form architecture">
+  <DiagramStack align="center">
+    <DiagramNode title="Feature Form" tone="purple" wide>Chooses the Action · owns domain result state · renders the fields.</DiagramNode>
+    <DiagramArrow />
+    <DiagramGrid columns={2}>
+      <DiagramNode title="SubmitButton" tone="blue">Uses `useFormStatus` for submission presentation.</DiagramNode>
+      <DiagramNode title="FieldError" tone="orange">Renders structured validation state accessibly.</DiagramNode>
+    </DiagramGrid>
+    <DiagramArrow label="server remains authoritative" />
+    <DiagramNode title="Server mutation boundary" tone="red" wide>Re-validates authorization, ownership, data shape, and business rules.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
 ## Common mistakes
 
-### Calling `useFormStatus` in the component that creates the form
+- Calling `useFormStatus` in the component that creates the form instead of a descendant.
+- Duplicating pending state that already has one clear owner.
+- Forgetting `name` on submitted fields.
+- Assuming every function Action is a Server Function.
+- Relying only on client/browser validation.
+- Treating controlled and browser-owned reset behaviour as the same thing.
 
-It needs a parent form, so extract a descendant component.
+## Decision guide
 
-### Duplicating pending state
-
-If `useFormStatus` already represents the exact form submission state, another local `isSubmitting` boolean may be unnecessary.
-
-### Forgetting `name`
-
-Without `name`, a field is not represented in `FormData` the way you expect.
-
-### Assuming function Actions are Server Functions
-
-A function-valued form Action can exist in client code. `'use server'` has different requirements and belongs to the Server Components/Server Functions architecture.
-
-### Relying only on client validation
-
-The server remains authoritative.
-
-## Production pattern
-
-A reusable form system might separate responsibilities like this:
-
-```text
-Feature Form
-  ├── chooses Action
-  ├── owns domain result state
-  └── renders fields
-
-SubmitButton
-  └── useFormStatus for pending presentation
-
-FieldError
-  └── renders structured validation state
-```
-
-This keeps visual form primitives independent from feature mutation logic.
+<DecisionTree
+  question="Which form primitive owns this concern?"
+  items={[
+    { label: 'Need Action result state + pending lifecycle?', value: 'useActionState' },
+    { label: 'Need generic descendant submit status?', value: 'useFormStatus' },
+    { label: 'Need every keystroke to drive rendering?', value: 'Controlled input state' },
+    { label: 'Field only matters at submission?', value: 'Browser-owned form control may be simpler' },
+    { label: 'Need authoritative validation?', value: 'Server boundary' },
+  ]}
+/>
 
 ## Interview questions
 
