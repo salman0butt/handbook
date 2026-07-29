@@ -4,25 +4,36 @@ description: Understand React 19 Actions, async Transitions, pending UI, orderin
 sidebar_position: 1
 ---
 
+import {
+  DecisionTree,
+  DiagramArrow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramStack,
+  LifecycleBar,
+  VisualDiagram,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Actions and async Transitions
 
-React 19 gives a first-class name and set of patterns to a workflow that modern applications perform constantly:
+React 19 gives a first-class name and set of patterns to a workflow that modern applications perform constantly.
 
-```text
-user intent
-   ↓
-start async work
-   ↓
-keep urgent UI responsive
-   ↓
-show pending feedback
-   ↓
-commit confirmed result
-```
+<VisualDiagram title="Action lifecycle" subtitle="User intent can start async work without turning the resulting UI update into urgent rendering work.">
+  <LifecycleBar
+    items={[
+      { label: 'User intent', tone: 'blue' },
+      { label: 'Start Action / Transition', tone: 'purple' },
+      { label: 'Async work runs', tone: 'orange' },
+      { label: 'Urgent UI stays responsive', tone: 'cyan' },
+      { label: 'Pending feedback stays local', tone: 'slate' },
+      { label: 'Confirmed result renders', tone: 'green' },
+    ]}
+  />
+</VisualDiagram>
 
 React calls functions executed inside a Transition **Actions**.
 
-An Action is not a replacement for event handlers, Effects, or API functions. It is a way to coordinate updates that may include asynchronous work while React treats the resulting UI update as non-urgent.
+An Action is not a replacement for event handlers, Effects, or API functions. It coordinates updates that may include asynchronous work while React treats the resulting UI update as non-urgent.
 
 ## Start with the problem
 
@@ -39,11 +50,7 @@ async function updateQuantity(nextQuantity) {
 }
 ```
 
-The network request itself is ordinary JavaScript. The React-specific question is:
-
-> How should the UI behave while that operation is happening and when its result updates rendered state?
-
-React 19's Action model connects this workflow to Transitions.
+The network request is ordinary JavaScript. The React question is how the UI should behave while it is happening and when its result updates rendered state.
 
 ## `useTransition`
 
@@ -72,23 +79,21 @@ function QuantityEditor() {
 }
 ```
 
-The important mental model is:
+<VisualDiagram title="What startTransition changes" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="startTransition(action)" tone="purple" wide />
+    <DiagramArrow label="calls action immediately" />
+    <DiagramNode title="Action executes now" tone="blue" wide>It is not delayed like `setTimeout`.</DiagramNode>
+    <DiagramArrow label="mark eligible updates" />
+    <DiagramNode title="Transition rendering" tone="green" wide>Non-urgent rendering may yield to more urgent interaction.</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-startTransition(action)
-        ↓
-React executes action immediately
-        ↓
-updates marked as Transition work
-        ↓
-urgent interactions remain interruptible
-```
+`startTransition` changes update priority; it does not postpone the callback.
 
-`startTransition` does **not** delay your callback like `setTimeout`.
+## Action naming is a convention
 
-## Why call these functions Actions?
-
-By convention, a callback intended to run inside a Transition can be named with an `Action` suffix:
+A callback intended to run as Transition work can use an `Action` suffix:
 
 ```jsx
 function SubmitButton({submitAction}) {
@@ -109,20 +114,18 @@ function SubmitButton({submitAction}) {
 }
 ```
 
-This makes the component contract clearer:
-
-```text
-onClick       → event callback
-submitAction  → operation intended to run as Transition work
-```
+<VisualDiagram title="Event callback vs Action-shaped callback" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="onClick" tone="blue" eyebrow="Event">Represents the browser/user event boundary.</DiagramNode>
+    <DiagramNode title="submitAction" tone="purple" eyebrow="Action">Represents an operation intended to participate in Transition coordination.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 The name is a convention, not special JavaScript syntax.
 
 ## Actions can contain side effects
 
-A reducer passed to `useReducer` must remain pure.
-
-An Action may perform side effects:
+A reducer passed to `useReducer` must remain pure. An Action may perform side effects:
 
 ```jsx
 startTransition(async () => {
@@ -131,11 +134,11 @@ startTransition(async () => {
 });
 ```
 
-That difference becomes especially important when comparing `useReducer` with `useActionState` later.
+That difference matters when comparing `useReducer` with `useActionState`.
 
 ## Actions are not Effects
 
-Do not move user-triggered work into `useEffect` just because it is asynchronous.
+Do not move user-triggered work into an Effect merely because it is asynchronous.
 
 Bad:
 
@@ -157,13 +160,13 @@ function handleSave() {
 }
 ```
 
-Use this decision rule:
-
-```text
-user caused it directly?     → event handler / Action
-external system must stay
-synchronized with rendering? → Effect
-```
+<DecisionTree
+  question="Where should this work start?"
+  items={[
+    { label: 'Directly caused by user intent?', value: 'Event handler / Action' },
+    { label: 'Must stay synchronized with an external system because rendering changed?', value: 'Effect' },
+  ]}
+/>
 
 ## Pending state
 
@@ -173,7 +176,7 @@ synchronized with rendering? → Effect
 const [isPending, startTransition] = useTransition();
 ```
 
-`isPending` lets the UI communicate background work:
+Use `isPending` for local feedback:
 
 ```jsx
 <button disabled={isPending}>
@@ -181,21 +184,21 @@ const [isPending, startTransition] = useTransition();
 </button>
 ```
 
-Pending UI should usually preserve context instead of replacing the whole screen with a spinner.
+Pending UI should usually preserve context instead of replacing the whole screen with a global spinner.
 
-## Important current limitation after `await`
+## State updates after `await`
 
-React's current Transition behavior has an important caveat.
+A current React limitation matters when an Action awaits asynchronous work.
 
 ```jsx
 startTransition(async () => {
   const result = await saveSomething();
 
-  setValue(result); // not automatically marked as a Transition today
+  setValue(result); // not automatically Transition work today
 });
 ```
 
-For state updates after an `await`, wrap them in another `startTransition`:
+Wrap state updates after the `await` in another `startTransition`:
 
 ```jsx
 startTransition(async () => {
@@ -207,49 +210,46 @@ startTransition(async () => {
 });
 ```
 
-Treat this as a current limitation, not a timeless design rule.
+<VisualDiagram title="Async Transition boundary" compact>
+  <DiagramStack align="center">
+    <DiagramNode title="startTransition" tone="purple" />
+    <DiagramArrow label="await async work" />
+    <DiagramNode title="Async boundary" tone="orange">React currently loses automatic Transition marking for later setters.</DiagramNode>
+    <DiagramArrow label="wrap setter again" />
+    <DiagramNode title="startTransition(() => setState(...))" tone="green" wide />
+  </DiagramStack>
+</VisualDiagram>
+
+Treat this as a current implementation limitation, not a timeless conceptual rule.
 
 ## Urgent vs non-urgent updates
 
-Transitions are for work that can yield to urgent interaction.
+<VisualDiagram title="Update priority" subtitle="Transitions are for work that can yield to more urgent interaction.">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Urgent" tone="blue">Controlled typing · direct pointer interaction · immediate button/menu feedback.</DiagramNode>
+    <DiagramNode title="Transition candidate" tone="purple">Navigation · expensive tab content · mutation result rendering · background recalculation.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Typical urgent updates:
-
-- typing into a controlled input;
-- clicking a button;
-- opening a menu;
-- direct pointer interaction.
-
-Typical Transition candidates:
-
-- navigation;
-- expensive tab content changes;
-- mutation result rendering;
-- background recalculation of large UI regions.
-
-## Do not put controlled input state in a Transition
-
-Bad:
+Do not put controlled input state itself in a Transition:
 
 ```jsx
 function SearchBox() {
   const [query, setQuery] = useState('');
 
   function handleChange(event) {
-    startTransition(() => {
-      setQuery(event.target.value); // ❌ input state should be immediate
-    });
+    setQuery(event.target.value); // immediate
   }
 
   return <input value={query} onChange={handleChange} />;
 }
 ```
 
-Use synchronous state for the input itself. Later, `useDeferredValue` or a second Transition-backed value can make expensive results lag behind without making typing lag.
+Use synchronous state for the input. `useDeferredValue` or a separate Transition-backed result can lag behind without making typing lag.
 
 ## Action props
 
-A reusable component can expose an Action-shaped prop:
+Reusable components can own pending presentation while callers provide domain behavior:
 
 ```jsx
 function SaveButton({action}) {
@@ -268,101 +268,44 @@ function SaveButton({action}) {
     </button>
   );
 }
-```
 
-Then callers provide behavior rather than duplicating pending-state plumbing.
-
-```jsx
 <SaveButton action={() => saveProfile(profile)} />
 ```
 
-## Request ordering matters
+## Request ordering still matters
 
-Raw async Transitions do not automatically solve every race condition.
+Raw async Transitions do not automatically solve race conditions.
 
-```text
-request A starts
-request B starts
-request B finishes
-request A finishes later
-```
+<VisualDiagram title="Out-of-order async completion" compact>
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Request A" tone="orange">Starts first · finishes last.</DiagramNode>
+    <DiagramNode title="Request B" tone="green">Starts second · finishes first.</DiagramNode>
+  </DiagramGrid>
+  <DiagramArrow label="blindly committing both can overwrite newer state" />
+  <DiagramNode title="Ordering strategy required" tone="red" wide>Use a higher-level ordered Action model or explicit request identity/cancellation when correctness depends on recency.</DiagramNode>
+</VisualDiagram>
 
-If both blindly commit state, the older result can overwrite the newer one.
-
-React provides higher-level tools such as `useActionState` and form Actions for common ordered mutation flows, but custom async Transition code may still need explicit request-ordering logic.
-
-## Actions compose
-
-A component may await another Action-shaped callback:
-
-```jsx
-function TabButton({action, children}) {
-  const [isPending, startTransition] = useTransition();
-
-  return (
-    <button
-      disabled={isPending}
-      onClick={() => {
-        startTransition(async () => {
-          await action();
-        });
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-```
-
-This lets UI primitives own pending presentation while feature code owns domain behavior.
+`useActionState` and form Actions help with common ordered mutation flows. Custom async Transition code may still need explicit request-ordering logic.
 
 ## Common mistakes
 
-### Using Actions for everything async
-
-A plain async event handler is still valid:
-
-```jsx
-async function handleDownload() {
-  await downloadFile();
-}
-```
-
-Use an Action when the operation participates in React state/render coordination where Transition semantics help.
-
-### Treating Transition work as delayed work
-
-`startTransition` calls its function immediately. It changes how React prioritizes state updates; it does not schedule the callback for later.
-
-### Ignoring failures
-
-Production Actions need an error strategy:
-
-- return expected validation/domain errors as state;
-- throw unexpected errors to an Error Boundary where appropriate;
-- preserve enough context for retry.
-
-### Showing pending UI too broadly
-
-Avoid disabling an entire application because one small mutation is pending. Keep feedback close to the operation when possible.
+- Using Actions for every async function. A normal async event handler is still valid.
+- Treating Transition work as delayed work. The callback runs immediately.
+- Ignoring failures. Expected validation/domain errors need a user-facing state model; unexpected failures need an error strategy.
+- Showing pending UI too broadly. Keep feedback close to the operation.
+- Using Transition state to control text inputs.
 
 ## Production decision guide
 
-```text
-Need async operation?
-      ↓
-Does it update React UI?
-  ├─ no → ordinary async function may be enough
-  └─ yes
-       ↓
-Should update remain non-blocking / expose pending UI?
-  ├─ no → normal state update may be enough
-  └─ yes → Transition / Action pattern
-                 ↓
-Common mutation with ordered result state?
-  ├─ yes → consider useActionState
-  └─ no  → custom useTransition/startTransition flow
-```
+<DecisionTree
+  question="Do I need an Action / Transition?"
+  items={[
+    { label: 'Async work does not update React UI?', value: 'Ordinary async function may be enough' },
+    { label: 'UI update is immediate and cheap?', value: 'Normal state update may be enough' },
+    { label: 'Update should be non-blocking and expose pending UI?', value: 'Transition / Action pattern' },
+    { label: 'Mutation result depends on previous Action result?', value: 'Consider useActionState' },
+  ]}
+/>
 
 ## Interview questions
 
@@ -380,4 +323,4 @@ Common mutation with ordered result state?
 
 ## Next
 
-Continue with **[useActionState](./use-action-state.md)** to manage the result, pending state, and ordering of Actions.
+Continue with **[useActionState](./use-action-state.md)** to manage Action result state, pending state, and ordered updates.
