@@ -1,0 +1,32 @@
+name: Verify handbook Pages smoke
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify-pages:
+    name: Verify published handbook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify final Next.js sidebar is published
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://salman0butt.github.io/handbook/docs/nextjs/intro'
+          for attempt in $(seq 1 24); do
+            html="$(curl --fail --silent --show-error --location "$url" || true)"
+            if grep -Fq '20 · Upgrades &amp; Modern Migration' <<<"$html" && \
+               grep -Fq '24 · Mock Interview Practice' <<<"$html"; then
+              echo 'Published handbook contains final Phase 20–24 sidebar integration.'
+              exit 0
+            fi
+            echo "Published site not updated yet (attempt $attempt)."
+            sleep 5
+          done
+          echo 'Final Phase 20–24 sidebar integration was not visible on the published site.' >&2
+          exit 1
