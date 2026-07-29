@@ -15,14 +15,34 @@ TypeScript 7.0 is the first stable release of the native Go-based compiler and l
 - ✅ The TypeScript language remains a static type system layered on JavaScript.
 - ✅ `tsc` remains the canonical command-line type checker/compiler.
 - ✅ TypeScript 7 uses the new native implementation and LSP-based editor integration.
+- ✅ TypeScript 7 adopts the TypeScript 6 transition defaults and turns 6.0-deprecated flags/constructs into hard errors.
 - ⚠️ TypeScript 6.0 was the transition release and deprecated several legacy options/behaviors in preparation for 7.0.
 - ⚠️ Guidance that depends on TypeScript 6's programmatic Compiler API must be treated separately.
 - 🧪 TypeScript 7.0 introduces parallelism controls such as `--checkers` and `--builders` as experimental tuning knobs; they are not baseline recommendations.
 - ✅ `--singleThreaded` is useful for diagnostics/reproducibility when investigating concurrency-sensitive performance behavior.
 
+## Important TypeScript 7 defaults
+
+TypeScript 7 carries forward the new defaults introduced for the 6→7 transition. These matter when a project relied on old implicit behavior:
+
+| Setting | TypeScript 7 baseline behavior | Migration implication |
+|---|---|---|
+| `strict` | defaults to `true` | old loosely-typed projects should use an explicit migration plan rather than disabling diagnostics piecemeal |
+| `module` | defaults to `esnext` | choose an explicit runtime-appropriate mode such as `nodenext` for Node or `preserve` for bundlers |
+| `target` | defaults to the stable ECMAScript version immediately before `esnext` | production projects should still state their runtime target deliberately |
+| `noUncheckedSideEffectImports` | defaults to `true` | unresolved side-effect-only imports are surfaced instead of silently ignored |
+| `libReplacement` | defaults to `false` | custom lib replacement is no longer an implicit expectation |
+| `stableTypeOrdering` | `true` and cannot be disabled | type ordering is standardized for compatibility with the native implementation |
+| `rootDir` | defaults to `./` | projects with source under `src/` may need explicit `rootDir: "./src"` to preserve output layout |
+| `types` | defaults to `[]` | ambient `@types` packages must be listed deliberately when globals are required; `types: ["*"]` restores the old broad inclusion model |
+
+The handbook still recommends explicit TSConfig policy for production projects. A compiler default is not a substitute for documenting runtime/module and strictness assumptions.
+
 ## Compiler API caveat in 7.0
 
-TypeScript 7.0 does **not** ship a replacement programmatic Compiler API. Tooling that still needs the TypeScript 6 API can run TypeScript 6 side-by-side through the compatibility package while using the TypeScript 7 compiler for builds. This handbook therefore teaches compiler concepts as stable mental models, and labels concrete programmatic API examples as **version-sensitive** where they depend on the TypeScript 6 API surface.
+TypeScript 7.0 does **not** ship a replacement stable programmatic Compiler API. Tooling that still needs the TypeScript 6 API can run TypeScript 6 side-by-side through the compatibility package while using the TypeScript 7 compiler for builds. This handbook therefore teaches compiler concepts as stable mental models, and labels concrete programmatic API examples as **version-sensitive** where they depend on the TypeScript 6 API surface.
+
+This also means some ecosystems that embed the compiler/language service—such as Vue/Volar-, MDX-, Astro-, Svelte-, or specialized template workflows—may still need TypeScript 6-era tooling even while a separate TypeScript 7 CLI is used for project-wide checking. Treat framework support as a toolchain compatibility question, not merely a language-version question.
 
 ## Current module-resolution guidance
 
