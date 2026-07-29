@@ -112,6 +112,17 @@ const nextjsItems = [
     'nextjs/errors-observability-and-debugging/opentelemetry-logs-traces-metrics-and-provider-architecture',
     'nextjs/errors-observability-and-debugging/production-debugging-source-maps-cli-and-incident-workflows',
     'nextjs/errors-observability-and-debugging/observability-architecture-slos-alerts-and-design-review',
+  ], { collapsed: true }),
+  category('15 · Performance', [
+    'nextjs/performance/performance-mental-model-budgets-and-measurement',
+    'nextjs/performance/core-web-vitals-rum-lighthouse-and-attribution',
+    'nextjs/performance/server-rsc-data-cache-and-streaming-performance',
+    'nextjs/performance/client-javascript-bundles-lazy-loading-and-react-compiler',
+    'nextjs/performance/rendering-hydration-inp-and-react-runtime-performance',
+    'nextjs/performance/images-fonts-css-scripts-and-network-performance',
+    'nextjs/performance/backend-runtime-database-memory-and-capacity-performance',
+    'nextjs/performance/profiling-debugging-and-performance-regression-workflows',
+    'nextjs/performance/performance-architecture-budgets-and-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
