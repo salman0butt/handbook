@@ -1,0 +1,53 @@
+name: Handbook live UX smoke
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ux-live-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Verify live navigation and search
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify published handbook UX
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://salman0butt.github.io/handbook'
+
+          retry_get() {
+            local url="$1"
+            for attempt in $(seq 1 20); do
+              if body="$(curl --fail --silent --show-error --location "$url")"; then
+                printf '%s' "$body"
+                return 0
+              fi
+              echo "Attempt $attempt failed for $url" >&2
+              sleep 10
+            done
+            return 1
+          }
+
+          intro="$(retry_get "$base/docs/typescript/intro")"
+          grep -Fq 'TypeScript Developer Handbook' <<<"$intro"
+
+          home="$(retry_get "$base/")"
+          grep -Fq 'Learn deeply. Build confidently.' <<<"$home"
+          grep -Fq 'Explore TypeScript' <<<"$home"
+
+          found=0
+          for path in search-index.json search-index.js assets/search-index.json; do
+            status="$(curl --silent --location --output /dev/null --write-out '%{http_code}' "$base/$path")"
+            if [ "$status" = '200' ]; then
+              echo "Verified local search asset: $base/$path"
+              found=1
+              break
+            fi
+          done
+
+          test "$found" = '1'
+          echo 'Live handbook route, landing page, and local search asset verified.'
