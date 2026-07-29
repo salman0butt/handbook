@@ -4,78 +4,57 @@ description: How senior engineers maintain class-heavy and pre-React-19 systems,
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Legacy React Maintenance and Migration
 
-Senior React work is not always greenfield.
+Senior React work often means evolving systems with classes, old lifecycles, legacy Context, older roots, deprecated testing tools, custom build pipelines, and years of business-critical behavior.
 
-Many production systems contain combinations of:
+The goal is not aesthetic modernization. It is **risk reduction plus architectural improvement**.
 
-- class components;
-- old lifecycle methods;
-- older Context patterns;
-- pre-hooks abstractions;
-- render props and higher-order components;
-- old React Router/data libraries;
-- deprecated testing tools;
-- legacy root APIs;
-- custom webpack/Babel configurations;
-- inconsistent state ownership;
-- years of business-critical behavior.
+## Rewrite vs incremental migration
 
-The goal is not to make the codebase look modern overnight.
+<DecisionTree
+  question="Should this system be rewritten?"
+  items={[
+    { label: 'Current system is stable and changeable', value: 'Prefer targeted incremental improvement' },
+    { label: 'Critical dependencies/security/runtime are unsupported', value: 'Plan a migration with explicit risk controls' },
+    { label: 'Architecture blocks every meaningful change', value: 'A larger replacement may be justified' },
+    { label: 'Only reason is that code looks old', value: 'Do not rewrite for aesthetics' },
+  ]}
+/>
 
-The goal is to **reduce risk while improving architecture**.
+Evaluate defect rate, change velocity, security risk, test coverage, deployment architecture, team knowledge, compatibility, and parallel-run cost before choosing a rewrite.
 
-## Do not rewrite just because code is old
+## Class components are not automatically migration debt
 
-A rewrite replaces known production behavior with unproven behavior.
+Function components are the normal direction for new code, but stable classes do not need mechanical conversion.
 
-Rewrites can be justified, but age alone is not enough.
+<VisualDiagram title="Prioritize migrations that unlock value">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Compatibility" tone="red">removed/deprecated APIs</DiagramNode>
+    <DiagramNode title="Architecture" tone="blue">ownership · Effects · boundaries</DiagramNode>
+    <DiagramNode title="Quality" tone="green">testability · accessibility · observability</DiagramNode>
+    <DiagramNode title="Platform" tone="purple">React 19/runtime/tooling</DiagramNode>
+    <DiagramNode title="Performance" tone="orange">measured bottlenecks</DiagramNode>
+    <DiagramNode title="Delivery" tone="cyan">dependency/build upgrades</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Before choosing a rewrite, evaluate:
+Error Boundaries are a useful exception: class lifecycle APIs still provide the built-in Error Boundary mechanism in React 19.2, so a function-component-first app can legitimately keep a small class boundary.
 
-- defect rate;
-- change velocity;
-- security risk;
-- unsupported dependencies;
-- test coverage;
-- deployment architecture;
-- team knowledge;
-- migration compatibility;
-- cost of running old and new systems in parallel.
+## Migrate synchronization processes, not lifecycle names
 
-Incremental migration is often safer.
-
-## Class components are still supported
-
-Modern React recommends function components for new code, but class components remain supported.
-
-Do not convert stable classes mechanically if the change has no user/business value.
-
-Prioritize migrations where they unlock:
-
-- React 19 features;
-- Compiler adoption;
-- better architecture;
-- testability;
-- removal of deprecated APIs;
-- simpler ownership;
-- performance fixes;
-- dependency upgrades.
-
-## Error Boundaries are a special case
-
-In React 19.2, Error Boundary lifecycle APIs still live on class components.
-
-A codebase can be function-component-first while keeping a small reusable class Error Boundary.
-
-That is not architectural failure.
-
-Use modern React where it improves the system; do not pursue aesthetic purity.
-
-## Lifecycle mapping is conceptual, not mechanical
-
-Old class lifecycle code often combines multiple responsibilities.
+Legacy lifecycle methods often mix unrelated responsibilities.
 
 ```jsx
 class ChatRoom extends React.Component {
@@ -89,7 +68,6 @@ class ChatRoom extends React.Component {
       this.disconnect();
       this.connect();
     }
-
     document.title = this.props.roomName;
   }
 
@@ -99,9 +77,7 @@ class ChatRoom extends React.Component {
 }
 ```
 
-Do not translate line-by-line into one giant Effect.
-
-Instead identify synchronization processes:
+Better migration reasoning:
 
 ```jsx
 function ChatRoom({ roomId, roomName }) {
@@ -116,39 +92,30 @@ function ChatRoom({ roomId, roomName }) {
 }
 ```
 
-Effects model synchronization processes, not lifecycle buckets.
+<VisualDiagram title="Split lifecycle buckets into independent synchronization processes">
+  <DiagramRow>
+    <DiagramNode title="Connection process" tone="blue">roomId → connect → cleanup/reconnect</DiagramNode>
+    <DiagramNode title="Document title process" tone="green">roomName → synchronize title</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## `UNSAFE_` lifecycle methods require scrutiny
+Do not translate `componentDidMount` into one giant `useEffect` merely because both happen after rendering.
 
-Legacy code may use:
+## Diagnose old lifecycle intent
 
-- `UNSAFE_componentWillMount`;
-- `UNSAFE_componentWillReceiveProps`;
-- `UNSAFE_componentWillUpdate`.
+<DecisionTree
+  question="What was the legacy lifecycle trying to do?"
+  items={[
+    { label: 'Copy/derive props into state', value: 'Derive during render or redesign ownership' },
+    { label: 'Synchronize external system', value: 'Effect or subscription abstraction' },
+    { label: 'Measure DOM before visible paint', value: 'Rare layout-effect use case' },
+    { label: 'Cache expensive calculation', value: 'Derive first; optimize only when measured' },
+  ]}
+/>
 
-These methods are risky in modern rendering because their historical assumptions do not align well with interruptible/repeated render work.
+Renaming an unsafe lifecycle does not fix the underlying model.
 
-Migration should ask what the code was trying to accomplish:
-
-```text
-prop-derived state?
-→ probably derive in render or redesign state ownership
-
-external synchronization?
-→ Effect / subscription API
-
-DOM measurement before mutation?
-→ rare lifecycle/layout-effect equivalent
-
-memoized computation?
-→ derive during render; optimize only if measured
-```
-
-Do not merely rename deprecated methods.
-
-## Derived state is a frequent legacy smell
-
-Legacy class code often copies props into state:
+## Derived state is a common legacy smell
 
 ```jsx
 state = {
@@ -156,391 +123,91 @@ state = {
 };
 ```
 
-Then tries to synchronize it later.
-
-Before preserving that pattern, ask:
-
-- should this value be derived directly from props?
-- is local editing state actually a separate concept?
-- should identity reset with a key?
-- is there one source of truth?
-
-Many migration bugs disappear when ownership is corrected rather than translated.
-
-## Legacy Context
-
-React 19 removed legacy Context APIs.
-
-Modern Context uses:
-
-```jsx
-const ThemeContext = createContext(null);
-```
-
-and React 19 provider shorthand:
-
-```jsx
-<ThemeContext value={theme}>
-  <App />
-</ThemeContext>
-```
-
-Migration should isolate old context consumers/providers and replace them domain-by-domain.
-
-Avoid creating one giant `LegacyContextReplacement` object that recreates the same coupling with a new API.
-
-## String refs are removed
-
-Old:
-
-```jsx
-<input ref="search" />
-```
-
-Modern direction:
-
-```jsx
-const inputRef = useRef(null);
-<input ref={inputRef} />
-```
-
-or callback refs when setup/cleanup behavior is needed.
-
-## `findDOMNode` is removed
-
-Old abstractions may locate host nodes indirectly.
-
-Modern code should use explicit refs and ownership.
-
-```jsx
-function Input(props) {
-  const inputRef = useRef(null);
-  return <input ref={inputRef} {...props} />;
-}
-```
-
-React 19's ref-as-prop support makes new function-component ref APIs simpler in many cases.
-
-## Legacy root APIs are removed
-
-Modern client roots use:
-
-```jsx
-import { createRoot } from 'react-dom/client';
-
-const root = createRoot(container);
-root.render(<App />);
-```
-
-Server-rendered roots use:
-
-```jsx
-hydrateRoot(container, <App />);
-```
-
-Old `ReactDOM.render` and `ReactDOM.hydrate` are not React 19 migration targets.
-
-## `react-test-renderer` is deprecated
-
-A legacy test suite may heavily assert implementation structure.
-
-Do not convert all snapshots blindly.
-
-Prioritize business-critical behavior and migrate toward:
-
-- Testing Library;
-- semantic queries;
-- user interactions;
-- integration tests;
-- E2E tests for critical flows.
-
-Keep narrow low-level tests only when they protect real contracts.
-
-## New JSX transform
-
-React 19 requires the modern JSX transform.
-
-Old build systems may still assume React must be imported purely for JSX:
-
-```jsx
-import React from 'react';
-```
-
-That import can still be used when APIs are needed, but build tooling should support the modern transform.
-
-Treat build modernization as a separate migration track from component rewriting.
-
-## Upgrade dependencies before adopting features
-
-A practical migration order:
-
-```text
-1. get current tests/build stable
-2. remove React warnings
-3. upgrade build/runtime dependencies
-4. migrate removed APIs
-5. verify React 19 compatibility
-6. stabilize production
-7. then adopt new features incrementally
-```
-
-Do not combine framework upgrades, state-library rewrites, design-system replacements, and React-major migration in one giant release unless unavoidable.
-
-## React 18.3 as migration warning bridge
-
-For older React applications, the React 19 upgrade guide recommended moving through React 18.3 first because it behaves like 18.2 while surfacing warnings for APIs that change in React 19.
-
-For a historical codebase, warnings are useful migration inventory.
-
-If you are already on React 19, use the migration guide to audit old code rather than downgrading.
-
-## Codemods are accelerators, not reviewers
-
-Official/community codemods can automate syntax transformations.
-
-But codemods cannot reliably decide:
-
-- correct state ownership;
-- Effect architecture;
-- Error Boundary granularity;
-- domain identity;
-- accessibility behavior;
-- security authorization;
-- whether a custom abstraction is still needed.
-
-After a codemod:
-
-1. review the diff;
-2. run tests;
-3. run lint/compiler diagnostics;
-4. test critical flows;
-5. profile if behavior/performance changed.
-
-## Preserve behavior before improving architecture
-
-A safe refactor often has two phases.
-
-### Phase A: behavior-preserving migration
-
-```text
-old API
-→ modern equivalent
-```
-
-Keep behavior stable.
-
-### Phase B: architectural improvement
-
-```text
-modern but awkward code
-→ clearer state/effect/component architecture
-```
-
-Separating the phases makes regressions easier to diagnose.
-
-## Strangler migration pattern
-
-For large systems, migrate feature boundaries gradually.
-
-```text
-Legacy application
-├── Legacy Account
-├── Legacy Billing
-├── Modern Search
-└── Modern Checkout
-```
-
-Over time, the modern surface grows.
-
-Useful boundaries include:
-
-- routes;
-- pages;
-- embedded widgets;
-- domain features;
-- shared design-system primitives.
-
-## Shared state complicates strangler migrations
-
-Legacy and modern islands can become tightly coupled through shared mutable global state.
-
-Create explicit adapters:
-
-```text
-legacy store
-→ adapter/subscription boundary
-→ modern React feature
-```
-
-`useSyncExternalStore` is appropriate for subscribing to external stores when you have a correct `subscribe/getSnapshot` contract.
-
-Do not copy the entire store into React state using Effects.
-
-## HOCs and render props are not automatically bad
-
-Older React ecosystems used:
-
-```jsx
-withAuth(Component)
-```
-
-and:
-
-```jsx
-<DataProvider render={data => <View data={data} />} />
-```
-
-Hooks often provide a simpler composition model, but migrating every HOC/render prop may not be worth the churn.
-
-Migrate when:
-
-- the abstraction blocks TypeScript inference;
-- nesting makes debugging difficult;
-- it prevents RSC/client-boundary architecture;
-- it duplicates logic better represented by a custom Hook;
-- the dependency is unsupported.
-
-## Refs during migration
-
-React 19 lets function components receive `ref` as a prop.
-
-Legacy libraries may still expose `forwardRef` APIs.
-
-Do not break public library compatibility simply to remove `forwardRef` immediately.
-
-For application code, new APIs can prefer ref-as-prop where supported.
-
-For published libraries, consider supported React version ranges and consumer types.
-
-## Class state and reducer migration
-
-Complex class state:
-
-```jsx
-this.setState({ ... })
-```
-
-may map better to:
-
-- multiple local `useState` values;
-- `useReducer` for related transitions;
-- domain state moved outside the component;
-- server cache rather than client state.
-
-Do not choose `useReducer` merely because the old class had a large `state` object.
-
-## Testing migration risk
-
-Before refactoring a poorly tested legacy feature, add characterization tests.
-
-A characterization test asks:
-
-> What does the system do today?
-
-Even if behavior is odd, capturing it first helps distinguish deliberate fixes from accidental regressions.
-
-Then update tests as intentional behavior changes are approved.
-
-## Migration observability
-
-For risky migrations, compare old and new paths using:
-
-- feature flags;
-- error rates;
-- interaction latency;
-- conversion/task completion;
-- backend request rate;
-- hydration errors;
-- memory usage for long-lived screens.
-
-A technically successful migration that degrades user outcomes is not successful.
-
-## Delete compatibility code
-
-Temporary adapters become permanent unless tracked.
-
-When a migration is complete:
-
-- remove old code path;
-- remove feature flag;
-- delete compatibility layer;
-- update docs;
-- remove unused dependencies;
-- simplify tests.
-
-Migration debt is still debt.
-
-## Senior migration plan template
-
-```text
-Current state
-- React/runtime version
-- removed/deprecated APIs
-- build tooling
-- testing confidence
-- critical user flows
-
-Target state
-- supported React version
-- modern root/hydration
-- feature boundaries
-- compiler/lint strategy
-
-Migration slices
-1. ...
-2. ...
-3. ...
-
-Safety
-- tests
-- telemetry
-- feature flags
-- rollback
-
-Exit criteria
-- legacy APIs removed
-- warning-free
-- error/perf baseline maintained
-- compatibility code deleted
-```
-
-## Interview questions
-
-### Should every class component be converted to a function?
-
-No. Prioritize changes that reduce risk, remove unsupported APIs, improve architecture, or unlock needed capabilities.
-
-### How do class lifecycles map to Effects?
-
-Do not map lifecycle buckets mechanically. Identify independent synchronization processes and model each according to its dependencies/cleanup.
-
-### Are HOCs obsolete?
-
-No. Hooks often simplify logic reuse, but HOCs remain a valid composition pattern when they provide a useful boundary or compatibility layer.
-
-### Rewrite or incremental migration?
-
-Usually incremental migration reduces risk, but the decision depends on architecture, compatibility, testability, team cost, and product constraints.
-
-## Exercise
-
-Create a migration plan for a React 16 application containing:
-
-- class components;
-- legacy Context;
-- string refs;
-- `ReactDOM.render`;
-- `react-test-renderer` snapshots;
-- a large Redux store;
-- old webpack config.
-
-Sequence the work so production stays deployable after every step.
-
-## References
-
-- https://react.dev/blog/2024/04/25/react-19-upgrade-guide
-- https://react.dev/reference/react/Component
-- https://react.dev/reference/react-dom/client/createRoot
-- https://react.dev/reference/react-dom/client/hydrateRoot
-- https://react.dev/reference/react/useSyncExternalStore
-- https://react.dev/reference/react-compiler
+<VisualDiagram title="Copying props creates competing sources of truth">
+  <DiagramRow>
+    <DiagramNode title="Prop owner" tone="blue">user.name</DiagramNode>
+    <DiagramArrow direction="right" label="copied" />
+    <DiagramNode title="Local state copy" tone="orange">can drift</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
+
+Before preserving the copy, decide whether the value should be derived, whether local editing is a separate concept, or whether domain identity should reset state with a key.
+
+## Migrate removed APIs by boundary
+
+<DiagramGrid columns={2}>
+  <DiagramNode title="Legacy Context" tone="orange">replace domain-by-domain with modern createContext/useContext</DiagramNode>
+  <DiagramNode title="String refs / findDOMNode" tone="orange">replace with explicit ref ownership</DiagramNode>
+  <DiagramNode title="ReactDOM.render / hydrate" tone="red">move to createRoot / hydrateRoot</DiagramNode>
+  <DiagramNode title="react-test-renderer-heavy suites" tone="purple">move confidence toward behavior-focused tests</DiagramNode>
+</DiagramGrid>
+
+Avoid recreating one giant legacy Context object with a new API; that preserves the original coupling.
+
+## Build modernization is its own track
+
+Legacy JSX transforms, Babel/Webpack assumptions, testing environments, and package versions can be upgraded separately from feature architecture.
+
+<VisualDiagram title="Separate migration tracks so failures stay diagnosable">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Runtime" tone="blue">React/root/API compatibility</DiagramNode>
+    <DiagramNode title="Build" tone="purple">JSX transform · bundler · TypeScript</DiagramNode>
+    <DiagramNode title="Application" tone="green">components · state · Effects · tests</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+Do not combine every framework, state, design-system, build, and React-major migration into one release unless you have no alternative.
+
+## Safer major-upgrade sequence
+
+<LifecycleBar items={[
+  { label: 'Stabilize tests/build', tone: 'blue' },
+  { label: 'Remove warnings', tone: 'cyan' },
+  { label: 'Upgrade tooling/dependencies', tone: 'purple' },
+  { label: 'Replace removed APIs', tone: 'orange' },
+  { label: 'Verify React compatibility', tone: 'red' },
+  { label: 'Stabilize production', tone: 'green' },
+  { label: 'Adopt new features', tone: 'slate' },
+]} />
+
+React 18.3 historically served as a warning bridge for React 19 migrations. If a system is already on React 19, use the migration inventory rather than downgrading merely to reproduce that path.
+
+## Codemods are accelerators, not architects
+
+Codemods can update syntax, but they cannot decide correct state ownership, Effect design, boundary granularity, domain identity, accessibility, authorization, or whether an abstraction is still useful.
+
+<LifecycleBar items={[
+  { label: 'Run focused codemod', tone: 'blue' },
+  { label: 'Review diff', tone: 'purple' },
+  { label: 'Type/lint/test', tone: 'cyan' },
+  { label: 'Exercise critical flows', tone: 'orange' },
+  { label: 'Profile when relevant', tone: 'green' },
+]} />
+
+## Strangler migration for large systems
+
+<VisualDiagram title="Replace capability by capability instead of freezing delivery">
+  <DiagramStack>
+    <DiagramNode title="Legacy application" tone="slate">known production behavior</DiagramNode>
+    <DiagramArrow label="introduce stable seam" />
+    <DiagramNode title="Old + new coexist" tone="orange">route/feature/adapter boundary</DiagramNode>
+    <DiagramArrow label="move traffic/ownership incrementally" />
+    <DiagramNode title="Modernized capability" tone="green">verified replacement</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
+
+Choose seams that let the old and new systems coexist without duplicating authority over the same state.
+
+## Migration definition of done
+
+<DecisionTree
+  question="Is this migration actually complete?"
+  items={[
+    { label: 'New code compiles only', value: 'No' },
+    { label: 'Behavior, accessibility, security, and failure paths are verified', value: 'Closer' },
+    { label: 'Production telemetry is stable and rollback is understood', value: 'Production-ready' },
+    { label: 'Old path/dependency is removed and ownership documented', value: 'Complete' },
+  ]}
+/>
+
+A successful migration reduces risk and future cost without losing the business behavior users already depend on.
