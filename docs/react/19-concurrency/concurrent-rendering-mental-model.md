@@ -4,38 +4,41 @@ description: Understand React concurrency as interruptible prioritized rendering
 sidebar_position: 3
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Concurrent rendering mental model
 
-“Concurrent React” is easy to misunderstand.
+“Concurrent React” does **not** mean React runs your component code on several JavaScript threads at once.
 
-It does **not** mean React runs your component code on several JavaScript threads at once.
+The practical model is:
 
-The practical mental model is:
+> React can prepare some renders with lower priority, interrupt them, abandon obsolete work, and commit only the result that matters.
 
-> **React can prepare some renders with lower priority, interrupt them, abandon obsolete work, and later commit only the result that matters.**
+## Render and commit are different phases
 
-This changes how you reason about rendering, but it does not change JavaScript into a multithreaded runtime.
+<VisualDiagram title="Not every render attempt commits">
+  <DiagramStack align="center">
+    <DiagramNode title="State update" tone="blue" />
+    <DiagramArrow label="calculate next UI" />
+    <DiagramNode title="Render work" tone="purple">May be interrupted, restarted, or discarded.</DiagramNode>
+    <DiagramArrow label="completed result chosen" />
+    <DiagramNode title="Commit" tone="green">Apply DOM/host changes.</DiagramNode>
+    <DiagramArrow label="after committed layout/state exists" />
+    <DiagramNode title="Layout / passive Effects run at their phases" tone="orange" />
+  </DiagramStack>
+</VisualDiagram>
 
-## Render and commit are separate phases
-
-React rendering computes what the UI should look like.
-
-Commit applies the chosen result to the host environment, such as the DOM.
-
-```text
-state update
-→ render work
-→ maybe interrupt/restart
-→ choose completed result
-→ commit DOM changes
-→ run committed layout/passive Effects at their appropriate times
-```
-
-The critical insight is that **not every render attempt commits**.
+The critical rule is that rendering is preparation; commit is the externally visible result.
 
 ## Rendering must be pure
-
-If React can restart rendering, render functions must not perform externally visible side effects.
 
 Bad:
 
@@ -46,11 +49,9 @@ function Invoice({ invoice }) {
 }
 ```
 
-React might call the component while preparing work that never commits.
+React might run that component while preparing work that never commits. External writes, subscriptions, analytics, DOM mutation, and network mutation do not belong in render.
 
-The external write would still happen.
-
-Render should calculate UI:
+Good:
 
 ```jsx
 function Invoice({ invoice }) {
@@ -58,94 +59,86 @@ function Invoice({ invoice }) {
 }
 ```
 
-Then synchronize external systems for the correct reason using events, Actions, or Effects.
+Then put external work in event/Action/Effect logic according to why it happens.
 
-## Priority is about user experience
+## Priority is a UX decision
 
-Not every update has equal urgency.
+<VisualDiagram title="Separate immediate interaction from expensive presentation">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Urgent" tone="blue">Typing · pressed state · focus · selection · dragging.</DiagramNode>
+    <DiagramNode title="Often non-urgent" tone="purple">Route navigation · large tab contents · filtered analytics · heavy visualizations.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Examples of urgent work:
-
-- typing into a controlled input;
-- pressing a control;
-- dragging;
-- focus/selection feedback.
-
-Examples that can often be non-urgent:
-
-- switching large tab contents;
-- route navigation;
-- rendering a filtered analytics table after the input itself updates;
-- preparing a heavy visualization.
-
-Transitions and deferred values let you express these relationships.
+Transitions and deferred values let you express this priority relationship.
 
 ## Interruption
 
-Imagine React is preparing an expensive chart update as Transition work.
+<LifecycleBar
+  items={[
+    { label: 'Render expensive chart for filter A', tone: 'purple' },
+    { label: 'User types', tone: 'blue' },
+    { label: 'Urgent input render takes priority', tone: 'green' },
+    { label: 'Old chart work can be discarded', tone: 'red' },
+    { label: 'Chart restarts for latest state', tone: 'purple' },
+  ]}
+/>
 
-```text
-render chart for filter A
-```
+Concurrency improves responsiveness because urgent interaction does not need to wait for every lower-priority render attempt to finish.
 
-Before it finishes, the user types.
+## Obsolete intermediate UI does not need to commit
 
-The typing update is urgent.
+Suppose the user selects filters `A → B → C` quickly.
 
-React can prioritize the input update:
+<VisualDiagram title="React can skip an obsolete intermediate result">
+  <DiagramStack align="center">
+    <DiagramNode title="A committed" tone="green" />
+    <DiagramArrow label="prepare B" />
+    <DiagramNode title="B rendering" tone="purple" />
+    <DiagramArrow label="C becomes latest before B commits" />
+    <DiagramNode title="B can be abandoned" tone="red" />
+    <DiagramArrow label="prepare latest state" />
+    <DiagramNode title="C commits" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-```text
-pause/abandon lower-priority chart render
-→ render urgent input state
-→ commit responsive input
-→ continue/restart chart work for latest state
-```
+The goal is not to preserve every intermediate frame. The goal is to keep the UI responsive and eventually commit the latest valid result.
 
-This is why concurrency improves responsiveness without requiring every render to finish first.
+## Each render still has an isolated snapshot
 
-## Obsolete work can be abandoned
+Concurrency does not make state variables mutate under a running render.
 
-Suppose the user selects filters quickly:
+<VisualDiagram title="Snapshots remain isolated">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Render A" tone="blue">Sees snapshot A.</DiagramNode>
+    <DiagramNode title="Render B" tone="purple">Sees snapshot B.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-A → B → C
-```
+React may prepare those renders at different times, but each render remains conceptually pure and snapshot-based.
 
-If B's render has not committed and C becomes the desired state, React does not need to commit B just because it started working on it.
+## Concurrency is not parallel JavaScript execution
 
-The goal is not to preserve every intermediate frame.
+A Transition does not create `thread 1` for input and `thread 2` for a chart. React still uses JavaScript's execution environment and scheduler; platform tools such as Web Workers are separate mechanisms for actual off-main-thread computation.
 
-The goal is to keep the UI responsive and eventually commit the latest valid result.
+<VisualDiagram title="Scheduling is not multithreading">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="React concurrency" tone="purple">Prioritize, yield, interrupt, restart render work.</DiagramNode>
+    <DiagramNode title="Web Worker" tone="blue">Move suitable JavaScript computation to another thread.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## Concurrency is not asynchronous state
+## How the concurrency APIs fit together
 
-State remains snapshot-based.
+<VisualDiagram title="Priority, lag, and readiness are separate dimensions">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="useTransition" tone="purple" eyebrow="UPDATE PRIORITY">Mark an update you initiate as non-urgent.</DiagramNode>
+    <DiagramNode title="useDeferredValue" tone="teal" eyebrow="CONSUMPTION PRIORITY">Let one consumer temporarily lag behind a changing value.</DiagramNode>
+    <DiagramNode title="Suspense" tone="orange" eyebrow="READINESS / REVEAL">Coordinate what is shown when part of the render is not ready.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Inside one render, you see that render's state snapshot.
-
-Concurrency does not make variables magically mutate underneath a running component function.
-
-```text
-render A sees snapshot A
-render B sees snapshot B
-```
-
-React may work on those renders at different times, but each render remains conceptually isolated.
-
-## Concurrency is not parallel execution
-
-A Transition does not do this:
-
-```text
-thread 1: input
-thread 2: chart
-```
-
-It is still ordinary JavaScript scheduling on the main thread unless you separately use platform primitives such as Web Workers.
-
-React's scheduler can yield between units of rendering work and prioritize newer work.
-
-## `useTransition` expresses update priority
+### `useTransition`
 
 ```jsx
 const [isPending, startTransition] = useTransition();
@@ -155,162 +148,97 @@ startTransition(() => {
 });
 ```
 
-You are telling React:
-
-> This update may be prepared without blocking more urgent interactions.
-
-## `useDeferredValue` expresses consumption priority
+### `useDeferredValue`
 
 ```jsx
 const deferredQuery = useDeferredValue(query);
 ```
 
-You are telling React:
+### Suspense
 
-> The latest query is urgent, but this consumer may temporarily use the previous value.
+A lower-priority render can suspend while React preserves useful already-revealed content until the new result is ready.
 
-## Suspense coordinates readiness
+<VisualDiagram title="Concurrency + Suspense background flow">
+  <DiagramStack align="center">
+    <DiagramNode title="Transition / deferred work starts" tone="purple" />
+    <DiagramArrow label="render next tree" />
+    <DiagramNode title="Subtree suspends" tone="orange" />
+    <DiagramArrow label="keep previous useful content when appropriate" />
+    <DiagramNode title="Resource/code becomes ready" tone="teal" />
+    <DiagramArrow label="retry and complete" />
+    <DiagramNode title="Commit latest tree" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-Concurrency determines which rendering work React can prioritize or restart.
+## `lazy` adds code readiness
 
-Suspense determines what happens when a subtree is not ready to reveal.
+A lazy component may suspend because its module has not loaded yet. That gives React another reason a background render may not be ready to commit.
 
-They work together.
-
-```text
-Transition/deferred work
-→ render new tree in background
-→ subtree suspends
-→ React can keep useful previous content visible
-→ retry when resource becomes ready
-→ commit new tree
-```
-
-## `lazy` introduces code readiness
-
-A lazy component may suspend because its module code has not loaded yet.
-
-This creates another reason a background render may not be ready to commit.
-
-Concurrency + Suspense lets React coordinate that delay without requiring a destructive whole-page loading state.
+Concurrency + Suspense coordinates that delay without requiring every navigation to destroy the current page.
 
 ## Effects belong to committed UI
 
-A background render that never commits should not cause committed Effects to run.
+A background render that never commits should not synchronize external systems.
 
-This is one reason React separates rendering from effects.
+<VisualDiagram title="Only committed UI owns committed Effects">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Abandoned render" tone="red">No committed DOM result → no Effects for that abandoned result.</DiagramNode>
+    <DiagramNode title="Committed render" tone="green">Host updates land → appropriate Effects can run.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-For deferred background renders, Effects run only after the corresponding render is committed.
+If Suspense hides already visible content, layout Effect cleanup/re-setup follows the visible committed layout lifecycle.
 
-This prevents synchronization based on UI the user never received.
+## Strict Mode teaches the same design discipline
 
-## Layout Effects and hidden content
+Strict Mode development checks can expose assumptions such as “render happens exactly once” or “Effect setup happens exactly once.”
 
-If Suspense hides already visible content, React cleans up layout Effects for the hidden subtree and re-runs them when the content becomes visible again.
+Do not treat Strict Mode's development behavior as a literal production scheduler simulation. The design lesson is that code must remain correct when React renders, discards, retries, or replays work before commit.
 
-That keeps DOM measurement tied to visible committed layout.
+## Priority APIs are not timing contracts
 
-## Concurrency and Strict Mode
+Do not write logic that depends on “Transition starts after X ms” or “deferred value always lags by 300ms.” These APIs express priority, not fixed timing.
 
-Strict Mode development behaviors already train you to avoid assumptions such as:
+React may complete lower-priority work almost immediately on a fast device.
 
-```text
-render happens exactly once
-Effect setup happens exactly once
-```
+## Responsive scheduling does not remove CPU cost
 
-Concurrent rendering reinforces the broader principle:
+If a list renders 50,000 DOM nodes, consider architecture and performance work such as virtualization, pagination, better data structures, component boundaries, memoization where justified, Compiler optimization where applicable, or moving non-render CPU work off the main thread.
 
-> Code must remain correct even when React renders, discards, retries, or replays work before commit.
+<VisualDiagram title="Concurrency changes scheduling, not the amount of work">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Scheduling problem" tone="purple">Urgent work is blocked by non-urgent rendering → concurrency APIs can help.</DiagramNode>
+    <DiagramNode title="Cost problem" tone="orange">Render/DOM/computation is simply too large → reduce the work too.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Do not use Strict Mode double execution as a literal model of production scheduling, but understand the design lesson it exposes.
+## Data consistency is a separate responsibility
 
-## Scheduling is an implementation capability, not app state
+React scheduling does not automatically solve stale network responses, optimistic conflicts, cache invalidation, transaction semantics, authorization changes, or broken external-store snapshots.
 
-Do not store your own flags such as:
+React decides **when rendering work is urgent**. Your data architecture decides **which data is valid**.
 
-```js
-const [isConcurrent, setIsConcurrent] = useState(false);
-```
-
-Concurrency is not a mode your application manually toggles per component.
-
-You express priorities using React APIs, and React schedules accordingly.
-
-## Avoid depending on exact scheduling timings
-
-Do not write logic that expects:
-
-```text
-Transition render will always begin after exactly X ms
-```
-
-or:
-
-```text
-deferred value will always lag by 300ms
-```
-
-These APIs are priority mechanisms, not timing contracts.
-
-React may complete low-priority work quickly on a fast device.
-
-## Responsive rendering does not replace profiling
-
-Concurrency can let urgent interactions cut ahead of expensive renders, but expensive work still consumes CPU.
-
-If a list renders 50,000 DOM nodes, consider:
-
-- virtualization;
-- pagination;
-- better data structures;
-- component boundaries;
-- memoization where justified;
-- React Compiler where applicable;
-- moving non-render CPU work off the main thread.
-
-Concurrency improves scheduling. It does not remove computational cost.
-
-## Concurrent rendering and data consistency
-
-React scheduling does not solve application-level consistency problems automatically.
-
-Examples still requiring explicit handling:
-
-- stale network response ordering;
-- optimistic mutation conflicts;
-- cache invalidation;
-- transaction semantics;
-- authorization changes;
-- stale external-store snapshots.
-
-React decides when rendering work is urgent. Your data architecture decides what data is valid.
-
-## A complete search mental model
-
-Consider a search page:
+## Complete search flow
 
 ```jsx
 const [query, setQuery] = useState('');
 const deferredQuery = useDeferredValue(query);
 ```
 
-Flow:
+<LifecycleBar
+  items={[
+    { label: 'User types', tone: 'blue' },
+    { label: 'query commits urgently', tone: 'green' },
+    { label: 'old deferredQuery may remain', tone: 'orange' },
+    { label: 'React prepares latest results', tone: 'purple' },
+    { label: 'new typing can interrupt', tone: 'blue' },
+    { label: 'latest completed results commit', tone: 'green' },
+  ]}
+/>
 
-```text
-1. user types
-2. query updates urgently
-3. input commits immediately
-4. old deferredQuery can remain
-5. React prepares results for latest query in background
-6. newer typing can interrupt that render
-7. Suspense can preserve stale results if data is not ready
-8. latest completed result commits
-```
+Suspense can keep stale deferred results visible if new data is not ready.
 
-That is concurrent rendering in a practical application.
-
-## A complete navigation mental model
+## Complete navigation flow
 
 ```jsx
 startTransition(() => {
@@ -318,136 +246,79 @@ startTransition(() => {
 });
 ```
 
-Flow:
-
-```text
-1. navigation event occurs
-2. route update is marked non-urgent
-3. React prepares next route
-4. lazy code or data may suspend
-5. current revealed route can remain visible
-6. pending navigation feedback remains interactive
-7. user can choose another route
-8. obsolete render may be abandoned
-9. latest ready route commits
-```
-
-## Common mistake: side effects during render
-
-Concurrency makes this bug easier to expose.
-
-Bad examples during render:
-
-- analytics events;
-- API mutation requests;
-- DOM mutation outside refs/effects;
-- writing storage;
-- mutating shared module state;
-- registering subscriptions.
-
-Render is calculation.
-
-## Common mistake: interpreting every extra render as a bug
-
-A render that does not commit can be expected behavior.
-
-Optimize based on measured user impact, not render-count anxiety alone.
-
-Ask:
-
-- did this render perform expensive unnecessary work?
-- did it cause an external side effect incorrectly?
-- did it block an urgent interaction?
-
-## Common mistake: using concurrency to cover broken architecture
-
-If every state change re-renders the whole application because state ownership is poor, a Transition is not the fundamental fix.
-
-First improve:
-
-- state scope;
-- context boundaries;
-- store selectors;
-- component composition;
-- data normalization;
-- memoization or Compiler optimization where useful.
-
-Then use priority APIs for real urgency differences.
-
-## Common mistake: assuming old UI is always safe
-
-Preserving old content during background work is only correct when stale UI is acceptable.
-
-Do not preserve stale values for decisions where correctness requires immediate freshness.
-
-## Debugging concurrency
-
-When UI feels unresponsive or surprising, inspect:
-
-1. Which state update is urgent?
-2. Which state update is marked as a Transition?
-3. Which value is deferred?
-4. Which subtree is expensive?
-5. Does that subtree suspend?
-6. Which boundary handles suspension?
-7. Can work be interrupted safely?
-8. Are there render side effects?
-9. Is stale UI acceptable?
-10. Is the actual bottleneck rendering, network, JavaScript computation, or DOM volume?
+<LifecycleBar
+  items={[
+    { label: 'Navigation event', tone: 'blue' },
+    { label: 'Route update marked non-urgent', tone: 'purple' },
+    { label: 'Lazy/data work may suspend', tone: 'orange' },
+    { label: 'Current route can stay visible', tone: 'green' },
+    { label: 'New navigation may supersede old work', tone: 'red' },
+    { label: 'Latest ready route commits', tone: 'green' },
+  ]}
+/>
 
 ## Senior design rule
 
-React concurrency is most effective when the architecture already separates:
+Concurrency is most useful when architecture already separates urgent interaction state from expensive derived presentation.
 
-```text
-urgent interaction state
-from
-expensive derived presentation
-```
+<DecisionTree
+  question="What should you fix first?"
+  items={[
+    { label: 'Urgent UI is blocked by non-urgent render work', value: 'Express priority with Transition/deferred value' },
+    { label: 'Whole app re-renders because ownership is broad', value: 'Fix state/context/store boundaries first' },
+    { label: 'DOM/computation is intrinsically huge', value: 'Reduce/virtualize/offload the work' },
+    { label: 'Data can arrive out of order', value: 'Fix consistency in the data layer' },
+  ]}
+/>
 
-If all state and UI are tightly coupled, React has fewer useful boundaries where priority can help.
+## Common mistakes
+
+- side effects during render;
+- interpreting every abandoned render as a bug;
+- using concurrency to hide poor state ownership;
+- assuming old UI is always safe to preserve;
+- treating priority APIs as request-ordering or timing tools.
+
+## Debugging concurrency
+
+Ask:
+
+1. Which state is urgent?
+2. Which update is a Transition?
+3. Which value is deferred?
+4. Which subtree is expensive?
+5. Does it suspend?
+6. Which boundary handles that suspension?
+7. Can render work be interrupted safely?
+8. Are there render side effects?
+9. Is stale UI acceptable?
+10. Is the real bottleneck render cost, network, computation, or DOM volume?
 
 ## Exercise
 
-Build an analytics explorer with:
-
-- a controlled search input;
-- a large result list;
-- a lazy chart;
-- a tab switch wrapped in a Transition;
-- a deferred search value;
-- Suspense boundaries around result/chart regions.
-
-Instrument renders with console logging in development.
-
-Then answer:
-
-1. Which renders commit?
-2. Which work may be interrupted?
-3. Which UI is allowed to stay stale?
-4. Which updates must remain urgent?
-5. Which expensive work should be optimized rather than merely deferred?
+Build an analytics explorer with controlled search input, a large result list, lazy chart, Transition tab switch, deferred search value, and Suspense boundaries. Instrument renders and identify which attempts commit, which can be interrupted, and which UI is allowed to stay stale.
 
 ## Interview questions
 
 **Beginner:** Does concurrent rendering mean React runs components on multiple threads?
 
-**Intermediate:** Why must render functions remain pure if React can interrupt or abandon rendering work?
+**Intermediate:** Why must render functions remain pure if React can interrupt or abandon work?
 
-**Senior:** Explain how urgent state, Transition updates, deferred values, Suspense, code splitting, and commit semantics interact during a slow route navigation with continued user input.
+**Senior:** Explain how urgent state, Transition updates, deferred values, Suspense, code splitting, and commit semantics interact during slow navigation with continued user input.
 
 ## Summary
 
-```text
+<VisualDiagram title="Concurrent rendering mental model">
+  <DiagramStack align="center">
+    <DiagramNode title="Prioritized render preparation" tone="purple" />
+    <DiagramArrow label="urgent work may interrupt" />
+    <DiagramNode title="Obsolete attempts can be discarded" tone="red" />
+    <DiagramArrow label="readiness may involve Suspense" />
+    <DiagramNode title="Only latest completed result commits" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
+
 Concurrency means prioritized, interruptible rendering—not multithreaded component execution.
-Render and commit are separate.
-Not every render attempt commits.
-Purity makes abandoned/retried work safe.
-Transitions prioritize updates.
-Deferred values let consumers lag.
-Suspense coordinates readiness and reveal.
-Concurrency improves responsiveness but does not remove CPU or data-consistency costs.
-```
 
 ## References
 

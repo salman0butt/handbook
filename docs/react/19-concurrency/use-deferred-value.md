@@ -4,9 +4,19 @@ description: Learn how useDeferredValue keeps urgent UI responsive while expensi
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # `useDeferredValue` and stale UI
 
-`useDeferredValue` lets one part of your UI use a value that may lag behind the latest value.
+`useDeferredValue` lets one part of the UI lag behind the latest value.
 
 ```jsx
 import { useDeferredValue, useState } from 'react';
@@ -21,133 +31,97 @@ function SearchPage() {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
-
       <SearchResults query={deferredQuery} />
     </>
   );
 }
 ```
 
-The input remains urgent. The expensive results subtree is allowed to lag behind.
+<VisualDiagram title="Latest value and deferred value have different jobs">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Latest value" tone="blue" eyebrow="CANONICAL / URGENT">
+      What the input and immediate UI need now.
+    </DiagramNode>
+    <DiagramNode title="Deferred value" tone="purple" eyebrow="PRESENTATION MAY LAG">
+      What slower or suspending UI may temporarily keep using.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-The mental model is:
+## How the catch-up render works
 
-```text
-latest value       → what urgent UI needs now
-deferred value     → what slower UI may catch up to in the background
-```
+Suppose `query` changes from `react` to `reacts`.
 
-## How updates happen
+<LifecycleBar
+  items={[
+    { label: 'query = react', tone: 'green' },
+    { label: 'User types s', tone: 'blue' },
+    { label: 'Urgent render: query = reacts, deferredQuery = react', tone: 'orange' },
+    { label: 'Background catch-up render begins', tone: 'purple' },
+    { label: 'deferredQuery = reacts commits when ready', tone: 'green' },
+  ]}
+/>
 
-Suppose:
+The canonical value updates immediately. The dependent subtree is allowed to catch up in background work.
 
-```text
-query = "react"
-```
+## Background rendering is interruptible
 
-The user types another character:
+If the user keeps typing, React can abandon an obsolete deferred render and restart toward the latest value.
 
-```text
-query = "reacts"
-```
-
-React can first render:
-
-```text
-query = "reacts"
-deferredQuery = "react"
-```
-
-Then it attempts a background render with:
-
-```text
-query = "reacts"
-deferredQuery = "reacts"
-```
-
-When that background render completes successfully, React commits it.
-
-## The background render is interruptible
-
-If the user continues typing before the deferred render finishes, React can abandon obsolete background work and restart with the newest value.
-
-```text
-type r
-→ deferred render begins
-
-type re
-→ old background render becomes obsolete
-→ React works toward latest value
-```
-
-This is useful for slow lists, visualizations, and content-heavy views that depend on rapidly changing urgent state.
+<VisualDiagram title="Deferred work follows the latest intent, not every intermediate frame">
+  <DiagramStack align="center">
+    <DiagramNode title="Background render for r" tone="purple" />
+    <DiagramArrow label="user types re" />
+    <DiagramNode title="Old render becomes obsolete" tone="red" />
+    <DiagramArrow label="restart toward newest value" />
+    <DiagramNode title="Background render for re" tone="purple" />
+    <DiagramArrow label="commit only when ready" />
+    <DiagramNode title="Slow UI catches up" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## There is no fixed delay
 
-`useDeferredValue` is not a debounce.
+`useDeferredValue` is not a debounce. React does not wait a fixed 200ms or 500ms timer. It starts background rendering after urgent work and can interrupt that render when more urgent work arrives.
 
-React does not wait for a hardcoded 200ms or 500ms timer.
-
-It begins working on the deferred update after urgent work and may interrupt that work if more urgent updates arrive.
-
-## `useDeferredValue` does not debounce requests
-
-This is one of the most important production distinctions.
+## It does not debounce requests
 
 ```jsx
 const deferredQuery = useDeferredValue(query);
 ```
 
-does not guarantee only one network request will happen.
+This does not guarantee fewer network requests. If your data layer starts a request for every query value, you may still get one request per keystroke.
 
-If your data layer starts requests for each query value, you may still create one request per keystroke.
-
-Use request deduplication, caching, debounce, cancellation, or framework data APIs when you need network control.
+<VisualDiagram title="Rendering priority and request frequency are separate concerns">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="useDeferredValue" tone="purple">Controls React presentation priority.</DiagramNode>
+    <DiagramNode title="Debounce / cache / cancel / dedupe" tone="orange">Controls request timing and network work.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## Stale content with Suspense
 
-A powerful pattern is to keep old results visible while new results suspend.
-
 ```jsx
-function SearchPage() {
-  const [query, setQuery] = useState('');
-  const deferredQuery = useDeferredValue(query);
-  const isStale = query !== deferredQuery;
+const deferredQuery = useDeferredValue(query);
+const isStale = query !== deferredQuery;
 
-  return (
-    <>
-      <input
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-
-      <Suspense fallback={<ResultsSkeleton />}>
-        <div style={{ opacity: isStale ? 0.5 : 1 }}>
-          <SearchResults query={deferredQuery} />
-        </div>
-      </Suspense>
-    </>
-  );
-}
+return (
+  <Suspense fallback={<ResultsSkeleton />}>
+    <div style={{ opacity: isStale ? 0.5 : 1 }}>
+      <SearchResults query={deferredQuery} />
+    </div>
+  </Suspense>
+);
 ```
 
-On first load, the fallback may appear.
+<VisualDiagram title="First load and later updates can have different UX">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="First load" tone="orange">No useful previous results exist → fallback may appear.</DiagramNode>
+    <DiagramNode title="Later update" tone="green">Old deferred results stay visible while fresh results prepare.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-During later updates, the stale deferred results can stay visible while fresh content loads.
-
-## Communicate staleness
-
-Keeping stale content visible can be better UX, but users should know it is stale.
-
-Useful signals include:
-
-- dimming;
-- subtle progress indicators;
-- “Updating…” labels;
-- `aria-busy` where appropriate;
-- temporary restrictions on actions that require fresh data.
-
-Do not visually preserve stale content when correctness depends on users knowing it changed immediately.
+Stale UI should be communicated through dimming, `aria-busy`, subtle progress, or another appropriate indicator.
 
 ## `initialValue`
 
@@ -157,72 +131,61 @@ Current React supports an optional initial value:
 const deferredValue = useDeferredValue(value, initialValue);
 ```
 
-On initial render, React can use `initialValue` first and then render the current value in the background.
+If supplied, `initialValue` can be used during the initial render before React catches up in the background. Without it, the initial render uses `value` because there is no previous version to preserve.
 
-If you omit it, the initial render uses the provided value because there is no previous deferred value to preserve.
+Use this carefully: an inappropriate initial value can briefly represent UI that never existed as canonical state.
 
-Use this intentionally. An incorrect initial value can briefly represent UI state that never actually existed.
+## Stable value identity matters
 
-## Values should have stable identity
-
-Primitive values are naturally straightforward:
+Primitive values are straightforward.
 
 ```jsx
 const deferredQuery = useDeferredValue(query);
 ```
 
-Be careful with objects created during every render:
+Avoid creating a brand-new object during every render just to defer it:
 
 ```jsx
 const deferredFilters = useDeferredValue({ query, sort });
 ```
 
-That object is new every render, so React sees it as a different value every time.
-
-Prefer stable objects when deferring structured values:
+That object is different every render. Prefer stable structured values when identity matters.
 
 ```jsx
 const filters = useMemo(() => ({ query, sort }), [query, sort]);
 const deferredFilters = useDeferredValue(filters);
 ```
 
-Later, React Compiler may reduce some manual memoization needs, but value identity still matters conceptually.
+React compares values using `Object.is` semantics when deciding whether background catch-up work is needed.
 
-## `Object.is` comparison
+## Effects wait for the deferred render to commit
 
-React compares the incoming value against the previous one using `Object.is` semantics.
-
-If it differs, React can schedule a background render with the new deferred value.
-
-That is why recreating objects unnecessarily can cause unnecessary deferred work.
-
-## Effects from deferred renders
-
-A deferred background render is not committed until it is ready.
-
-Effects associated with that render do not run until the render commits.
-
-This reinforces the render/commit distinction:
-
-```text
-background rendering may happen
-→ no commit yet
-→ no committed Effects yet
-```
+<VisualDiagram title="Background render is not committed UI">
+  <DiagramStack align="center">
+    <DiagramNode title="Deferred background render" tone="purple" />
+    <DiagramArrow label="may suspend or be interrupted" />
+    <DiagramNode title="No commit yet" tone="orange" />
+    <DiagramArrow label="render finally completes" />
+    <DiagramNode title="Commit" tone="green" />
+    <DiagramArrow label="then" />
+    <DiagramNode title="Effects for that committed render run" tone="blue" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## Inside a Transition
 
-If an update is already happening inside a Transition, `useDeferredValue` does not need to create another separate deferred render for the same value.
+If an update is already inside a Transition, `useDeferredValue` does not need to create a separate deferred render for that same value. The update is already non-urgent.
 
-The update is already non-urgent.
-
-This means you should not mechanically combine every concurrency API.
-
-Use the smallest tool that expresses the intended priority relationship.
+Do not mechanically combine every concurrency API; choose the smallest one that expresses the intended priority relationship.
 
 ## `useDeferredValue` vs `useTransition`
 
-Use `useTransition` when you control the update:
+<VisualDiagram title="Initiated update vs lagging consumer">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="useTransition" tone="purple">You control the setter and want that update to be non-urgent.</DiagramNode>
+    <DiagramNode title="useDeferredValue" tone="teal">The value is already changing; one consumer may lag behind.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ```jsx
 startTransition(() => {
@@ -230,193 +193,100 @@ startTransition(() => {
 });
 ```
 
-Use `useDeferredValue` when a value is already changing urgently but one consumer may lag:
-
 ```jsx
 const deferredQuery = useDeferredValue(query);
 ```
 
-A useful distinction:
+## Deferred rendering vs debounce
 
-```text
-useTransition      → mark an update you initiate as non-urgent
-useDeferredValue   → let a consumer lag behind a value you receive
-```
+<VisualDiagram title="Different timing models">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Debounce" tone="orange">User types → wait → start work.</DiagramNode>
+    <DiagramNode title="Deferred rendering" tone="purple">User types → urgent UI updates now → slower subtree catches up when possible.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## `useDeferredValue` vs debounce
+You can use both when you need both request timing control and rendering responsiveness.
 
-Debounce changes **when work begins**.
+## Deferred rendering does not make slow UI cheap
 
-```text
-user types
-→ wait 300ms
-→ start work
-```
-
-Deferred rendering changes **React render priority**.
-
-```text
-user types
-→ urgent UI updates now
-→ slower React subtree catches up when possible
-```
-
-You can use both if both network timing and rendering responsiveness matter.
-
-## `useDeferredValue` vs memoization
-
-Deferring does not automatically make a slow component cheap.
-
-If the parent re-renders urgently and your slow subtree recomputes even when its deferred prop is unchanged, you may need `memo` or better component boundaries.
+If the slow child still re-renders urgently even while its deferred prop is unchanged, component boundaries or `memo` may still matter.
 
 ```jsx
 const SlowList = memo(function SlowList({ text }) {
   // expensive rendering
 });
-```
 
-Then urgent parent renders can skip the expensive child while `deferredText` is unchanged.
-
-## Deferred rendering and memo
-
-Consider:
-
-```jsx
 const deferredText = useDeferredValue(text);
 return <SlowList text={deferredText} />;
 ```
 
-If `SlowList` is not memoized, the urgent render of the parent may still render `SlowList` even though `deferredText` has not changed.
+Concurrency changes priority; profiling and architecture still decide cost.
 
-Deferring the value and avoiding unnecessary child renders are related but distinct concerns.
+## Production data-table pattern
 
-## Production example: data table filtering
-
-Urgent state:
-
-```text
-input value
-selected controls
-```
-
-Deferred state consumption:
-
-```text
-large filtered table
-summary visualization
-```
-
-Architecture:
-
-```jsx
-const [query, setQuery] = useState('');
-const deferredQuery = useDeferredValue(query);
-
-return (
-  <>
-    <SearchBox value={query} onChange={setQuery} />
-    <MemoizedLargeTable query={deferredQuery} />
-  </>
-);
-```
-
-The user sees immediate keystrokes while table rendering can lag.
-
-## Production example: Suspense-backed search
-
-If the results resource suspends:
-
-```jsx
-const deferredQuery = useDeferredValue(query);
-const stale = query !== deferredQuery;
-
-<Suspense fallback={<FirstLoadSkeleton />}>
-  <Results query={deferredQuery} stale={stale} />
-</Suspense>
-```
-
-The first load can show a fallback. Later searches can preserve old results while new data prepares.
+<VisualDiagram title="Keep controls urgent; let expensive presentation lag">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Urgent state" tone="blue">Input value · selected controls · accessibility state.</DiagramNode>
+    <DiagramNode title="Deferred consumption" tone="purple">Large table · summary visualization · suspending results.</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
 ## When not to defer
 
-Do not defer values where lag would be confusing or unsafe.
+Do not defer values when lag would be confusing or unsafe, for example direct drag position, checkbox state, current accessibility state, or values immediately required for a destructive confirmation.
 
-Examples:
+<DecisionTree
+  question="Can this consumer safely lag?"
+  items={[
+    { label: 'Old content remains useful and clearly marked stale', value: 'Good deferred candidate' },
+    { label: 'Interaction itself must reflect current state immediately', value: 'Keep urgent' },
+    { label: 'Problem is too many requests', value: 'Use network/data-layer controls' },
+    { label: 'Problem is expensive render cost', value: 'Defer if appropriate, then profile/optimize too' },
+  ]}
+/>
 
-- password strength rules that must reflect the exact current value;
-- confirmation totals immediately before a destructive payment action;
-- direct cursor/drag position;
-- selected checkbox state;
-- accessibility state that must match the control now.
+## Common mistakes
 
-Priority is a product decision.
+- treating the deferred value as canonical state;
+- expecting fewer server requests automatically;
+- hiding that visible content is stale;
+- passing unstable objects created during every render;
+- assuming deferral replaces memoization or architecture work.
 
-## Common mistake: using deferred value as canonical state
+## Debugging checklist
 
-The deferred value is a rendering tool, not a second source of truth.
-
-Do not build application logic that treats the stale deferred value as authoritative.
-
-Canonical state remains the latest value.
-
-## Common mistake: expecting fewer server requests
-
-Again:
-
-```text
-useDeferredValue ≠ debounce
-```
-
-Measure network behavior separately.
-
-## Common mistake: hiding stale state
-
-If users see old search results for a new query with no indication, they may assume the system returned incorrect data.
-
-## Debugging deferred UI
-
-Ask:
-
-1. Is the urgent state updating immediately?
-2. Is the expensive subtree actually receiving the deferred value?
-3. Is the child memoized where necessary?
-4. Are new object identities causing unnecessary deferred renders?
-5. Is Suspense preserving old deferred content as expected?
-6. Are network requests still firing too often?
-7. Is staleness visibly communicated?
-8. Does the use case tolerate stale UI?
+1. Is urgent state updating immediately?
+2. Does the expensive subtree actually receive the deferred value?
+3. Are unstable identities causing extra background work?
+4. Does Suspense preserve old deferred content as expected?
+5. Are requests still firing too often?
+6. Is stale UI visibly communicated?
+7. Is stale UI actually acceptable for this feature?
 
 ## Exercise
 
-Build a search page with 5,000 locally generated items.
-
-1. Filter using the urgent input value.
-2. Add artificial render cost and observe typing lag.
-3. Add `useDeferredValue`.
-4. Memoize the slow list.
-5. Add a stale indicator.
-6. Compare the behavior to a 300ms debounce.
-7. Explain why the two techniques solve different problems.
+Build a search page with 5,000 local items. Add artificial render cost, compare urgent rendering to `useDeferredValue`, memoize the list, show stale feedback, and compare the behavior with a 300ms debounce.
 
 ## Interview questions
 
 **Beginner:** What does `useDeferredValue` return?
 
-**Intermediate:** Why does `useDeferredValue` not reduce network requests by itself?
+**Intermediate:** Why does it not reduce network requests by itself?
 
-**Senior:** How would you combine urgent input state, a deferred query, Suspense-backed results, memoization, cancellation, and stale-state UX in a production search page?
+**Senior:** How would you combine urgent input, deferred results, Suspense, memoization, request cancellation, and stale-state UX in production search?
 
 ## Summary
 
-```text
-useDeferredValue lets a UI consumer lag behind the latest value.
-There is no fixed delay.
-Background deferred rendering is interruptible.
-It integrates with Suspense to preserve stale content.
-It does not debounce requests.
-Stable value identity and memoized expensive children still matter.
-Use it only when stale UI is acceptable.
-```
+<VisualDiagram title="Deferred-value mental model">
+  <DiagramStack align="center">
+    <DiagramNode title="Canonical value updates urgently" tone="blue" />
+    <DiagramArrow label="consumer may keep previous value" />
+    <DiagramNode title="Background catch-up render" tone="purple" />
+    <DiagramArrow label="interruptible / may suspend" />
+    <DiagramNode title="Latest completed presentation commits" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## References
 
