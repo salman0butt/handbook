@@ -62,7 +62,7 @@ class ErrorBoundary extends React.Component {
   </DiagramStack>
 </VisualDiagram>
 
-In React 19.2, the built-in Error Boundary lifecycle API is still class-based; maintained libraries can package the class for function-component applications. citeturn760867search0
+In React 19.2, the built-in Error Boundary lifecycle API is still class-based; maintained libraries can package the class for function-component applications.
 
 ## What Error Boundaries do and do not own
 
@@ -172,7 +172,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 ```
 
-Current React documentation says `captureOwnerStack()` returns `string | null`, is available only in development, and is useful during React-controlled execution such as render, Effects, React event handlers, and root error handlers. It can be unavailable in detached callbacks such as `setTimeout` or custom DOM event listeners. citeturn760867search1
+Current React documentation says `captureOwnerStack()` returns `string | null`, is available only in development, and is useful during React-controlled execution such as render, Effects, React event handlers, and root error handlers. It can be unavailable in detached callbacks such as `setTimeout` or custom DOM event listeners.
 
 <VisualDiagram title="Capture ownership context before leaving React-controlled execution">
   <DiagramRow>
