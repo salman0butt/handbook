@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–16 are implemented; Phase 17 Deployment & Production Operations is next.**
+> **Status: NOT COMPLETE — Phases 1–17 are implemented; Phase 18 Architecture & Large Applications is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -47,7 +47,8 @@ The audit keeps the original baseline for history while allowing later phases to
 - [x] Phase 14 · Errors, Observability & Debugging
 - [x] Phase 15 · Performance
 - [x] Phase 16 · Testing
-- [ ] Phase 17 · Deployment & Production Operations
+- [x] Phase 17 · Deployment & Production Operations
+- [ ] Phase 18 · Architecture & Large Applications
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
@@ -80,6 +81,8 @@ Phase 15 includes production performance engineering across the full App Router 
 
 Phase 16 includes the current App Router testing contract: risk-driven unit/component/integration/E2E boundaries; Vitest and Jest with React Testing Library; the current recommendation to use E2E rather than forcing unsupported unit tooling for async Server Components; server data, database, cache isolation and revalidation tests; direct Server Action and Route Handler validation/auth/idempotency/HTTP contracts; experimental Proxy testing utilities isolated from stable suite architecture; authentication/session/tenant-isolation and broader CSRF/XSS/SSRF/webhook/rate-limit regression matrices; real-browser Suspense/streaming/hard-vs-soft navigation/hydration/Router Cache tests; Playwright/Cypress production-build E2E; accessibility and keyboard coverage; deterministic test data/time/randomness/provider boundaries; flake diagnosis, sharding, CI evidence and protected secrets; bundle/query/performance regression gates; and senior release-gate/test-debt architecture. Experimental `@next/playwright`, `unstable_doesProxyMatch`, and related Next testing helpers remain labelled experimental and are not treated as required stable primitives.
 
+Phase 17 includes the current production deployment contract: build/start/request lifecycle separation; immutable build-once artifacts; `next build`/`next start`; output file tracing and `output: 'standalone'`; multi-stage container packaging; self-hosting behind reverse proxies/load balancers; trusted forwarding, streaming/PPR buffering and timeouts; graceful `SIGTERM`/`SIGINT` draining including pending `after()` callbacks; build-time vs runtime environment variables and frozen `NEXT_PUBLIC_` values; secret injection/rotation and startup configuration validation; CDN/static asset policy; `cacheHandler` vs Cache Components `cacheHandlers`; multi-instance cache/tag coordination and tenant-safe cache keys; stable `deploymentId`, `generateBuildId`, Server Action encryption-key consistency and mixed-version rollout safety; health/readiness, autoscaling, DB pools, object storage, distributed rate limits, durable queues/outbox/DLQ and scheduled work; reproducible CI/CD, migrations, canary/blue-green/rolling deployments, source-map/release telemetry, rollback and incident runbooks; `output: 'export'` static-hosting limitations; and the Next.js Adapter API / stable 16.2 `adapterPath` deployment surface with platform capability and disaster-recovery design review.
+
 ## Final audit gates
 
 - [ ] Re-check npm `latest`, support policy, release notes, and App Router docs at final release.
@@ -96,12 +99,12 @@ Phase 16 includes the current App Router testing contract: risk-driven unit/comp
 - [ ] Re-audit error handling, instrumentation, OpenTelemetry, client observability, source maps, and production-debugging APIs against final stable release.
 - [ ] Re-audit performance, Core Web Vitals, RUM, profiling, bundle analysis, React Compiler integration, lazy loading, experimental performance flags, backend capacity guidance, and budgets against final stable release.
 - [ ] Re-audit testing guidance, async Server Component support, Vitest/Jest/RTL, Playwright/Cypress, Proxy testing helpers, Cache Components testing helpers, CI strategy, security/accessibility/performance regressions, and experimental test APIs against final stable release.
+- [ ] Re-audit `next build` / `next start`, standalone output, self-hosting, streaming proxies, graceful shutdown, environment/runtime config, multi-instance cache coordination, deployment/build IDs, Server Action keys, static export, adapters, CI/CD, rollbacks and platform support against final stable release.
 - [ ] Audit configuration options relevant to application engineering.
-- [ ] Audit Node/self-hosting, adapters, static export, and deployment guidance.
-- [ ] Verify Vercel-specific content is clearly labeled as platform-specific.
+- [ ] Verify Vercel/platform-specific content is clearly labeled as platform-specific.
 - [ ] Verify experimental/preview/canary features are labeled and not taught as stable.
 - [ ] Verify deprecated/historical behavior appears only where migration context requires it.
-- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, logs, sessions, tenancy, outbound HTTP, incident response, and security regression testing.
+- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, logs, sessions, tenancy, outbound HTTP, incident response, security regression testing, CI/CD and production access.
 - [ ] Verify performance advice follows measurement → diagnosis → change → measurement and has proportionate regression coverage.
 - [ ] Complete all capstone specifications.
 - [ ] Complete interview mastery.
@@ -115,6 +118,6 @@ Phase 16 includes the current App Router testing contract: risk-driven unit/comp
 
 The handbook is complete only when the official documentation audit and the educational-quality audit both pass.
 
-A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, testing, trade-offs, and production patterns at the depth appropriate to each topic.
+A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, testing, deployment, trade-offs, and production patterns at the depth appropriate to each topic.
 
 See [API Coverage Contract](./api-coverage.md) for the release gate.
