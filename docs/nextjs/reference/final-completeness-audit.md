@@ -5,7 +5,7 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–15 are implemented; Phase 16 Testing is next.**
+> **Status: NOT COMPLETE — Phases 1–16 are implemented; Phase 17 Deployment & Production Operations is next.**
 
 This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
 
@@ -46,7 +46,8 @@ The audit keeps the original baseline for history while allowing later phases to
 - [x] Phase 13 · Authentication, Authorization & Security
 - [x] Phase 14 · Errors, Observability & Debugging
 - [x] Phase 15 · Performance
-- [ ] Phase 16 · Testing
+- [x] Phase 16 · Testing
+- [ ] Phase 17 · Deployment & Production Operations
 - [ ] Remaining roadmap phases
 
 Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
@@ -77,6 +78,8 @@ Phase 14 includes the stable App Router failure and observability model: expecte
 
 Phase 15 includes production performance engineering across the full App Router stack: measurement-first critical-path analysis; route budgets; field vs lab data; Core Web Vitals LCP/INP/CLS and p75 interpretation; `useReportWebVitals` RUM architecture; Lighthouse and attribution diagnostics; server/RSC dependency waterfalls, bounded parallelism, cache hit/miss analysis, Cache Components shells, Suspense streaming and payload minimization; Client Component boundary and browser-JavaScript cost; `next/dynamic`, interaction-triggered imports, bundle analysis, stable React Compiler integration, and evidence-driven memoization; hydration/INP/main-thread work, transitions/deferred values, list/DOM bounds and memory; image/font/CSS/script/third-party/network critical paths; database/upstream/pool/tail-latency/cold-start/capacity performance; browser/React/server profiling and release-regression workflows; plus SLOs, budgets, canary comparison, ownership, and senior performance architecture review. Current experimental facilities such as Turbopack `experimental-analyze`, `webVitalsAttribution`, `inlineCss`, and `optimizePackageImports` remain explicitly labelled experimental rather than required production primitives.
 
+Phase 16 includes the current App Router testing contract: risk-driven unit/component/integration/E2E boundaries; Vitest and Jest with React Testing Library; the current recommendation to use E2E rather than forcing unsupported unit tooling for async Server Components; server data, database, cache isolation and revalidation tests; direct Server Action and Route Handler validation/auth/idempotency/HTTP contracts; experimental Proxy testing utilities isolated from stable suite architecture; authentication/session/tenant-isolation and broader CSRF/XSS/SSRF/webhook/rate-limit regression matrices; real-browser Suspense/streaming/hard-vs-soft navigation/hydration/Router Cache tests; Playwright/Cypress production-build E2E; accessibility and keyboard coverage; deterministic test data/time/randomness/provider boundaries; flake diagnosis, sharding, CI evidence and protected secrets; bundle/query/performance regression gates; and senior release-gate/test-debt architecture. Experimental `@next/playwright`, `unstable_doesProxyMatch`, and related Next testing helpers remain labelled experimental and are not treated as required stable primitives.
+
 ## Final audit gates
 
 - [ ] Re-check npm `latest`, support policy, release notes, and App Router docs at final release.
@@ -92,14 +95,14 @@ Phase 15 includes production performance engineering across the full App Router 
 - [ ] Re-audit authentication, authorization, sessions, CSRF, CSP, secrets, XSS, SSRF, abuse controls, and broader security architecture against final stable release.
 - [ ] Re-audit error handling, instrumentation, OpenTelemetry, client observability, source maps, and production-debugging APIs against final stable release.
 - [ ] Re-audit performance, Core Web Vitals, RUM, profiling, bundle analysis, React Compiler integration, lazy loading, experimental performance flags, backend capacity guidance, and budgets against final stable release.
-- [ ] Audit testing guidance.
+- [ ] Re-audit testing guidance, async Server Component support, Vitest/Jest/RTL, Playwright/Cypress, Proxy testing helpers, Cache Components testing helpers, CI strategy, security/accessibility/performance regressions, and experimental test APIs against final stable release.
 - [ ] Audit configuration options relevant to application engineering.
 - [ ] Audit Node/self-hosting, adapters, static export, and deployment guidance.
 - [ ] Verify Vercel-specific content is clearly labeled as platform-specific.
 - [ ] Verify experimental/preview/canary features are labeled and not taught as stable.
 - [ ] Verify deprecated/historical behavior appears only where migration context requires it.
-- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, logs, sessions, tenancy, outbound HTTP, and incident response.
-- [ ] Verify performance advice follows measurement → diagnosis → change → measurement.
+- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, logs, sessions, tenancy, outbound HTTP, incident response, and security regression testing.
+- [ ] Verify performance advice follows measurement → diagnosis → change → measurement and has proportionate regression coverage.
 - [ ] Complete all capstone specifications.
 - [ ] Complete interview mastery.
 - [ ] Complete the question bank.
@@ -112,6 +115,6 @@ Phase 15 includes production performance engineering across the full App Router 
 
 The handbook is complete only when the official documentation audit and the educational-quality audit both pass.
 
-A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, trade-offs, and production patterns at the depth appropriate to each topic.
+A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, testing, trade-offs, and production patterns at the depth appropriate to each topic.
 
 See [API Coverage Contract](./api-coverage.md) for the release gate.
