@@ -5,9 +5,9 @@ description: Final verification gate for the Next.js App Router handbook against
 
 # Final Completeness Audit
 
-> **Status: NOT COMPLETE — Phases 1–19 are implemented; Phase 20 Upgrades & Modern Migration is next.**
+> **Status: FINAL VALIDATION PENDING — Phases 00–24 are implemented and integrated; the final production build and published-site verification remain.**
 
-This page is the final release gate for the handbook. It must not be marked complete until the entire App Router curriculum, projects, interview system, and reference coverage have been implemented and re-audited against the then-current stable Next.js release.
+This page is the final release gate for the Next.js handbook. The curriculum is not declared complete until the integrated sidebar/reference state passes the production Docusaurus build and the published GitHub Pages site is verified.
 
 ## Baseline history
 
@@ -17,16 +17,17 @@ This page is the final release gate for the handbook. It must not be marked comp
 - Stable npm `latest` at start: **Next.js 16.2.11**
 - Supported line: **16.x Active LTS**
 - Router scope: **App Router only**
-- Pages Router: **intentionally out of scope**
+- Pages Router: **intentionally out of scope except migration context**
 
-### Latest stable re-check
+### Final stable re-check
 
 - Re-verified date: **July 29, 2026**
 - Current npm `latest`: **Next.js 16.2.12**
+- Current backport tag: **15.5.22**
 - Next.js 16.3: **preview/canary — not stable**
 - Stable curriculum remains on the **16.2 Active LTS** contract
 
-The audit keeps the original baseline for history while allowing later phases to refresh the exact stable patch. Preview/canary behavior is not silently promoted into stable chapters.
+The final delta re-audit found no new stable release after the accumulated phase-by-phase official-document audits. Therefore the stable contracts already re-verified through Phases 00–24 remain the final baseline; preview/canary behavior is not promoted into stable teaching.
 
 ## Progress snapshot
 
@@ -50,82 +51,122 @@ The audit keeps the original baseline for history while allowing later phases to
 - [x] Phase 17 · Deployment & Production Operations
 - [x] Phase 18 · Architecture & Large Applications
 - [x] Phase 19 · Internals & Senior Mental Models
-- [ ] Phase 20 · Upgrades & Modern Migration
-- [ ] Remaining roadmap phases
+- [x] Phase 20 · Upgrades & Modern Migration
+- [x] Phase 21 · Projects
+- [x] Phase 22 · Interview Mastery
+- [x] Phase 23 · Interview Question Bank
+- [x] Phase 24 · Mock Interview Practice
 
-Phase 02 includes route-tree composition, nested layouts, templates, dynamic segments, Promise-based params, route groups, private folders, multiple roots, loading/error/not-found/default files, parallel routes, intercepting routes, route-driven modals, debugging, and architecture review.
+## Phase 20 completion
 
-Phase 03 includes `<Link>`, prefetching, `useRouter`, server redirects, pathname/param/layout hooks, Promise-based `searchParams`, URL-driven filtering/pagination, `useLinkStatus`, History API, scroll/focus/accessibility, redirect safety, and navigation architecture review.
+Phase 20 closes the upgrade/migration contract with:
 
-Phase 04 includes Server Components by default, `'use client'`, module-graph boundaries, interleaving, serialization, provider placement, third-party/browser-only integration, `server-only` / `client-only`, environment isolation, performance/security/debugging, and server/client architecture review.
+- stable/LTS/release-channel strategy and upgrade risk
+- current `next upgrade` and codemod workflows
+- async request APIs and Promise-based route values
+- React 19/type/typegen migration concerns
+- `middleware.ts` → `proxy.ts`
+- `next lint` removal and direct linter CI ownership
+- removed runtime config migration
+- Webpack customizations → current Turbopack/default build model
+- previous cache/PPR assumptions → Cache Components
+- SPA/client-heavy and Pages Router coexistence/retirement strategy
+- production canary, compatibility windows, migration telemetry and deterministic rollback
 
-Phase 05 includes async Server Component data ownership, server `fetch`, direct database/ORM/SDK reads, parallel/sequential fetching, dependency waterfalls, N+1/batching/fan-out analysis, preloading, React `cache`, Suspense/`use()`, client fetching, timeout/retry/security/error handling, and data architecture review.
+Deprecated APIs remain migration context rather than current recommendations.
 
-Phase 06 includes current server `fetch` cache semantics, previous model, Cache Components, `'use cache'`, `cacheLife`, `cacheTag`, revalidation APIs, `connection()`, request-time boundaries, remote/distributed caching, partial prerendering, Router Cache interactions, cache isolation/security, incident debugging, and cache architecture review.
+## Phase 21 completion
 
-Phase 07 includes Server Function/Server Action terminology, `'use server'`, form actions, `FormData`, progressive enhancement, validation/auth/authorization, action security, `useActionState`, `useFormStatus`, `useOptimistic`, mutation concurrency, revalidation/refresh/redirect/cookies, idempotency, transactions, side effects, and mutation architecture review.
+Phase 21 provides portfolio-grade project evidence through:
 
-Phase 08 includes Route Handler ownership/method semantics, Web `Request` / `Response`, `NextRequest` / `NextResponse`, async params, request parsing, validation, files/downloads/streaming, GET caching behavior, Cache Components, HTTP caching, CORS, CSRF/auth baseline, webhooks/replay/callback safety, rate limiting, BFF decisions, runtime constraints, debugging, and HTTP/API design review.
+- a production delivery/evaluation rubric
+- public catalog/search/SEO/cache capstone
+- transactional booking/commerce/idempotency/webhook capstone
+- multi-tenant SaaS/auth/jobs/audit/observability capstone
+- full production-reference architecture capstone with ADRs, fitness functions, failure drills, CI/CD and release review
 
-Phase 09 includes `proxy.ts`, migration from `middleware.ts`, exact request order, matchers and prefetch filtering, `NextResponse.next`, request/response headers and cookies, redirects/rewrites, localization/tenancy, RSC-safe rewrites, optimistic auth gating, CORS/CSRF/CSP baseline, `waitUntil`, runtime/performance constraints, experimental Proxy test helpers, debugging, and request-pipeline architecture review.
+## Phase 22 completion
 
-Phase 10 includes Server Component rendering orchestration; RSC Payload and initial HTML; Client Component prerendering and hydration; hard vs soft navigation; route-segment reconciliation and preserved layouts; `loading.tsx`; manual Suspense; progressive streaming; Cache Components static shells and request-time dynamic holes; server-started Promises consumed with React `use()`; hydration mismatches and visible-before-interactive behavior; streamed error/retry/recovery models; infrastructure buffering; RSC-vs-JS-vs-hydration performance reasoning; security; diagnostics; and senior rendering architecture review.
+Phase 22 converts framework knowledge into senior interview reasoning across:
 
-Phase 11 includes static `metadata` and dynamic `generateMetadata`; Server Component ownership; async params/search params; route-tree ordering, shallow merging, parent extension, and file-based precedence; titles, descriptions, `metadataBase`, canonical URLs and alternates; Open Graph/Twitter metadata and generated social images; favicon/icon/apple-icon and manifests; robots and sitemap routes including Next.js 16 `generateSitemaps` Promise IDs; JSON-LD with HTML script-context XSS-safe serialization; broader metadata fields and verification; dedicated `viewport` / `generateViewport`; streaming metadata and HTML-limited bot behavior; Cache Components interactions; crawler/social performance; content lifecycle, preview/staging, multi-tenant URL identity; and senior SEO debugging/architecture review.
+- answer frameworks and deliberate-practice study plan
+- fundamentals-to-senior App Router progression
+- debugging/performance/security production scenarios
+- Next.js system-design trade-off drills
+- staff-level architecture, migration, platform, incident and leadership rounds
 
-Phase 12 includes the current Next.js 16.2.12 image, font, and script contracts: `next/image` geometry and responsive candidate selection; `fill`, `sizes`, placeholders, loading, `preload`, `fetchPriority`, deprecated `priority`, LCP reasoning, remote/local source allow-lists, quality/width/format policy, local-IP and redirect protections, source-response and disk-cache controls, SVG security, custom loaders, `getImageProps`, art direction, static-export image strategy, immutable media identity, and image incident debugging; `next/font` Google/local self-hosting, variable/static faces, subsets, display/fallback/metric adjustment, CSS variables, route-scoped preloading, multilingual typography, and typography CLS diagnostics; `next/script` strategies, layout scope, inline-script identity, lifecycle callbacks and client boundaries, CSP nonce integration, third-party failure isolation, analytics/pageview ownership, consent/data minimization, facades/embeds, and experimental `@next/third-parties`; plus a unified browser resource-loading and production design review.
+## Phase 23 completion
 
-Phase 13 includes the current stable App Router security model: authentication, session management, and authorization as separate concerns; auth-library/provider ownership; Server Action sign-up/sign-in and server validation; OAuth/OIDC callback, recovery, MFA and safe-redirect design; stateless/database sessions, secure cookies, renewal, rotation and revocation; Proxy optimistic checks vs DAL secure checks; `server-only` DAL/DTO design; RBAC plus tenant/resource/relationship authorization; IDOR/BOLA prevention; Server Action/Route Handler/Proxy security responsibilities; action Origin/Host protections, `allowedOrigins`, closure encryption and multi-instance keys; CSRF, XSS, CSP and nonce-driven dynamic-rendering trade-offs; secrets, `NEXT_PUBLIC_`, RSC/client/action/API exposure boundaries, experimental tainting as defense in depth; SSRF, uploads, object-storage capabilities, active SVG, webhook signatures/replay, distributed rate limiting, bounded resource work, injection classes and API-key lifecycle; plus threat modeling, security audits, incident runbooks, audit-event design, dependency/supply-chain review, and supported-patch policy. Experimental `unauthorized()` / `forbidden()` / `authInterrupts` remain labeled non-production.
+Phase 23 provides a broad active-recall bank spanning:
 
-Phase 14 includes the stable App Router failure and observability model: expected failures vs uncaught exceptions vs framework control flow; nested `error.tsx`, `global-error.tsx`, production Server Component error sanitization, digests and stable `reset()` recovery; `notFound()`/redirect control flow, streamed 404 status caveats and `noindex`; Server Action, Route Handler, Server Component, Client Component, Proxy and `after()` failure contracts; server `instrumentation.ts`, `register()`, stable `onRequestError`, runtime-aware initialization, structured logs and request/trace/release correlation; `instrumentation-client.ts`, early browser error capture, unhandled rejections, router-transition breadcrumbs and client release identity; provider-neutral OpenTelemetry architecture, custom spans, logs/metrics/traces, sampling and exporters; production source-map policy, `next info`, `next build --debug`, `--debug-prerender`, targeted build debugging, Node inspector usage, hard-vs-soft navigation triage, cache/stream/proxy incident workflows; and SLI/SLO/error-budget/alert/runbook design. `unstable_catchError`, `unstable_retry`, `unstable_rethrow`, and other unstable error helpers remain explicitly non-baseline.
+- routing/navigation/rendering/RSC
+- data/Cache Components/mutations
+- authentication/security/Route Handlers/Proxy/HTTP
+- metadata/images/fonts/scripts/performance
+- testing/errors/observability/deployment
+- architecture/internals/migration
+- coding/system-design/output/misconception drills
 
-Phase 15 includes production performance engineering across the full App Router stack: measurement-first critical-path analysis; route budgets; field vs lab data; Core Web Vitals LCP/INP/CLS and p75 interpretation; `useReportWebVitals` RUM architecture; Lighthouse and attribution diagnostics; server/RSC dependency waterfalls, bounded parallelism, cache hit/miss analysis, Cache Components shells, Suspense streaming and payload minimization; Client Component boundary and browser-JavaScript cost; `next/dynamic`, interaction-triggered imports, bundle analysis, stable React Compiler integration, and evidence-driven memoization; hydration/INP/main-thread work, transitions/deferred values, list/DOM bounds and memory; image/font/CSS/script/third-party/network critical paths; database/upstream/pool/tail-latency/cold-start/capacity performance; browser/React/server profiling and release-regression workflows; plus SLOs, budgets, canary comparison, ownership, and senior performance architecture review. Current experimental facilities such as Turbopack `experimental-analyze`, `webVitalsAttribution`, `inlineCss`, and `optimizePackageImports` remain explicitly labelled experimental rather than required production primitives.
+## Phase 24 completion
 
-Phase 16 includes the current App Router testing contract: risk-driven unit/component/integration/E2E boundaries; Vitest and Jest with React Testing Library; the current recommendation to use E2E rather than forcing unsupported unit tooling for async Server Components; server data, database, cache isolation and revalidation tests; direct Server Action and Route Handler validation/auth/idempotency/HTTP contracts; experimental Proxy testing utilities isolated from stable suite architecture; authentication/session/tenant-isolation and broader CSRF/XSS/SSRF/webhook/rate-limit regression matrices; real-browser Suspense/streaming/hard-vs-soft navigation/hydration/Router Cache tests; Playwright/Cypress production-build E2E; accessibility and keyboard coverage; deterministic test data/time/randomness/provider boundaries; flake diagnosis, sharding, CI evidence and protected secrets; bundle/query/performance regression gates; and senior release-gate/test-debt architecture. Experimental `@next/playwright`, `unstable_doesProxyMatch`, and related Next testing helpers remain labelled experimental and are not treated as required stable primitives.
+Phase 24 provides timed practice for:
 
-Phase 17 includes the current production deployment contract: build/start/request lifecycle separation; immutable build-once artifacts; `next build`/`next start`; output file tracing and `output: 'standalone'`; multi-stage container packaging; self-hosting behind reverse proxies/load balancers; trusted forwarding, streaming/PPR buffering and timeouts; graceful `SIGTERM`/`SIGINT` draining including pending `after()` callbacks; build-time vs runtime environment variables and frozen `NEXT_PUBLIC_` values; secret injection/rotation and startup configuration validation; CDN/static asset policy; `cacheHandler` vs Cache Components `cacheHandlers`; multi-instance cache/tag coordination and tenant-safe cache keys; stable `deploymentId`, `generateBuildId`, Server Action encryption-key consistency and mixed-version rollout safety; health/readiness, autoscaling, DB pools, object storage, distributed rate limits, durable queues/outbox/DLQ and scheduled work; reproducible CI/CD, migrations, canary/blue-green/rolling deployments, source-map/release telemetry, rollback and incident runbooks; `output: 'export'` static-hosting limitations; and the Next.js Adapter API / stable 16.2 `adapterPath` deployment surface with platform capability and disaster-recovery design review.
+- 20-minute technical screen
+- 60-minute senior Next.js round
+- full-stack Next.js/Node/data round
+- lead/staff architecture round
+- live coding/debugging/system design round
+- behavioral/production/experience round
+- consistent scoring and weak-area iteration
 
-Phase 18 includes large-application architecture across the current App Router model: capability/vertical-slice boundaries; route composition roots; dependency direction and explicit public module APIs; safe `app` colocation, private folders and route-group organisation; DAL/query ownership, DTO exposure contracts, commands, transactions, idempotency and outbox/event boundaries; monorepos, design systems, package exports, server/client package entry points and stable `transpilePackages` integration; tenant identity through routing, sessions, database queries, caches, jobs, storage, events, feature flags and noisy-neighbour controls; BFF/Route Handler vs direct Server Component access, Server Actions as UI mutation adapters, provider adapters, synchronous API vs event/job/service boundaries; feature flag/config/state governance; Multi-Zones path ownership, asset isolation, hard cross-zone navigation, mixed-version compatibility and team autonomy; plus ADRs, architecture fitness functions, data/cache/operational ownership and a senior reference architecture/design-review process.
+## Final official-doc audit gates
 
-Phase 19 includes the current senior internals mental model without turning private framework machinery into application APIs: public-contract vs implementation-detail stability; RSC/Flight, server/client graph partitioning, client/server references, serialization, initial HTML and hydration; Turbopack's unified dependency graph, route compilation, build metadata/manifests as diagnostic evidence, build/deployment IDs, Output File Tracing and standalone runtime closure; Cache Components prerender execution, static shells, semantic cache keys, Suspense request-time holes, request APIs and `connection()`; Router Cache/prefetch/route-tree reconciliation and deployment-skew hard navigation; Server Function POST references, closure encryption, serialization, Action result-plus-RSC responses and version skew; full request routing/Proxy/render/streaming lifecycle; Node/Edge/process/package/custom-server boundaries; and a first-principles debugging/design-review system based on ownership, lifecycle, representation, cache state and exact release/deployment version. Private `.next` schemas, `next/dist` imports, Flight wire parsing, private headers and manual Action protocol construction remain explicitly outside the application contract.
+- [x] Re-check npm `latest`, backport, preview and canary tags at final release.
+- [x] Reconfirm App Router-only scope and Pages Router migration-only treatment.
+- [x] Audit stable routing and file-system conventions across Phases 01–03.
+- [x] Audit Server/Client Component, RSC, rendering, streaming and navigation behavior across Phases 04 / 10 / 19.
+- [x] Audit current data fetching, Cache Components, caching and revalidation behavior across Phases 05–06 / 19–20.
+- [x] Audit async request APIs and modern migration behavior in Phase 20.
+- [x] Audit Server Functions, forms, actions, transactions and mutation security across Phases 07 / 13 / 16 / 19.
+- [x] Audit Route Handlers, Proxy and request-pipeline behavior across Phases 08–09 / 19–20.
+- [x] Audit metadata, SEO, images, fonts, scripts and resource optimization across Phases 11–12 / 15.
+- [x] Audit authentication, authorization, sessions, tenancy, CSRF, CSP, XSS, SSRF, uploads, webhooks and abuse controls across Phases 13 / 16 / 18.
+- [x] Audit errors, instrumentation, OpenTelemetry, source maps and production debugging across Phase 14 / 19.
+- [x] Audit Core Web Vitals, RUM, profiling, bundling, React Compiler, backend capacity and performance budgets across Phase 15.
+- [x] Audit Vitest/Jest/RTL/Playwright/Cypress guidance, async RSC test boundaries, security/accessibility/performance regressions and experimental testing helpers across Phase 16.
+- [x] Audit `next build`, `next start`, standalone output, self-hosting, proxies, shutdown, runtime config, distributed caches, deployment IDs, static export and adapters across Phase 17.
+- [x] Audit project organization, DAL/DTO/command boundaries, monorepos, tenancy, BFF/service/event/job boundaries, Multi-Zones and governance across Phase 18.
+- [x] Audit RSC/build/router/Action/request/runtime internals while excluding private `.next`, `next/dist`, Flight and private transport coupling across Phase 19.
+- [x] Audit `next upgrade`, codemods, async API migration, Proxy/lint/runtime-config migration, Cache Components modernization and staged rollback across Phase 20.
+- [x] Reconfirm experimental/preview/canary features remain labeled and are not taught as stable.
+- [x] Reconfirm deprecated behavior appears only where migration/history requires it.
+- [x] Reconfirm platform-specific behavior is distinguished from Next.js core.
+- [x] Complete capstone specifications.
+- [x] Complete interview mastery.
+- [x] Complete interview question bank.
+- [x] Complete mock interview practice.
+- [ ] Run final integrated Docusaurus production build and resolve every sidebar/doc reference.
+- [ ] Verify the rendered GitHub Pages Next.js handbook after final integration merge.
 
-## Final audit gates
+## Educational quality gate
 
-- [ ] Re-check npm `latest`, support policy, release notes, and App Router docs at final release.
-- [ ] Audit every Getting Started topic.
-- [ ] Audit every stable file-system convention.
-- [ ] Audit every stable component, hook, function, and directive.
-- [ ] Audit routing, navigation, rendering, streaming, and RSC behavior.
-- [ ] Audit current caching, revalidation, Cache Components, and migration behavior.
-- [ ] Audit request APIs and async request-bound values.
-- [ ] Audit Server Functions, forms, mutations, and security requirements.
-- [ ] Audit Route Handlers, Proxy, and request pipeline behavior.
-- [ ] Re-audit metadata, images, fonts, scripts, and resource optimization against final stable release.
-- [ ] Re-audit authentication, authorization, sessions, CSRF, CSP, secrets, XSS, SSRF, abuse controls, and broader security architecture against final stable release.
-- [ ] Re-audit error handling, instrumentation, OpenTelemetry, client observability, source maps, and production-debugging APIs against final stable release.
-- [ ] Re-audit performance, Core Web Vitals, RUM, profiling, bundle analysis, React Compiler integration, lazy loading, experimental performance flags, backend capacity guidance, and budgets against final stable release.
-- [ ] Re-audit testing guidance, async Server Component support, Vitest/Jest/RTL, Playwright/Cypress, Proxy testing helpers, Cache Components testing helpers, CI strategy, security/accessibility/performance regressions, and experimental test APIs against final stable release.
-- [ ] Re-audit `next build` / `next start`, standalone output, self-hosting, streaming proxies, graceful shutdown, environment/runtime config, multi-instance cache coordination, deployment/build IDs, Server Action keys, static export, adapters, CI/CD, rollbacks and platform support against final stable release.
-- [ ] Re-audit project organisation, route groups/private folders, DAL/DTO/command boundaries, monorepos/`transpilePackages`, multi-tenancy, BFF/service/event/job boundaries, feature/config governance, Multi-Zones and large-app architecture guidance against final stable release.
-- [ ] Re-audit RSC/Flight and module-graph behavior, Turbopack/build pipeline, route compilation, private manifest boundaries, Output File Tracing, Cache Components prerender/static-shell internals, Router Cache/prefetch/reconciliation, Server Function reference/encryption/skew behavior, request/stream lifecycle, runtime/process/custom-server guidance and private-internals stability boundaries against final stable release.
-- [ ] Audit configuration options relevant to application engineering.
-- [ ] Verify Vercel/platform-specific content is clearly labeled as platform-specific.
-- [ ] Verify experimental/preview/canary features are labeled and not taught as stable.
-- [ ] Verify deprecated/historical behavior appears only where migration context requires it.
-- [ ] Verify security is integrated across data, mutations, APIs, caches, auth, secrets, uploads, metadata, structured data, media delivery, third-party scripts, logs, sessions, tenancy, outbound HTTP, incident response, security regression testing, CI/CD, production access, architecture boundaries and framework transport boundaries.
-- [ ] Verify performance advice follows measurement → diagnosis → change → measurement and has proportionate regression coverage.
-- [ ] Complete all capstone specifications.
-- [ ] Complete interview mastery.
-- [ ] Complete the question bank.
-- [ ] Complete mock interview practice.
-- [ ] Run the Docusaurus production build and resolve every broken doc/sidebar reference.
-- [ ] Review the rendered GitHub Pages site.
-- [ ] Update `api-coverage.md` so every stable in-scope item has a justified final status.
+The handbook teaches more than names and syntax. Across the curriculum it consistently covers:
+
+```text
+mental models
+lifecycle and ownership
+server/browser boundaries
+caching and freshness
+security and tenancy
+performance and capacity
+debugging and observability
+testing and release confidence
+deployment and rollback
+large-application architecture
+migration strategy
+interview/system-design reasoning
+```
 
 ## Rule for declaring completion
 
-The handbook is complete only when the official documentation audit and the educational-quality audit both pass.
-
-A list of API names is not completeness. The final version must teach mental models, runtime behavior, server/browser consequences, caching, security, performance, debugging, testing, deployment, architecture, internals, trade-offs, and production patterns at the depth appropriate to each topic.
-
-See [API Coverage Contract](./api-coverage.md) for the release gate.
+The final status changes to **COMPLETE** only after the integrated branch passes the authoritative GitHub Actions production build and the merged GitHub Pages site is verified. The final `api-coverage.md` must also remain fully justified against the stable 16.2.12 App Router baseline.
