@@ -21,7 +21,7 @@ const config = {
       'classic',
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
+          sidebarPath: require.resolve('./sidebars.clean.js'),
           editUrl: 'https://github.com/salman0butt/handbook/edit/main/',
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
@@ -44,20 +44,21 @@ const config = {
     navbar: {
       title: 'Developer Handbook',
       items: [
+        {to: '/docs/react/intro', label: 'React', position: 'left'},
+        {to: '/docs/nextjs/intro', label: 'Next.js', position: 'left'},
+        {to: '/docs/typescript/intro', label: 'TypeScript', position: 'left'},
+        {to: '/docs/javascript/intro', label: 'JavaScript', position: 'left'},
+        {to: '/docs/nodejs/intro', label: 'Node.js', position: 'left'},
         {
-          to: '/docs/react/intro',
-          label: 'React',
+          label: 'More',
           position: 'left',
-        },
-        {
-          to: '/docs/nextjs/intro',
-          label: 'Next.js',
-          position: 'left',
-        },
-        {
-          to: '/docs/javascript/intro',
-          label: 'JavaScript',
-          position: 'left',
+          items: [
+            {label: 'Databases', to: '/docs/databases/intro'},
+            {label: 'System Design', to: '/docs/system-design/intro'},
+            {label: 'DevOps', to: '/docs/devops/intro'},
+            {label: 'WordPress', to: '/docs/wordpress/intro'},
+            {label: 'AI Engineering', to: '/docs/ai-engineering/intro'},
+          ],
         },
         {
           href: 'https://github.com/salman0butt/handbook',
