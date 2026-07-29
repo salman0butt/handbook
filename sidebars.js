@@ -134,6 +134,17 @@ const nextjsItems = [
     'nextjs/testing/playwright-cypress-e2e-accessibility-and-production-testing',
     'nextjs/testing/test-data-mocking-flakiness-ci-and-performance-regression',
     'nextjs/testing/testing-architecture-release-gates-and-design-review',
+  ], { collapsed: true }),
+  category('17 · Deployment & Production Operations', [
+    'nextjs/deployment-and-production-operations/deployment-model-build-runtime-and-platform-capabilities',
+    'nextjs/deployment-and-production-operations/next-build-next-start-standalone-and-docker',
+    'nextjs/deployment-and-production-operations/self-hosting-reverse-proxies-streaming-and-graceful-shutdown',
+    'nextjs/deployment-and-production-operations/environment-variables-secrets-build-time-and-runtime-config',
+    'nextjs/deployment-and-production-operations/cdn-caching-multi-instance-isr-and-cache-handlers',
+    'nextjs/deployment-and-production-operations/rolling-deployments-version-skew-build-id-and-server-actions',
+    'nextjs/deployment-and-production-operations/health-readiness-scaling-databases-queues-and-background-work',
+    'nextjs/deployment-and-production-operations/ci-cd-migrations-rollbacks-observability-and-incident-operations',
+    'nextjs/deployment-and-production-operations/static-export-adapters-platforms-and-production-design-review',
   ], { collapsed: false }),
   category('📋 Reference & Coverage', ['nextjs/reference/api-coverage', 'nextjs/reference/final-completeness-audit']),
 ];
