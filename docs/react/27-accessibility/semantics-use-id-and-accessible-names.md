@@ -4,15 +4,31 @@ description: Build React interfaces on semantic HTML, accessible names, relation
 sidebar_position: 1
 ---
 
-# Accessibility Foundations — Semantics, Accessible Names, and useId
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+} from '@site/src/components/handbook/VisualDiagram'
 
-Accessibility is part of component correctness. A UI that only works with a mouse, loses meaning in a screen reader, or exposes unlabeled controls is functionally incomplete.
+# Accessibility Foundations — Semantics, Accessible Names, and `useId`
 
-> **Mental model:** start with native HTML semantics, then add ARIA only where native HTML cannot express the required widget behavior.
+Accessibility is part of component correctness. React produces DOM; the browser exposes that DOM through semantics, names, states, relationships, focus, and the accessibility tree.
 
-React does not replace the browser accessibility tree. Your JSX becomes DOM, and the DOM's semantics, names, states, relationships, and focus behavior determine what assistive technologies can understand.
+<VisualDiagram title="React does not replace browser semantics">
+  <DiagramRow>
+    <DiagramNode title="JSX" tone="blue">Elements + props</DiagramNode>
+    <DiagramArrow direction="right" label="React DOM" />
+    <DiagramNode title="DOM" tone="purple">HTML semantics + attributes</DiagramNode>
+    <DiagramArrow direction="right" label="browser maps" />
+    <DiagramNode title="Accessibility tree" tone="green">Role · name · state · relationships</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## 1. Native HTML first
+## Native HTML first
 
 Prefer:
 
@@ -20,7 +36,7 @@ Prefer:
 <button onClick={save}>Save</button>
 ```
 
-Over:
+over:
 
 ```tsx
 <div role="button" tabIndex={0} onClick={save}>
@@ -28,19 +44,20 @@ Over:
 </div>
 ```
 
-The native `<button>` already has:
+The native button already owns button semantics, focusability, keyboard activation, disabled behavior, and mature browser/assistive-technology support.
 
-- button semantics;
-- keyboard activation behavior;
-- focusability;
-- disabled behavior;
-- expected browser/assistive-technology support.
+<DecisionTree
+  question="How should this interaction be represented?"
+  items={[
+    { label: 'Native HTML element already matches the meaning', value: 'Use the native element first' },
+    { label: 'Native HTML cannot express the required widget semantics', value: 'Add ARIA + implement the full expected behavior' },
+    { label: 'Only appearance differs', value: 'Keep semantic HTML and style it with CSS' },
+  ]}
+/>
 
-A role changes semantics; it does not automatically implement browser behavior.
+A role changes semantics. It does **not** automatically implement keyboard behavior.
 
-## 2. Choose elements by meaning, not appearance
-
-Examples:
+## Choose elements by meaning
 
 ```tsx
 <nav aria-label="Primary">...</nav>
@@ -48,26 +65,19 @@ Examples:
 <article>...</article>
 <button>Delete</button>
 <a href="/settings">Settings</a>
-<label htmlFor={emailId}>Email</label>
-<input id={emailId} type="email" />
 ```
 
-CSS can make a button look like a link or a link look like a button. The element should still represent what it does.
+A control that navigates is usually a link. A control that performs an action is usually a button.
 
-- navigates somewhere → link;
-- performs an action → button.
+## Accessible names
 
-## 3. Accessible names
-
-Interactive elements need meaningful names so users can understand their purpose and distinguish them from similar controls.
-
-Strong:
+Interactive elements need a useful name.
 
 ```tsx
 <button>Save profile</button>
 ```
 
-Icon-only control:
+For an icon-only control:
 
 ```tsx
 <button aria-label="Close dialog">
@@ -75,56 +85,34 @@ Icon-only control:
 </button>
 ```
 
-Visible text is often the most robust name because everyone can perceive and maintain it.
+<VisualDiagram title="Accessible name sources">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Visible text" tone="green">Best default when available</DiagramNode>
+    <DiagramNode title="aria-labelledby" tone="teal">Reuse meaningful visible text elsewhere</DiagramNode>
+    <DiagramNode title="aria-label" tone="orange">Use when no visible naming content exists</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## 4. Prefer visible labels for form controls
+Visible text is often easiest for everyone to perceive and maintain.
+
+## Forms need persistent labels
 
 ```tsx
 <label htmlFor={emailId}>Email address</label>
 <input id={emailId} type="email" />
 ```
 
-or:
+A placeholder is not a durable replacement for a label because it disappears during input and provides weaker orientation.
 
-```tsx
-<label>
-  Email address
-  <input type="email" />
-</label>
-```
+## Names and descriptions are different
 
-A placeholder is not a good replacement for a persistent label:
-
-```tsx
-<input placeholder="Email address" />
-```
-
-Placeholder text disappears during input and is only a fallback naming mechanism in accessibility APIs.
-
-## 5. `aria-label` and `aria-labelledby`
-
-Use `aria-label` when no visible text can provide the name:
-
-```tsx
-<button aria-label="Delete invoice 42">
-  <TrashIcon aria-hidden="true" />
-</button>
-```
-
-Use `aria-labelledby` when visible content elsewhere already provides the name:
-
-```tsx
-<h2 id={titleId}>Delete invoice?</h2>
-<div role="dialog" aria-labelledby={titleId}>
-  ...
-</div>
-```
-
-Prefer reusing visible text rather than maintaining duplicate hidden strings when possible.
-
-## 6. Accessible descriptions
-
-Names answer "what is this?" Descriptions can add supporting information.
+<VisualDiagram title="Name answers what; description adds context">
+  <DiagramRow>
+    <DiagramNode title="Accessible name" tone="blue">Password</DiagramNode>
+    <DiagramArrow direction="right" label="plus" />
+    <DiagramNode title="Description" tone="teal">Use at least 12 characters</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
 ```tsx
 const inputId = useId();
@@ -139,11 +127,7 @@ return (
 );
 ```
 
-The field keeps a concise name, while the hint supplies additional description.
-
-## 7. `useId` for stable React-generated relationships
-
-React's `useId` generates an ID associated with a Hook call in a component.
+## `useId` creates stable DOM relationships
 
 ```tsx
 function EmailField() {
@@ -158,87 +142,36 @@ function EmailField() {
 }
 ```
 
-This is especially useful for reusable components that can appear multiple times on a page.
-
-## 8. One base ID can create related IDs
+One base ID can create several relationships:
 
 ```tsx
-function PasswordField() {
-  const baseId = useId();
-  const inputId = `${baseId}-input`;
-  const hintId = `${baseId}-hint`;
-  const errorId = `${baseId}-error`;
-
-  return (
-    <div>
-      <label htmlFor={inputId}>Password</label>
-      <input
-        id={inputId}
-        type="password"
-        aria-describedby={`${hintId} ${errorId}`}
-      />
-      <p id={hintId}>At least 12 characters.</p>
-      <p id={errorId}>...</p>
-    </div>
-  );
-}
+const baseId = useId();
+const inputId = `${baseId}-input`;
+const hintId = `${baseId}-hint`;
+const errorId = `${baseId}-error`;
 ```
 
-Only include an error description ID when the error element is actually present if that produces a cleaner relationship for your implementation.
+## `key`, DOM `id`, and domain identity are different
 
-## 9. Do not use `useId` for list keys
+<VisualDiagram title="Three identity systems solve different problems">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="React key" tone="purple">Tree identity across sibling renders</DiagramNode>
+    <DiagramNode title="DOM id" tone="blue">Document relationships such as label/description</DiagramNode>
+    <DiagramNode title="Domain ID" tone="green">Database/API/business identity</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Wrong:
+Do not use `useId` for list keys, persisted record IDs, analytics entity IDs, API resource IDs, or cache keys.
+
+Keys come from the data:
 
 ```tsx
-items.map((item) => <Row key={useId()} item={item} />)
+items.map(item => <Row key={item.id} item={item} />)
 ```
 
-`useId` is a Hook and cannot be called inside the loop, and React explicitly says it should not generate list keys.
+React's current documentation also notes that `useId` cannot currently be called in async Server Components.
 
-Keys come from data identity:
-
-```tsx
-items.map((item) => <Row key={item.id} item={item} />)
-```
-
-Remember the distinction:
-
-```text
-key
-→ React tree identity
-
-id
-→ DOM relationship/document identity
-```
-
-They solve different problems.
-
-## 10. Do not use `useId` as a domain ID or cache key
-
-A generated accessibility ID is not your database identifier.
-
-Do not use it for:
-
-- persisted record IDs;
-- cache keys;
-- analytics entity IDs;
-- API resource IDs;
-- business identity.
-
-Generate those from the relevant domain/data system.
-
-## 11. Async Server Component caveat
-
-React's current `useId` documentation notes that `useId` cannot currently be used in async Server Components.
-
-Place the ID-generating logic in a supported component boundary or use framework/server data where appropriate.
-
-## 12. Landmarks
-
-Semantic landmarks help users navigate page structure.
-
-Typical elements:
+## Landmarks and headings communicate structure
 
 ```tsx
 <header>...</header>
@@ -248,16 +181,14 @@ Typical elements:
 <footer>...</footer>
 ```
 
-If multiple landmarks of the same type exist, give them distinguishable names when needed:
+When multiple landmarks share a type, give them distinguishable names where useful.
 
 ```tsx
 <nav aria-label="Primary">...</nav>
 <nav aria-label="Account">...</nav>
 ```
 
-Do not add landmark roles redundantly when the native element already provides the semantics.
-
-## 13. Headings communicate structure
+Headings describe document structure, not visual size:
 
 ```tsx
 <h1>Account settings</h1>
@@ -266,11 +197,7 @@ Do not add landmark roles redundantly when the native element already provides t
 <h3>Two-factor authentication</h3>
 ```
 
-Choose heading levels for document structure, not font size.
-
-Style them with CSS.
-
-## 14. Images
+## Images and icons
 
 Informative image:
 
@@ -284,11 +211,7 @@ Decorative image:
 <img src={dividerUrl} alt="" />
 ```
 
-The correct alternative text depends on the image's purpose in context, not a mechanical description of pixels.
-
-## 15. Icon components
-
-A decorative icon inside a named button should usually not add a second name:
+A decorative icon inside an already-named button should usually stay out of the accessibility name:
 
 ```tsx
 <button>
@@ -297,33 +220,31 @@ A decorative icon inside a named button should usually not add a second name:
 </button>
 ```
 
-For icon-only controls, name the control:
-
-```tsx
-<button aria-label="Search">
-  <SearchIcon aria-hidden="true" />
-</button>
-```
-
-The button owns the interaction semantics.
-
-## 16. ARIA states should match real state
+## ARIA states must match real UI state
 
 ```tsx
 <button
   aria-expanded={open}
   aria-controls={panelId}
-  onClick={() => setOpen((value) => !value)}
+  onClick={() => setOpen(value => !value)}
 >
   Filters
 </button>
 ```
 
-If `aria-expanded` says `true` while the panel is closed, the accessibility tree lies.
+<VisualDiagram title="ARIA is part of rendered truth">
+  <DiagramRow>
+    <DiagramNode title="React state" tone="purple">open = true</DiagramNode>
+    <DiagramArrow direction="right" label="render" />
+    <DiagramNode title="Visible UI" tone="blue">Panel is open</DiagramNode>
+    <DiagramArrow direction="right" label="must agree" />
+    <DiagramNode title="Accessibility state" tone="green">aria-expanded=true</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Treat ARIA state as part of the rendered UI contract.
+If ARIA says one thing while the visible UI does another, the accessibility tree is lying.
 
-## 17. Validation relationships
+## Validation relationships
 
 ```tsx
 function EmailField({ error }: { error?: string }) {
@@ -339,53 +260,30 @@ function EmailField({ error }: { error?: string }) {
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
       />
-      {error && (
-        <p id={errorId} role="alert">
-          {error}
-        </p>
-      )}
+      {error && <p id={errorId}>{error}</p>}
     </div>
   );
 }
 ```
 
-`aria-invalid` communicates state. `aria-describedby` associates the explanation.
+`aria-invalid` communicates state; `aria-describedby` connects the explanation. Add live-region behavior only when the product genuinely needs an announcement.
 
-Use live-region/alert behavior deliberately; do not make every piece of text an alert.
+## Native `disabled` vs `aria-disabled`
 
-## 18. Native disabled vs ARIA disabled
-
-```tsx
-<button disabled>Save</button>
-```
-
-Native `disabled` changes browser behavior as well as semantics.
-
-```tsx
-<div role="button" aria-disabled="true">...</div>
-```
-
-`aria-disabled` communicates state but does not automatically prevent clicks, keyboard activation, focus, or form behavior.
+<DiagramGrid columns={2}>
+  <DiagramNode title="disabled" tone="green">Native control state + browser behavior</DiagramNode>
+  <DiagramNode title="aria-disabled" tone="orange">Communicates state only; behavior remains your responsibility</DiagramNode>
+</DiagramGrid>
 
 Prefer native disabled controls when they match the design.
 
-## 19. Hidden content
+## Hidden is not one concept
 
-Ask which kind of hidden you mean:
+A subtree may be visually hidden, removed from layout, not focusable, absent from the accessibility tree, or React-hidden with state preserved. These are not equivalent.
 
-- not visually shown;
-- not in layout;
-- not focusable;
-- not in the accessibility tree;
-- state preserved but effects disconnected (`<Activity mode="hidden">` has React-specific behavior).
+Be especially careful with `aria-hidden="true"`: descendants disappear from assistive technology. Do not leave meaningful focusable controls inside such a subtree without a deliberate, tested pattern.
 
-These are not equivalent.
-
-Be careful with `aria-hidden="true"`: descendants are hidden from assistive technology even if visually present.
-
-Never leave focusable interactive elements inside a subtree that assistive technology cannot perceive without a deliberate, tested pattern.
-
-## 20. Semantic Testing Library queries reinforce accessibility
+## Semantic testing reinforces accessibility
 
 ```tsx
 screen.getByRole('button', { name: 'Save profile' });
@@ -393,80 +291,32 @@ screen.getByLabelText('Email address');
 screen.getByRole('navigation', { name: 'Primary' });
 ```
 
-These queries encourage the DOM to expose meaningful semantics and names.
+These tests protect important parts of the accessibility surface, but they are not a complete accessibility audit.
 
-A semantic test is not a full accessibility audit, but it protects important parts of the accessibility tree.
+## Review checklist
 
-## 21. Common mistakes
-
-### "ARIA makes any element accessible"
-
-No. ARIA provides semantics and state. Authors still own behavior and keyboard support for custom widgets.
-
-### Placeholder-only labels
-
-Placeholders are not persistent labels.
-
-### Icon-only buttons without a name
-
-The visual icon alone does not guarantee an accessible name.
-
-### `aria-label` everywhere
-
-Visible text and native labeling are often easier to maintain.
-
-### `useId` for data identity
-
-It is intended for React-generated DOM relationships, not business identity.
-
-### Heading levels chosen by visual size
-
-Use CSS for appearance and headings for structure.
-
-## 22. Accessibility review checklist
-
-For a component, ask:
-
-1. Is there a native element that already provides the right semantics?
+1. Is there a native element with the correct meaning?
 2. Does every interactive control have a useful accessible name?
 3. Are form controls visibly labeled?
-4. Are hints/errors connected with appropriate relationships?
-5. Are ARIA states synchronized with actual UI state?
-6. Are repeated IDs unique?
-7. Are icons decorative or meaningful, and treated accordingly?
-8. Does the page have useful landmarks/headings?
-9. Can semantic queries locate the important UI?
-10. Have we avoided adding ARIA where native HTML already solves the problem?
-
-## Exercise
-
-Build an accessible reusable `Field` component supporting:
-
-- visible label;
-- optional hint;
-- optional error;
-- `useId`-generated relationships;
-- `aria-invalid` only when invalid;
-- standard input props;
-- multiple instances on one page without ID collisions;
-- Testing Library tests using role/name or label queries.
-
-Explain why the field ID must not be reused as a React list key or domain identifier.
+4. Are hints/errors connected through correct relationships?
+5. Do ARIA states match actual UI state?
+6. Are generated IDs unique and used only for DOM relationships?
+7. Are icons/images classified by purpose?
+8. Do landmarks/headings make page structure understandable?
+9. Can semantic tests find the important UI?
+10. Have you avoided ARIA where native HTML already solves the problem?
 
 ## Interview questions
 
 1. Why should semantic HTML come before ARIA?
 2. What is an accessible name?
 3. When would you use `aria-labelledby` instead of `aria-label`?
-4. What problem does `useId` solve in reusable React components?
+4. What problem does `useId` solve?
 5. Why should `useId` not generate list keys?
-6. What is the difference between a React `key` and a DOM `id`?
-7. Why does `aria-disabled` not behave like native `disabled`?
-8. How can Testing Library semantic queries expose accessibility regressions?
+6. What is the difference between `disabled` and `aria-disabled`?
 
 ## References
 
 - https://react.dev/reference/react/useId
-- https://react.dev/reference/react-dom/components/common
+- https://www.w3.org/TR/WCAG22/
 - https://www.w3.org/WAI/ARIA/apg/
-- https://www.w3.org/WAI/ARIA/apg/practices/names-and-descriptions/
