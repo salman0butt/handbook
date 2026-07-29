@@ -4,9 +4,19 @@ description: Deep mental model for React Suspense boundaries, fallbacks, reveal 
 sidebar_position: 1
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Suspense boundaries and reveal behavior
 
-`<Suspense>` lets React temporarily show a fallback while some part of a render is not ready yet.
+`<Suspense>` lets React temporarily show a fallback while part of a render is not ready.
 
 The important mental model is not “Suspense is a spinner component.” It is:
 
@@ -24,19 +34,29 @@ export default function Page() {
 }
 ```
 
-The fallback is only one part of the behavior. The real design question is: **which pieces of UI should reveal together, and which may reveal independently?**
+<VisualDiagram title="Suspense coordinates readiness and reveal" subtitle="The fallback is temporary UI; the boundary is the architectural unit.">
+  <DiagramStack align="center">
+    <DiagramNode title="Render subtree" tone="blue" />
+    <DiagramArrow label="resource/code not ready" />
+    <DiagramNode title="Suspend" tone="orange">React finds the closest Suspense boundary.</DiagramNode>
+    <DiagramArrow label="temporarily reveal" />
+    <DiagramNode title="Fallback" tone="gray" />
+    <DiagramArrow label="work becomes ready" />
+    <DiagramNode title="Retry render → reveal content" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## What can suspend?
 
-In modern React, stable Suspense can be activated by work such as:
+Stable Suspense can participate in work such as:
 
 - a component loaded with `lazy`;
 - a Promise read with `use`;
 - Suspense-enabled framework data sources;
-- stylesheet loading when React is coordinating stylesheet precedence;
+- stylesheet loading React coordinates;
 - streaming server-rendered content that has not reached the client yet.
 
-Suspense does **not** automatically detect ordinary fetching started inside an Effect or an event handler.
+Suspense does **not** automatically detect ordinary fetching started in an Effect or event handler.
 
 ```jsx
 useEffect(() => {
@@ -44,11 +64,9 @@ useEffect(() => {
 }, []);
 ```
 
-That fetch does not suspend just because it is asynchronous.
+That is ordinary explicit loading-state code, not Suspense-driven rendering.
 
 ## The closest boundary handles suspension
-
-When a child suspends during rendering, React looks upward for the closest Suspense boundary.
 
 ```jsx
 <Suspense fallback={<PageSkeleton />}>
@@ -60,164 +78,164 @@ When a child suspends during rendering, React looks upward for the closest Suspe
 </Suspense>
 ```
 
-If `SearchResults` suspends, the inner boundary can show `ResultsSkeleton` while the surrounding page remains visible.
+<VisualDiagram title="Suspension walks upward to the closest boundary">
+  <DiagramStack align="center">
+    <DiagramNode title="SearchResults suspends" tone="orange" />
+    <DiagramArrow label="nearest boundary" />
+    <DiagramNode title="Results Suspense" tone="purple">Shows <code>ResultsSkeleton</code>.</DiagramNode>
+    <DiagramArrow label="surrounding content stays revealed" />
+    <DiagramNode title="Header + page shell remain visible" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 If the inner fallback itself suspends, React continues upward to the next Suspense boundary.
 
-## Suspense coordinates reveal order
+## Reveal order is UX architecture
 
-Imagine a profile page with biography, albums, recommendations, and comments.
+A single large boundary coordinates one reveal. Nested boundaries allow staged reveal.
 
-A single boundary means:
+<VisualDiagram title="One boundary vs staged reveal">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Single boundary" tone="orange" eyebrow="COORDINATED">
+      Wait for the whole region, then reveal it together.
+    </DiagramNode>
+    <DiagramNode title="Nested boundaries" tone="green" eyebrow="PROGRESSIVE">
+      Shell → biography → albums → recommendations can reveal in meaningful stages.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-```text
-wait until everything inside is ready
-then reveal all of it together
-```
+Do not wrap every component in Suspense. A boundary should correspond to a loading state the user understands.
 
-Nested boundaries let you define staged reveal:
+## First-mount suspension and state
 
-```text
-page shell
-  ↓
-biography
-  ↓
-albums
-  ↓
-recommendations
-```
+If a tree suspends before its first successful mount, React retries later; state from the incomplete render attempt is not preserved as mounted state.
 
-This is a UX decision, not merely a code organization decision.
+<VisualDiagram title="A first render can be attempted more than once">
+  <DiagramStack align="center">
+    <DiagramNode title="First render attempt" tone="blue" />
+    <DiagramArrow label="suspends before commit" />
+    <DiagramNode title="No mounted state yet" tone="orange" />
+    <DiagramArrow label="resource resolves" />
+    <DiagramNode title="React retries" tone="purple" />
+    <DiagramArrow label="successful commit" />
+    <DiagramNode title="Mounted UI + state" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-## Do not wrap every component in Suspense
-
-A boundary should normally correspond to a meaningful loading experience.
-
-Bad mental model:
-
-```text
-component → boundary
-component → boundary
-component → boundary
-```
-
-Better mental model:
-
-```text
-loading state the user understands → boundary
-```
-
-If five components form one coherent card, revealing them together may feel better than letting each component flash independently.
-
-## First mount suspension and state
-
-If a tree suspends before it mounts for the first time, React does not preserve state from that incomplete render attempt.
-
-React retries the render when the suspended work becomes ready.
-
-This matters when debugging code that appears to “run again” before the user ever saw the component.
+This is one reason rendering must remain pure.
 
 ## Already visible content may suspend again
 
-Suppose a search results page is already visible and a new query causes the result subtree to suspend.
+If an already revealed region suspends during an urgent update, React may need to replace it with the boundary fallback.
 
-Without special handling, React may replace the visible content with the boundary fallback.
+<VisualDiagram title="Why transitions and deferred values matter">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Urgent suspending update" tone="red">
+      Visible results → fallback/skeleton → fresh results.
+    </DiagramNode>
+    <DiagramNode title="Non-urgent coordinated update" tone="green">
+      Visible results stay useful → pending/stale feedback → fresh results.
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-That can feel jarring:
-
-```text
-results visible
-→ user types
-→ whole area becomes skeleton
-→ new results appear
-```
-
-For non-urgent updates, React provides `useDeferredValue` and Transitions so you can often keep already revealed content visible while new work happens.
+`useTransition` and `useDeferredValue` help express when old content is still useful while the next render prepares.
 
 ## Layout Effects and hidden Suspense content
 
-If React must hide already visible content because it suspended again, React cleans up layout Effects in that hidden subtree.
-
-When the content becomes visible again, those layout Effects run again.
-
-This prevents layout-measuring code from assuming hidden DOM is still safe to measure.
+If React hides already visible content because it suspended again, layout Effects in that hidden subtree are cleaned up. When the content becomes visible again, layout Effects run again.
 
 ```jsx
 useLayoutEffect(() => {
   const rect = ref.current.getBoundingClientRect();
-  // measurement belongs to currently visible committed layout
+  // measure currently visible committed layout
 }, []);
 ```
 
-## Suspense and ordinary Effects are different systems
+<LifecycleBar
+  title="Layout-effect lifecycle when revealed content is hidden"
+  items={[
+    { label: 'Visible commit', tone: 'green' },
+    { label: 'Suspend again', tone: 'orange' },
+    { label: 'Layout cleanup', tone: 'red' },
+    { label: 'Reveal again', tone: 'purple' },
+    { label: 'Layout setup again', tone: 'green' },
+  ]}
+/>
 
-Do not treat Suspense as an Effect replacement.
+## Suspense and Effects solve different problems
 
-Suspense participates in **render/reveal coordination**.
+<VisualDiagram title="Reveal coordination is not synchronization">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Suspense" tone="purple" eyebrow="RENDER / REVEAL">
+      When is this subtree ready to be shown?
+    </DiagramNode>
+    <DiagramNode title="Effect" tone="orange" eyebrow="AFTER COMMIT">
+      Which external system must be synchronized with committed UI/state?
+    </DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-Effects run after a committed render to synchronize with external systems.
+## Suspense and Error Boundaries
 
-```text
-Suspense → when can this subtree be revealed?
-Effect   → after commit, what external system must be synchronized?
-```
+Suspense handles **not ready yet**. Error Boundaries handle **failed rendering/resource work**.
 
-## Error boundaries and Suspense boundaries solve different failures
+<VisualDiagram title="A production async region often needs both">
+  <DiagramStack align="center">
+    <DiagramNode title="Error Boundary" tone="red">Owns failure recovery.</DiagramNode>
+    <DiagramArrow label="contains" />
+    <DiagramNode title="Suspense Boundary" tone="orange">Owns pending/reveal UX.</DiagramNode>
+    <DiagramArrow label="contains" />
+    <DiagramNode title="Async / lazy region" tone="blue" />
+  </DiagramStack>
+</VisualDiagram>
 
-Suspense handles “not ready yet.”
+A rejected lazy import or failed resource should surface to an appropriate error boundary rather than being treated as loading forever.
 
-Error Boundaries handle render failures.
+## Suspense does not define caching
 
-A Promise that is still pending causes suspension. A rejected lazy import or failed resource can surface as an error and should be handled by an Error Boundary.
+Suspense coordinates rendering when work is not ready. It does not decide:
 
-A production route often needs both concepts:
+- cache lifetime;
+- request deduplication;
+- staleness;
+- retries;
+- mutation invalidation.
 
-```text
-Route Error Boundary
-└── Suspense boundary
-    └── route content
-```
-
-## Suspense does not define your caching strategy
-
-Suspense tells React how to coordinate rendering when work is not ready.
-
-It does not answer:
-
-- how long data should stay cached;
-- how requests are deduplicated;
-- when data becomes stale;
-- how retries work;
-- how mutations invalidate cached data.
-
-Those are framework or data-layer responsibilities.
+Those belong to the framework or data layer.
 
 ## Suspense and server rendering
 
-Suspense is integrated with React's server rendering architecture.
+Suspense is also part of streaming SSR and hydration architecture.
 
-A server can stream parts of the document progressively, and the client can hydrate available sections selectively instead of requiring the whole application to become ready as one block.
+<VisualDiagram title="Suspense spans client and server reveal architecture">
+  <DiagramStack align="center">
+    <DiagramNode title="Server renders what is ready" tone="blue" />
+    <DiagramArrow label="stream boundaries progressively" />
+    <DiagramNode title="Browser receives shell + later content" tone="teal" />
+    <DiagramArrow label="hydrate available regions" />
+    <DiagramNode title="Interactive UI reveals progressively" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
-The detailed server APIs belong in the SSR phase of this handbook, but keep this mental model now:
+The SSR section covers the server APIs in detail.
 
-```text
-Suspense is not only a client spinner mechanism.
-It is also a coordination primitive used by streaming and hydration.
-```
+## Boundary placement decision
 
-## Boundary placement checklist
+<DecisionTree
+  title="Should this region have its own Suspense boundary?"
+  items={[
+    { question: 'Is this a meaningful user-visible region that may be unavailable independently?', yes: 'Continue', no: 'Prefer the surrounding boundary' },
+    { question: 'Should it reveal independently from its siblings?', yes: 'Own boundary is a strong candidate', no: 'Coordinate them in one boundary' },
+    { question: 'Is already visible content still useful during refresh/navigation?', yes: 'Consider Transition/deferred stale UI', no: 'Fallback replacement may be appropriate' },
+    { question: 'Can the region fail independently?', yes: 'Pair with an Error Boundary', no: 'Use the nearest suitable recovery boundary' },
+  ]}
+/>
 
-Before adding a boundary, ask:
+## Common mistakes
 
-1. What user-visible region is allowed to wait?
-2. Should this region reveal together or independently?
-3. Is there already useful content that should remain visible?
-4. Is the fallback stable enough to avoid layout shift?
-5. Does navigation need to reset this boundary?
-6. Does an Error Boundary exist for failure rather than loading?
-7. Is the suspending data/code source actually Suspense-enabled?
-
-## Common mistake: giant root spinner
+### Giant root spinner
 
 ```jsx
 <Suspense fallback={<FullScreenSpinner />}>
@@ -225,11 +243,9 @@ Before adding a boundary, ask:
 </Suspense>
 ```
 
-A root boundary can be useful as a last resort, but relying only on it often causes unrelated parts of the application to disappear together.
+A root boundary can be a last resort, but relying only on it makes unrelated regions disappear together.
 
-Prefer meaningful nested boundaries around route content, panels, or expensive regions.
-
-## Common mistake: expecting Effect fetching to suspend
+### Expecting Effect fetching to suspend
 
 ```jsx
 function Products() {
@@ -240,58 +256,35 @@ function Products() {
   }, []);
 
   if (!products) return <Spinner />;
-
   return <ProductList products={products} />;
 }
 ```
 
-This is explicit loading-state code, not Suspense.
+This is explicit loading-state code. That is valid—just know which model you are using.
 
-That is not inherently wrong. The key is to know which model you are using.
+### Destructive fallback replacement
 
-## Common mistake: fallback that is too destructive
-
-If a transition replaces a whole page with a spinner, users lose context.
-
-Prefer skeletons that preserve layout or use transitions/deferred values to retain already revealed content where appropriate.
+If a small nested region suspends, avoid replacing a useful whole page with a spinner. Prefer stable shells, localized skeletons, or stale-but-useful content when correct.
 
 ## Debugging Suspense
 
 When a fallback appears unexpectedly, inspect:
 
-- which child actually suspended;
-- which boundary is closest;
-- whether the update was urgent or a Transition;
-- whether the suspending Promise is stable/cached;
-- whether a key reset the subtree;
-- whether a lazy component was declared inside another component;
-- whether your fallback itself can suspend.
+1. Which child suspended?
+2. Which boundary is closest?
+3. Was the update urgent or a Transition?
+4. Is the Promise/resource identity stable?
+5. Did a key reset the subtree?
+6. Was a lazy component declared inside another component?
+7. Can the fallback itself suspend?
 
 ## Production design principle
 
-Loading architecture should be designed with the same care as success-state UI.
-
-Good Suspense architecture often produces:
-
-- stable page shells;
-- localized skeletons;
-- progressive reveal;
-- visible navigation feedback;
-- stale-but-useful content instead of unnecessary replacement;
-- clear recovery paths for failures.
+Good Suspense architecture tends to produce stable shells, localized skeletons, progressive reveal, visible navigation feedback, stale-but-useful content when appropriate, and separate error recovery.
 
 ## Exercise
 
-Build a dashboard containing:
-
-- a profile summary;
-- a notifications panel;
-- a sales chart;
-- recent activity.
-
-Create a single-boundary version first. Then redesign it with nested boundaries so the page shell and profile appear before slower analytical panels.
-
-Explain why each boundary exists from the user's perspective.
+Build a dashboard with profile, notifications, sales chart, and recent activity. Start with one Suspense boundary, then redesign it with nested boundaries and explain each boundary from the user's perspective.
 
 ## Interview questions
 
@@ -299,19 +292,19 @@ Explain why each boundary exists from the user's perspective.
 
 **Intermediate:** What kinds of work activate Suspense, and why does fetching inside `useEffect` not automatically do so?
 
-**Senior:** How would you decide Suspense boundary placement for a route that combines navigation, cached content, streaming server data, and several independently slow panels?
+**Senior:** How would you place Suspense boundaries for a route with navigation, cached content, streaming server data, and independently slow panels?
 
 ## Summary
 
-```text
-Suspense is a reveal boundary.
-The closest boundary handles suspension.
-Nested boundaries define loading/reveal sequences.
-Do not expect ordinary Effect fetching to suspend.
-Transitions and deferred values can preserve already revealed content.
-Suspense loading and Error Boundary failure handling are different concerns.
-Boundary placement is UX architecture.
-```
+<VisualDiagram title="Suspense mental model">
+  <DiagramStack align="center">
+    <DiagramNode title="Boundary = reveal contract" tone="purple" />
+    <DiagramArrow label="closest boundary owns pending UI" />
+    <DiagramNode title="Nested boundaries = staged reveal" tone="blue" />
+    <DiagramArrow label="Transitions/deferred values can preserve useful content" />
+    <DiagramNode title="Error handling and caching remain separate responsibilities" tone="green" />
+  </DiagramStack>
+</VisualDiagram>
 
 ## References
 
