@@ -4,15 +4,33 @@ description: Test asynchronous React behavior, Suspense, transitions, Actions, p
 sidebar_position: 2
 ---
 
-# Async React Testing — act, Suspense, Actions, and Transitions
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
 
-Modern React can schedule work across async boundaries, Suspense boundaries, Transitions, form Actions, optimistic updates, and Effects. Tests need to wait for **observable states**, not guessed amounts of time.
+# Async React Testing — `act`, Suspense, Actions, and Transitions
 
-> **Mental model:** perform one unit of user-visible work, let React flush the related updates, then assert the resulting DOM state.
+Modern React can schedule work across Promises, Suspense, Transitions, form Actions, optimistic updates, and Effects. Tests should wait for **observable states**, not guessed amounts of time.
 
-## 1. What `act` does
+<VisualDiagram title="Async test loop">
+  <LifecycleBar items={[
+    { label: 'Trigger one unit of user work', tone: 'blue' },
+    { label: 'React schedules / flushes related updates', tone: 'purple' },
+    { label: 'Await the observable condition', tone: 'orange' },
+    { label: 'Assert committed UI', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-React's `act` helper ensures React updates associated with a unit of test work are processed before you assert on the result.
+## What `act` does
+
+`act` lets React process updates associated with a unit of test work before assertions run.
 
 ```tsx
 await act(async () => {
@@ -20,7 +38,7 @@ await act(async () => {
 });
 ```
 
-React's current guidance recommends the async form:
+Current React guidance prefers the async form:
 
 ```tsx
 await act(async () => {
@@ -28,41 +46,27 @@ await act(async () => {
 });
 ```
 
-The synchronous form is less reliable across scheduling behavior and is planned for removal in the future.
+Application tests using Testing Library usually do not need to wrap every operation manually because its helpers integrate with `act`.
 
-## 2. Prefer Testing Library helpers over manual `act`
+<DecisionTree
+  question="Should this test call act directly?"
+  items={[
+    { label: 'Using Testing Library render/user-event normally', value: 'Usually no; await the library helper and observable state' },
+    { label: 'Using createRoot or low-level React test infrastructure', value: 'Yes, direct act may be appropriate' },
+    { label: 'Manually advancing an external update source/timer', value: 'Possibly; integrate advancement with the test framework and React flush' },
+  ]}
+/>
 
-React Testing Library's rendering and interaction helpers are designed to integrate with `act`, so most application tests should not need to wrap every operation manually.
-
-Typical test:
-
-```tsx
-const user = userEvent.setup();
-render(<Counter />);
-
-await user.click(screen.getByRole('button', { name: 'Increment' }));
-expect(screen.getByText('Count: 1')).toBeVisible();
-```
-
-Reach for direct `act` when:
-
-- testing low-level React integration;
-- using `createRoot` directly;
-- manually advancing a source of updates outside Testing Library helpers;
-- writing library infrastructure where you are responsible for React update flushing.
-
-## 3. Never solve async React tests with arbitrary sleep
+## Do not solve async tests with arbitrary sleeps
 
 Avoid:
 
 ```tsx
-await new Promise((resolve) => setTimeout(resolve, 500));
+await new Promise(resolve => setTimeout(resolve, 500));
 expect(screen.getByText('Saved')).toBeVisible();
 ```
 
-This is slow and race-prone.
-
-Prefer waiting for the state you actually expect:
+Prefer the state you actually expect:
 
 ```tsx
 expect(await screen.findByText('Saved')).toBeVisible();
@@ -76,59 +80,54 @@ await waitFor(() => {
 });
 ```
 
-## 4. `findBy` for content that should appear
+<VisualDiagram title="Timing guess vs deterministic wait">
+  <DiagramGrid columns={2}>
+    <DiagramNode title="Arbitrary delay" tone="red">Hope enough time elapsed → slow + flaky</DiagramNode>
+    <DiagramNode title="Observable wait" tone="green">Wait until promised UI/condition exists</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
+
+## `findBy`, `waitFor`, and disappearance
+
+<DiagramGrid columns={3}>
+  <DiagramNode title="findBy" tone="teal">An element should appear asynchronously.</DiagramNode>
+  <DiagramNode title="waitFor" tone="purple">A condition/side effect should eventually become true.</DiagramNode>
+  <DiagramNode title="waitForElementToBeRemoved" tone="orange">Known content should disappear.</DiagramNode>
+</DiagramGrid>
 
 ```tsx
-render(<UserProfile userId="42" />);
-
 expect(await screen.findByRole('heading', { name: 'Aisha' })).toBeVisible();
-```
 
-`findBy` is ideal when an element should appear after asynchronous work.
-
-## 5. `waitFor` for a condition or side effect
-
-```tsx
 await waitFor(() => {
   expect(onSuccess).toHaveBeenCalledWith(expectedUser);
 });
-```
 
-The callback must throw while the condition is not satisfied. A falsy return value alone does not trigger another retry.
-
-Do not put large amounts of interaction inside `waitFor`; keep it focused on the condition being awaited.
-
-## 6. Waiting for disappearance
-
-```tsx
 const spinner = screen.getByRole('status', { name: 'Loading profile' });
-
 await waitForElementToBeRemoved(spinner);
 ```
 
-Then assert the final UI:
+## Protect meaningful async state sequences
 
-```tsx
-expect(screen.getByRole('heading', { name: 'Profile' })).toBeVisible();
-```
-
-## 7. Test the full async state sequence when it matters
-
-For a save flow:
+For a save flow, both pending and completion can be part of the contract:
 
 ```tsx
 await user.click(screen.getByRole('button', { name: 'Save' }));
 
 expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
-
 expect(await screen.findByText('Saved successfully')).toBeVisible();
 ```
 
-This protects both pending and completion behavior.
+<VisualDiagram title="Mutation UI contract">
+  <DiagramRow>
+    <DiagramNode title="Intent" tone="blue">Save</DiagramNode>
+    <DiagramArrow direction="right" label="starts" />
+    <DiagramNode title="Pending" tone="orange">Disabled / progress UI</DiagramNode>
+    <DiagramArrow direction="right" label="settles" />
+    <DiagramNode title="Outcome" tone="green">Success or useful error</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## 8. Suspense: assert fallback and revealed content
-
-Given a Suspense-enabled resource:
+## Suspense: assert the boundary contract
 
 ```tsx
 render(
@@ -138,129 +137,97 @@ render(
 );
 
 expect(screen.getByRole('status', { name: 'Loading user…' })).toBeVisible();
-```
 
-Resolve the resource through your test boundary, then assert the reveal:
-
-```tsx
 resolveUser({ id: '42', name: 'Aisha' });
 
 expect(await screen.findByRole('heading', { name: 'Aisha' })).toBeVisible();
 ```
 
-The exact resource setup depends on your framework/data layer. Do not recreate React's internal Suspense protocol in application tests.
+<VisualDiagram title="Test Suspense from the user's perspective">
+  <DiagramStack>
+    <DiagramNode title="Child cannot finish" tone="orange">Compatible resource is pending</DiagramNode>
+    <DiagramArrow label="nearest boundary" />
+    <DiagramNode title="Fallback is visible" tone="blue">Assert meaningful loading UI</DiagramNode>
+    <DiagramArrow label="resource resolves" />
+    <DiagramNode title="Boundary retries and reveals" tone="green">Assert final content</DiagramNode>
+  </DiagramStack>
+</VisualDiagram>
 
-## 9. Test the closest boundary behavior, not internal suspension
+Do not make “a Promise was thrown” the main application-test contract.
 
-A useful Suspense test asks:
-
-- which fallback appears;
-- whether already-visible content stays visible;
-- what reveals after data becomes ready;
-- whether errors go to the intended Error Boundary.
-
-It should not assert that "a Promise was thrown" as the primary UI contract.
-
-## 10. Transitions: urgent input should remain responsive
-
-Suppose a search input updates urgently while results are deferred through a Transition.
-
-Test the behavior:
+## Transitions: protect responsiveness and eventual UI
 
 ```tsx
 await user.type(screen.getByRole('searchbox'), 'react');
-
 expect(screen.getByRole('searchbox')).toHaveValue('react');
-```
-
-Then assert eventual results:
-
-```tsx
 expect(await screen.findByRole('heading', { name: 'Results for react' })).toBeVisible();
 ```
 
-Do not test scheduler implementation details or exact render counts.
+<VisualDiagram title="Urgent and transition work have different observable promises">
+  <DiagramRow>
+    <DiagramNode title="Urgent" tone="blue">Input reflects typing immediately</DiagramNode>
+    <DiagramArrow direction="right" label="while" />
+    <DiagramNode title="Transition" tone="purple">Expensive result work may lag / restart</DiagramNode>
+    <DiagramArrow direction="right" label="eventually" />
+    <DiagramNode title="Committed result" tone="green">Assert final content</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## 11. Pending navigation
+Avoid scheduler implementation assertions and exact render counts.
 
-For a Transition-driven navigation UI:
+## Pending navigation
 
 ```tsx
 await user.click(screen.getByRole('link', { name: 'Billing' }));
-
 expect(screen.getByText('Loading Billing…')).toBeVisible();
 expect(await screen.findByRole('heading', { name: 'Billing' })).toBeVisible();
 ```
 
-If the product intentionally preserves the previous screen instead of showing a global fallback, assert that contract.
+If the product preserves the previous page instead of showing a global fallback, assert that product contract instead.
 
-## 12. `useDeferredValue`: test stale content behavior
-
-Suppose the design keeps previous results visible while new results render.
+## `useDeferredValue`: test stale UI, not Hook internals
 
 ```tsx
 expect(screen.getByText('Result for rea')).toBeVisible();
-
 await user.type(screen.getByRole('searchbox'), 'ct');
 
 expect(screen.getByRole('searchbox')).toHaveValue('react');
 expect(screen.getByText('Result for rea')).toBeVisible();
-
 expect(await screen.findByText('Result for react')).toBeVisible();
 ```
 
-This tests the UX contract instead of the deferred value variable itself.
+<VisualDiagram title="Deferred UI contract">
+  <DiagramRow>
+    <DiagramNode title="Canonical input" tone="blue">react</DiagramNode>
+    <DiagramNode title="Stale results" tone="orange">Previous committed result can remain visible</DiagramNode>
+    <DiagramNode title="Deferred catch-up" tone="green">New result eventually commits</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-## 13. Form Actions
+## Form Actions, `useActionState`, and `useFormStatus`
 
-For a function-valued form Action:
+Test through the rendered form workflow:
 
 ```tsx
-const user = userEvent.setup();
-render(<ProfileForm />);
-
 await user.type(screen.getByLabelText('Display name'), 'Aisha');
 await user.click(screen.getByRole('button', { name: 'Save profile' }));
-```
 
-Assert meaningful states:
-
-```tsx
 expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
 expect(await screen.findByText('Profile saved')).toBeVisible();
 ```
 
-## 14. `useActionState`
-
-Test the state returned by the Action through the rendered UI.
-
-Error example:
+Error state:
 
 ```tsx
 await user.click(screen.getByRole('button', { name: 'Create account' }));
-
 expect(await screen.findByRole('alert')).toHaveTextContent(
   'Email is already registered',
 );
 ```
 
-Do not reach into the Hook tuple and assert its internal state directly in a component test.
+Do not reach into Hook tuples just to assert private pending/result values.
 
-## 15. `useFormStatus`
-
-Test the descendant form UI that consumes the status:
-
-```tsx
-await user.click(screen.getByRole('button', { name: 'Submit order' }));
-
-expect(screen.getByRole('button', { name: 'Submitting…' })).toBeDisabled();
-```
-
-This proves the status context is wired correctly inside the intended form.
-
-## 16. Optimistic UI
-
-A useful optimistic test proves both the immediate projection and eventual result.
+## Optimistic UI must test convergence and rollback
 
 ```tsx
 await user.type(screen.getByLabelText('Message'), 'Hello');
@@ -269,33 +236,20 @@ await user.click(screen.getByRole('button', { name: 'Send' }));
 expect(screen.getByText('Hello')).toHaveTextContent('Sending');
 ```
 
-Then complete the request:
+Then resolve the canonical result and assert convergence.
 
-```tsx
-resolveSend({ id: 'server-42', text: 'Hello' });
+<VisualDiagram title="Complete optimistic test">
+  <LifecycleBar items={[
+    { label: 'User mutation intent', tone: 'blue' },
+    { label: 'Optimistic projection appears', tone: 'orange' },
+    { label: 'Server/request settles', tone: 'purple' },
+    { label: 'Converge to canonical result OR rollback', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-await waitFor(() => {
-  expect(screen.getByText('Hello')).not.toHaveTextContent('Sending');
-});
-```
+A happy-path-only optimistic test is incomplete if failure recovery is part of the product contract.
 
-## 17. Optimistic rollback
-
-When a mutation fails:
-
-```tsx
-rejectSend(new Error('Network unavailable'));
-
-expect(await screen.findByRole('alert')).toHaveTextContent('Network unavailable');
-```
-
-If the product contract removes or reverts the optimistic item, assert that too.
-
-Optimistic tests are incomplete if they only test the happy path.
-
-## 18. Error Boundaries
-
-For a component that fails during rendering, test the boundary fallback:
+## Error Boundaries
 
 ```tsx
 render(
@@ -307,43 +261,28 @@ render(
 expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong');
 ```
 
-In real test suites, suppress expected console noise carefully if the test environment reports the deliberately triggered error. Do not globally hide unexpected errors.
+Suppress expected console noise narrowly if the environment reports the deliberately triggered error. Never globally hide unexpected errors.
 
-## 19. Effects and async cleanup
-
-For subscription behavior, assert the external contract.
+## Effects and cleanup
 
 ```tsx
 const unsubscribe = vi.fn();
 subscribe.mockReturnValue(unsubscribe);
 
 const { unmount } = render(<OnlineIndicator />);
-
 expect(subscribe).toHaveBeenCalled();
 
 unmount();
-
 expect(unsubscribe).toHaveBeenCalled();
 ```
 
-When the number of setup calls varies under Strict Mode, focus on the invariant: every committed subscription has a matching cleanup.
+Under Strict Mode, focus on the invariant: every committed subscription has matching cleanup.
 
-## 20. Timers
+## Timers and controlled Promises
 
-Fake timers can be useful for:
+Fake timers can be useful for debounce, polling, delayed tooltips, and timeout-driven retries. Timer advancement that causes React updates must cooperate with the test framework's async/`act` behavior.
 
-- debounce behavior;
-- polling intervals;
-- delayed tooltips;
-- timeout-based retry logic.
-
-But timer advancement that causes React updates may need to be integrated with the test framework's async/`act` behavior.
-
-Avoid fake timers when real asynchronous state can be tested deterministically through a controlled Promise or network mock instead.
-
-## 21. Promise control beats timing guesses
-
-A deferred helper makes async state deterministic:
+When possible, a controlled Promise is stronger than guessing timing:
 
 ```tsx
 function deferred<T>() {
@@ -359,63 +298,39 @@ function deferred<T>() {
 }
 ```
 
-Then tests decide exactly when async work completes.
+## Do not over-assert intermediate renders
 
-## 22. Do not over-assert intermediate states
+Concurrent rendering may restart or abandon work before it commits.
 
-Concurrency means React may skip intermediate renders that are not part of the user-visible contract.
+<VisualDiagram title="Render attempts are not user-visible history">
+  <DiagramRow>
+    <DiagramNode title="Attempt A" tone="gray">May be discarded</DiagramNode>
+    <DiagramNode title="Attempt B" tone="gray">May be interrupted</DiagramNode>
+    <DiagramArrow direction="right" label="chosen result" />
+    <DiagramNode title="Commit" tone="green">Assert states the product promises</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Avoid assumptions like:
+## Flaky async test checklist
 
-```text
-render A
-render B
-render C
-commit C
-```
-
-The scheduler may interrupt or abandon work.
-
-Assert committed states the product promises users.
-
-## 23. Flaky async test checklist
-
-When a test flakes:
-
-1. remove arbitrary sleeps;
-2. find the observable state that should be awaited;
-3. use `findBy`, `waitFor`, or removal helpers appropriately;
-4. ensure user interactions are awaited;
-5. control the network/Promise boundary deterministically;
-6. avoid asserting exact render counts;
-7. verify timers are advanced through the test framework correctly;
-8. ensure expected errors are not being swallowed;
-9. check for state leakage between tests;
-10. keep each test focused on one behavior sequence.
-
-## Exercise
-
-Test a search screen that uses:
-
-- an urgent controlled input;
-- `useDeferredValue` for results;
-- Suspense fallback for first load;
-- stale previous results during subsequent searches;
-- a retryable error boundary;
-- an optimistic "save search" Action.
-
-The tests must not use arbitrary timeouts or inspect Hook internals.
+1. Remove arbitrary sleeps.
+2. Identify the observable state that should be awaited.
+3. Await user interactions.
+4. Control network/Promise boundaries deterministically.
+5. Avoid exact render-count assertions.
+6. Integrate fake timers correctly with React updates.
+7. Prevent state leakage between tests.
+8. Keep each test focused on one behavior sequence.
 
 ## Interview questions
 
-1. What problem does `act` solve in React tests?
-2. Why does React recommend async `act`?
-3. When should application tests call `act` directly?
-4. What is the difference between `findBy` and `waitFor`?
-5. How should you test Suspense without coupling to its internal Promise mechanics?
-6. How do you test `useDeferredValue` from the user's perspective?
-7. What states should an optimistic mutation test cover?
-8. Why are exact render-count assertions fragile with concurrent rendering?
+1. What problem does `act` solve?
+2. Why should app tests usually prefer Testing Library helpers over direct `act`?
+3. What is the difference between `findBy` and `waitFor`?
+4. How should Suspense be tested without coupling to internal Promise mechanics?
+5. How do you test `useDeferredValue` from the user's perspective?
+6. Which states should an optimistic mutation test cover?
+7. Why are exact render-count assertions fragile in concurrent React?
 
 ## References
 

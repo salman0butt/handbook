@@ -4,46 +4,49 @@ description: Build accessible React interactions with predictable keyboard behav
 sidebar_position: 2
 ---
 
+import {
+  VisualDiagram,
+  DiagramStack,
+  DiagramRow,
+  DiagramGrid,
+  DiagramNode,
+  DiagramArrow,
+  DecisionTree,
+  LifecycleBar,
+} from '@site/src/components/handbook/VisualDiagram'
+
 # Keyboard, Focus, Forms, Dialogs, and Dynamic UI
 
-Accessibility becomes most challenging when React UI is highly interactive. Custom dialogs, tabs, menus, comboboxes, async validation, Suspense transitions, and client-side navigation all affect focus and user orientation.
+Accessibility becomes hardest when UI is interactive. Focus, keyboard behavior, announcements, loading, and client navigation are part of the user's application state even when they are not stored in React state.
 
-> **Mental model:** keyboard behavior and focus are part of application state from the user's perspective, even when React does not store them in component state.
+<VisualDiagram title="Interactive accessibility has several coordinated layers">
+  <DiagramGrid columns={3}>
+    <DiagramNode title="Semantics" tone="blue">role · name · state · relationships</DiagramNode>
+    <DiagramNode title="Keyboard + focus" tone="purple">Tab · arrows · Escape · programmatic focus</DiagramNode>
+    <DiagramNode title="Dynamic feedback" tone="teal">errors · pending · announcements · navigation orientation</DiagramNode>
+  </DiagramGrid>
+</VisualDiagram>
 
-## 1. Keyboard access should follow platform conventions
+## Follow platform conventions
 
-Native controls already implement expected keyboard behavior.
+Native buttons, links, inputs, checkboxes, radios, and form controls already implement mature keyboard/focus behavior.
 
-Examples:
+Custom ARIA widgets such as tabs, menus, listboxes, trees, and comboboxes require you to implement the expected interaction model yourself.
 
-- buttons activate with keyboard conventions;
-- links participate in tab order and navigate;
-- checkboxes expose checked state;
-- radio groups implement browser behavior;
-- form controls provide focus and editing semantics.
+## Roving `tabIndex`
 
-Custom ARIA widgets require you to implement the expected keyboard model yourself.
+Composite widgets usually should not make every item a page-level Tab stop.
 
-## 2. Do not make every item a Tab stop
+<VisualDiagram title="Roving tab index">
+  <DiagramRow>
+    <DiagramNode title="Active item" tone="green">tabIndex=0</DiagramNode>
+    <DiagramNode title="Other items" tone="gray">tabIndex=-1</DiagramNode>
+    <DiagramArrow direction="right" label="arrow key" />
+    <DiagramNode title="Next active item" tone="blue">old → -1 · new → 0 · focus moves</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Composite widgets such as tabs, toolbars, listboxes, menus, and trees commonly have one entry point in the page Tab sequence, then use arrow keys internally.
-
-A roving `tabIndex` pattern uses:
-
-```text
-active item      tabIndex={0}
-other items      tabIndex={-1}
-```
-
-When arrow navigation changes the active item:
-
-1. old active item gets `-1`;
-2. new item gets `0`;
-3. focus moves to the new item.
-
-This keeps page Tab navigation manageable.
-
-## 3. Roving tab index example
+Example:
 
 ```tsx
 function TabList({ tabs }: { tabs: Tab[] }) {
@@ -60,13 +63,11 @@ function TabList({ tabs }: { tabs: Tab[] }) {
       {tabs.map((tab, index) => (
         <button
           key={tab.id}
-          ref={(node) => {
-            refs.current[index] = node;
-          }}
+          ref={node => { refs.current[index] = node; }}
           role="tab"
           tabIndex={index === activeIndex ? 0 : -1}
           aria-selected={index === activeIndex}
-          onKeyDown={(event) => {
+          onKeyDown={event => {
             if (event.key === 'ArrowRight') {
               event.preventDefault();
               move((index + 1) % tabs.length);
@@ -85,13 +86,11 @@ function TabList({ tabs }: { tabs: Tab[] }) {
 }
 ```
 
-A production tabs component also needs correct panel relationships, activation behavior, orientation handling, disabled-state behavior if supported, and tests matching the intended accessibility pattern.
+Production tabs also need tabpanel relationships, activation rules, orientation, disabled-state behavior when supported, and tests matching the chosen APG pattern.
 
-## 4. `aria-activedescendant` is an alternative
+## `aria-activedescendant` is a different focus model
 
-Some composite widgets keep DOM focus on one container and identify the active child with `aria-activedescendant`.
-
-Conceptually:
+Some widgets keep DOM focus on one container and expose the active child through `aria-activedescendant`.
 
 ```tsx
 <div
@@ -103,19 +102,16 @@ Conceptually:
 </div>
 ```
 
-This is not universally interchangeable with roving focus. Use the accessibility pattern appropriate for the widget and understand its browser/assistive-technology behavior.
+<DiagramGrid columns={2}>
+  <DiagramNode title="Roving focus" tone="purple">DOM focus moves among child options</DiagramNode>
+  <DiagramNode title="aria-activedescendant" tone="teal">DOM focus stays on container; active child is referenced</DiagramNode>
+</DiagramGrid>
 
-## 5. Visible focus is essential
+These approaches are not interchangeable. Follow the accessibility pattern for the widget you are building.
 
-Do not remove outlines globally:
+## Focus must be visible
 
-```css
-*:focus {
-  outline: none;
-}
-```
-
-Instead, design a clear focus indicator.
+Do not globally remove outlines.
 
 ```css
 .button:focus-visible {
@@ -124,22 +120,24 @@ Instead, design a clear focus indicator.
 }
 ```
 
-Users navigating by keyboard need to know where interaction will occur.
+WCAG 2.2 continues to require visible keyboard focus at Level AA and includes additional criteria around focus not being obscured.
 
-## 6. Focus management should explain UI changes
+## Move focus only when the UI transition needs orientation
 
-Focus should usually remain stable unless the UI transition creates a reason to move it.
+Good reasons include opening a modal, orienting users after client-side navigation, focusing a validation summary, or entering a newly created editor.
 
-Good reasons include:
+Do not move focus merely because a component re-rendered.
 
-- opening a modal dialog;
-- navigating to a new client-side page where focus must be re-oriented;
-- revealing a validation summary after failed submission;
-- adding an editor and intentionally placing focus into it.
+<DecisionTree
+  question="Should this update move focus?"
+  items={[
+    { label: 'The user entered a new interaction context', value: 'Often yes; move focus deliberately' },
+    { label: 'The same context merely re-rendered or refreshed data', value: 'Usually preserve focus' },
+    { label: 'A critical error summary must orient the user', value: 'Move focus if that is the product accessibility contract' },
+  ]}
+/>
 
-Do not move focus simply because a component re-rendered.
-
-## 7. Refs are the React escape hatch for focus
+## Refs are the React escape hatch for focus
 
 ```tsx
 const headingRef = useRef<HTMLHeadingElement>(null);
@@ -149,7 +147,7 @@ function focusHeading() {
 }
 ```
 
-If a normally non-focusable element must receive programmatic focus:
+For a normally non-focusable heading:
 
 ```tsx
 <h1 ref={headingRef} tabIndex={-1}>
@@ -157,42 +155,35 @@ If a normally non-focusable element must receive programmatic focus:
 </h1>
 ```
 
-`tabIndex={-1}` allows programmatic focus without adding the heading to normal sequential Tab navigation.
+`tabIndex={-1}` allows programmatic focus without placing the heading in normal sequential Tab navigation.
 
-## 8. Dialog focus lifecycle
+## Dialog focus lifecycle
 
-A modal dialog typically needs a complete lifecycle:
+<VisualDiagram title="A modal is a complete focus lifecycle">
+  <LifecycleBar items={[
+    { label: 'Trigger activated', tone: 'blue' },
+    { label: 'Dialog opens', tone: 'purple' },
+    { label: 'Focus enters dialog', tone: 'green' },
+    { label: 'Modal interaction stays contained', tone: 'orange' },
+    { label: 'Escape/close finishes interaction', tone: 'purple' },
+    { label: 'Focus returns to meaningful target', tone: 'green' },
+  ]} />
+</VisualDiagram>
 
-```text
-trigger activated
-→ dialog opens
-→ focus moves into dialog
-→ focus remains within modal interaction context
-→ Escape/close action closes it when supported
-→ focus returns to meaningful trigger/next target
-```
+ARIA alone does not implement this behavior.
 
-Do not implement this with ARIA attributes alone.
+A mature modal primitive owns:
 
-A mature dialog primitive should manage:
-
-- role/semantics;
-- accessible name;
-- focus entry;
+- dialog semantics and accessible name;
+- initial focus placement;
 - focus containment while modal;
-- Escape behavior when appropriate;
+- Escape/close behavior when appropriate;
 - background interaction prevention;
 - focus restoration.
 
-## 9. Prefer established dialog primitives when appropriate
+Well-tested dialog primitives are often safer than repeatedly implementing focus trapping yourself.
 
-Dialog behavior has many edge cases.
-
-A well-tested accessible primitive/library can be safer than rebuilding focus trapping and modal semantics in every product.
-
-Still understand the behavior so you can test and integrate it correctly.
-
-## 10. Dialog naming
+## Dialog naming
 
 ```tsx
 const titleId = useId();
@@ -205,28 +196,23 @@ return (
 );
 ```
 
-If the platform/library uses the native `<dialog>` element, follow its semantics and browser behavior rather than layering unnecessary roles mechanically.
+If using the native `<dialog>` element or an accessibility library, follow its supported semantics rather than layering redundant roles automatically.
 
-## 11. Focus restoration
+## Focus restoration depends on commit timing
 
-Store the trigger via a ref or let the dialog primitive handle restoration.
+The element you focus must exist in the committed DOM.
 
-```tsx
-const triggerRef = useRef<HTMLButtonElement>(null);
+<VisualDiagram title="Focus is imperative work tied to the committed tree">
+  <DiagramRow>
+    <DiagramNode title="React state changes" tone="blue">close dialog</DiagramNode>
+    <DiagramArrow direction="right" label="commit" />
+    <DiagramNode title="DOM reflects new UI" tone="purple">trigger/next target exists</DiagramNode>
+    <DiagramArrow direction="right" label="imperative focus" />
+    <DiagramNode title="User orientation restored" tone="green">focus meaningful target</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-function closeDialog() {
-  setOpen(false);
-  // restoration timing belongs after the close commit in a robust implementation
-}
-```
-
-Timing matters because the element you focus must exist in the committed DOM.
-
-This is a good example of why focus management is an imperative concern tied to commit timing.
-
-## 12. Forms: group related controls
-
-For related radio controls:
+## Forms: group controls by meaning
 
 ```tsx
 <fieldset>
@@ -242,17 +228,9 @@ For related radio controls:
 </fieldset>
 ```
 
-`fieldset` + `legend` provide group context that individual labels alone do not.
+`fieldset` + `legend` provide group context beyond individual labels.
 
-## 13. Validation should not rely on color alone
-
-Weak:
-
-```tsx
-<input className={error ? 'red-border' : ''} />
-```
-
-Better:
+## Validation must communicate more than color
 
 ```tsx
 <input
@@ -262,11 +240,11 @@ Better:
 {error && <p id={errorId}>{error}</p>}
 ```
 
-Also provide visual feedback, but ensure the error remains understandable without color perception.
+Visual styling can reinforce the error, but color alone should not carry its meaning.
 
-## 14. Error summaries
+## Error summaries
 
-For long forms, an error summary can help users recover quickly.
+For long forms, an error summary can orient users and provide direct links to invalid fields.
 
 ```tsx
 <div role="alert" aria-labelledby={summaryId}>
@@ -277,45 +255,24 @@ For long forms, an error summary can help users recover quickly.
 </div>
 ```
 
-When submission fails, the design may intentionally focus the summary so keyboard/screen-reader users are informed of the failure and can navigate to fields.
+If the product focuses the summary after submission failure, test that focus behavior explicitly.
 
-Test the actual focus behavior.
+## Dynamic updates: announcement and focus are different tools
 
-## 15. Async validation
-
-Do not announce every keystroke as an error.
-
-For async validation, consider:
-
-- when validation starts;
-- whether pending state needs communication;
-- when errors become relevant;
-- whether a live region is appropriate;
-- whether focus should remain in the field.
-
-The correct behavior depends on the task. Avoid noisy announcements.
-
-## 16. Live regions
-
-Dynamic content may need announcement without moving focus.
+<DiagramGrid columns={2}>
+  <DiagramNode title="Move focus" tone="purple">Use when the user must enter/orient to a new interaction context</DiagramNode>
+  <DiagramNode title="Live region" tone="teal">Use when status should be announced without stealing focus</DiagramNode>
+</DiagramGrid>
 
 ```tsx
 <p aria-live="polite">{statusMessage}</p>
 ```
 
-Examples where a polite live region may be useful:
+Possible uses include background save completion, search-result counts, or an item added to cart without navigation.
 
-- background save completed;
-- search result count changed;
-- item added to cart without navigation.
+Do not turn every status change into an assertive alert. Too many announcements create noise.
 
-Use assertive/alert behavior only for urgent interruptions.
-
-Too many live regions can create an unusable experience.
-
-## 17. Suspense and loading UI
-
-A loading fallback should communicate meaningful context when users need it.
+## Suspense and pending UI
 
 ```tsx
 <Suspense fallback={<p role="status">Loading order history…</p>}>
@@ -323,110 +280,58 @@ A loading fallback should communicate meaningful context when users need it.
 </Suspense>
 ```
 
-But avoid turning every nested fallback into a competing live announcement.
+A loading fallback should communicate enough context when users need it, but nested boundaries should not create competing live announcements.
 
-The loading architecture should match the UX priority and reveal behavior.
+## Transitions and stale content
 
-## 18. Transitions and stale content
+When already-visible content remains during non-urgent work, preserve orientation.
 
-When stale content remains visible during a Transition, communicate state without destroying orientation.
+<VisualDiagram title="Pending work does not automatically require moving focus">
+  <DiagramRow>
+    <DiagramNode title="Active control" tone="blue">Focus remains stable</DiagramNode>
+    <DiagramNode title="Existing content" tone="gray">Can remain visible</DiagramNode>
+    <DiagramNode title="Pending status" tone="orange">aria-busy / nearby status when useful</DiagramNode>
+    <DiagramNode title="New content" tone="green">Reveal without unnecessary focus jump</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-Possible patterns:
+A region may expose `aria-busy={isPending}` when that accurately represents a meaningful update.
 
-- subtle visual stale state;
-- `aria-busy` on the relevant region when appropriate;
-- a nearby status message;
-- preserve focus on the active control.
+## Client-side navigation needs orientation review
 
-Do not automatically move focus to every loading indicator.
+A full-page browser navigation naturally changes document context. A client-side navigation may leave focus sitting on an old control while the page changes around it.
 
-## 19. `aria-busy`
+Verify:
 
-A region can indicate it is being updated:
-
-```tsx
-<section aria-busy={isPending} aria-labelledby={resultsHeadingId}>
-  ...
-</section>
-```
-
-Use it when it reflects a meaningful region-level update. Do not add it indiscriminately to the entire application for every network request.
-
-## 20. Client-side navigation
-
-A browser full-page navigation naturally changes document context. Client-side navigation may preserve focus in a way that leaves keyboard/screen-reader users on an old control while the page content changes around them.
-
-A router/framework may provide conventions, but product teams should verify:
-
-- document title changes;
-- focus/orientation after navigation;
-- landmarks/headings;
+- document title updates;
+- focus/orientation strategy;
+- landmarks and headings;
 - pending navigation behavior;
 - back/forward behavior.
 
-Test important navigation flows in a real browser.
+Critical navigation flows deserve real-browser tests.
 
-## 21. Menus are not generic navigation lists
+## Menus, tabs, and comboboxes have specific interaction contracts
 
-Do not use `role="menu"` merely because a visual panel looks like a menu.
+Do not use `role="menu"` just because a visual panel looks menu-like. Ordinary site navigation is often better represented by links in a semantic list.
 
-ARIA menu widgets have specific keyboard and interaction expectations.
+Tabs require coordinated `tablist`, `tab`, `tabpanel`, selection state, relationships, arrow-key focus, and an activation model.
 
-For ordinary website navigation, semantic links in a list are often better:
+<VisualDiagram title="Tabs combine semantics and behavior">
+  <DiagramRow>
+    <DiagramNode title="tablist" tone="blue">One entry into page Tab sequence</DiagramNode>
+    <DiagramArrow direction="right" label="arrow keys" />
+    <DiagramNode title="active tab" tone="purple">focus + selected state</DiagramNode>
+    <DiagramArrow direction="right" label="controls" />
+    <DiagramNode title="tabpanel" tone="green">labelled by selected tab</DiagramNode>
+  </DiagramRow>
+</VisualDiagram>
 
-```tsx
-<nav aria-label="Account">
-  <ul>
-    <li><a href="/profile">Profile</a></li>
-    <li><a href="/security">Security</a></li>
-  </ul>
-</nav>
-```
+Comboboxes are even more complex: input semantics, popup relationship, expanded state, active option model, selection, Escape behavior, async results, and text-input/IME correctness all matter.
 
-Use a true menu pattern when the interaction model actually matches one.
+Use established APG patterns or accessible primitives rather than improvising from roles alone.
 
-## 22. Tabs require more than `role="tab"`
-
-A correct tabs implementation needs coordinated semantics and keyboard behavior:
-
-```text
-tablist
-  tab
-  tab
-
-tabpanel
-```
-
-Typical relationships include:
-
-- `aria-selected`;
-- `aria-controls`;
-- `aria-labelledby`;
-- roving focus;
-- arrow-key movement;
-- activation model.
-
-Follow an established APG pattern or accessible primitive instead of improvising.
-
-## 23. Comboboxes are complex widgets
-
-A production combobox may need:
-
-- editable input semantics;
-- popup relationship;
-- expanded state;
-- active descendant/focus model;
-- option selection;
-- keyboard navigation;
-- escape behavior;
-- async result state;
-- IME/text-input correctness.
-
-Do not treat `role="combobox"` as a shortcut that supplies this behavior.
-
-## 24. Keyboard tests
-
-Example:
+## Keyboard tests
 
 ```tsx
 const user = userEvent.setup();
@@ -439,11 +344,9 @@ await user.keyboard('{ArrowRight}');
 expect(screen.getByRole('tab', { name: 'Security' })).toHaveFocus();
 ```
 
-Then assert selected state and panel visibility according to the activation model.
+Then assert selected state and panel visibility according to your activation model.
 
-## 25. Dialog tests
-
-A useful test sequence:
+## Dialog tests
 
 ```tsx
 const trigger = screen.getByRole('button', { name: 'Delete account' });
@@ -453,122 +356,39 @@ const dialog = screen.getByRole('dialog', { name: 'Delete account?' });
 expect(dialog).toBeVisible();
 
 // Assert intended initial focus.
-
 await user.keyboard('{Escape}');
+
 expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 expect(trigger).toHaveFocus();
 ```
 
-This protects a user journey, not just markup.
+This protects the complete user journey rather than only the dialog markup.
 
-## 26. Mouse-only anti-patterns
+## Review checklist
 
-### Clickable `<div>`
-
-```tsx
-<div onClick={open}>Open</div>
-```
-
-Use a button if it is an action.
-
-### Hover-only content
-
-If important content appears only on hover, keyboard and touch users may never reach it.
-
-### Drag-only operation
-
-Critical functionality should provide an alternative if drag is the only interaction mechanism.
-
-## 27. Focus traps can become bugs
-
-A modal dialog may intentionally contain focus while open.
-
-Other UI should not unexpectedly trap users.
-
-If Tab cannot leave a region, that must be part of a recognized interaction pattern and have a clear exit.
-
-## 28. Portals do not remove accessibility responsibilities
-
-A dialog rendered through `createPortal` still participates in the React tree, but its physical DOM location changes.
-
-You still need to ensure:
-
-- logical focus behavior;
-- correct labeling;
-- modal background behavior;
-- escape/close semantics;
-- restoration.
-
-Portal placement alone does not make a modal accessible.
-
-## 29. Automated checks vs manual checks
-
-Automation can catch issues such as:
-
-- missing names;
-- invalid ARIA combinations;
-- some contrast/structure problems;
-- duplicate IDs in certain tooling;
-- unlabeled fields.
-
-Manual and browser-based testing is still needed for:
-
-- keyboard flow quality;
-- focus restoration;
-- screen-reader announcements;
-- complex composite widgets;
-- cognitive clarity;
-- dynamic timing/orientation.
-
-## 30. Accessibility engineering checklist
-
-For an interactive feature, verify:
-
-1. Native semantics are used where possible.
-2. Every action works without a mouse.
-3. Focus is visible.
-4. Focus moves only for a user-oriented reason.
-5. Modal focus entry/containment/restoration works.
-6. Form groups and validation are understandable.
-7. Dynamic messages are announced only when useful.
-8. Custom widgets follow an established keyboard pattern.
-9. Suspense/Transition UI does not destroy user orientation.
-10. Semantic tests and real keyboard checks both pass.
-
-## Exercise
-
-Build an accessible modal account-delete flow with:
-
-- a semantic trigger button;
-- portal rendering;
-- accessible dialog name and description;
-- initial focus on the least destructive sensible control;
-- keyboard closure behavior;
-- background interaction prevention;
-- focus restoration;
-- async pending state during deletion;
-- server error announcement;
-- Testing Library keyboard/focus tests.
-
-Then identify which behaviors should also be covered in a real-browser test.
+1. Do native controls provide the behavior already?
+2. Is the page Tab sequence manageable?
+3. Is focus always visible and not intentionally obscured?
+4. Does a modal move focus in, contain the interaction, and restore focus?
+5. Do errors communicate through text/relationships rather than color alone?
+6. Are live regions used sparingly?
+7. Does pending UI preserve orientation?
+8. Do custom widgets follow an established keyboard model?
+9. Are important flows tested with keyboard and focus assertions?
+10. Are critical navigation/widget flows verified in a real browser?
 
 ## Interview questions
 
-1. Why can a custom `role="button"` still be inaccessible?
-2. What is roving `tabIndex`, and where is it useful?
-3. When would `aria-activedescendant` be used instead of moving DOM focus?
-4. What focus lifecycle should a modal dialog implement?
-5. Why should form errors not rely on color alone?
-6. When is a live region preferable to moving focus?
-7. What accessibility risks does client-side navigation introduce?
-8. Why is automated accessibility testing insufficient for complex widgets?
+1. What is roving `tabIndex`?
+2. When is `aria-activedescendant` useful?
+3. Why is focus management tied to commit timing?
+4. What is the expected modal focus lifecycle?
+5. When should a live region be used instead of moving focus?
+6. Why does `role="tab"` alone not make accessible tabs?
 
 ## References
 
-- https://www.w3.org/WAI/ARIA/apg/
-- https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/
-- https://www.w3.org/WAI/ARIA/apg/practices/names-and-descriptions/
-- https://react.dev/reference/react/useId
-- https://react.dev/reference/react-dom/createPortal
-- https://react.dev/reference/react/Suspense
-- https://react.dev/reference/react/useTransition
+- https://www.w3.org/TR/WCAG22/
+- https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/
+- https://www.w3.org/WAI/ARIA/apg/patterns/tabs/
+- https://www.w3.org/WAI/ARIA/apg/patterns/combobox/
