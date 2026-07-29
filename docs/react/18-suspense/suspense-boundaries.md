@@ -154,7 +154,6 @@ useLayoutEffect(() => {
 ```
 
 <LifecycleBar
-  title="Layout-effect lifecycle when revealed content is hidden"
   items={[
     { label: 'Visible commit', tone: 'green' },
     { label: 'Suspend again', tone: 'orange' },
@@ -195,15 +194,7 @@ A rejected lazy import or failed resource should surface to an appropriate error
 
 ## Suspense does not define caching
 
-Suspense coordinates rendering when work is not ready. It does not decide:
-
-- cache lifetime;
-- request deduplication;
-- staleness;
-- retries;
-- mutation invalidation.
-
-Those belong to the framework or data layer.
+Suspense coordinates rendering when work is not ready. It does not decide cache lifetime, request deduplication, staleness, retries, or mutation invalidation. Those belong to the framework or data layer.
 
 ## Suspense and server rendering
 
@@ -224,12 +215,12 @@ The SSR section covers the server APIs in detail.
 ## Boundary placement decision
 
 <DecisionTree
-  title="Should this region have its own Suspense boundary?"
+  question="What should decide the boundary?"
   items={[
-    { question: 'Is this a meaningful user-visible region that may be unavailable independently?', yes: 'Continue', no: 'Prefer the surrounding boundary' },
-    { question: 'Should it reveal independently from its siblings?', yes: 'Own boundary is a strong candidate', no: 'Coordinate them in one boundary' },
-    { question: 'Is already visible content still useful during refresh/navigation?', yes: 'Consider Transition/deferred stale UI', no: 'Fallback replacement may be appropriate' },
-    { question: 'Can the region fail independently?', yes: 'Pair with an Error Boundary', no: 'Use the nearest suitable recovery boundary' },
+    { label: 'Meaningful region can wait independently', value: 'Own boundary is a strong candidate' },
+    { label: 'Children should reveal together', value: 'Use one coordinated boundary' },
+    { label: 'Old content is still useful', value: 'Consider Transition or deferred stale UI' },
+    { label: 'Region can fail independently', value: 'Pair with an Error Boundary' },
   ]}
 />
 
