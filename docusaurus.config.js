@@ -37,7 +37,7 @@ const config = {
       'classic',
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.javascript.js'),
+          sidebarPath: require.resolve('./sidebars.postgresql.js'),
           editUrl: 'https://github.com/salman0butt/handbook/edit/main/',
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
@@ -57,7 +57,7 @@ const config = {
     metadata: [
       {
         name: 'keywords',
-        content: 'React, Next.js, App Router, JavaScript, TypeScript, Node.js, system design, DevOps, AI engineering, developer handbook',
+        content: 'React, Next.js, App Router, JavaScript, TypeScript, Node.js, SQL, PostgreSQL, databases, system design, DevOps, AI engineering, developer handbook',
       },
     ],
     navbar: {
@@ -68,6 +68,7 @@ const config = {
         {to: '/typescript', label: 'TypeScript', position: 'left', activeBaseRegex: '^/(typescript|docs/typescript)'},
         {to: '/javascript', label: 'JavaScript', position: 'left', activeBaseRegex: '^/(javascript|docs/javascript)'},
         {to: '/nodejs', label: 'Node.js', position: 'left', activeBaseRegex: '^/(nodejs|docs/nodejs)'},
+        {to: '/postgresql', label: 'PostgreSQL', position: 'left', activeBaseRegex: '^/(postgresql|docs/postgresql)'},
         {
           label: 'More',
           position: 'left',
@@ -96,6 +97,7 @@ const config = {
             {label: 'Next.js', to: '/nextjs'},
             {label: 'JavaScript', to: '/javascript'},
             {label: 'TypeScript', to: '/typescript'},
+            {label: 'PostgreSQL', to: '/postgresql'},
           ],
         },
         {
