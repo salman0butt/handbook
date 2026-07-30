@@ -29,7 +29,7 @@ title: Expert SQL Exercises E001–E060
 **Schema:** order_items. **Expected:** weighted avg/product. **Hint:** sum(value)/sum(qty). **Solution:** `SELECT product_id,sum(quantity*unit_price)/NULLIF(sum(quantity),0) FROM order_items GROUP BY product_id;` **Explanation:** `avg(unit_price)` weights lines, not units. **Alternative:** expand units only pedagogically, never production.
 
 ### E008 — Pareto revenue contributors
-**Schema:** orders. **Problem:** smallest top customer set reaching 80% revenue. **Expected:** customers with cumulative share <=/crossing 0.8. **Hint:** aggregate revenue then cumulative window. **Solution:** aggregate by customer, compute `sum(r) over(order by r desc)/sum(r) over()` and filter including first crossing row. **Explanation:** two-stage window analysis. **Alternative:** percentile grouping.
+**Schema:** orders. **Problem:** smallest top customer set reaching 80% revenue. **Expected:** customers with cumulative share at or below the threshold, including the first row crossing 0.8. **Hint:** aggregate revenue then cumulative window. **Solution:** aggregate by customer, compute `sum(r) over(order by r desc)/sum(r) over()` and filter including first crossing row. **Explanation:** two-stage window analysis. **Alternative:** percentile grouping.
 
 ### E009 — Running balance with same-time ties
 **Schema addition:** ledger(account_id,entry_id,posted_at,amount). **Expected:** deterministic balance. **Solution:** `SELECT ...,sum(amount) OVER(PARTITION BY account_id ORDER BY posted_at,entry_id ROWS UNBOUNDED PRECEDING) balance FROM ledger;` **Hint:** stable tie-breaker. **Explanation:** without entry_id ties make row order ambiguous. **Alternative:** sequence/order key.
