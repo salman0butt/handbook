@@ -77,9 +77,9 @@ Start with [00 · Start Here](./00-start-here.md), then follow the sidebar. If y
 
 Semantics are cross-checked against ECMA-262 and the TC39 living specification. Internationalization uses ECMA-402. MDN is the primary practical reference for JavaScript and browser-host APIs. W3Schools is used only as a curriculum-coverage checklist; where it conflicts with ECMA-262/TC39, the specification wins.
 
-- ECMA-262: <https://tc39.es/ecma262/>
-- ECMA-262 2026 snapshot: <https://tc39.es/ecma262/2026/>
-- TC39 process: <https://tc39.es/process-document/>
-- TC39 proposals: <https://github.com/tc39/proposals>
-- ECMA-402: <https://tc39.es/ecma402/>
-- MDN JavaScript: <https://developer.mozilla.org/docs/Web/JavaScript>
+- [ECMA-262 living specification](https://tc39.es/ecma262/)
+- [ECMA-262 2026 snapshot](https://tc39.es/ecma262/2026/)
+- [TC39 process](https://tc39.es/process-document/)
+- [TC39 proposals](https://github.com/tc39/proposals)
+- [ECMA-402 living specification](https://tc39.es/ecma402/)
+- [MDN JavaScript](https://developer.mozilla.org/docs/Web/JavaScript)
