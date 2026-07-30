@@ -37,7 +37,7 @@ const config = {
       'classic',
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.clean.js'),
+          sidebarPath: require.resolve('./sidebars.javascript.js'),
           editUrl: 'https://github.com/salman0butt/handbook/edit/main/',
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,

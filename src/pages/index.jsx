@@ -31,9 +31,10 @@ const handbooks = [
   {
     icon: 'JS',
     title: 'JavaScript',
-    description: 'The language foundations behind modern frontend and backend development.',
-    status: 'Available',
+    description: 'ECMAScript semantics, browser engineering, async, performance, security, architecture, projects, and interview mastery.',
+    status: 'Complete',
     href: '/javascript',
+    featured: true,
   },
   {
     icon: '⬢',

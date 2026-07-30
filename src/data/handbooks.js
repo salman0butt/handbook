@@ -30,14 +30,14 @@ export const handbookData = {
     studyPath: ['Foundations', 'Type manipulation', 'Compatibility & inference', 'Modules & libraries', 'Architecture & compiler', 'Interview mastery'],
   },
   javascript: {
-    name: 'JavaScript', icon: 'JS', intro: '/docs/javascript/intro',
-    description: 'The language foundations behind modern frontend and backend engineering, from runtime semantics to practical application design.',
+    name: 'JavaScript', icon: 'JS', status: 'Complete', intro: '/docs/javascript/intro',
+    description: 'From ECMAScript fundamentals and runtime semantics to browser engineering, performance, security, architecture, specification reasoning, projects, and interview mastery.',
     highlights: [
-      {title: 'Language foundations', description: 'Values, functions, objects, scope, closures, prototypes, modules, and the runtime model.'},
-      {title: 'Asynchronous JavaScript', description: 'Promises, async/await, event-loop reasoning, concurrency, and error handling.'},
-      {title: 'Production patterns', description: 'Debugging, performance, APIs, maintainability, and dependable JavaScript design.'},
+      {label: 'Understand', title: 'Language foundations & runtime semantics', description: 'Master bindings, coercion, functions, closures, this, objects, prototypes, built-ins, iteration, modules, and specification-level mental models.', href: '/docs/javascript/01-04-fundamentals-types-coercion'},
+      {label: 'Engineer', title: 'Async, browser APIs & production debugging', description: 'Reason about Promises, async/await, Jobs versus host tasks, DOM/events/fetch, security, memory, performance, and debugging.', href: '/docs/javascript/31-35-errors-promises-async-event-loop'},
+      {label: 'Master', title: 'Architecture, projects & 384 interview questions', description: 'Progress through library/framework authoring and staff architecture, then build the project ladder and practice senior JavaScript interviews.', href: '/docs/javascript/interview-question-bank/overview'},
     ],
-    studyPath: ['Language basics', 'Functions & objects', 'Async', 'Modules', 'Production patterns'],
+    studyPath: ['Start Here', 'Language foundations', 'Async & modules', 'Browser JavaScript', 'Internals & performance', 'Architecture', 'Projects & interviews'],
   },
   nodejs: {
     name: 'Node.js', icon: '⬢', status: 'Complete', intro: '/docs/nodejs/intro',
