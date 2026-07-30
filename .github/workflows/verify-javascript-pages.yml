@@ -58,11 +58,13 @@ jobs:
               curl -L --fail --silent --output /tmp/js-intro.html "$base/docs/javascript/intro"
               grep -q 'JavaScript Developer Handbook' /tmp/js-intro.html
               curl -L --fail --silent --output /tmp/js-audit.html "$base/docs/javascript/reference/final-completeness-audit"
-              grep -q 'Status: NOT COMPLETE' /tmp/js-audit.html
-              echo 'All representative JavaScript handbook routes and content markers are live.'
-              exit 0
+              if grep -q 'Status: COMPLETE' /tmp/js-audit.html; then
+                echo 'All representative JavaScript handbook routes are live and the published final audit is COMPLETE.'
+                exit 0
+              fi
+              echo 'Routes are live but final audit deployment is not COMPLETE yet.'
             fi
             sleep 15
           done
-          echo 'Published JavaScript routes did not become healthy within the verification attempts.'
+          echo 'Published JavaScript final audit did not become COMPLETE within the verification attempts.'
           exit 1
