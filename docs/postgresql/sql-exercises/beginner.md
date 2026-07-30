@@ -119,7 +119,7 @@ Schema/seed: use the [shared practice schema](./overview.md) with at least 5 cus
 **Problem:** subtotal per order. **Expected:** one row/order. **Hint:** SUM line expressions. **Solution:** `SELECT order_id,sum(quantity*unit_price) AS subtotal FROM order_items GROUP BY order_id;` **Why:** aggregate calculated values. **Alternative:** join orders if empty orders must appear.
 
 ### B038 — CASE price bucket
-**Problem:** label products cheap (<20), mid (<100), expensive. **Expected:** category per product. **Hint:** searched CASE. **Solution:** `SELECT id,CASE WHEN price<20 THEN 'cheap' WHEN price<100 THEN 'mid' ELSE 'expensive' END AS bucket FROM products;` **Why:** ordered conditions. **Alternative:** range lookup table for configurable buckets.
+**Problem:** label products cheap (below 20), mid (below 100), expensive. **Expected:** category per product. **Hint:** searched CASE. **Solution:** `SELECT id,CASE WHEN price<20 THEN 'cheap' WHEN price<100 THEN 'mid' ELSE 'expensive' END AS bucket FROM products;` **Why:** ordered conditions. **Alternative:** range lookup table for configurable buckets.
 
 ### B039 — COALESCE country
 **Problem:** display `Unknown` for null countries. **Expected:** non-null display value. **Hint:** COALESCE. **Solution:** `SELECT id,coalesce(country,'Unknown') AS country_display FROM customers;` **Why:** first non-null expression. **Alternative:** preserve NULL in storage and format in UI.
