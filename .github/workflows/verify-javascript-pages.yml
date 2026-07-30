@@ -1,0 +1,66 @@
+name: Verify JavaScript Pages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-javascript-pages.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify published JavaScript handbook routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://salman0butt.github.io/handbook'
+          routes=(
+            '/javascript'
+            '/docs/javascript/intro'
+            '/docs/javascript/00-start-here'
+            '/docs/javascript/01-04-fundamentals-types-coercion'
+            '/docs/javascript/09-12-functions-scope-this'
+            '/docs/javascript/13-17-objects-prototypes-classes'
+            '/docs/javascript/18-22-arrays-text-numbers-dates'
+            '/docs/javascript/31-35-errors-promises-async-event-loop'
+            '/docs/javascript/36-37-modules-resource-management'
+            '/docs/javascript/51-53-dom-model-selection-manipulation'
+            '/docs/javascript/54-56-events-forms-fetch'
+            '/docs/javascript/60-62-workers-clone-browser-security'
+            '/docs/javascript/63-67-execution-environments-realms'
+            '/docs/javascript/72-74-performance-memory-debugging'
+            '/docs/javascript/88-91-library-framework-senior-staff'
+            '/docs/javascript/projects/11-capstone-vanilla-javascript-application-platform'
+            '/docs/javascript/interview-mastery/overview'
+            '/docs/javascript/interview-question-bank/overview'
+            '/docs/javascript/mock-interview-practice/01-rounds-1-8'
+            '/docs/javascript/reference/api-coverage'
+            '/docs/javascript/reference/final-completeness-audit'
+          )
+
+          for attempt in {1..20}; do
+            failed=0
+            echo "Published-route verification attempt $attempt"
+            for route in "${routes[@]}"; do
+              code=$(curl -L --silent --show-error --output /tmp/page.html --write-out '%{http_code}' "$base$route" || true)
+              if [[ "$code" != '200' ]]; then
+                echo "FAIL $code $route"
+                failed=1
+              else
+                echo "OK   200 $route"
+              fi
+            done
+            if [[ "$failed" == '0' ]]; then
+              curl -L --fail --silent "$base/docs/javascript/intro" | grep -q 'JavaScript Developer Handbook'
+              curl -L --fail --silent "$base/docs/javascript/reference/final-completeness-audit" | grep -q 'Status: NOT COMPLETE'
+              echo 'All representative JavaScript handbook routes are live.'
+              exit 0
+            fi
+            sleep 15
+          done
+          echo 'Published JavaScript routes did not become healthy within the verification attempts.'
+          exit 1
