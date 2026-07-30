@@ -55,9 +55,11 @@ jobs:
               fi
             done
             if [[ "$failed" == '0' ]]; then
-              curl -L --fail --silent "$base/docs/javascript/intro" | grep -q 'JavaScript Developer Handbook'
-              curl -L --fail --silent "$base/docs/javascript/reference/final-completeness-audit" | grep -q 'Status: NOT COMPLETE'
-              echo 'All representative JavaScript handbook routes are live.'
+              curl -L --fail --silent --output /tmp/js-intro.html "$base/docs/javascript/intro"
+              grep -q 'JavaScript Developer Handbook' /tmp/js-intro.html
+              curl -L --fail --silent --output /tmp/js-audit.html "$base/docs/javascript/reference/final-completeness-audit"
+              grep -q 'Status: NOT COMPLETE' /tmp/js-audit.html
+              echo 'All representative JavaScript handbook routes and content markers are live.'
               exit 0
             fi
             sleep 15
