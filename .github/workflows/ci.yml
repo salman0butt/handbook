@@ -43,6 +43,48 @@ jobs:
           fi
           exit "$status"
 
+      - name: Verify React Native search artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Search/index-like build files containing React Native terms:"
+          matches=$(grep -RIl -E 'TurboModules|Hermes|Codegen|CocoaPods|Gradle' build 2>/dev/null | grep -Ei 'search|index' || true)
+          printf '%s\n' "$matches" | head -30
+          test -n "$matches"
+
+      - name: Verify deployed React Native handbook
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://salman0butt.github.io/handbook'
+
+          check_page() {
+            local path="$1"
+            local needle="$2"
+            local body=''
+            for attempt in $(seq 1 30); do
+              body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$BASE$path" || true)
+              if printf '%s' "$body" | grep -Fq "$needle"; then
+                echo "PASS $path -> $needle"
+                return 0
+              fi
+              echo "Attempt $attempt: $path not ready yet"
+              sleep 5
+            done
+            echo "FAIL $path missing expected content: $needle"
+            return 1
+          }
+
+          check_page '/react-native' 'React Native'
+          check_page '/docs/react-native/intro' 'React Native + Community CLI Developer Handbook'
+          check_page '/docs/react-native/chapters/chapters-001-020' 'Community CLI'
+          check_page '/docs/react-native/chapters/chapters-141-160' 'TurboModules'
+          check_page '/docs/react-native/projects/projects-11-15' 'Native Module Application'
+          check_page '/docs/react-native/projects/capstone-production-mobile-saas' 'Production Mobile SaaS'
+          check_page '/docs/react-native/exercises/exercises-beginner-001-060' 'Beginner Exercises 001'
+          check_page '/docs/react-native/interview-question-bank/interview-questions-staff-321-400' 'Staff Interview Questions 321'
+          check_page '/docs/react-native/reference/final-completeness-audit' 'Status: NOT COMPLETE'
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
