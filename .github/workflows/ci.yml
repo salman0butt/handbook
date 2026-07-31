@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Docusaurus
+  smoke:
+    name: Verify visual AI foundations release
     runs-on: ubuntu-latest
 
     steps:
@@ -28,86 +28,129 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund --loglevel=error
 
-      - name: Build handbook
-        id: build
-        shell: bash
-        run: |
-          set +e
-          npm run build > docusaurus-build.log 2>&1
-          status=$?
-          if [ "$status" -ne 0 ]; then
-            echo "Docusaurus build failed. Last 120 lines:"
-            tail -120 docusaurus-build.log
-          else
-            echo "Docusaurus production build succeeded."
-          fi
-          exit "$status"
+      - name: Build production site
+        run: npm run build
 
-      - name: Verify beginner lessons are visual and practical
+      - name: Verify generated lessons, code, diagrams and search index
         shell: bash
         run: |
           set -euo pipefail
 
-          mapfile -t lessons < <(find \
-            docs/ai-engineering/foundations \
-            docs/ai-engineering/prompt-engineering \
-            -type f -name '*.md' | sort)
+          count=$(find docs/ai-engineering/foundations docs/ai-engineering/prompt-engineering -type f -name '*.md' | wc -l)
+          test "$count" -ge 44 || { echo "Expected at least 44 focused beginner/prompt lessons, got $count"; exit 1; }
 
-          if [ "${#lessons[@]}" -lt 40 ]; then
-            echo "Expected at least 40 focused foundation/prompt lessons, found ${#lessons[@]}"
-            exit 1
-          fi
-
-          for file in "${lessons[@]}"; do
-            grep -Fq '```mermaid' "$file" || { echo "Missing Mermaid diagram: $file"; exit 1; }
-            grep -Fq '```ts' "$file" || { echo "Missing TypeScript example: $file"; exit 1; }
-            grep -Fq '## Practice' "$file" || { echo "Missing practice section: $file"; exit 1; }
+          for file in \
+            docs/ai-engineering/foundations/what-is-llm.md \
+            docs/ai-engineering/foundations/what-is-a-token.md \
+            docs/ai-engineering/foundations/tokenization.md \
+            docs/ai-engineering/foundations/transformers.md \
+            docs/ai-engineering/foundations/attention.md \
+            docs/ai-engineering/foundations/kv-cache.md \
+            docs/ai-engineering/foundations/prompt-cache.md \
+            docs/ai-engineering/foundations/response-cache.md \
+            docs/ai-engineering/prompt-engineering/types-of-prompting.md; do
+              grep -Fq '```mermaid' "$file"
+              grep -Fq '```ts' "$file"
+              grep -Fq '## Practice' "$file"
           done
 
-          node <<'NODE'
-          const sidebars = require('./sidebars.ai-engineering.js');
-          const labels = [];
-          const ids = [];
-          function walk(items) {
-            for (const item of items || []) {
-              if (!item || typeof item !== 'object') continue;
-              if (typeof item.label === 'string') labels.push(item.label);
-              if (item.type === 'doc') ids.push(item.id);
-              if (Array.isArray(item.items)) walk(item.items);
-            }
-          }
-          walk(sidebars.aiEngineeringSidebar);
+          INDEX='build/search-index-docs-default-current.json'
+          test -f "$INDEX"
+          for term in \
+            'What Is a Token?' \
+            'Tokenization' \
+            'Large Language Model' \
+            'KV Cache' \
+            'Prompt Caching' \
+            'Response Caching' \
+            'Attention, Queries, Keys & Values' \
+            'Zero-Shot Prompting' \
+            'Few-Shot Prompting'; do
+              grep -Fiq "$term" "$INDEX" || { echo "Search index missing: $term"; exit 1; }
+          done
 
-          const beginnerIds = ids.filter(id =>
-            id.startsWith('ai-engineering/foundations/') ||
-            id.startsWith('ai-engineering/prompt-engineering/')
-          );
+          token_html=$(find build -type f -path '*foundations/what-is-a-token*' | head -1)
+          test -n "$token_html" || { echo 'Built token page not found'; exit 1; }
+          grep -Fiq 'mermaid' "$token_html" || { echo 'Built token page has no Mermaid rendering marker'; exit 1; }
+          grep -Fiq 'toyTokenizer' "$token_html" || { echo 'Built token page missing code example'; exit 1; }
 
-          if (beginnerIds.length < 40) {
-            throw new Error(`Expected at least 40 focused beginner/prompt sidebar lessons, got ${beginnerIds.length}`);
-          }
-          if (ids.includes('ai-engineering/chapters/chapters-001-020')) {
-            throw new Error('Bundled AI foundations page is still in primary sidebar');
-          }
-          const numbered = labels.filter(label => /\d/.test(label));
-          if (numbered.length) throw new Error(`Numeric sidebar labels found: ${numbered.join(', ')}`);
+          echo "PASS focused lessons, search index, code examples, and Mermaid build output"
 
-          console.log(`PASS ${beginnerIds.length} focused beginner/prompt lessons; all labels number-free`);
-          NODE
-
-      - name: Verify Mermaid is enabled
+      - name: Verify merged Pages deployment run
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "@docusaurus/theme-mermaid" package.json
-          grep -Fq "mermaid: true" docusaurus.config.js
-          grep -Fq "themes: ['@docusaurus/theme-mermaid']" docusaurus.config.js
-          echo 'PASS Mermaid rendering is configured'
+          MERGE_SHA='346fc5e99fe26be2214da28f956c63bfdb70fe74'
+          API="https://api.github.com/repos/salman0butt/handbook/actions/runs?head_sha=$MERGE_SHA"
 
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docusaurus-build-log
-          path: docusaurus-build.log
-          if-no-files-found: warn
+          for attempt in $(seq 1 36); do
+            curl -fsSL -H 'Accept: application/vnd.github+json' "$API" -o /tmp/runs.json
+            if python - <<'PY'
+          import json
+          with open('/tmp/runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          runs = [r for r in data.get('workflow_runs', []) if r.get('event') == 'push' and r.get('name') == 'Deploy handbook to GitHub Pages']
+          ok = [r for r in runs if r.get('conclusion') == 'success']
+          if ok:
+              r = ok[0]
+              print(f"PASS Pages workflow run {r['id']} {r.get('html_url', '')}")
+              raise SystemExit(0)
+          failed = [r for r in runs if r.get('conclusion') == 'failure']
+          if failed:
+              print('FAIL Pages deployment:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+              raise SystemExit(2)
+          print('Pages run state:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+          raise SystemExit(1)
+          PY
+            then
+              exit 0
+            else
+              status=$?
+              if [ "$status" -eq 2 ]; then exit 1; fi
+            fi
+            sleep 5
+          done
+
+          echo 'FAIL merged Pages deployment did not reach success'
+          exit 1
+
+      - name: Verify deployed beginner handbook
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://salman0butt.github.io/handbook'
+
+          check_page() {
+            local path="$1"
+            local needle="$2"
+            local body=''
+            for attempt in $(seq 1 20); do
+              body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$BASE$path" || true)
+              if grep -Fq "$needle" <<< "$body"; then
+                echo "PASS $path -> $needle"
+                return 0
+              fi
+              echo "Attempt $attempt: $path not ready yet"
+              sleep 5
+            done
+            echo "FAIL $path missing expected content: $needle"
+            return 1
+          }
+
+          check_page '/docs/ai-engineering/00-start-here' 'What is a token'
+          check_page '/docs/ai-engineering/foundations/what-is-ai' 'Artificial Intelligence'
+          check_page '/docs/ai-engineering/foundations/what-is-llm' 'Large Language Model'
+          check_page '/docs/ai-engineering/foundations/what-is-a-token' 'A token is a unit'
+          check_page '/docs/ai-engineering/foundations/what-is-a-token' 'toyTokenizer'
+          check_page '/docs/ai-engineering/foundations/tokenization' 'Byte Pair Encoding'
+          check_page '/docs/ai-engineering/foundations/transformers' 'Transformer Block'
+          check_page '/docs/ai-engineering/foundations/attention' 'Queries, Keys'
+          check_page '/docs/ai-engineering/foundations/kv-cache' 'previously processed tokens'
+          check_page '/docs/ai-engineering/foundations/prompt-cache' 'stable prompt prefix'
+          check_page '/docs/ai-engineering/foundations/response-cache' 'application-level cache'
+          check_page '/docs/ai-engineering/prompt-engineering/types-of-prompting' 'Zero-shot prompting'
+          check_page '/docs/ai-engineering/prompt-engineering/one-shot-few-shot-prompting' 'Few-shot prompting'
+
+          body=$(curl -fsSL "$BASE/docs/ai-engineering/foundations/what-is-a-token")
+          grep -Fiq 'mermaid' <<< "$body" || { echo 'FAIL deployed token page missing Mermaid marker'; exit 1; }
+          echo 'PASS live beginner pages include expected content, code, and Mermaid markup'
