@@ -48,15 +48,15 @@ jobs:
         run: |
           set -euo pipefail
           test -f build/search-index-docs-default-current.json
-          grep -Fq 'RAG' build/search-index-docs-default-current.json
-          grep -Fq 'embeddings' build/search-index-docs-default-current.json
-          grep -Fq 'LangChain' build/search-index-docs-default-current.json
-          grep -Fq 'LangGraph' build/search-index-docs-default-current.json
-          grep -Fq 'tool calling' build/search-index-docs-default-current.json
-          grep -Fq 'MCP' build/search-index-docs-default-current.json
-          grep -Fq 'reranking' build/search-index-docs-default-current.json
-          grep -Fq 'human-in-the-loop' build/search-index-docs-default-current.json
-          grep -Fq 'evals' build/search-index-docs-default-current.json
+          grep -Fiq 'RAG' build/search-index-docs-default-current.json
+          grep -Fiq 'embeddings' build/search-index-docs-default-current.json
+          grep -Fiq 'LangChain' build/search-index-docs-default-current.json
+          grep -Fiq 'LangGraph' build/search-index-docs-default-current.json
+          grep -Fiq 'tool calling' build/search-index-docs-default-current.json
+          grep -Fiq 'MCP' build/search-index-docs-default-current.json
+          grep -Fiq 'reranking' build/search-index-docs-default-current.json
+          grep -Fiq 'human-in-the-loop' build/search-index-docs-default-current.json
+          grep -Fiq 'evals' build/search-index-docs-default-current.json
           echo 'PASS AI Engineering terms are present in the generated production search index'
 
       - name: Verify merged Pages deployment run
