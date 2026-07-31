@@ -43,6 +43,93 @@ jobs:
           fi
           exit "$status"
 
+      - name: Verify AI Engineering search artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f build/search-index-docs-default-current.json
+          grep -Fq 'RAG' build/search-index-docs-default-current.json
+          grep -Fq 'embeddings' build/search-index-docs-default-current.json
+          grep -Fq 'LangChain' build/search-index-docs-default-current.json
+          grep -Fq 'LangGraph' build/search-index-docs-default-current.json
+          grep -Fq 'tool calling' build/search-index-docs-default-current.json
+          grep -Fq 'MCP' build/search-index-docs-default-current.json
+          grep -Fq 'reranking' build/search-index-docs-default-current.json
+          grep -Fq 'human-in-the-loop' build/search-index-docs-default-current.json
+          grep -Fq 'evals' build/search-index-docs-default-current.json
+          echo 'PASS AI Engineering terms are present in the generated production search index'
+
+      - name: Verify merged Pages deployment run
+        shell: bash
+        run: |
+          set -euo pipefail
+          MERGE_SHA='da4006901f0f1a7f28ad5742e36b5b357e6a78e1'
+          API="https://api.github.com/repos/salman0butt/handbook/actions/runs?head_sha=$MERGE_SHA"
+          for attempt in $(seq 1 20); do
+            curl -fsSL -H 'Accept: application/vnd.github+json' "$API" -o /tmp/runs.json
+            if python - <<'PY'
+          import json
+          with open('/tmp/runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          runs = [r for r in data.get('workflow_runs', []) if r.get('event') == 'push' and r.get('name') == 'Deploy handbook to GitHub Pages']
+          ok = [r for r in runs if r.get('conclusion') == 'success']
+          if ok:
+              r = ok[0]
+              print(f"PASS Pages workflow run {r['id']} {r.get('html_url', '')}")
+              raise SystemExit(0)
+          print('Pages run state:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+          raise SystemExit(1)
+          PY
+            then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'FAIL merged Pages deployment did not reach success'
+          exit 1
+
+      - name: Verify deployed AI Engineering handbook
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://salman0butt.github.io/handbook'
+
+          check_page() {
+            local path="$1"
+            local needle="$2"
+            local body=''
+            for attempt in $(seq 1 12); do
+              body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$BASE$path" || true)
+              if grep -Fq "$needle" <<< "$body"; then
+                echo "PASS $path -> $needle"
+                return 0
+              fi
+              echo "Attempt $attempt: $path not ready yet"
+              sleep 5
+            done
+            echo "FAIL $path missing expected content: $needle"
+            return 1
+          }
+
+          check_page '/ai-engineering' 'AI Engineering'
+          check_page '/docs/ai-engineering/intro' 'AI Engineering Handbook'
+          check_page '/docs/ai-engineering/chapters/chapters-001-020' 'Transformer Architecture'
+          check_page '/docs/ai-engineering/chapters/chapters-041-060' 'What Tool Calling Means'
+          check_page '/docs/ai-engineering/chapters/chapters-061-080' 'Embedding Vectors'
+          check_page '/docs/ai-engineering/chapters/081-100-rag-foundations' 'Complete RAG Pipeline'
+          check_page '/docs/ai-engineering/chapters/chapters-101-110' 'Hybrid Search'
+          check_page '/docs/ai-engineering/chapters/chapters-111-130' 'Why LangChain Exists'
+          check_page '/docs/ai-engineering/chapters/131-145-langgraph-state-graphs' 'What LangGraph Is'
+          check_page '/docs/ai-engineering/chapters/chapters-156-170' 'What an Agent Is'
+          check_page '/docs/ai-engineering/chapters/chapters-171-180' 'What MCP Solves'
+          check_page '/docs/ai-engineering/chapters/chapters-181-190' 'Prompt Injection'
+          check_page '/docs/ai-engineering/chapters/191-200-production-staff-engineering' 'Production AI Architecture'
+          check_page '/docs/ai-engineering/projects/projects-11-15' 'Production AI Agent SaaS'
+          check_page '/docs/ai-engineering/projects/capstone-production-multi-tenant-agent-platform' 'Production Multi-Tenant AI Agent Platform'
+          check_page '/docs/ai-engineering/exercises/exercises-production-241-300' '60 Production Exercises'
+          check_page '/docs/ai-engineering/interview-question-bank/interview-questions-staff-321-400' '80 Staff Interview Questions'
+          check_page '/docs/ai-engineering/reference/final-completeness-audit' 'Status: NOT COMPLETE'
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
