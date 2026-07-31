@@ -1,6 +1,7 @@
 ---
 id: chapters-191-200
 title: 191–200 — Production Architecture & Staff AI Engineering
+slug: /ai-engineering/chapters/191-200-production-staff-engineering
 ---
 
 # 191 — Production AI Architecture
