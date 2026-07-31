@@ -43,6 +43,81 @@ jobs:
           fi
           exit "$status"
 
+      - name: Verify AI beginner lessons are visual and practical
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required=(
+            docs/ai-engineering/foundations/what-is-ai.md
+            docs/ai-engineering/foundations/ml-deep-learning-generative-ai.md
+            docs/ai-engineering/foundations/neural-networks.md
+            docs/ai-engineering/foundations/training-pretraining-posttraining.md
+            docs/ai-engineering/foundations/foundation-models.md
+            docs/ai-engineering/foundations/what-is-generative-ai.md
+            docs/ai-engineering/foundations/what-is-llm.md
+            docs/ai-engineering/foundations/model-parameters.md
+            docs/ai-engineering/foundations/what-is-a-token.md
+            docs/ai-engineering/foundations/tokenization.md
+            docs/ai-engineering/foundations/embeddings.md
+            docs/ai-engineering/foundations/transformers.md
+            docs/ai-engineering/foundations/attention.md
+            docs/ai-engineering/foundations/context-window.md
+            docs/ai-engineering/foundations/prompt-context-memory.md
+            docs/ai-engineering/foundations/inference-generation.md
+            docs/ai-engineering/foundations/logits-softmax-probabilities.md
+            docs/ai-engineering/foundations/sampling-temperature-top-p.md
+            docs/ai-engineering/foundations/reasoning-models.md
+            docs/ai-engineering/foundations/hallucinations-grounding.md
+            docs/ai-engineering/foundations/kv-cache.md
+            docs/ai-engineering/foundations/prompt-cache.md
+            docs/ai-engineering/foundations/response-cache.md
+            docs/ai-engineering/foundations/token-cost-latency.md
+            docs/ai-engineering/foundations/model-selection.md
+            docs/ai-engineering/prompt-engineering/what-is-prompt-engineering.md
+            docs/ai-engineering/prompt-engineering/prompt-anatomy.md
+            docs/ai-engineering/prompt-engineering/types-of-prompting.md
+            docs/ai-engineering/prompt-engineering/zero-shot-prompting.md
+            docs/ai-engineering/prompt-engineering/one-shot-few-shot-prompting.md
+          )
+
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing lesson: $file"; exit 1; }
+            grep -Fq '```mermaid' "$file" || { echo "Missing Mermaid diagram: $file"; exit 1; }
+            grep -Fq '```ts' "$file" || { echo "Missing TypeScript example: $file"; exit 1; }
+            grep -Fq '## Practice' "$file" || { echo "Missing practice section: $file"; exit 1; }
+          done
+
+          node <<'NODE'
+          const sidebars = require('./sidebars.ai-engineering.js');
+          const labels = [];
+          const ids = [];
+          function walk(items) {
+            for (const item of items || []) {
+              if (!item || typeof item !== 'object') continue;
+              if (typeof item.label === 'string') labels.push(item.label);
+              if (item.type === 'doc') ids.push(item.id);
+              if (Array.isArray(item.items)) walk(item.items);
+            }
+          }
+          walk(sidebars.aiEngineeringSidebar);
+
+          const beginnerIds = ids.filter(id =>
+            id.startsWith('ai-engineering/foundations/') ||
+            id.startsWith('ai-engineering/prompt-engineering/')
+          );
+
+          if (beginnerIds.length < 30) {
+            throw new Error(`Expected at least 30 focused beginner/prompt lessons, got ${beginnerIds.length}`);
+          }
+
+          if (ids.includes('ai-engineering/chapters/chapters-001-020')) {
+            throw new Error('Bundled AI foundations page is still in the primary sidebar');
+          }
+
+          console.log(`PASS ${beginnerIds.length} focused beginner/prompt lessons in navigation`);
+          NODE
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
