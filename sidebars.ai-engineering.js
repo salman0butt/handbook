@@ -11,39 +11,39 @@ sidebars.aiEngineeringSidebar = [
     doc('00-start-here', '00 · Start Here'),
   ], {collapsed: false}),
   category('AI & LLM Foundations', [
-    doc('chapters/001-020-ai-llm-foundations', '001–020 · AI & LLM Foundations'),
+    doc('chapters/chapters-001-020', '001–020 · AI & LLM Foundations'),
   ]),
   category('Prompting & Model Interaction', [
-    doc('chapters/021-040-prompting-model-interaction', '021–040 · Prompt Engineering & Model APIs'),
+    doc('chapters/chapters-021-040', '021–040 · Prompt Engineering & Model APIs'),
   ]),
   category('Structured Outputs, Tools & Streaming', [
-    doc('chapters/041-060-structured-outputs-tools-streaming', '041–060 · Structured Outputs, Tools & Streaming'),
+    doc('chapters/chapters-041-060', '041–060 · Structured Outputs, Tools & Streaming'),
   ]),
   category('Embeddings & Vector Search', [
-    doc('chapters/061-080-embeddings-vector-search', '061–080 · Embeddings, Semantic Search & Vector DBs'),
+    doc('chapters/chapters-061-080', '061–080 · Embeddings, Semantic Search & Vector DBs'),
   ]),
   category('RAG', [
-    doc('chapters/081-100-rag-foundations', '081–100 · RAG Foundations'),
-    doc('chapters/101-110-advanced-rag-evaluation', '101–110 · Advanced RAG & Evaluation'),
+    doc('chapters/chapters-081-100', '081–100 · RAG Foundations'),
+    doc('chapters/chapters-101-110', '101–110 · Advanced RAG & Evaluation'),
   ]),
   category('LangChain TypeScript', [
-    doc('chapters/111-130-langchain-typescript', '111–130 · LangChain TypeScript'),
+    doc('chapters/chapters-111-130', '111–130 · LangChain TypeScript'),
   ]),
   category('LangGraph TypeScript', [
-    doc('chapters/131-145-langgraph-state-graphs', '131–145 · State, Nodes & Control Flow'),
-    doc('chapters/146-155-langgraph-durable-hitl', '146–155 · Durability, Persistence & HITL'),
+    doc('chapters/chapters-131-145', '131–145 · State, Nodes & Control Flow'),
+    doc('chapters/chapters-146-155', '146–155 · Durability, Persistence & HITL'),
   ]),
   category('Agents & Multi-Agent Systems', [
-    doc('chapters/156-170-agents-multi-agent-memory-hitl', '156–170 · Agents, Multi-Agent, Memory & HITL'),
+    doc('chapters/chapters-156-170', '156–170 · Agents, Multi-Agent, Memory & HITL'),
   ]),
   category('MCP, OAuth & Permissions', [
-    doc('chapters/171-180-mcp-tools-oauth', '171–180 · MCP, OAuth & Permissions'),
+    doc('chapters/chapters-171-180', '171–180 · MCP, OAuth & Permissions'),
   ]),
   category('Evals, Observability & Security', [
-    doc('chapters/181-190-evals-observability-security', '181–190 · Evals, Observability & Security'),
+    doc('chapters/chapters-181-190', '181–190 · Evals, Observability & Security'),
   ]),
   category('Production & Staff Engineering', [
-    doc('chapters/191-200-production-staff-engineering', '191–200 · Production Architecture & Staff Engineering'),
+    doc('chapters/chapters-191-200', '191–200 · Production Architecture & Staff Engineering'),
   ]),
   category('Projects', [
     doc('projects/projects-01-05', 'Projects 01–05'),
