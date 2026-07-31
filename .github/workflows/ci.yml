@@ -43,6 +43,77 @@ jobs:
           fi
           exit "$status"
 
+      - name: Verify React Native search artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          INDEX='build/search-index-docs-default-current.json'
+          test -f "$INDEX"
+          grep -Fq 'TurboModules' "$INDEX"
+          grep -Fq 'Hermes' "$INDEX"
+          grep -Fq 'Codegen' "$INDEX"
+          grep -Fq 'Gradle' "$INDEX"
+          grep -Fq 'CocoaPods' "$INDEX"
+          echo 'PASS React Native terms remain in production search index'
+
+      - name: Verify final audit Pages deployment run
+        shell: bash
+        run: |
+          set -euo pipefail
+          MERGE_SHA='cf34207bb30a2abdf95b0df533406e2cd4b49e78'
+          API="https://api.github.com/repos/salman0butt/handbook/actions/runs?head_sha=$MERGE_SHA"
+          for attempt in $(seq 1 30); do
+            curl -fsSL -H 'Accept: application/vnd.github+json' "$API" -o /tmp/runs.json
+            if python - <<'PY'
+          import json
+          with open('/tmp/runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          runs = [r for r in data.get('workflow_runs', []) if r.get('event') == 'push' and r.get('name') == 'Deploy handbook to GitHub Pages']
+          ok = [r for r in runs if r.get('conclusion') == 'success']
+          if ok:
+              r = ok[0]
+              print(f"PASS final Pages workflow run {r['id']} {r.get('html_url', '')}")
+              raise SystemExit(0)
+          print('Final Pages run state:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+          raise SystemExit(1)
+          PY
+            then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'FAIL final audit Pages deployment did not reach success'
+          exit 1
+
+      - name: Verify final live React Native certification
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://salman0butt.github.io/handbook'
+
+          check_page() {
+            local path="$1"
+            local needle="$2"
+            local body=''
+            for attempt in $(seq 1 20); do
+              body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$BASE$path" || true)
+              if grep -Fq "$needle" <<< "$body"; then
+                echo "PASS $path -> $needle"
+                return 0
+              fi
+              echo "Attempt $attempt: $path not ready yet"
+              sleep 5
+            done
+            echo "FAIL $path missing expected content: $needle"
+            return 1
+          }
+
+          check_page '/react-native' 'Complete'
+          check_page '/docs/react-native/reference/final-completeness-audit' 'Status: COMPLETE'
+          check_page '/docs/react-native/intro' 'React Native + Community CLI Developer Handbook'
+          check_page '/docs/react-native/chapters/chapters-141-160' 'TurboModules'
+          check_page '/docs/react-native/interview-question-bank/interview-questions-staff-321-400' 'Q400'
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
