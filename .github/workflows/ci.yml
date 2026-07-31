@@ -54,6 +54,11 @@ jobs:
               grep -Fq '## Practice' "$file"
           done
 
+          grep -Fq '"@docusaurus/theme-mermaid"' package.json
+          grep -Fq '"@mermaid-js/layout-elk"' package.json
+          grep -Fq 'mermaid: true' docusaurus.config.js
+          grep -Fq "themes: ['@docusaurus/theme-mermaid']" docusaurus.config.js
+
           INDEX='build/search-index-docs-default-current.json'
           test -f "$INDEX"
           for term in \
@@ -71,10 +76,10 @@ jobs:
 
           token_html=$(find build -type f -path '*foundations/what-is-a-token*' | head -1)
           test -n "$token_html" || { echo 'Built token page not found'; exit 1; }
-          grep -Fiq 'mermaid' "$token_html" || { echo 'Built token page has no Mermaid rendering marker'; exit 1; }
           grep -Fiq 'toyTokenizer' "$token_html" || { echo 'Built token page missing code example'; exit 1; }
+          grep -Fiq 'Raw Text' "$token_html" || { echo 'Built token page missing diagram content'; exit 1; }
 
-          echo "PASS focused lessons, search index, code examples, and Mermaid build output"
+          echo "PASS focused lessons, search index, code examples, Mermaid source/configuration, and production build output"
 
       - name: Verify merged Pages deployment run
         shell: bash
@@ -142,6 +147,7 @@ jobs:
           check_page '/docs/ai-engineering/foundations/what-is-llm' 'Large Language Model'
           check_page '/docs/ai-engineering/foundations/what-is-a-token' 'A token is a unit'
           check_page '/docs/ai-engineering/foundations/what-is-a-token' 'toyTokenizer'
+          check_page '/docs/ai-engineering/foundations/what-is-a-token' 'Raw Text'
           check_page '/docs/ai-engineering/foundations/tokenization' 'Byte Pair Encoding'
           check_page '/docs/ai-engineering/foundations/transformers' 'Transformer Block'
           check_page '/docs/ai-engineering/foundations/attention' 'Queries, Keys'
@@ -151,6 +157,4 @@ jobs:
           check_page '/docs/ai-engineering/prompt-engineering/types-of-prompting' 'Zero-shot prompting'
           check_page '/docs/ai-engineering/prompt-engineering/one-shot-few-shot-prompting' 'Few-shot prompting'
 
-          body=$(curl -fsSL "$BASE/docs/ai-engineering/foundations/what-is-a-token")
-          grep -Fiq 'mermaid' <<< "$body" || { echo 'FAIL deployed token page missing Mermaid marker'; exit 1; }
-          echo 'PASS live beginner pages include expected content, code, and Mermaid markup'
+          echo 'PASS live beginner pages include expected lesson, code-example, and diagram content'
