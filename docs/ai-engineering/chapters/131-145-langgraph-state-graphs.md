@@ -1,6 +1,6 @@
 ---
 id: chapters-131-145
-title: 131–145 — LangGraph TypeScript: State, Nodes & Control Flow
+title: "131–145 — LangGraph TypeScript: State, Nodes & Control Flow"
 ---
 
 # 131 — What LangGraph Is
