@@ -1,6 +1,6 @@
 ---
 id: mcp-architecture-current
-title: MCP Architecture: Host, Client & Server
+title: "MCP Architecture: Host, Client & Server"
 ---
 
 # MCP Architecture: Host, Client & Server
