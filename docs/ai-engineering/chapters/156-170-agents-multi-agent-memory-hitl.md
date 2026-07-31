@@ -1,0 +1,140 @@
+---
+id: chapters-156-170
+title: 156–170 — Agents, Multi-Agent Systems, Memory & HITL
+---
+
+# 156 — What an Agent Is
+
+A useful simplification is:
+
+```text
+LLM + tools + state + control loop = agent
+```
+
+But the boundary is fuzzy. A tool-using assistant with one fixed tool call is less agentic than a runtime that observes state, chooses actions, uses tools, revises plans, and decides when to stop.
+
+**Rule.** Describe the control pattern precisely rather than labeling every model call an “agent.”
+
+# 157 — Workflow vs Agent
+
+A **workflow** has application-defined control flow. An **agent** delegates more action/route selection to the model.
+
+```text
+known business process → workflow/graph
+unknown path requiring tool choice → agentic loop
+```
+
+Prefer deterministic workflows when the sequence is known. They are cheaper, easier to evaluate, and easier to secure.
+
+# 158 — ReAct
+
+ReAct-style agents interleave model reasoning/action selection with observations from tools.
+
+```text
+observe → decide action → execute tool → observe result → ... → answer
+```
+
+The production runtime must bound loops, validate tool arguments, enforce permissions, detect repeated actions, and record the trajectory. The model’s internal reasoning is not the audit log; tool/action events are.
+
+# 159 — Planner / Executor
+
+A planner proposes a task decomposition; an executor performs steps and reports observations. Planning can be revised when evidence changes.
+
+```text
+User → Planner → Plan → Executor → Tools → Evaluator → revise/finish
+```
+
+Use for genuinely variable multi-step work. Avoid planner overhead for a stable pipeline where code already knows the correct sequence.
+
+# 160 — Router & Supervisor Patterns
+
+A router selects one next capability. A supervisor coordinates multiple workers/agents and decides delegation/aggregation.
+
+Routing should use deterministic rules for policy boundaries and model judgment only for ambiguous intent. Supervisors need explicit budgets and termination rules so delegation cannot recurse indefinitely.
+
+# 161 — Reflection, Critique & Evaluator/Optimizer
+
+Reflection patterns ask a model/evaluator to inspect a draft/trajectory against a rubric and produce feedback for revision.
+
+This can improve quality on writing, code, or research but adds calls and may amplify shared blind spots. Use independent checks where possible and stop after bounded iterations or when measured improvement plateaus.
+
+# 162 — Orchestrator / Workers
+
+The orchestrator decomposes independent subtasks, dispatches workers—often in parallel—and synthesizes their outputs.
+
+```text
+orchestrator
+ ├→ research worker
+ ├→ data worker
+ ├→ code worker
+ └→ reviewer
+      ↓
+  synthesis
+```
+
+Workers should have narrow tools/context and typed outputs. Parallelism helps only when tasks are meaningfully separable.
+
+# 163 — Agentic RAG
+
+Agentic RAG lets control logic decide when/where/how to retrieve, possibly query multiple sources or revise retrieval after observing results.
+
+Use it when static retrieval cannot handle the diversity of requests. Keep source authorization deterministic and evaluate trajectory efficiency—not just answer quality—because an agent may obtain the right answer with wasteful or unsafe searches.
+
+# 164 — Multi-Agent Systems
+
+Multiple agents can help when specialized context/tools/ownership produce better decomposition than one agent. They can also increase latency, cost, coordination errors, and evaluation complexity.
+
+Start single-agent or deterministic. Add agents only when evals show specialization/delegation improves task success enough to justify operations.
+
+# 165 — Multi-Agent Communication & State
+
+Decide what is shared: complete conversation, task-specific summaries, typed artifacts, or isolated worker state.
+
+Avoid a giant shared scratchpad that leaks secrets and creates coupling. Prefer narrow messages/artifacts with source/provenance. Supervisor state should track delegation IDs, budgets, outputs, failures, and completion.
+
+# 166 — Handoffs, Conflicts & Convergence
+
+A handoff transfers responsibility with explicit task/context. Conflict resolution needs deterministic or rubric-based policy: choose authoritative source, request another opinion, or escalate.
+
+Define convergence: maximum turns, acceptance rubric, no-progress detection, and terminal disagreement state. Two agents arguing forever is not robustness.
+
+# 167 — What “Memory” Can Mean
+
+Memory may mean:
+
+- current context window;
+- chat history;
+- graph state/checkpoint;
+- persistent user preferences;
+- semantic facts;
+- episodic past interactions;
+- database records retrieved on demand.
+
+Name the mechanism. “The agent remembers” hides retention, privacy, consistency, and retrieval semantics.
+
+# 168 — Short-Term vs Long-Term Memory
+
+Short-term state supports one active run/thread. Long-term memory persists beyond it and therefore needs lifecycle policy: consent, source, timestamp, update semantics, expiry, deletion, tenant/user ownership, and conflict handling.
+
+Do not store every conversation by default and call it personalization. Store information with explicit product value and user controls.
+
+# 169 — Human-in-the-Loop Design
+
+HITL is a stateful protocol:
+
+```text
+proposed action → persist → interrupt → human review
+                                  ├→ approve
+                                  ├→ modify
+                                  └→ reject
+                                         ↓
+                                  resume / stop
+```
+
+Bind approval to exact normalized arguments, actor, timestamp, policy version, and action ID. Re-check authorization before execution because permissions may change while a run waits.
+
+# 170 — Agent Reliability Checklist
+
+Before shipping an agent, define: allowed tools; read/write risk; auth scopes; max steps/time/tokens/cost; idempotency; retries; human approvals; state persistence; cancellation; structured terminal states; trajectory evals; trace/redaction policy; fallback behavior; and incident kill switch.
+
+The senior design question is not “Which agent framework?” It is “Which decisions may be probabilistic, which invariants stay deterministic, and how will we prove the whole loop remains useful and safe?”
