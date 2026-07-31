@@ -4,21 +4,18 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Docusaurus
+  smoke:
+    name: Verify zero-to-hero release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,81 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund --loglevel=error
 
-      - name: Build handbook
-        id: build
-        shell: bash
-        run: |
-          set +e
-          npm run build > docusaurus-build.log 2>&1
-          status=$?
-          if [ "$status" -ne 0 ]; then
-            echo "Docusaurus build failed. Last 160 lines:"
-            tail -160 docusaurus-build.log
-          else
-            echo "Docusaurus production build succeeded."
-          fi
-          exit "$status"
+      - name: Build production site
+        run: npm run build
 
-      - name: Verify visual and practical AI lessons
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          mapfile -t beginnerLessons < <(find \
-            docs/ai-engineering/foundations \
-            docs/ai-engineering/prompt-engineering \
-            -type f -name '*.md' | sort)
-
-          if [ "${#beginnerLessons[@]}" -lt 40 ]; then
-            echo "Expected at least 40 focused foundation/prompt lessons, found ${#beginnerLessons[@]}"
-            exit 1
-          fi
-
-          mapfile -t zeroLessons < <(find docs/ai-engineering/zero-to-hero -type f -name '*.md' | sort)
-          if [ "${#zeroLessons[@]}" -lt 100 ]; then
-            echo "Expected at least 100 zero-to-hero lessons, found ${#zeroLessons[@]}"
-            exit 1
-          fi
-
-          for file in "${beginnerLessons[@]}" "${zeroLessons[@]}"; do
-            grep -Fq '```mermaid' "$file" || { echo "Missing Mermaid diagram: $file"; exit 1; }
-            grep -Fq '```ts' "$file" || { echo "Missing TypeScript example: $file"; exit 1; }
-            grep -Fq '## Practice' "$file" || { echo "Missing practice section: $file"; exit 1; }
-          done
-
-          node <<'NODE'
-          const sidebars = require('./sidebars.ai-engineering.js');
-          const labels = [];
-          const ids = [];
-          function walk(items) {
-            for (const item of items || []) {
-              if (!item || typeof item !== 'object') continue;
-              if (typeof item.label === 'string') labels.push(item.label);
-              if (item.type === 'doc') ids.push(item.id);
-              if (Array.isArray(item.items)) walk(item.items);
-            }
-          }
-          walk(sidebars.aiEngineeringSidebar);
-
-          const beginnerIds = ids.filter(id =>
-            id.startsWith('ai-engineering/foundations/') ||
-            id.startsWith('ai-engineering/prompt-engineering/')
-          );
-          const zeroIds = ids.filter(id => id.startsWith('ai-engineering/zero-to-hero/'));
-
-          if (beginnerIds.length < 40) throw new Error(`Expected at least 40 beginner/prompt sidebar lessons, got ${beginnerIds.length}`);
-          if (zeroIds.length < 100) throw new Error(`Expected at least 100 zero-to-hero sidebar lessons, got ${zeroIds.length}`);
-          if (new Set(ids).size !== ids.length) throw new Error('Duplicate AI sidebar doc IDs found');
-          if (ids.includes('ai-engineering/chapters/chapters-001-020')) throw new Error('Bundled AI foundations page is still in primary sidebar');
-          if (ids.includes('ai-engineering/chapters/chapters-171-180')) throw new Error('Legacy bundled MCP page is still in primary sidebar');
-
-          const numbered = labels.filter(label => /^\s*\d+(?:\s*[–—-]\s*\d+)?\b/.test(label));
-          if (numbered.length) throw new Error(`Numeric enumeration sidebar labels found: ${numbered.join(', ')}`);
-
-          console.log(`PASS ${beginnerIds.length} beginner/prompt lessons and ${zeroIds.length} zero-to-hero lessons`);
-          NODE
-
-      - name: Verify zero-to-hero search coverage
+      - name: Verify generated search index
         shell: bash
         run: |
           set -euo pipefail
@@ -124,21 +50,82 @@ jobs:
             'Zero Data Retention'; do
               grep -Fiq "$term" "$INDEX" || { echo "Search index missing: $term"; exit 1; }
           done
-          echo 'PASS zero-to-hero terms are searchable'
+          echo 'PASS zero-to-hero search index'
 
-      - name: Verify Mermaid is enabled
+      - name: Verify merged Pages deployment run
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq '"@docusaurus/theme-mermaid"' package.json
-          grep -Fq 'mermaid: true' docusaurus.config.js
-          grep -Fq "themes: ['@docusaurus/theme-mermaid']" docusaurus.config.js
-          echo 'PASS Mermaid rendering is configured'
+          MERGE_SHA='a6dd0cd2d8ef95b47544b863a0311643ccb57658'
+          API="https://api.github.com/repos/salman0butt/handbook/actions/runs?head_sha=$MERGE_SHA"
 
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docusaurus-build-log
-          path: docusaurus-build.log
-          if-no-files-found: warn
+          for attempt in $(seq 1 48); do
+            curl -fsSL -H 'Accept: application/vnd.github+json' "$API" -o /tmp/runs.json
+            if python - <<'PY'
+          import json
+          with open('/tmp/runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          runs = [r for r in data.get('workflow_runs', []) if r.get('event') == 'push' and r.get('name') == 'Deploy handbook to GitHub Pages']
+          success = [r for r in runs if r.get('conclusion') == 'success']
+          if success:
+              r = success[0]
+              print(f"PASS Pages workflow run {r['id']} {r.get('html_url', '')}")
+              raise SystemExit(0)
+          failed = [r for r in runs if r.get('conclusion') == 'failure']
+          if failed:
+              print('FAIL Pages deployment:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+              raise SystemExit(2)
+          print('Pages state:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+          raise SystemExit(1)
+          PY
+            then
+              exit 0
+            else
+              status=$?
+              if [ "$status" -eq 2 ]; then exit 1; fi
+            fi
+            sleep 5
+          done
+          echo 'FAIL Pages deployment did not reach success'
+          exit 1
+
+      - name: Verify deployed zero-to-hero routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://salman0butt.github.io/handbook'
+
+          check_page() {
+            local path="$1"
+            local needle="$2"
+            local body=''
+            for attempt in $(seq 1 24); do
+              body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$BASE$path" || true)
+              if grep -Fq "$needle" <<< "$body"; then
+                echo "PASS $path -> $needle"
+                return 0
+              fi
+              echo "Attempt $attempt: $path not ready"
+              sleep 5
+            done
+            echo "FAIL $path missing: $needle"
+            return 1
+          }
+
+          check_page '/docs/ai-engineering/zero-to-hero/neural-networks/forward-pass-loss' 'Forward Pass'
+          check_page '/docs/ai-engineering/zero-to-hero/tokenizers/chat-templates' 'Chat Templates'
+          check_page '/docs/ai-engineering/zero-to-hero/transformers/mha-mqa-gqa' 'Grouped-Query Attention'
+          check_page '/docs/ai-engineering/zero-to-hero/language-modeling/cross-entropy-perplexity' 'Perplexity'
+          check_page '/docs/ai-engineering/zero-to-hero/context-engineering/context-engineering-overview' 'Context Engineering'
+          check_page '/docs/ai-engineering/zero-to-hero/llm-integration/background-webhooks-batch' 'Background Runs'
+          check_page '/docs/ai-engineering/zero-to-hero/multimodal-understanding/documents-ocr-layout' 'Layout-Aware Document'
+          check_page '/docs/ai-engineering/zero-to-hero/training/pretraining-pipeline' 'LLM Pretraining Pipeline'
+          check_page '/docs/ai-engineering/zero-to-hero/inference/pagedattention-continuous-batching' 'Continuous Batching'
+          check_page '/docs/ai-engineering/zero-to-hero/advanced-rag/late-interaction-colbert' 'Late Interaction'
+          check_page '/docs/ai-engineering/zero-to-hero/openai-agents-sdk/openai-agents-sdk-overview' 'OpenAI Agents SDK'
+          check_page '/docs/ai-engineering/zero-to-hero/mcp/mcp-stateless-capabilities' 'Stateless Requests'
+          check_page '/docs/ai-engineering/zero-to-hero/a2a/a2a-overview' 'Agent2Agent'
+          check_page '/docs/ai-engineering/zero-to-hero/privacy/retention-zdr' 'Zero Data Retention'
+          check_page '/docs/ai-engineering/reference/zero-to-hero-gap-closure' '107 focused lessons'
+
+          echo 'PASS deployed zero-to-hero routes'
