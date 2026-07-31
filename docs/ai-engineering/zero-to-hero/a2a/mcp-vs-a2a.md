@@ -1,6 +1,6 @@
 ---
 id: mcp-vs-a2a
-title: MCP vs A2A: Tools vs Remote Agents
+title: "MCP vs A2A: Tools vs Remote Agents"
 ---
 
 # MCP vs A2A: Tools vs Remote Agents
