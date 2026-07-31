@@ -5,29 +5,32 @@ title: MCP Coverage
 
 # MCP Coverage
 
-**Stable production baseline:** MCP specification 2025-11-25. **Version-sensitive:** 2026-07-28 protocol revision/SDK v2-era migration behavior remains draft/beta at the July 31, 2026 authoring baseline.
+**Current baseline:** MCP specification **2026-07-28**.
 
-| Topic | Coverage |
+| Topic | Dedicated coverage |
 |---|---|
-| what MCP solves / what it is not | 171 |
-| host / client / server | 172 |
-| tools / resources / prompts | 173 |
-| stdio / Streamable HTTP / legacy SSE | 174 |
-| initialization / capabilities / discovery / versioning | 175 |
-| TypeScript server | 176, Project 14 |
-| TypeScript client / discovery / allowlist | 177, Project 14 |
-| malicious metadata / tool poisoning / resource injection | 178 |
-| OAuth / PKCE / access & refresh tokens / audience | 179 |
-| scopes / per-tool authorization / approval | 180 |
-| filesystem/network/command/security boundaries | 178–180, 190 |
-| capstone MCP integration | capstone |
-| exercises / interviews | 145–158, Q119–Q136, Q203–Q208, Q261–Q267, staff governance questions |
+| MCP purpose; host / client / server | `zero-to-hero/mcp/mcp-architecture-current` |
+| stateless request core | `zero-to-hero/mcp/mcp-stateless-capabilities` |
+| per-request protocol version / client capabilities | `zero-to-hero/mcp/mcp-stateless-capabilities` |
+| `server/discover` | `zero-to-hero/mcp/mcp-server-discovery` |
+| stdio and Streamable HTTP | `zero-to-hero/mcp/mcp-transports-subscriptions` |
+| `subscriptions/listen` | `zero-to-hero/mcp/mcp-transports-subscriptions` |
+| tools | `zero-to-hero/mcp/mcp-tools-current` |
+| resources and cache hints | `zero-to-hero/mcp/mcp-resources-current` |
+| prompts | `zero-to-hero/mcp/mcp-prompts-current` |
+| MRTR / `input_required` | `zero-to-hero/mcp/mcp-elicitation-mrtr` |
+| Tasks extension | `zero-to-hero/mcp/mcp-tasks-extension` |
+| Skills over MCP / MCP Apps | `zero-to-hero/mcp/mcp-skills-apps` |
+| OAuth / consent / audience / scope security | `zero-to-hero/mcp/mcp-oauth-security-current` |
+| migration from 2025-11-25 | `zero-to-hero/mcp/mcp-deprecations-migration` |
+| deprecated Roots / Sampling / Logging / old HTTP+SSE guidance | migration lesson |
+| Agents SDK + MCP | `zero-to-hero/openai-agents-sdk/agents-sdk-realtime-mcp` |
+| MCP vs remote-agent interoperability | `zero-to-hero/a2a/mcp-vs-a2a` |
 
 ```text
-MCP ≠ LLM
-MCP ≠ agent framework
-MCP ≠ LangChain
-MCP ≠ LangGraph
+MCP != LLM
+MCP != agent framework
+MCP != remote-agent protocol
 ```
 
-MCP standardizes connectivity and discovery. The host/application still owns trust, permission, authorization, approval, data-flow, sandboxing, and audit decisions.
+MCP standardizes an application/agent-to-capability-server boundary. The host/application still owns trust, authorization, user consent, data flow, sandboxing and audit decisions.

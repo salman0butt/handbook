@@ -1,110 +1,75 @@
 ---
 id: version-baseline
-title: Version Baseline — July 31, 2026
+title: Version Baseline — August 1, 2026
 sidebar_position: 2
 ---
 
-# Version Baseline — July 31, 2026
+# Version Baseline — August 1, 2026
 
-AI APIs, generative-media libraries, and agent frameworks change quickly. This handbook records the assumptions behind every version-sensitive example instead of pretending an API is timeless.
+AI APIs, inference engines, generative-media libraries, agent frameworks, and interoperability protocols change quickly. This page records the current assumptions behind version-sensitive examples; durable engineering concepts remain separated from SDK syntax.
 
 ## Production baseline
 
 | Area | Handbook baseline | Guidance |
 | --- | --- | --- |
-| Runtime | Node.js 20+; current LTS preferred | Use strict TypeScript and ESM-compatible packages where practical. |
-| Validation | Zod 4.x | Validate model/tool/media boundaries at runtime. |
-| OpenAI | Responses API as the primary modern text/reasoning API; current specialized media/realtime APIs where needed | Prefer the modern API surface for new examples while keeping application architecture provider-neutral. |
-| OpenAI Agents SDK | `@openai/agents` current stable | Used where provider-specific agent SDK examples are useful; not the architecture default. |
-| LangChain JS/TS | `langchain` 1.5.x baseline | Modern `createAgent`, tools, middleware, structured output, retrievers, and model integrations. |
-| LangGraph JS/TS | `@langchain/langgraph` 1.4.x baseline | Low-level stateful graph/runtime examples: state, nodes, edges, persistence, interrupts, subgraphs, durable workflows. |
-| LangChain OpenAI integration | `@langchain/openai` 1.5.x baseline | Keep provider integration separate from generic orchestration concepts. |
-| MCP protocol | **2025-11-25 stable specification** | The 2026-07-28 protocol work is still a draft/beta migration target at this audit date; do not teach draft semantics as the stable production default. |
-| MCP TypeScript SDK | `@modelcontextprotocol/sdk` 1.30.x production line | v2/draft examples must be explicitly labeled experimental/version-sensitive. |
-| Hugging Face Diffusers | **0.39.x stable line** | Generative image/video/audio concepts, pipelines, schedulers, adapters, DiT/FlowMatch examples, optimization, and media serving. |
-| Hugging Face PEFT | **0.20.x stable line** | LoRA and other parameter-efficient adaptation concepts; works across Transformers/Diffusers integrations. |
-| Hugging Face Transformers | **5.14.x stable line** | Multimodal processing, audio/vision/video model context, training concepts, and quantization guidance. |
-| Transformers.js | **3.8.x stable line** | Relevant for JavaScript/browser/local inference examples; not assumed for every production workload. |
-| PostgreSQL vectors | pgvector current stable | Exact search plus HNSW/IVFFlat trade-offs are taught. |
-| Pinecone / Qdrant / Weaviate / Redis | Current official APIs/concepts at authoring date | Concepts remain provider-neutral; provider-specific syntax is isolated in adapters/examples. |
-
-## Generative AI compatibility note
-
-The dedicated Generative AI track distinguishes durable concepts from fast-moving model-specific controls.
-
-**Durable concepts** include:
-
-- autoregressive generation;
-- latent representations and autoencoders;
-- diffusion and iterative denoising;
-- Diffusion Transformers;
-- flow matching / rectified-flow mental models;
-- conditioning and guidance;
-- image/audio/video generation;
-- multimodal processing;
-- PEFT/LoRA;
-- quantization and distillation;
-- synthetic data and multimodal evaluation;
-- asynchronous media serving and asset lineage.
-
-**Version-sensitive details** include exact model IDs, scheduler compatibility, supported adapters, provider media endpoints, resolution/duration limits, realtime event names, rate limits, and generation parameter names.
-
-Examples therefore teach a stable application boundary first and provider/library syntax second.
-
-## OpenAI model guidance
-
-The current OpenAI model catalog changes independently of this handbook. Examples therefore use environment-configured model identifiers instead of hard-coding one model everywhere:
-
-```ts
-const MODEL = process.env.AI_MODEL ?? "gpt-5.6";
-```
-
-The current model family at this baseline includes GPT-5.6 variants, plus specialized image, audio/realtime, and other modality-specific models. Model selection chapters teach capability/latency/cost/evaluation-driven routing rather than assuming the largest model is always correct.
-
-## Stable vs version-sensitive guidance
-
-Every example falls into one of three categories:
-
-- **Conceptual/stable** — embeddings, diffusion mental models, retrieval metrics, idempotency, authorization, queue semantics, adapter boundaries, evaluation design.
-- **Current API** — imports, method names, request fields, framework helpers verified against current official docs.
-- **Version-sensitive** — beta/draft protocol features, newly released SDK surface, specialized media controls, or provider behavior that may change quickly.
-
-When a version-sensitive API changes, preserve the mental model and update only the adapter/syntax chapter unless the underlying architecture also changed.
+| Runtime | Node.js 20+; current LTS preferred | TypeScript-first application examples. |
+| Validation | Zod 4.x | Validate model, structured-output and tool boundaries at runtime. |
+| OpenAI | Responses API and current specialized realtime/media surfaces | Keep model IDs configurable and provider details behind adapters. |
+| OpenAI Agents SDK | current stable `@openai/agents` TypeScript line | Dedicated track for tools, handoffs, guardrails, sessions, HITL, tracing, realtime, MCP and sandbox agents. |
+| LangChain JS/TS | current stable 1.x line | Modern `createAgent`, middleware, structured output, tools and retrievers. |
+| LangGraph JS/TS | current stable 1.x line | Explicit state, graph topology, checkpoints, interrupts and durable workflows. |
+| MCP protocol | **2026-07-28 specification** | Current handbook baseline: stateless core, per-request protocol/capability metadata, `server/discover`, MRTR input-required flows and opt-in extensions. |
+| MCP extensions | current official extension specifications | Tasks, Skills over MCP and MCP Apps are extensions, not assumed core behavior. |
+| Agent-to-Agent protocol | current official A2A specification | Remote-agent interoperability: Agent Cards, Messages, Tasks, Artifacts, streaming and push notifications. |
+| Hugging Face Transformers | current stable line | Tokenizers/chat templates, model internals, local inference, multimodal processing and quantization concepts. |
+| Hugging Face PEFT | current stable line | LoRA/QLoRA and parameter-efficient adaptation. |
+| Hugging Face Diffusers | current stable line | Image/video/audio generation, schedulers, adapters, DiT and flow-matching concepts. |
+| vLLM | current stable documentation | OpenAI-compatible serving, scheduling, KV-cache management, prefix caching, speculative decoding, structured output and distributed inference. |
+| llama.cpp / GGUF | current ecosystem formats/runtimes | Local/edge/CPU and consumer-GPU inference concepts; artifact integrity remains a production concern. |
+| pgvector / managed vector databases | current stable provider docs | Retrieval concepts remain provider-neutral. |
 
 ## MCP compatibility note
 
-The stable protocol architecture remains host → client → server, with servers exposing tools, resources, and prompts over supported transports such as stdio and Streamable HTTP. Authorization for HTTP transports follows OAuth-oriented resource-server guidance. The newer 2026-07-28 protocol revision is intentionally treated as **draft** in this handbook until finalized.
+The **2026-07-28** protocol is now the current specification taught by the handbook. Important differences from the previous architecture include:
 
-## LangChain / LangGraph compatibility note
+- stateless request semantics;
+- no protocol-level `Mcp-Session-Id` dependency;
+- removal of the old initialize/initialized handshake;
+- protocol version and client capabilities supplied per request;
+- `server/discover` for supported versions/capabilities/server identity;
+- `subscriptions/listen` for subscription/list-change streams;
+- multi round-trip `input_required` results for additional input;
+- Tasks moved to an extension;
+- Skills over MCP and MCP Apps as opt-in extensions;
+- deprecated Roots, Sampling, Logging and older HTTP+SSE guidance treated as migration knowledge, not the new default.
 
-Modern LangChain JavaScript uses `createAgent` and middleware-oriented extension points; modern LangChain agents are built on LangGraph. LangGraph remains the lower-level choice when an application needs explicit state, graph topology, checkpoints, interrupts, durable execution, custom routing, or long-running workflows.
+The durable host → client → server trust model remains useful: the host owns user experience, model use, authorization policy, approval and data-flow decisions.
 
-Avoid copying old tutorials that rely on deprecated executor/chain APIs without checking migration docs.
+## Model/training guidance
 
-## Generative media library note
+The zero-to-hero track now distinguishes:
 
-Diffusers' pipeline catalog now spans image, video, audio, editing/control, DiT, and 3D tasks. Scheduler documentation includes both diffusion schedulers and FlowMatch-specific schedulers. PEFT supports a broad adapter ecosystem and integrates with Transformers and Diffusers. Transformers exposes multimodal processors that combine text tokenization with image/video/audio processing and a broad quantization surface.
+- base vs instruct/chat models;
+- tokenizer/model compatibility and chat templates;
+- causal language modeling, cross-entropy and perplexity;
+- pretraining, SFT, preferences/DPO, RLHF/RLAIF, reinforcement fine-tuning and PEFT;
+- hosted APIs vs self-hosted inference;
+- prefill/decode, TTFT/TPOT, KV cache, continuous batching and quantization;
+- product evals from generic training/model metrics.
 
-The handbook does not treat one library as the architecture. These libraries are implementation examples behind provider-neutral generation, adaptation, evaluation, and serving interfaces.
+Exact optimizer defaults, quantization kernels, model IDs, context limits and training recipes are version-sensitive and must be verified against the selected stack.
 
 ## Source-of-truth policy
 
-Primary sources for implementation decisions are official documentation and specifications:
+Primary sources for implementation decisions are official documentation/specifications, including:
 
-- OpenAI developer documentation: `https://developers.openai.com/`
-- OpenAI Agents SDK TypeScript: `https://openai.github.io/openai-agents-js/`
-- LangChain JavaScript: `https://docs.langchain.com/oss/javascript/langchain/overview`
-- LangGraph JavaScript: `https://docs.langchain.com/oss/javascript/langgraph/overview`
-- MCP specification: `https://modelcontextprotocol.io/specification/2025-11-25`
-- MCP TypeScript SDK: `https://github.com/modelcontextprotocol/typescript-sdk`
-- Hugging Face Diffusers: `https://huggingface.co/docs/diffusers/`
-- Hugging Face PEFT: `https://huggingface.co/docs/peft/`
-- Hugging Face Transformers: `https://huggingface.co/docs/transformers/`
-- Hugging Face Transformers.js: `https://huggingface.co/docs/transformers.js/`
-- pgvector: `https://github.com/pgvector/pgvector`
-- Pinecone docs: `https://docs.pinecone.io/`
-- Qdrant docs: `https://qdrant.tech/documentation/`
-- Weaviate docs: `https://docs.weaviate.io/`
-- Redis vector search: `https://redis.io/docs/latest/develop/ai/search-and-query/vectors/`
+- OpenAI developer documentation and OpenAI Agents SDK TypeScript docs;
+- Hugging Face Transformers, PEFT and Diffusers documentation;
+- PyTorch documentation for training/autodiff fundamentals;
+- vLLM documentation for serving/inference engineering;
+- LangChain and LangGraph JavaScript documentation;
+- MCP specification **2026-07-28** and official TypeScript SDK;
+- A2A protocol specification;
+- official vector database and pgvector documentation.
 
-The reference coverage documents map these sources to chapters and mark version-sensitive assumptions explicitly.
+Community examples can be useful for operational experience, but current syntax/protocol behavior is not inferred from old tutorials when official docs disagree.

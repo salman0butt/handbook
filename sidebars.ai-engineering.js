@@ -22,7 +22,6 @@ sidebars.aiEngineeringSidebar = [
       doc('foundations/what-is-generative-ai', 'What Is Generative AI?'),
       doc('foundations/nlp-language-modeling', 'NLP & Language Modeling'),
     ], {collapsed: false}),
-
     category('LLM Basics', [
       doc('foundations/what-is-llm', 'What Is a Large Language Model?'),
       doc('foundations/model-parameters', 'Model Parameters, Weights & Model Size'),
@@ -34,7 +33,6 @@ sidebars.aiEngineeringSidebar = [
       doc('foundations/context-window', 'Context Window & Token Budget'),
       doc('foundations/prompt-context-memory', 'Prompt, Context, Conversation & Memory'),
     ], {collapsed: false}),
-
     category('Generation & Reliability', [
       doc('foundations/inference-generation', 'Inference & Autoregressive Generation'),
       doc('foundations/logits-softmax-probabilities', 'Logits, Softmax & Token Probabilities'),
@@ -43,7 +41,6 @@ sidebars.aiEngineeringSidebar = [
       doc('foundations/hallucinations-grounding', 'Hallucinations, Grounding & Uncertainty'),
       doc('foundations/model-selection', 'Model Selection'),
     ]),
-
     category('Caching & Performance Basics', [
       doc('foundations/kv-cache', 'KV Cache'),
       doc('foundations/prompt-cache', 'Prompt Caching'),
@@ -51,6 +48,46 @@ sidebars.aiEngineeringSidebar = [
       doc('foundations/token-cost-latency', 'Tokens, Cost, Latency & Throughput'),
     ]),
   ], {collapsed: false}),
+
+  category('Neural Network Training', [
+    doc('zero-to-hero/neural-networks/forward-pass-loss', 'Forward Pass & Loss Functions'),
+    doc('zero-to-hero/neural-networks/gradients-backprop', 'Gradients & Backpropagation'),
+    doc('zero-to-hero/neural-networks/gradient-descent-optimizers', 'Gradient Descent & Optimizers'),
+    doc('zero-to-hero/neural-networks/batches-epochs-learning-rate', 'Batches, Epochs & Learning Rate'),
+    doc('zero-to-hero/neural-networks/train-validation-test', 'Training, Validation & Test Sets'),
+    doc('zero-to-hero/neural-networks/overfitting-regularization', 'Overfitting & Regularization'),
+    doc('zero-to-hero/neural-networks/training-loop', 'The Complete Training Loop'),
+    doc('zero-to-hero/neural-networks/precision-hardware', 'Numerical Precision & AI Accelerators'),
+  ]),
+
+  category('Tokenizers & Chat Model Internals', [
+    doc('zero-to-hero/tokenizers/vocabulary-special-tokens', 'Vocabulary, Token IDs & Special Tokens'),
+    doc('zero-to-hero/tokenizers/bpe-wordpiece-unigram', 'BPE, WordPiece & Unigram Tokenization'),
+    doc('zero-to-hero/tokenizers/padding-truncation-masks', 'Padding, Truncation & Attention Masks'),
+    doc('zero-to-hero/tokenizers/chat-templates', 'Chat Templates & Control Tokens'),
+    doc('zero-to-hero/tokenizers/tokenizer-training', 'Training & Evaluating a Tokenizer'),
+    doc('zero-to-hero/tokenizers/token-efficiency', 'Token Efficiency, Cost & Multilingual Effects'),
+  ]),
+
+  category('Transformer Internals', [
+    doc('zero-to-hero/transformers/transformer-block', 'Inside a Transformer Block'),
+    doc('zero-to-hero/transformers/residuals-normalization', 'Residual Connections, LayerNorm & RMSNorm'),
+    doc('zero-to-hero/transformers/mlp-activations', 'Feed-Forward Networks, GELU & SwiGLU'),
+    doc('zero-to-hero/transformers/positional-encoding-rope', 'Positional Encoding & RoPE'),
+    doc('zero-to-hero/transformers/mha-mqa-gqa', 'Multi-Head, Multi-Query & Grouped-Query Attention'),
+    doc('zero-to-hero/transformers/causal-masking', 'Causal Masking & Autoregressive Attention'),
+    doc('zero-to-hero/transformers/mixture-of-experts', 'Mixture of Experts'),
+    doc('zero-to-hero/transformers/encoder-decoder-architectures', 'Encoder, Decoder & Encoder-Decoder Models'),
+  ]),
+
+  category('Language Modeling & Decoding', [
+    doc('zero-to-hero/language-modeling/causal-objective', 'Causal Language Modeling Objective'),
+    doc('zero-to-hero/language-modeling/cross-entropy-perplexity', 'Cross-Entropy, Log Likelihood & Perplexity'),
+    doc('zero-to-hero/language-modeling/base-instruct-chat', 'Base, Instruct & Chat Models'),
+    doc('zero-to-hero/language-modeling/decoding-strategies', 'Greedy, Sampling & Beam Decoding'),
+    doc('zero-to-hero/language-modeling/logprobs-stop-controls', 'Logprobs, Stop Sequences & Repetition Controls'),
+    doc('zero-to-hero/language-modeling/speculative-decoding', 'Speculative Decoding'),
+  ]),
 
   category('Generative AI', [
     doc('generative-ai/overview', 'Foundations & Model Families'),
@@ -94,12 +131,52 @@ sidebars.aiEngineeringSidebar = [
     ]),
   ], {collapsed: false}),
 
-  category('Model APIs & Interaction', [
-    doc('chapters/chapters-021-040', 'Model API Interaction & Advanced Prompting Notes'),
+  category('Context Engineering', [
+    doc('zero-to-hero/context-engineering/context-engineering-overview', 'What Is Context Engineering?'),
+    doc('zero-to-hero/context-engineering/context-budgets-selection', 'Context Budgets & Selection'),
+    doc('zero-to-hero/context-engineering/history-trimming', 'Conversation History & Trimming'),
+    doc('zero-to-hero/context-engineering/compaction-compression', 'Context Compaction & Semantic Compression'),
+    doc('zero-to-hero/context-engineering/memory-vs-context', 'Memory vs Context vs Application State'),
+    doc('zero-to-hero/context-engineering/long-context-engineering', 'Long-Context Engineering'),
+    doc('zero-to-hero/context-engineering/context-security-evals', 'Context Poisoning, Injection & Evaluation'),
   ]),
+
+  category('LLM API Integration', [
+    doc('zero-to-hero/llm-integration/llm-first-request', 'Your First Production LLM Request'),
+    doc('zero-to-hero/llm-integration/request-response-lifecycle', 'Request, Response & Item Lifecycle'),
+    doc('zero-to-hero/llm-integration/conversation-state', 'Stateless vs Stateful Conversations'),
+    doc('zero-to-hero/llm-integration/llm-streaming', 'Streaming Responses & Event Handling'),
+    doc('zero-to-hero/llm-integration/background-webhooks-batch', 'Background Runs, Webhooks & Batch Processing'),
+    doc('zero-to-hero/llm-integration/realtime-llm-integration', 'Realtime LLM Integration'),
+    doc('zero-to-hero/llm-integration/multimodal-llm-inputs', 'Images, PDFs, Audio & Video Inputs'),
+    doc('zero-to-hero/llm-integration/llm-api-reliability', 'Rate Limits, Timeouts, Retries & Circuit Breakers'),
+    doc('zero-to-hero/llm-integration/provider-abstraction', 'Provider Abstraction, Routing & Fallbacks'),
+  ]),
+
+  category('Multimodal Understanding', [
+    doc('zero-to-hero/multimodal-understanding/multimodal-vision-models', 'Vision-Language Models & Image Understanding'),
+    doc('zero-to-hero/multimodal-understanding/documents-ocr-layout', 'PDFs, OCR & Layout-Aware Documents'),
+    doc('zero-to-hero/multimodal-understanding/charts-diagrams-understanding', 'Charts, Tables & Diagram Understanding'),
+    doc('zero-to-hero/multimodal-understanding/audio-understanding', 'Speech & Audio Understanding'),
+    doc('zero-to-hero/multimodal-understanding/video-understanding', 'Video Understanding & Temporal Reasoning'),
+    doc('zero-to-hero/multimodal-understanding/multimodal-security-evals', 'Multimodal Security & Evaluation'),
+  ]),
+
   category('Structured Outputs, Tools & Streaming', [
     doc('chapters/chapters-041-060', 'Structured Outputs, Tools & Streaming'),
   ]),
+
+  category('Training & Post-Training', [
+    doc('zero-to-hero/training/training-data-curation', 'Training Data Curation, Cleaning & Deduplication'),
+    doc('zero-to-hero/training/pretraining-pipeline', 'LLM Pretraining Pipeline'),
+    doc('zero-to-hero/training/supervised-fine-tuning', 'Supervised Fine-Tuning'),
+    doc('zero-to-hero/training/preference-dpo', 'Preference Data & Direct Preference Optimization'),
+    doc('zero-to-hero/training/rlhf-rlaif', 'RLHF, RLAIF & Reward Models'),
+    doc('zero-to-hero/training/reinforcement-fine-tuning', 'Reinforcement Fine-Tuning & Grader Design'),
+    doc('zero-to-hero/training/lora-qlora-internals', 'LoRA & QLoRA Internals'),
+    doc('zero-to-hero/training/eval-contamination-lineage', 'Training Evaluation, Contamination & Lineage'),
+  ]),
+
   category('Embeddings & Vector Search', [
     doc('chapters/chapters-061-080', 'Embeddings, Semantic Search & Vector Databases'),
   ]),
@@ -107,6 +184,29 @@ sidebars.aiEngineeringSidebar = [
     doc('chapters/chapters-081-100', 'RAG Foundations'),
     doc('chapters/chapters-101-110', 'Advanced RAG & Evaluation'),
   ]),
+  category('Advanced RAG Architectures', [
+    doc('zero-to-hero/advanced-rag/late-interaction-colbert', 'Late Interaction & ColBERT-Style Retrieval'),
+    doc('zero-to-hero/advanced-rag/multi-vector-retrieval', 'Multi-Vector Retrieval'),
+    doc('zero-to-hero/advanced-rag/retrieval-fusion', 'Retrieval Fusion & Reciprocal Rank Fusion'),
+    doc('zero-to-hero/advanced-rag/graph-rag', 'GraphRAG & Knowledge-Graph Retrieval'),
+    doc('zero-to-hero/advanced-rag/sql-code-rag', 'SQL RAG & Code RAG'),
+    doc('zero-to-hero/advanced-rag/multimodal-rag-advanced', 'Multimodal RAG'),
+    doc('zero-to-hero/advanced-rag/adaptive-corrective-self-rag', 'Adaptive, Corrective & Self-Reflective RAG'),
+    doc('zero-to-hero/advanced-rag/rag-index-migration', 'Embedding & Index Migration'),
+  ]),
+
+  category('Self-Hosted LLMs & Inference', [
+    doc('zero-to-hero/inference/hosted-vs-self-hosted', 'Hosted APIs vs Self-Hosted Models'),
+    doc('zero-to-hero/inference/huggingface-transformers-inference', 'Local Inference with Hugging Face Transformers'),
+    doc('zero-to-hero/inference/llama-cpp-gguf', 'llama.cpp, GGUF & Edge Inference'),
+    doc('zero-to-hero/inference/vllm-serving', 'vLLM Serving Architecture'),
+    doc('zero-to-hero/inference/prefill-vs-decode', 'Prefill, Decode, TTFT & TPOT'),
+    doc('zero-to-hero/inference/pagedattention-continuous-batching', 'PagedAttention & Continuous Batching'),
+    doc('zero-to-hero/inference/inference-quantization', 'Quantization & Low-Precision Inference'),
+    doc('zero-to-hero/inference/distributed-parallelism', 'Distributed Inference Parallelism'),
+    doc('zero-to-hero/inference/inference-capacity-observability', 'Capacity Planning & Inference Observability'),
+  ]),
+
   category('LangChain TypeScript', [
     doc('chapters/chapters-111-130', 'LangChain TypeScript'),
   ]),
@@ -114,15 +214,59 @@ sidebars.aiEngineeringSidebar = [
     doc('chapters/chapters-131-145', 'State, Nodes & Control Flow'),
     doc('chapters/chapters-146-155', 'Durability, Persistence & Human-in-the-Loop'),
   ]),
+
+  category('OpenAI Agents SDK TypeScript', [
+    doc('zero-to-hero/openai-agents-sdk/openai-agents-sdk-overview', 'Agents SDK Fundamentals'),
+    doc('zero-to-hero/openai-agents-sdk/agents-sdk-tools-output', 'Function Tools & Structured Output'),
+    doc('zero-to-hero/openai-agents-sdk/agents-sdk-guardrails', 'Input, Output & Tool Guardrails'),
+    doc('zero-to-hero/openai-agents-sdk/agents-sdk-handoffs', 'Handoffs, Agents as Tools & Managers'),
+    doc('zero-to-hero/openai-agents-sdk/agents-sdk-sessions-hitl', 'Sessions, Memory & Human-in-the-Loop'),
+    doc('zero-to-hero/openai-agents-sdk/agents-sdk-sandbox', 'Sandbox Agents'),
+    doc('zero-to-hero/openai-agents-sdk/agents-sdk-tracing-evals', 'Agent Tracing, Results & Evals'),
+    doc('zero-to-hero/openai-agents-sdk/agents-sdk-realtime-mcp', 'Realtime Agents & MCP Integration'),
+  ]),
+
   category('Agents & Multi-Agent Systems', [
     doc('chapters/chapters-156-170', 'Agents, Multi-Agent Systems, Memory & Human-in-the-Loop'),
   ]),
+
   category('MCP, OAuth & Permissions', [
-    doc('chapters/chapters-171-180', 'MCP, OAuth & Permissions'),
+    doc('zero-to-hero/mcp/mcp-architecture-current', 'MCP Architecture: Host, Client & Server'),
+    doc('zero-to-hero/mcp/mcp-stateless-capabilities', 'Stateless Requests & Per-Request Capabilities'),
+    doc('zero-to-hero/mcp/mcp-server-discovery', 'Server Discovery & Protocol Negotiation'),
+    doc('zero-to-hero/mcp/mcp-transports-subscriptions', 'stdio, Streamable HTTP & Subscriptions'),
+    doc('zero-to-hero/mcp/mcp-tools-current', 'MCP Tools'),
+    doc('zero-to-hero/mcp/mcp-resources-current', 'MCP Resources & Cache Hints'),
+    doc('zero-to-hero/mcp/mcp-prompts-current', 'MCP Prompts'),
+    doc('zero-to-hero/mcp/mcp-elicitation-mrtr', 'Elicitation & Multi Round-Trip Requests'),
+    doc('zero-to-hero/mcp/mcp-tasks-extension', 'Tasks Extension'),
+    doc('zero-to-hero/mcp/mcp-skills-apps', 'Skills over MCP & MCP Apps'),
+    doc('zero-to-hero/mcp/mcp-oauth-security-current', 'OAuth, Consent & Authorization Security'),
+    doc('zero-to-hero/mcp/mcp-deprecations-migration', 'Migration from the Previous MCP Architecture'),
   ]),
+
+  category('Agent-to-Agent Interoperability', [
+    doc('zero-to-hero/a2a/a2a-overview', 'Agent-to-Agent Protocol Fundamentals'),
+    doc('zero-to-hero/a2a/a2a-agent-cards', 'Agent Cards, Skills & Discovery'),
+    doc('zero-to-hero/a2a/a2a-tasks-messages-artifacts', 'Messages, Tasks, Parts & Artifacts'),
+    doc('zero-to-hero/a2a/a2a-streaming-async', 'Streaming, Push Notifications & Long-Running Tasks'),
+    doc('zero-to-hero/a2a/mcp-vs-a2a', 'MCP vs Agent-to-Agent Interoperability'),
+    doc('zero-to-hero/a2a/a2a-security-multitenancy', 'Authentication, Authorization & Multi-Tenancy'),
+  ]),
+
   category('Evals, Observability & Security', [
     doc('chapters/chapters-181-190', 'Evals, Observability & Security'),
   ]),
+
+  category('Privacy & Governance', [
+    doc('zero-to-hero/privacy/ai-data-flow-mapping', 'AI Data-Flow Mapping & Trust Boundaries'),
+    doc('zero-to-hero/privacy/retention-zdr', 'Data Retention & Zero Data Retention'),
+    doc('zero-to-hero/privacy/files-caches-state-privacy', 'Privacy of Files, Caches & Conversation State'),
+    doc('zero-to-hero/privacy/tenant-isolation-regions', 'Tenant Isolation, Residency & Regional Processing'),
+    doc('zero-to-hero/privacy/pii-secrets-redaction', 'PII, Secrets & Redaction'),
+    doc('zero-to-hero/privacy/model-supply-chain-governance', 'Model Supply Chain, Governance & Auditability'),
+  ]),
+
   category('Production & Staff Engineering', [
     doc('chapters/chapters-191-200', 'Production Architecture & Staff Engineering'),
   ]),
@@ -153,6 +297,7 @@ sidebars.aiEngineeringSidebar = [
   ]),
   category('Reference & Coverage', [
     doc('reference/official-docs-coverage', 'Official Docs Coverage'),
+    doc('reference/zero-to-hero-gap-closure', 'Zero-to-Hero Gap Closure'),
     doc('reference/generative-ai-coverage', 'Generative AI Coverage'),
     doc('reference/openai-api-coverage', 'OpenAI API Coverage'),
     doc('reference/rag-coverage', 'RAG Coverage'),
