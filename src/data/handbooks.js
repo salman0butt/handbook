@@ -60,7 +60,7 @@ export const handbookData = {
     studyPath: ['SQL foundations', 'Data modelling', 'Indexes & performance', 'Transactions & MVCC', 'Operations & reliability', 'Internals & architecture', 'Projects & interviews'],
   },
   reactNative: {
-    name: 'React Native', icon: 'RN', status: 'In Review', intro: '/docs/react-native/intro',
+    name: 'React Native', icon: 'RN', status: 'Complete', intro: '/docs/react-native/intro',
     description: 'A Community CLI-first React Native handbook for native Android and iOS engineering, from components and mobile UX through Metro, Hermes, Fabric, TurboModules, Codegen, native integration, performance, releases, projects, and staff-level architecture.',
     highlights: [
       {label: 'Build native apps', title: 'Android + iOS with Community CLI', description: 'Own the generated native projects, navigation, data, permissions, device APIs, Gradle, Xcode, CocoaPods, signing, and store release workflows.', href: '/docs/react-native/chapters/chapters-121-140'},
