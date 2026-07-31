@@ -1,6 +1,7 @@
 ---
 id: chapters-081-100
 title: 081–100 — RAG Foundations
+slug: /ai-engineering/chapters/081-100-rag-foundations
 ---
 
 # 081 — Why RAG Exists
