@@ -43,6 +43,67 @@ jobs:
           fi
           exit "$status"
 
+      - name: Verify beginner lessons are visual and practical
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t lessons < <(find \
+            docs/ai-engineering/foundations \
+            docs/ai-engineering/prompt-engineering \
+            -type f -name '*.md' | sort)
+
+          if [ "${#lessons[@]}" -lt 40 ]; then
+            echo "Expected at least 40 focused foundation/prompt lessons, found ${#lessons[@]}"
+            exit 1
+          fi
+
+          for file in "${lessons[@]}"; do
+            grep -Fq '```mermaid' "$file" || { echo "Missing Mermaid diagram: $file"; exit 1; }
+            grep -Fq '```ts' "$file" || { echo "Missing TypeScript example: $file"; exit 1; }
+            grep -Fq '## Practice' "$file" || { echo "Missing practice section: $file"; exit 1; }
+          done
+
+          node <<'NODE'
+          const sidebars = require('./sidebars.ai-engineering.js');
+          const labels = [];
+          const ids = [];
+          function walk(items) {
+            for (const item of items || []) {
+              if (!item || typeof item !== 'object') continue;
+              if (typeof item.label === 'string') labels.push(item.label);
+              if (item.type === 'doc') ids.push(item.id);
+              if (Array.isArray(item.items)) walk(item.items);
+            }
+          }
+          walk(sidebars.aiEngineeringSidebar);
+
+          const beginnerIds = ids.filter(id =>
+            id.startsWith('ai-engineering/foundations/') ||
+            id.startsWith('ai-engineering/prompt-engineering/')
+          );
+
+          if (beginnerIds.length < 40) {
+            throw new Error(`Expected at least 40 focused beginner/prompt sidebar lessons, got ${beginnerIds.length}`);
+          }
+          if (ids.includes('ai-engineering/chapters/chapters-001-020')) {
+            throw new Error('Bundled AI foundations page is still in primary sidebar');
+          }
+          const numbered = labels.filter(label => /\d/.test(label));
+          if (numbered.length) throw new Error(`Numeric sidebar labels found: ${numbered.join(', ')}`);
+
+          console.log(`PASS ${beginnerIds.length} focused beginner/prompt lessons; all labels number-free`);
+          NODE
+
+      - name: Verify Mermaid is enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "@docusaurus/theme-mermaid" package.json
+          grep -Fq "mermaid: true" docusaurus.config.js
+          grep -Fq "themes: ['@docusaurus/theme-mermaid']" docusaurus.config.js
+          echo 'PASS Mermaid rendering is configured'
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
