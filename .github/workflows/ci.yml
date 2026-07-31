@@ -43,46 +43,22 @@ jobs:
           fi
           exit "$status"
 
-      - name: Verify AI beginner lessons are visual and practical
+      - name: Verify beginner lessons are visual and practical
         shell: bash
         run: |
           set -euo pipefail
 
-          required=(
-            docs/ai-engineering/foundations/what-is-ai.md
-            docs/ai-engineering/foundations/ml-deep-learning-generative-ai.md
-            docs/ai-engineering/foundations/neural-networks.md
-            docs/ai-engineering/foundations/training-pretraining-posttraining.md
-            docs/ai-engineering/foundations/foundation-models.md
-            docs/ai-engineering/foundations/what-is-generative-ai.md
-            docs/ai-engineering/foundations/what-is-llm.md
-            docs/ai-engineering/foundations/model-parameters.md
-            docs/ai-engineering/foundations/what-is-a-token.md
-            docs/ai-engineering/foundations/tokenization.md
-            docs/ai-engineering/foundations/embeddings.md
-            docs/ai-engineering/foundations/transformers.md
-            docs/ai-engineering/foundations/attention.md
-            docs/ai-engineering/foundations/context-window.md
-            docs/ai-engineering/foundations/prompt-context-memory.md
-            docs/ai-engineering/foundations/inference-generation.md
-            docs/ai-engineering/foundations/logits-softmax-probabilities.md
-            docs/ai-engineering/foundations/sampling-temperature-top-p.md
-            docs/ai-engineering/foundations/reasoning-models.md
-            docs/ai-engineering/foundations/hallucinations-grounding.md
-            docs/ai-engineering/foundations/kv-cache.md
-            docs/ai-engineering/foundations/prompt-cache.md
-            docs/ai-engineering/foundations/response-cache.md
-            docs/ai-engineering/foundations/token-cost-latency.md
-            docs/ai-engineering/foundations/model-selection.md
-            docs/ai-engineering/prompt-engineering/what-is-prompt-engineering.md
-            docs/ai-engineering/prompt-engineering/prompt-anatomy.md
-            docs/ai-engineering/prompt-engineering/types-of-prompting.md
-            docs/ai-engineering/prompt-engineering/zero-shot-prompting.md
-            docs/ai-engineering/prompt-engineering/one-shot-few-shot-prompting.md
-          )
+          mapfile -t lessons < <(find \
+            docs/ai-engineering/foundations \
+            docs/ai-engineering/prompt-engineering \
+            -type f -name '*.md' | sort)
 
-          for file in "${required[@]}"; do
-            test -f "$file" || { echo "Missing lesson: $file"; exit 1; }
+          if [ "${#lessons[@]}" -lt 40 ]; then
+            echo "Expected at least 40 focused foundation/prompt lessons, found ${#lessons[@]}"
+            exit 1
+          fi
+
+          for file in "${lessons[@]}"; do
             grep -Fq '```mermaid' "$file" || { echo "Missing Mermaid diagram: $file"; exit 1; }
             grep -Fq '```ts' "$file" || { echo "Missing TypeScript example: $file"; exit 1; }
             grep -Fq '## Practice' "$file" || { echo "Missing practice section: $file"; exit 1; }
@@ -107,16 +83,26 @@ jobs:
             id.startsWith('ai-engineering/prompt-engineering/')
           );
 
-          if (beginnerIds.length < 30) {
-            throw new Error(`Expected at least 30 focused beginner/prompt lessons, got ${beginnerIds.length}`);
+          if (beginnerIds.length < 40) {
+            throw new Error(`Expected at least 40 focused beginner/prompt sidebar lessons, got ${beginnerIds.length}`);
           }
-
           if (ids.includes('ai-engineering/chapters/chapters-001-020')) {
-            throw new Error('Bundled AI foundations page is still in the primary sidebar');
+            throw new Error('Bundled AI foundations page is still in primary sidebar');
           }
+          const numbered = labels.filter(label => /\d/.test(label));
+          if (numbered.length) throw new Error(`Numeric sidebar labels found: ${numbered.join(', ')}`);
 
-          console.log(`PASS ${beginnerIds.length} focused beginner/prompt lessons in navigation`);
+          console.log(`PASS ${beginnerIds.length} focused beginner/prompt lessons; all labels number-free`);
           NODE
+
+      - name: Verify Mermaid is enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "@docusaurus/theme-mermaid" package.json
+          grep -Fq "mermaid: true" docusaurus.config.js
+          grep -Fq "themes: ['@docusaurus/theme-mermaid']" docusaurus.config.js
+          echo 'PASS Mermaid rendering is configured'
 
       - name: Upload build log
         if: always()
