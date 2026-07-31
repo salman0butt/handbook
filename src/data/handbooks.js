@@ -59,6 +59,16 @@ export const handbookData = {
     ],
     studyPath: ['SQL foundations', 'Data modelling', 'Indexes & performance', 'Transactions & MVCC', 'Operations & reliability', 'Internals & architecture', 'Projects & interviews'],
   },
+  reactNative: {
+    name: 'React Native', icon: 'RN', status: 'In Review', intro: '/docs/react-native/intro',
+    description: 'A Community CLI-first React Native handbook for native Android and iOS engineering, from components and mobile UX through Metro, Hermes, Fabric, TurboModules, Codegen, native integration, performance, releases, projects, and staff-level architecture.',
+    highlights: [
+      {label: 'Build native apps', title: 'Android + iOS with Community CLI', description: 'Own the generated native projects, navigation, data, permissions, device APIs, Gradle, Xcode, CocoaPods, signing, and store release workflows.', href: '/docs/react-native/chapters/chapters-121-140'},
+      {label: 'Understand internals', title: 'Hermes, Fabric, JSI & TurboModules', description: 'Reason from React through the renderer, Shadow Tree, Yoga, Codegen and New Architecture native boundaries instead of treating mobile as a black box.', href: '/docs/react-native/chapters/chapters-141-160'},
+      {label: 'Production mastery', title: 'Performance, architecture & interviews', description: 'Diagnose real failures, build production projects, practice 300 exercises and 400 interview questions, and design platforms for many teams.', href: '/docs/react-native/chapters/chapters-181-200'},
+    ],
+    studyPath: ['Community CLI & fundamentals', 'Mobile UI & state', 'Android & iOS', 'Metro & New Architecture', 'Production & release', 'Projects & interview mastery'],
+  },
   databases: {
     name: 'Databases', icon: 'DB', intro: '/docs/databases/intro',
     description: 'Data modelling, SQL, indexes, transactions, query optimisation, storage trade-offs, and distributed data concepts.',
