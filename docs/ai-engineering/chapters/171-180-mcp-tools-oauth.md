@@ -1,9 +1,9 @@
 ---
 id: chapters-171-180
-title: 171–180 — MCP, Tool Ecosystems, OAuth & Permissions
+title: MCP, Tool Ecosystems, OAuth & Permissions
 ---
 
-# 171 — What MCP Solves
+# What MCP Solves
 
 The Model Context Protocol (MCP) standardizes how AI applications connect to external capabilities and context providers. It is **not** an LLM, agent framework, LangChain replacement, or authorization system.
 
@@ -22,31 +22,31 @@ external system
 
 MCP reduces bespoke integration contracts while leaving application architecture and policy explicit.
 
-# 172 — Host, Client & Server
+# Host, Client & Server
 
 The **host** is the AI application. It creates/owns one or more **clients**, each connected to an MCP **server**. The server exposes protocol capabilities backed by an external system.
 
 Keep trust boundaries visible: connecting a server gives its descriptions/resources influence over model context and may expose callable actions. Server installation/connection is therefore a security decision.
 
-# 173 — Tools, Resources & Prompts
+# Tools, Resources & Prompts
 
 **Tools** represent callable actions/functions. **Resources** expose readable contextual data identified by URIs/templates. **Prompts** expose reusable prompt templates/workflows.
 
 Choose the primitive by semantics, not because everything is easiest to register as a tool. Clients can discover supported primitives and decide how to surface them to the model/user.
 
-# 174 — Transports
+# Transports
 
 For the stable 2025-11-25-era MCP baseline, use **stdio** for local process-spawned servers and **Streamable HTTP** for remote servers. Legacy HTTP+SSE is retained only for backward compatibility in the current v1 SDK guidance.
 
 Remote servers must validate origin/host behavior, use TLS through production infrastructure, authenticate requests, and avoid binding broadly by accident during local development.
 
-# 175 — Initialization, Capabilities & Discovery
+# Initialization, Capabilities & Discovery
 
 MCP peers negotiate supported protocol/capabilities and clients can discover tools/resources/prompts. Build for capability negotiation rather than assuming every server supports every feature.
 
 Treat 2026-07-28 protocol behavior as draft/version-sensitive at this baseline: it changes negotiation/session/server→client behavior and requires explicit migration decisions.
 
-# 176 — Build an MCP Server in TypeScript
+# Build an MCP Server in TypeScript
 
 Stable v1-style server:
 
@@ -74,7 +74,7 @@ await server.connect(new StdioServerTransport());
 
 The handler still owns real authorization and safe data shaping.
 
-# 177 — Build an MCP Client
+# Build an MCP Client
 
 A client connects over stdio or Streamable HTTP, discovers capabilities, and invokes allowed primitives.
 
@@ -90,7 +90,7 @@ callTool / readResource / getPrompt
 
 Do not automatically expose every discovered server tool to every model/session. Apply local allowlists, risk classification, user/tenant policy, and approval rules first.
 
-# 178 — MCP Security & Tool Poisoning
+# MCP Security & Tool Poisoning
 
 Threats include malicious tool descriptions, prompt injection through resources, data exfiltration, overbroad filesystem/network access, command execution, token theft, and a compromised/untrusted server.
 
@@ -110,7 +110,7 @@ executor
 
 Never let remote server text expand local privileges.
 
-# 179 — OAuth 2.x for AI Tools
+# OAuth 2.x for AI Tools
 
 For remote integrations, authorization often uses OAuth-style delegated access. Core concepts: authorization code flow, PKCE, resource-server metadata, access tokens, refresh tokens, scopes, consent, token audience, and secure storage.
 
@@ -124,7 +124,7 @@ AI application → scoped access token → MCP/API resource
 
 Use short-lived least-privilege access tokens, protect refresh tokens, validate audience/resource, and never pass upstream tokens through to unrelated services.
 
-# 180 — Per-Tool Permissions & Approval
+# Per-Tool Permissions & Approval
 
 Authorization belongs immediately before capability execution.
 
