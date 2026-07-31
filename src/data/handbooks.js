@@ -110,13 +110,13 @@ export const handbookData = {
     studyPath: ['Core', 'Plugins & themes', 'Blocks', 'Security', 'Performance'],
   },
   'ai-engineering': {
-    name: 'AI Engineering', icon: 'AI', intro: '/docs/ai-engineering/intro',
-    description: 'LLMs, prompting, retrieval, agents, tool use, evaluation, observability, safety, and production AI architecture.',
+    name: 'AI Engineering', icon: 'AI', status: 'In Review', intro: '/docs/ai-engineering/intro',
+    description: 'A TypeScript-first production AI handbook spanning LLM foundations, structured outputs, tools, embeddings, RAG, LangChain, LangGraph, agents, MCP, OAuth, evals, observability, security, performance, cost, incidents, and staff-level platform architecture.',
     highlights: [
-      {title: 'LLM application foundations', description: 'Prompts, structured outputs, model behaviour, context, and application boundaries.'},
-      {title: 'RAG & agents', description: 'Retrieval, embeddings, tools, workflows, state, MCP, and agent architecture.'},
-      {title: 'Production AI', description: 'Evaluation, observability, permissions, failure handling, security, cost, and reliability.'},
+      {label: 'Build AI Applications', title: 'Prompts, tools, embeddings & RAG', description: 'Move from model fundamentals through typed structured output, streaming, secure tool calling, semantic search, ingestion, hybrid retrieval, reranking, and grounded citations.', href: '/docs/ai-engineering/chapters/081-100-rag-foundations'},
+      {label: 'Build Agents', title: 'LangChain, LangGraph, agents & MCP', description: 'Build stateful workflows with modern TypeScript APIs, checkpoints, durable HITL, agent architectures, multi-agent patterns, memory, MCP, OAuth, and permission boundaries.', href: '/docs/ai-engineering/chapters/131-145-langgraph-state-graphs'},
+      {label: 'Production AI Engineering', title: 'Evals, security, reliability & architecture', description: 'Evaluate and operate AI systems with traces, regression suites, tenant-safe policy, queues, routing, caching, cost/latency engineering, incident drills, projects, and staff system design.', href: '/docs/ai-engineering/chapters/191-200-production-staff-engineering'},
     ],
-    studyPath: ['LLM foundations', 'RAG', 'Agents & tools', 'Evals', 'Production architecture'],
+    studyPath: ['LLM Foundations', 'Prompts & APIs', 'Embeddings & RAG', 'LangChain', 'LangGraph & Agents', 'MCP', 'Evals & Security', 'Production Architecture', 'Interview Mastery'],
   },
 };

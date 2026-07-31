@@ -37,7 +37,7 @@ const config = {
       'classic',
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.react-native.js'),
+          sidebarPath: require.resolve('./sidebars.ai-engineering.js'),
           editUrl: 'https://github.com/salman0butt/handbook/edit/main/',
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
@@ -57,7 +57,7 @@ const config = {
     metadata: [
       {
         name: 'keywords',
-        content: 'React, React Native, Community CLI, Android, iOS, Hermes, Metro, Fabric, TurboModules, JSI, Codegen, Next.js, JavaScript, TypeScript, Node.js, SQL, PostgreSQL, databases, system design, DevOps, AI engineering, developer handbook',
+        content: 'React, React Native, Community CLI, Android, iOS, Hermes, Metro, Fabric, TurboModules, JSI, Codegen, Next.js, JavaScript, TypeScript, Node.js, SQL, PostgreSQL, databases, system design, DevOps, AI engineering, LLM, RAG, LangChain, LangGraph, MCP, AI agents, developer handbook',
       },
     ],
     navbar: {
