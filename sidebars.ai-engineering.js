@@ -10,9 +10,46 @@ sidebars.aiEngineeringSidebar = [
     doc('version-baseline', 'Version Baseline'),
     doc('00-start-here', 'Start Here'),
   ], {collapsed: false}),
+
   category('AI & LLM Foundations', [
-    doc('chapters/chapters-001-020', 'AI & LLM Foundations'),
-  ]),
+    category('AI Basics', [
+      doc('foundations/what-is-ai', 'What Is Artificial Intelligence?'),
+      doc('foundations/ml-deep-learning-generative-ai', 'Machine Learning, Deep Learning & Generative AI'),
+      doc('foundations/neural-networks', 'Neural Networks'),
+      doc('foundations/training-pretraining-posttraining', 'Training, Pretraining & Post-Training'),
+      doc('foundations/foundation-models', 'Foundation Models'),
+      doc('foundations/what-is-generative-ai', 'What Is Generative AI?'),
+    ], {collapsed: false}),
+
+    category('LLM Basics', [
+      doc('foundations/what-is-llm', 'What Is a Large Language Model?'),
+      doc('foundations/model-parameters', 'Model Parameters, Weights & Model Size'),
+      doc('foundations/what-is-a-token', 'What Is a Token?'),
+      doc('foundations/tokenization', 'Tokenization'),
+      doc('foundations/embeddings', 'Embeddings'),
+      doc('foundations/transformers', 'Transformers'),
+      doc('foundations/attention', 'Attention, Queries, Keys & Values'),
+      doc('foundations/context-window', 'Context Window & Token Budget'),
+      doc('foundations/prompt-context-memory', 'Prompt, Context, Conversation & Memory'),
+    ], {collapsed: false}),
+
+    category('Generation & Reliability', [
+      doc('foundations/inference-generation', 'Inference & Autoregressive Generation'),
+      doc('foundations/logits-softmax-probabilities', 'Logits, Softmax & Token Probabilities'),
+      doc('foundations/sampling-temperature-top-p', 'Sampling, Temperature, Top-p & Top-k'),
+      doc('foundations/reasoning-models', 'Reasoning Models & Reasoning Effort'),
+      doc('foundations/hallucinations-grounding', 'Hallucinations, Grounding & Uncertainty'),
+      doc('foundations/model-selection', 'Model Selection'),
+    ]),
+
+    category('Caching & Performance Basics', [
+      doc('foundations/kv-cache', 'KV Cache'),
+      doc('foundations/prompt-cache', 'Prompt Caching'),
+      doc('foundations/response-cache', 'Response Caching'),
+      doc('foundations/token-cost-latency', 'Tokens, Cost, Latency & Throughput'),
+    ]),
+  ], {collapsed: false}),
+
   category('Generative AI', [
     doc('generative-ai/overview', 'Foundations & Model Families'),
     doc('generative-ai/image-generation', 'Image Generation & Editing'),
@@ -24,9 +61,19 @@ sidebars.aiEngineeringSidebar = [
     doc('generative-ai/serving-optimization-safety', 'Serving, Optimization & Safety'),
     doc('generative-ai/advanced-generative-systems', 'Advanced & Emerging Generative Systems'),
   ]),
-  category('Prompting & Model Interaction', [
-    doc('chapters/chapters-021-040', 'Prompt Engineering & Model APIs'),
+
+  category('Prompt Engineering', [
+    doc('prompt-engineering/what-is-prompt-engineering', 'What Is Prompt Engineering?'),
+    doc('prompt-engineering/prompt-anatomy', 'Prompt Anatomy'),
+    doc('prompt-engineering/types-of-prompting', 'Types of Prompting'),
+    doc('prompt-engineering/zero-shot-prompting', 'Zero-Shot Prompting'),
+    doc('prompt-engineering/one-shot-few-shot-prompting', 'One-Shot & Few-Shot Prompting'),
+  ], {collapsed: false}),
+
+  category('Model APIs & Interaction', [
+    doc('chapters/chapters-021-040', 'Model API Interaction & Advanced Prompting Notes'),
   ]),
+
   category('Structured Outputs, Tools & Streaming', [
     doc('chapters/chapters-041-060', 'Structured Outputs, Tools & Streaming'),
   ]),
