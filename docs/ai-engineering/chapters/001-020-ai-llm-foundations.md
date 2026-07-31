@@ -1,9 +1,9 @@
 ---
 id: chapters-001-020
-title: 001–020 — AI & LLM Foundations
+title: AI & LLM Foundations
 ---
 
-# 001 — AI, Machine Learning, Deep Learning & Generative AI
+# AI, Machine Learning, Deep Learning & Generative AI
 
 **Problem.** “AI” is too broad to guide architecture. A rules engine, classifier, vision model, and LLM have different failure modes.
 
@@ -13,7 +13,7 @@ title: 001–020 — AI & LLM Foundations
 
 **Interview lens.** Explain the problem class and trade-offs, not just definitions.
 
-# 002 — What an LLM Actually Does
+# What an LLM Actually Does
 
 **Problem.** Developers often treat an LLM as a database or reasoning oracle.
 
@@ -29,7 +29,7 @@ The model can encode impressive learned representations and perform multi-step t
 
 **Production lens.** Add retrieval for changing knowledge, tools for external actions, schemas for machine-readable boundaries, and evals for quality.
 
-# 003 — Neural Networks: The Minimum Useful Model
+# Neural Networks: The Minimum Useful Model
 
 **Problem.** You need enough neural-network intuition to understand transformers without becoming a research mathematician.
 
@@ -42,7 +42,7 @@ input → layer → activation → layer → ... → output
 
 **Production lens.** Parameters are learned state, not application memory. Sending a new chat message does not permanently update model weights. Distinguish inference-time context from training/fine-tuning.
 
-# 004 — Transformer Architecture
+# Transformer Architecture
 
 **Problem.** Why can modern LLMs connect information across long sequences efficiently?
 
@@ -61,7 +61,7 @@ tokens → embeddings + position
 
 **Production lens.** You rarely implement blocks yourself, but transformer properties explain context limits, attention cost, tokenization effects, and why prompt position/structure can affect results.
 
-# 005 — Attention
+# Attention
 
 **Problem.** A token should not treat every earlier token as equally relevant.
 
@@ -71,7 +71,7 @@ tokens → embeddings + position
 
 **Production lens.** “The model attends to X” is an intuition, not an authorization guarantee. Important constraints can still be ignored. Enforce invariants outside the model.
 
-# 006 — Self-Attention, Causal Masking & Context
+# Self-Attention, Causal Masking & Context
 
 **Problem.** During next-token generation, a model must not read future output tokens.
 
@@ -79,7 +79,7 @@ tokens → embeddings + position
 
 **Production lens.** The complete usable context includes instructions, messages, tool definitions/results, retrieved documents, and prior generated tokens. Every token consumes a finite context budget and can influence later output.
 
-# 007 — Positional Information
+# Positional Information
 
 **Problem.** Pure attention does not inherently know sequence order.
 
@@ -87,7 +87,7 @@ tokens → embeddings + position
 
 **Production lens.** Long-context capability is not simply “maximum token count.” Quality can vary with distance and ordering. Retrieval and context construction still matter even when the advertised context window is large.
 
-# 008 — Tokens & Tokenization
+# Tokens & Tokenization
 
 **Problem.** APIs charge and limit work in tokens, not characters.
 
@@ -100,7 +100,7 @@ model token IDs → decoder → text
 
 **Production lens.** Never assume “one word equals one token.” Different languages, code, JSON, and unusual strings tokenize differently. Measure usage with provider/tokenizer tooling when cost or context limits matter.
 
-# 009 — Vocabulary & Special Tokens
+# Vocabulary & Special Tokens
 
 **Problem.** Models need a finite discrete interface to raw text and protocol structure.
 
@@ -108,7 +108,7 @@ model token IDs → decoder → text
 
 **Production lens.** Avoid manually reproducing hidden chat templates unless a local/open model deployment explicitly requires it. Use the supported API so role/tool formatting stays compatible with the model family.
 
-# 010 — Embeddings as Learned Representations
+# Embeddings as Learned Representations
 
 **Problem.** Applications need a numeric representation for semantic comparison.
 
@@ -124,7 +124,7 @@ model token IDs → decoder → text
 
 **Production lens.** Embeddings are model-version-dependent data. Store model/version metadata so re-embedding and index migration are possible.
 
-# 011 — Parameters, Weights & Model Size
+# Parameters, Weights & Model Size
 
 **Problem.** “Bigger model” is often used as a proxy for “better product.”
 
@@ -132,7 +132,7 @@ model token IDs → decoder → text
 
 **Production lens.** Select models using task evals, latency, cost, modality, context, reliability, and operational constraints. A smaller model may dominate for extraction/routing while a larger reasoning model handles hard cases.
 
-# 012 — Pretraining
+# Pretraining
 
 **Problem.** Where does general language capability come from?
 
@@ -140,7 +140,7 @@ model token IDs → decoder → text
 
 **Production lens.** Pretraining knowledge is neither guaranteed current nor guaranteed correct. Treat it as model behavior, not your source of truth for time-sensitive/private business data.
 
-# 013 — Fine-Tuning, Instruction Tuning & Preference Optimization
+# Fine-Tuning, Instruction Tuning & Preference Optimization
 
 **Problem.** Base next-token models are not automatically optimized for following user instructions.
 
@@ -148,7 +148,7 @@ model token IDs → decoder → text
 
 **Production lens.** Fine-tuning changes behavior/style/task specialization; it is not the default solution for frequently changing factual knowledge. Compare prompting, RAG, tools, and fine-tuning against the actual failure.
 
-# 014 — Inference
+# Inference
 
 **Problem.** Training and serving are fundamentally different workloads.
 
@@ -156,7 +156,7 @@ model token IDs → decoder → text
 
 **Production lens.** Track time-to-first-token, output tokens/second, total latency, queueing, and provider errors separately. Streaming improves perceived latency but does not necessarily reduce compute.
 
-# 015 — Logits, Probabilities & Sampling
+# Logits, Probabilities & Sampling
 
 **Problem.** Why can the same prompt produce different answers?
 
@@ -164,7 +164,7 @@ model token IDs → decoder → text
 
 **Production lens.** Even low-randomness generation is not a database constraint. Use deterministic parsers/validators and evals when exactness matters.
 
-# 016 — Temperature & Top-p
+# Temperature & Top-p
 
 **Problem.** Sampling controls are frequently misunderstood as “creativity knobs.”
 
@@ -172,7 +172,7 @@ model token IDs → decoder → text
 
 **Production lens.** Do not cargo-cult settings. Establish a model-specific baseline, then evaluate changes on the task dataset. For extraction, schema enforcement matters more than hoping a temperature value makes output valid.
 
-# 017 — Context Windows
+# Context Windows
 
 **Problem.** Every model call has a finite working set.
 
@@ -180,7 +180,7 @@ model token IDs → decoder → text
 
 **Production lens.** Use retrieval, summarization, selective memory, and context budgets. Handle overflow explicitly. Do not silently truncate security-critical instructions or tool results.
 
-# 018 — Roles, Instructions & Message Hierarchy
+# Roles, Instructions & Message Hierarchy
 
 **Problem.** Applications combine platform instructions, product policy, user requests, tool outputs, and retrieved data.
 
@@ -188,7 +188,7 @@ model token IDs → decoder → text
 
 **Production lens.** Instruction hierarchy reduces ambiguity but does not replace policy enforcement. Treat indirect prompt injection as hostile data crossing a trust boundary.
 
-# 019 — Reasoning Models
+# Reasoning Models
 
 **Problem.** Some tasks need more deliberate internal computation than straightforward generation.
 
@@ -196,7 +196,7 @@ model token IDs → decoder → text
 
 **Production lens.** Route reasoning models to tasks where eval gains justify higher latency/cost. Design explanations around verifiable evidence and outputs rather than depending on hidden chain-of-thought.
 
-# 020 — Multimodal Models & Model Selection
+# Multimodal Models & Model Selection
 
 **Problem.** Production requests can include text, images, audio, documents, and generated media.
 

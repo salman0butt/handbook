@@ -1,9 +1,9 @@
 ---
 id: chapters-146-155
-title: 146–155 — LangGraph Durability, Persistence & HITL
+title: LangGraph Durability, Persistence & HITL
 ---
 
-# 146 — Checkpoints
+# Checkpoints
 
 A checkpointer persists graph state at execution boundaries so a run can continue after process restarts, pauses, or failures.
 
@@ -15,7 +15,7 @@ node A → checkpoint → node B → checkpoint → interrupt
 
 In-memory checkpointers are useful for development; production workflows that must survive restarts require a durable backend appropriate to the deployment.
 
-# 147 — Thread Identity
+# Thread Identity
 
 Persistent LangGraph execution uses a `thread_id` as the pointer to a conversation/workflow history.
 
@@ -25,13 +25,13 @@ const config = { configurable: { thread_id: run.threadId } };
 
 Treat thread IDs as internal resource identifiers. Authorize access to a thread through your application’s user/tenant model; possession of an ID must not grant data access.
 
-# 148 — Persistence & State Evolution
+# Persistence & State Evolution
 
 Persisted state outlives a deployment. Schema changes therefore need migration/version strategy. Add compatible fields with defaults where possible, version breaking shapes, and test resuming old checkpoints after upgrades.
 
 Do not persist ephemeral credentials or provider client instances. Persist references/authorized intent, then resolve short-lived credentials at execution time.
 
-# 149 — Interrupts
+# Interrupts
 
 `interrupt()` pauses execution and surfaces a JSON-serializable payload to the caller. A checkpointer and stable thread ID let the workflow wait indefinitely for external input.
 
@@ -46,7 +46,7 @@ const decision = interrupt({
 
 Interrupts are ideal for approval, missing information, review/edit, and escalation.
 
-# 150 — Resume with `Command`
+# Resume with `Command`
 
 Resume an interrupted run using the same thread identity and `Command({ resume: ... })`.
 
@@ -61,7 +61,7 @@ await graph.invoke(
 
 Validate the human/external response before converting it into a resume payload.
 
-# 151 — Interrupt Replay & Idempotency
+# Interrupt Replay & Idempotency
 
 A critical LangGraph rule: when an interrupted node resumes, the node restarts from its beginning, so code before `interrupt()` can run again.
 
@@ -74,25 +74,25 @@ GOOD: prepare refund → interrupt → execute idempotent refund
 
 Any unavoidable pre-interrupt effect must itself be idempotent. This is a workflow correctness issue, not framework trivia.
 
-# 152 — Durable Execution
+# Durable Execution
 
 Durability means useful work and state can survive transient failures/process changes without starting the entire task from zero.
 
 Design node effects so replay is safe. External writes need idempotency keys; reads should tolerate repetition; non-deterministic values such as current time/random IDs should be captured deliberately when they affect state transitions.
 
-# 153 — Retries & Error Routing
+# Retries & Error Routing
 
 Retries belong near the failing boundary and must classify errors. A transient provider timeout may retry; invalid tool arguments should route back to correction; authorization denial should not retry; repeated model/tool loops should terminate or escalate.
 
 Model error state explicitly so observability can distinguish recovered and terminal failures.
 
-# 154 — Subgraphs
+# Subgraphs
 
 Subgraphs encapsulate reusable workflows such as retrieval, compliance review, or approval/execution. They reduce monolithic graph complexity and allow teams to own bounded orchestration components.
 
 Keep subgraph inputs/outputs typed and narrow. Avoid sharing every parent-state field by default; explicit boundaries reduce accidental coupling and data leakage.
 
-# 155 — Long-Running Production Workflows
+# Long-Running Production Workflows
 
 A production graph may wait minutes or days, use background workers, resume after human approval, and outlive one server process.
 
