@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Docusaurus
+  verify:
+    name: Verify final AI release
     runs-on: ubuntu-latest
 
     steps:
@@ -20,33 +20,58 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund --loglevel=error
-
-      - name: Build handbook
-        id: build
+      - name: Verify certification Pages deployment run
         shell: bash
         run: |
-          set +e
-          npm run build > docusaurus-build.log 2>&1
-          status=$?
-          if [ "$status" -ne 0 ]; then
-            echo "Docusaurus build failed. Last 120 lines:"
-            tail -120 docusaurus-build.log
-          else
-            echo "Docusaurus production build succeeded."
-          fi
-          exit "$status"
+          set -euo pipefail
+          MERGE_SHA='a591228b8098fcdb9fc68e2ac890055c4c3e7204'
+          API="https://api.github.com/repos/salman0butt/handbook/actions/runs?head_sha=$MERGE_SHA"
+          for attempt in $(seq 1 30); do
+            curl -fsSL -H 'Accept: application/vnd.github+json' "$API" -o /tmp/runs.json
+            if python - <<'PY'
+          import json
+          with open('/tmp/runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          runs = [r for r in data.get('workflow_runs', []) if r.get('event') == 'push' and r.get('name') == 'Deploy handbook to GitHub Pages']
+          ok = [r for r in runs if r.get('conclusion') == 'success']
+          if ok:
+              r = ok[0]
+              print(f"PASS final Pages workflow run {r['id']} {r.get('html_url', '')}")
+              raise SystemExit(0)
+          print('Final Pages run state:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+          raise SystemExit(1)
+          PY
+            then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'FAIL certification Pages deployment did not reach success'
+          exit 1
 
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docusaurus-build-log
-          path: docusaurus-build.log
-          if-no-files-found: warn
+      - name: Verify published final certification
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://salman0butt.github.io/handbook'
+
+          check_page() {
+            local path="$1"
+            local needle="$2"
+            for attempt in $(seq 1 20); do
+              body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$BASE$path" || true)
+              if grep -Fq "$needle" <<< "$body"; then
+                echo "PASS $path -> $needle"
+                return 0
+              fi
+              echo "Attempt $attempt: $path not ready yet"
+              sleep 5
+            done
+            echo "FAIL $path missing expected content: $needle"
+            return 1
+          }
+
+          check_page '/docs/ai-engineering/reference/final-completeness-audit' 'Status: COMPLETE'
+          check_page '/docs/ai-engineering/reference/final-completeness-audit' 'Generative AI expansion'
+          check_page '/docs/ai-engineering/generative-ai/overview' 'Generative AI Foundations'
+          check_page '/docs/ai-engineering/generative-ai/advanced-generative-systems' 'Generative AI evolves quickly'
