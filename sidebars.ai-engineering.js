@@ -16,9 +16,11 @@ sidebars.aiEngineeringSidebar = [
       doc('foundations/what-is-ai', 'What Is Artificial Intelligence?'),
       doc('foundations/ml-deep-learning-generative-ai', 'Machine Learning, Deep Learning & Generative AI'),
       doc('foundations/neural-networks', 'Neural Networks'),
+      doc('foundations/vectors-matrices-tensors', 'Vectors, Matrices & Tensors'),
       doc('foundations/training-pretraining-posttraining', 'Training, Pretraining & Post-Training'),
       doc('foundations/foundation-models', 'Foundation Models'),
       doc('foundations/what-is-generative-ai', 'What Is Generative AI?'),
+      doc('foundations/nlp-language-modeling', 'NLP & Language Modeling'),
     ], {collapsed: false}),
 
     category('LLM Basics', [
@@ -63,17 +65,38 @@ sidebars.aiEngineeringSidebar = [
   ]),
 
   category('Prompt Engineering', [
-    doc('prompt-engineering/what-is-prompt-engineering', 'What Is Prompt Engineering?'),
-    doc('prompt-engineering/prompt-anatomy', 'Prompt Anatomy'),
-    doc('prompt-engineering/types-of-prompting', 'Types of Prompting'),
-    doc('prompt-engineering/zero-shot-prompting', 'Zero-Shot Prompting'),
-    doc('prompt-engineering/one-shot-few-shot-prompting', 'One-Shot & Few-Shot Prompting'),
+    category('Prompt Foundations', [
+      doc('prompt-engineering/what-is-prompt-engineering', 'What Is Prompt Engineering?'),
+      doc('prompt-engineering/prompt-anatomy', 'Prompt Anatomy'),
+      doc('prompt-engineering/types-of-prompting', 'Types of Prompting'),
+      doc('prompt-engineering/instruction-prompting', 'Instruction Prompting'),
+      doc('prompt-engineering/context-prompting', 'Context Prompting'),
+      doc('prompt-engineering/constraint-prompting', 'Constraint Prompting'),
+      doc('prompt-engineering/role-prompting', 'Role & Persona Prompting'),
+    ], {collapsed: false}),
+    category('Examples & Demonstrations', [
+      doc('prompt-engineering/zero-shot-prompting', 'Zero-Shot Prompting'),
+      doc('prompt-engineering/one-shot-few-shot-prompting', 'One-Shot & Few-Shot Prompting'),
+    ]),
+    category('Complex Tasks', [
+      doc('prompt-engineering/task-decomposition', 'Task Decomposition'),
+      doc('prompt-engineering/prompt-chaining', 'Prompt Chaining'),
+      doc('prompt-engineering/reasoning-model-prompting', 'Prompting Reasoning Models'),
+      doc('prompt-engineering/critique-revision', 'Critique & Revision Prompting'),
+    ]),
+    category('Context, Modalities & Safety', [
+      doc('prompt-engineering/long-context-prompting', 'Long-Context Prompting'),
+      doc('prompt-engineering/multimodal-prompting', 'Multimodal Prompting'),
+      doc('prompt-engineering/prompt-injection-defense', 'Prompt Injection & Defense'),
+    ]),
+    category('Evaluation & Delivery', [
+      doc('prompt-engineering/prompt-evals-versioning', 'Prompt Evals, Versioning & Rollout'),
+    ]),
   ], {collapsed: false}),
 
   category('Model APIs & Interaction', [
     doc('chapters/chapters-021-040', 'Model API Interaction & Advanced Prompting Notes'),
   ]),
-
   category('Structured Outputs, Tools & Streaming', [
     doc('chapters/chapters-041-060', 'Structured Outputs, Tools & Streaming'),
   ]),
