@@ -37,7 +37,7 @@ const config = {
       'classic',
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.postgresql.js'),
+          sidebarPath: require.resolve('./sidebars.react-native.js'),
           editUrl: 'https://github.com/salman0butt/handbook/edit/main/',
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
@@ -57,7 +57,7 @@ const config = {
     metadata: [
       {
         name: 'keywords',
-        content: 'React, Next.js, App Router, JavaScript, TypeScript, Node.js, SQL, PostgreSQL, databases, system design, DevOps, AI engineering, developer handbook',
+        content: 'React, React Native, Community CLI, Android, iOS, Hermes, Metro, Fabric, TurboModules, JSI, Codegen, Next.js, JavaScript, TypeScript, Node.js, SQL, PostgreSQL, databases, system design, DevOps, AI engineering, developer handbook',
       },
     ],
     navbar: {
@@ -69,6 +69,7 @@ const config = {
         {to: '/javascript', label: 'JavaScript', position: 'left', activeBaseRegex: '^/(javascript|docs/javascript)'},
         {to: '/nodejs', label: 'Node.js', position: 'left', activeBaseRegex: '^/(nodejs|docs/nodejs)'},
         {to: '/postgresql', label: 'PostgreSQL', position: 'left', activeBaseRegex: '^/(postgresql|docs/postgresql)'},
+        {to: '/react-native', label: 'React Native', position: 'left', activeBaseRegex: '^/(react-native|docs/react-native)'},
         {
           label: 'More',
           position: 'left',
@@ -98,6 +99,7 @@ const config = {
             {label: 'JavaScript', to: '/javascript'},
             {label: 'TypeScript', to: '/typescript'},
             {label: 'PostgreSQL', to: '/postgresql'},
+            {label: 'React Native', to: '/react-native'},
           ],
         },
         {
