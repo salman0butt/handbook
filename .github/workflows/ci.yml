@@ -43,6 +43,125 @@ jobs:
           fi
           exit "$status"
 
+      - name: Verify number-free AI Engineering sidebar labels
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const sidebars = require('./sidebars.ai-engineering.js');
+          const root = sidebars.aiEngineeringSidebar;
+          const labels = [];
+          function walk(items) {
+            for (const item of items || []) {
+              if (item && typeof item === 'object') {
+                if (typeof item.label === 'string') labels.push(item.label);
+                if (Array.isArray(item.items)) walk(item.items);
+              }
+            }
+          }
+          walk(root);
+          const numbered = labels.filter(label => /\d/.test(label));
+          if (numbered.length) {
+            console.error('Numeric sidebar labels found:', numbered);
+            process.exit(1);
+          }
+          if (!labels.includes('Generative AI')) {
+            console.error('Generative AI category is missing');
+            process.exit(1);
+          }
+          console.log(`PASS ${labels.length} AI Engineering sidebar labels contain no digits`);
+          NODE
+
+      - name: Verify Generative AI search artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          INDEX='build/search-index-docs-default-current.json'
+          test -f "$INDEX"
+          for term in \
+            'Generative AI' \
+            'latent diffusion' \
+            'Diffusion Transformers' \
+            'flow matching' \
+            'ControlNet' \
+            'IP-Adapter' \
+            'LoRA' \
+            'text-to-speech' \
+            'temporal consistency' \
+            'multimodal' \
+            'quantization' \
+            '3D generation'; do
+            grep -Fiq "$term" "$INDEX" || { echo "FAIL search index missing: $term"; exit 1; }
+          done
+          echo 'PASS Generative AI terms are present in the generated production search index'
+
+      - name: Verify merged Pages deployment run
+        shell: bash
+        run: |
+          set -euo pipefail
+          MERGE_SHA='c846fc27f92f6705aa1a41878c0eb168dcde61fa'
+          API="https://api.github.com/repos/salman0butt/handbook/actions/runs?head_sha=$MERGE_SHA"
+          for attempt in $(seq 1 24); do
+            curl -fsSL -H 'Accept: application/vnd.github+json' "$API" -o /tmp/runs.json
+            if python - <<'PY'
+          import json
+          with open('/tmp/runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          runs = [r for r in data.get('workflow_runs', []) if r.get('event') == 'push' and r.get('name') == 'Deploy handbook to GitHub Pages']
+          ok = [r for r in runs if r.get('conclusion') == 'success']
+          if ok:
+              r = ok[0]
+              print(f"PASS Pages workflow run {r['id']} {r.get('html_url', '')}")
+              raise SystemExit(0)
+          print('Pages run state:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+          raise SystemExit(1)
+          PY
+            then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'FAIL merged Pages deployment did not reach success'
+          exit 1
+
+      - name: Verify deployed Generative AI handbook
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://salman0butt.github.io/handbook'
+
+          check_page() {
+            local path="$1"
+            local needle="$2"
+            local body=''
+            for attempt in $(seq 1 16); do
+              body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$BASE$path" || true)
+              if grep -Fq "$needle" <<< "$body"; then
+                echo "PASS $path -> $needle"
+                return 0
+              fi
+              echo "Attempt $attempt: $path not ready yet"
+              sleep 5
+            done
+            echo "FAIL $path missing expected content: $needle"
+            return 1
+          }
+
+          check_page '/ai-engineering' 'AI Engineering'
+          check_page '/docs/ai-engineering/intro' 'Generative AI'
+          check_page '/docs/ai-engineering/00-start-here' 'Generative AI is bigger than LLM chat'
+          check_page '/docs/ai-engineering/generative-ai/overview' 'Generative AI Foundations'
+          check_page '/docs/ai-engineering/generative-ai/image-generation' 'Image Generation & Editing'
+          check_page '/docs/ai-engineering/generative-ai/audio-speech-generation' 'Audio, Speech & Realtime Generation'
+          check_page '/docs/ai-engineering/generative-ai/video-generation' 'Video Generation & Temporal Systems'
+          check_page '/docs/ai-engineering/generative-ai/multimodal-generation' 'Multimodal Generative AI'
+          check_page '/docs/ai-engineering/generative-ai/fine-tuning-adaptation' 'Fine-Tuning, LoRA & Model Adaptation'
+          check_page '/docs/ai-engineering/generative-ai/synthetic-data-evaluation' 'Synthetic Data, Distillation & Generative Evaluation'
+          check_page '/docs/ai-engineering/generative-ai/serving-optimization-safety' 'Generative AI Serving, Optimization & Safety'
+          check_page '/docs/ai-engineering/generative-ai/advanced-generative-systems' 'Advanced Generative Systems & Emerging Modalities'
+          check_page '/docs/ai-engineering/reference/generative-ai-coverage' 'Generative AI Coverage Audit'
+          check_page '/docs/ai-engineering/reference/final-completeness-audit' 'Status: REVALIDATION REQUIRED'
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
