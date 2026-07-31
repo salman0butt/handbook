@@ -83,6 +83,7 @@ sidebars.aiEngineeringSidebar = [
   ]),
   category('Reference & Coverage', [
     doc('reference/official-docs-coverage', 'Official Docs Coverage'),
+    doc('reference/generative-ai-coverage', 'Generative AI Coverage'),
     doc('reference/openai-api-coverage', 'OpenAI API Coverage'),
     doc('reference/rag-coverage', 'RAG Coverage'),
     doc('reference/langchain-coverage', 'LangChain Coverage'),
