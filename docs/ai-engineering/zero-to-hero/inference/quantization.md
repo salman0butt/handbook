@@ -1,6 +1,6 @@
 ---
 id: inference-quantization
-title: Quantization: FP16, BF16, FP8, INT8 & INT4
+title: "Quantization: FP16, BF16, FP8, INT8 & INT4"
 ---
 
 # Quantization: FP16, BF16, FP8, INT8 & INT4
