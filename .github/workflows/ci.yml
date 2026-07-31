@@ -43,6 +43,54 @@ jobs:
           fi
           exit "$status"
 
+      - name: Verify certification Pages deployment run
+        shell: bash
+        run: |
+          set -euo pipefail
+          MERGE_SHA='904ad0e51c94ee7cc35ee815ac1b8c8bd43e7baf'
+          API="https://api.github.com/repos/salman0butt/handbook/actions/runs?head_sha=$MERGE_SHA"
+          for attempt in $(seq 1 24); do
+            curl -fsSL -H 'Accept: application/vnd.github+json' "$API" -o /tmp/runs.json
+            if python - <<'PY'
+          import json
+          with open('/tmp/runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          runs = [r for r in data.get('workflow_runs', []) if r.get('event') == 'push' and r.get('name') == 'Deploy handbook to GitHub Pages']
+          ok = [r for r in runs if r.get('conclusion') == 'success']
+          if ok:
+              r = ok[0]
+              print(f"PASS final Pages workflow run {r['id']} {r.get('html_url', '')}")
+              raise SystemExit(0)
+          print('Final Pages run state:', [(r.get('id'), r.get('status'), r.get('conclusion')) for r in runs])
+          raise SystemExit(1)
+          PY
+            then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'FAIL certification Pages deployment did not reach success'
+          exit 1
+
+      - name: Verify published final certification
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://salman0butt.github.io/handbook/docs/ai-engineering/reference/final-completeness-audit'
+          for attempt in $(seq 1 16); do
+            body=$(curl -fsSL --connect-timeout 10 --max-time 30 "$URL" || true)
+            if grep -Fq 'Status: COMPLETE' <<< "$body" \
+              && grep -Fq 'Certification date' <<< "$body" \
+              && grep -Fq 'Content release evidence' <<< "$body"; then
+              echo 'PASS published final audit renders Status: COMPLETE with certification evidence'
+              exit 0
+            fi
+            echo "Attempt $attempt: published certification not ready yet"
+            sleep 5
+          done
+          echo 'FAIL published final audit does not contain the COMPLETE certification'
+          exit 1
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
