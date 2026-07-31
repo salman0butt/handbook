@@ -150,9 +150,9 @@ jobs:
           check_page '/docs/ai-engineering/foundations/transformers' 'neural-network architecture'
           check_page '/docs/ai-engineering/foundations/attention' 'Attention lets a token representation'
           check_page '/docs/ai-engineering/foundations/kv-cache' 'previously processed tokens'
-          check_page '/docs/ai-engineering/foundations/prompt-cache' 'stable prompt prefix'
-          check_page '/docs/ai-engineering/foundations/response-cache' 'application-level cache'
-          check_page '/docs/ai-engineering/prompt-engineering/types-of-prompting' 'Zero-shot prompting'
-          check_page '/docs/ai-engineering/prompt-engineering/one-shot-few-shot-prompting' 'Few-shot prompting'
+          check_page '/docs/ai-engineering/foundations/prompt-cache' 'Prompt Caching'
+          check_page '/docs/ai-engineering/foundations/response-cache' 'Response Caching'
+          check_page '/docs/ai-engineering/prompt-engineering/types-of-prompting' 'Types of Prompting'
+          check_page '/docs/ai-engineering/prompt-engineering/one-shot-few-shot-prompting' 'One-Shot'
 
           echo 'PASS live beginner pages include expected lesson and code-example content; Mermaid rendering is validated by official theme configuration plus successful production build'
