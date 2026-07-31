@@ -6,27 +6,79 @@ sidebar_position: 3
 
 # Start Here
 
+If you are new to AI engineering, do **not** begin with LangChain, agents, RAG, or MCP. First understand what an LLM receives, how it generates tokens, what context and cache mean, and which responsibilities belong to application code.
+
 ## The engineering mental model
 
 A generative model is a component inside a software system, not the system itself.
 
-```text
-request
-  ↓
-deterministic application code
-  ├── authentication / authorization
-  ├── input and asset validation
-  ├── retrieval
-  ├── model or media-generation call
-  ├── tool execution
-  ├── state / asset persistence
-  ├── moderation / policy enforcement
-  └── observability / eval hooks
-  ↓
-response, generated asset, or side effect
+```mermaid
+flowchart TD
+  U[User / Client] --> API[Application API]
+  API --> AUTH[Authentication & Authorization]
+  AUTH --> VALIDATE[Input Validation]
+  VALIDATE --> ORCH[AI Orchestration]
+  ORCH --> RET[RAG / Retrieval]
+  ORCH --> MODEL[Model / Media Generator]
+  ORCH --> TOOLS[Tools / MCP]
+  ORCH --> STATE[(State / Memory / Database)]
+  MODEL --> CHECK[Schema / Safety / Grounding Checks]
+  RET --> CHECK
+  TOOLS --> CHECK
+  CHECK --> OBS[Tracing / Evals / Cost]
+  OBS --> OUT[Response / Asset / Approved Side Effect]
 ```
 
 The model produces probabilistic outputs. Everything around it should make uncertainty explicit and enforce deterministic invariants where the product requires them.
+
+## Beginner path: learn these first
+
+Work through these concepts in order before moving into frameworks.
+
+```mermaid
+flowchart TD
+  AI[What Is AI?] --> ML[ML vs Deep Learning vs Generative AI]
+  ML --> NN[Neural Networks]
+  NN --> TRAIN[Training & Post-Training]
+  TRAIN --> FM[Foundation Models]
+  FM --> LLM[What Is an LLM?]
+  LLM --> PARAM[Parameters & Weights]
+  PARAM --> TOKEN[What Is a Token?]
+  TOKEN --> TOK[Tokenization]
+  TOK --> EMB[Embeddings]
+  EMB --> TR[Transformers]
+  TR --> ATT[Attention]
+  ATT --> CTX[Context Window]
+  CTX --> INF[Inference & Generation]
+  INF --> SAMPLE[Sampling]
+  SAMPLE --> CACHE[Caches]
+  CACHE --> GROUND[Hallucinations & Grounding]
+```
+
+### Foundation checkpoints
+
+After the beginner section, you should be able to answer:
+
+- What is AI, ML, deep learning, and generative AI?
+- What is a neural network?
+- What is a foundation model?
+- What is an LLM?
+- What is a parameter?
+- What is a token, and why is a token not necessarily a word?
+- What does a tokenizer do?
+- What is an embedding?
+- What is a transformer?
+- What are Query, Key, and Value in attention?
+- What is a context window?
+- What is the difference between prompt, context, conversation history, and memory?
+- What happens during inference?
+- What are logits, softmax, temperature, top-p, and top-k?
+- What is a KV cache?
+- What is prompt caching?
+- What is response caching?
+- Why do hallucinations happen, and what does grounding mean?
+
+If any of those answers are unclear, stay in **AI & LLM Foundations** before moving on.
 
 ## Generative AI is bigger than LLM chat
 
@@ -62,19 +114,19 @@ Keep provider SDK objects out of core domain code.
 
 ```ts
 export type GenerateRequest = {
-  system: string
-  user: string
-  signal?: AbortSignal
-}
+  system: string;
+  user: string;
+  signal?: AbortSignal;
+};
 
 export type GenerateResult = {
-  text: string
-  inputTokens?: number
-  outputTokens?: number
-}
+  text: string;
+  inputTokens?: number;
+  outputTokens?: number;
+};
 
 export interface ModelProvider {
-  generate(request: GenerateRequest): Promise<GenerateResult>
+  generate(request: GenerateRequest): Promise<GenerateResult>;
 }
 ```
 
@@ -83,10 +135,10 @@ Use the same principle for media generation:
 ```ts
 export interface MediaGenerator {
   submit(input: {
-    modality: 'image' | 'audio' | 'video'
-    prompt: string
-    referenceAssetIds?: string[]
-  }): Promise<{ jobId: string }>
+    modality: 'image' | 'audio' | 'video';
+    prompt: string;
+    referenceAssetIds?: string[];
+  }): Promise<{ jobId: string }>;
 }
 ```
 
@@ -94,56 +146,62 @@ Provider adapters can expose richer capabilities, but application policy should 
 
 ## Security rule
 
-Never implement this:
+Never implement:
 
 ```text
-LLM or media model decides authorization → execute / publish
+model decides authorization → execute / publish
 ```
 
-Implement this:
+Implement:
 
-```text
-model proposes action or creates output
-  ↓
-parse + validate + moderate
-  ↓
-authorization / policy check
-  ↓
-optional human approval
-  ↓
-idempotent tool executor or controlled publisher
-  ↓
-audit log
+```mermaid
+flowchart TD
+  MODEL[Model proposes action / output] --> PARSE[Parse & Validate]
+  PARSE --> AUTH[Authorization / Policy]
+  AUTH --> APPROVE{Human approval required?}
+  APPROVE -->|Yes| HUMAN[Human Review]
+  APPROVE -->|No| EXEC[Idempotent Executor / Publisher]
+  HUMAN --> EXEC
+  EXEC --> AUDIT[Audit Log]
 ```
 
 Prompt instructions are not an authorization system.
 
-## Recommended study order
+## Full recommended study order
 
-```text
-AI & LLM Foundations
-  ↓
-Generative AI model families
-  ↓
-Image / audio / video / multimodal generation
-  ↓
-Fine-tuning / LoRA / synthetic data / serving
-  ↓
-Prompting + APIs
-  ↓
-Embeddings + RAG
-  ↓
-LangChain + LangGraph
-  ↓
-Agents + MCP
-  ↓
-Evals + Security
-  ↓
-Production & Staff Engineering
+```mermaid
+flowchart TD
+  F[AI & LLM Foundations] --> G[Generative AI]
+  G --> P[Prompt Engineering]
+  P --> API[Model APIs]
+  API --> ST[Structured Outputs / Tools / Streaming]
+  ST --> E[Embeddings & Vector Search]
+  E --> R[RAG]
+  R --> LC[LangChain TypeScript]
+  LC --> LG[LangGraph TypeScript]
+  LG --> AG[Agents & Multi-Agent Systems]
+  AG --> MCP[MCP, OAuth & Permissions]
+  MCP --> EV[Evals, Observability & Security]
+  EV --> PROD[Production & Staff Engineering]
 ```
 
-## Study expectations
+## How to study each topic
 
-Run examples, change inputs, deliberately break schemas and tools, inspect traces, create evaluation cases, and calculate cost. For media generation, vary seeds/controls, inspect asset lineage, test async job failures, and compare accepted-output cost. For RAG, evaluate retrieval separately from generation. For agents, inspect trajectories and stop conditions rather than judging only the final prose.
+Every new foundation lesson uses the same learning format:
 
-The target outcome is not “I know LangChain” or “I can call an image API.” It is: **I can design, implement, evaluate, secure, operate, and explain production AI systems across text and generative media, and I know when a simpler non-agent or non-generative architecture is better.**
+```text
+Definition
+→ mental model
+→ visual diagram
+→ code example
+→ practical use case
+→ common mistakes
+→ production implications
+→ practice questions
+```
+
+Do not only read code. Change it, break it, test edge cases, and explain the concept in your own words.
+
+For RAG, evaluate retrieval separately from generation. For agents, inspect trajectories and stop conditions rather than judging only the final prose. For tools/MCP, treat authentication and authorization as deterministic system boundaries.
+
+The target outcome is not “I know LangChain.” It is: **I can design, implement, evaluate, secure, operate, and explain production AI systems from first principles through agents and MCP, and I know when a simpler non-AI architecture is better.**
