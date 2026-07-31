@@ -11,10 +11,13 @@ const config = {
   trailingSlash: false,
   onBrokenLinks: 'throw',
   markdown: {
+    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'warn',
     },
   },
+
+  themes: ['@docusaurus/theme-mermaid'],
 
   plugins: [
     require.resolve('./plugins/handbook-ux'),
@@ -54,10 +57,13 @@ const config = {
   ],
 
   themeConfig: {
+    mermaid: {
+      theme: {light: 'neutral', dark: 'dark'},
+    },
     metadata: [
       {
         name: 'keywords',
-        content: 'React, React Native, Community CLI, Android, iOS, Hermes, Metro, Fabric, TurboModules, JSI, Codegen, Next.js, JavaScript, TypeScript, Node.js, SQL, PostgreSQL, databases, system design, DevOps, AI engineering, LLM, RAG, LangChain, LangGraph, MCP, AI agents, developer handbook',
+        content: 'React, React Native, Community CLI, Android, iOS, Hermes, Metro, Fabric, TurboModules, JSI, Codegen, Next.js, JavaScript, TypeScript, Node.js, SQL, PostgreSQL, databases, system design, DevOps, AI engineering, LLM, tokens, tokenization, transformers, prompt engineering, RAG, LangChain, LangGraph, MCP, AI agents, developer handbook',
       },
     ],
     navbar: {
