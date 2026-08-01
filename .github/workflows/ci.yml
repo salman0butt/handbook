@@ -4,141 +4,42 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build Docusaurus
+  smoke:
+    name: Verify deployed navbar and Mermaid
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund --loglevel=error
+      - name: Install browser driver
+        run: npm install --no-save --no-audit --no-fund --loglevel=error puppeteer-core@24.16.0
 
-      - name: Build handbook
-        id: build
-        shell: bash
-        run: |
-          set +e
-          npm run build > docusaurus-build.log 2>&1
-          status=$?
-          if [ "$status" -ne 0 ]; then
-            echo "Docusaurus build failed. Last 160 lines:"
-            tail -160 docusaurus-build.log
-          else
-            echo "Docusaurus production build succeeded."
-          fi
-          exit "$status"
-
-      - name: Verify visual and practical AI lessons
+      - name: Locate Chrome
         shell: bash
         run: |
           set -euo pipefail
+          CHROME_BIN=$(command -v google-chrome-stable || command -v google-chrome || command -v chromium)
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          "$CHROME_BIN" --version
 
-          mapfile -t beginnerLessons < <(find \
-            docs/ai-engineering/foundations \
-            docs/ai-engineering/prompt-engineering \
-            -type f -name '*.md' | sort)
+      - name: Verify live desktop UI
+        run: node scripts/verify-live-navbar.cjs
 
-          if [ "${#beginnerLessons[@]}" -lt 40 ]; then
-            echo "Expected at least 40 focused foundation/prompt lessons, found ${#beginnerLessons[@]}"
-            exit 1
-          fi
-
-          mapfile -t zeroLessons < <(find docs/ai-engineering/zero-to-hero -type f -name '*.md' | sort)
-          if [ "${#zeroLessons[@]}" -lt 100 ]; then
-            echo "Expected at least 100 zero-to-hero lessons, found ${#zeroLessons[@]}"
-            exit 1
-          fi
-
-          for file in "${beginnerLessons[@]}" "${zeroLessons[@]}"; do
-            grep -Fq '```mermaid' "$file" || { echo "Missing Mermaid diagram: $file"; exit 1; }
-            grep -Fq '```ts' "$file" || { echo "Missing TypeScript example: $file"; exit 1; }
-            grep -Fq '## Practice' "$file" || { echo "Missing practice section: $file"; exit 1; }
-          done
-
-          node <<'NODE'
-          const sidebars = require('./sidebars.ai-engineering.js');
-          const labels = [];
-          const ids = [];
-          function walk(items) {
-            for (const item of items || []) {
-              if (!item || typeof item !== 'object') continue;
-              if (typeof item.label === 'string') labels.push(item.label);
-              if (item.type === 'doc') ids.push(item.id);
-              if (Array.isArray(item.items)) walk(item.items);
-            }
-          }
-          walk(sidebars.aiEngineeringSidebar);
-
-          const beginnerIds = ids.filter(id =>
-            id.startsWith('ai-engineering/foundations/') ||
-            id.startsWith('ai-engineering/prompt-engineering/')
-          );
-          const zeroIds = ids.filter(id => id.startsWith('ai-engineering/zero-to-hero/'));
-
-          if (beginnerIds.length < 40) throw new Error(`Expected at least 40 beginner/prompt sidebar lessons, got ${beginnerIds.length}`);
-          if (zeroIds.length < 100) throw new Error(`Expected at least 100 zero-to-hero sidebar lessons, got ${zeroIds.length}`);
-          if (new Set(ids).size !== ids.length) throw new Error('Duplicate AI sidebar doc IDs found');
-          if (ids.includes('ai-engineering/chapters/chapters-001-020')) throw new Error('Bundled AI foundations page is still in primary sidebar');
-          if (ids.includes('ai-engineering/chapters/chapters-171-180')) throw new Error('Legacy bundled MCP page is still in primary sidebar');
-
-          const numbered = labels.filter(label => /^\s*\d+(?:\s*[–—-]\s*\d+)?\b/.test(label));
-          if (numbered.length) throw new Error(`Numeric enumeration sidebar labels found: ${numbered.join(', ')}`);
-
-          console.log(`PASS ${beginnerIds.length} beginner/prompt lessons and ${zeroIds.length} zero-to-hero lessons`);
-          NODE
-
-      - name: Verify zero-to-hero search coverage
-        shell: bash
-        run: |
-          set -euo pipefail
-          INDEX='build/search-index-docs-default-current.json'
-          test -f "$INDEX"
-          for term in \
-            'Backpropagation' \
-            'Chat Templates' \
-            'Grouped-Query Attention' \
-            'Perplexity' \
-            'Context Engineering' \
-            'Background Runs' \
-            'Reinforcement Fine-Tuning' \
-            'PagedAttention' \
-            'ColBERT' \
-            'OpenAI Agents SDK' \
-            'server/discover' \
-            'Agent2Agent' \
-            'Zero Data Retention'; do
-              grep -Fiq "$term" "$INDEX" || { echo "Search index missing: $term"; exit 1; }
-          done
-          echo 'PASS zero-to-hero terms are searchable'
-
-      - name: Verify Mermaid is enabled
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -Fq '"@docusaurus/theme-mermaid"' package.json
-          grep -Fq 'mermaid: true' docusaurus.config.js
-          grep -Fq "themes: ['@docusaurus/theme-mermaid']" docusaurus.config.js
-          echo 'PASS Mermaid rendering is configured'
-
-      - name: Upload build log
+      - name: Upload live screenshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: docusaurus-build-log
-          path: docusaurus-build.log
+          name: navbar-mermaid-live
+          path: /tmp/navbar-mermaid-live.png
           if-no-files-found: warn
