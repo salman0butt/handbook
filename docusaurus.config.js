@@ -69,22 +69,34 @@ const config = {
     navbar: {
       title: 'Developer Handbook',
       items: [
-        {to: '/react', label: 'React', position: 'left', activeBaseRegex: '^/(react|docs/react)'},
-        {to: '/nextjs', label: 'Next.js', position: 'left', activeBaseRegex: '^/(nextjs|docs/nextjs)'},
-        {to: '/typescript', label: 'TypeScript', position: 'left', activeBaseRegex: '^/(typescript|docs/typescript)'},
-        {to: '/javascript', label: 'JavaScript', position: 'left', activeBaseRegex: '^/(javascript|docs/javascript)'},
-        {to: '/nodejs', label: 'Node.js', position: 'left', activeBaseRegex: '^/(nodejs|docs/nodejs)'},
-        {to: '/postgresql', label: 'PostgreSQL', position: 'left', activeBaseRegex: '^/(postgresql|docs/postgresql)'},
-        {to: '/react-native', label: 'React Native', position: 'left', activeBaseRegex: '^/(react-native|docs/react-native)'},
+        {
+          label: 'Frontend',
+          position: 'left',
+          items: [
+            {to: '/react', label: 'React', activeBaseRegex: '^/(react|docs/react)'},
+            {to: '/nextjs', label: 'Next.js', activeBaseRegex: '^/(nextjs|docs/nextjs)'},
+            {to: '/typescript', label: 'TypeScript', activeBaseRegex: '^/(typescript|docs/typescript)'},
+            {to: '/javascript', label: 'JavaScript', activeBaseRegex: '^/(javascript|docs/javascript)'},
+          ],
+        },
+        {
+          label: 'Backend & Data',
+          position: 'left',
+          items: [
+            {to: '/nodejs', label: 'Node.js', activeBaseRegex: '^/(nodejs|docs/nodejs)'},
+            {to: '/postgresql', label: 'PostgreSQL', activeBaseRegex: '^/(postgresql|docs/postgresql)'},
+            {to: '/databases', label: 'Databases', activeBaseRegex: '^/(databases|docs/databases)'},
+          ],
+        },
+        {to: '/react-native', label: 'Mobile', position: 'left', activeBaseRegex: '^/(react-native|docs/react-native)'},
+        {to: '/ai-engineering', label: 'AI', position: 'left', activeBaseRegex: '^/(ai-engineering|docs/ai-engineering)'},
         {
           label: 'More',
           position: 'left',
           items: [
-            {label: 'Databases', to: '/databases'},
             {label: 'System Design', to: '/system-design'},
             {label: 'DevOps', to: '/devops'},
             {label: 'WordPress', to: '/wordpress'},
-            {label: 'AI Engineering', to: '/ai-engineering'},
           ],
         },
         {
