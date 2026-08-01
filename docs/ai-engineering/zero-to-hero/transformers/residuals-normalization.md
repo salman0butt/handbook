@@ -9,10 +9,10 @@ Deep transformers repeatedly transform hidden states. **Residual connections** p
 
 ```mermaid
 flowchart LR
-  X[Hidden state x] --> F[Sublayer F(x)]
+  X[Hidden state x] --> F["Sublayer F(x)"]
   X --> ADD[Add]
   F --> ADD
-  ADD --> Y[x + F(x)]
+  ADD --> Y["x + F(x)"]
 ```
 
 ```ts
