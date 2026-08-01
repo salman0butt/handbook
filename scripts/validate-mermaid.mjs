@@ -6,7 +6,7 @@ const dom = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://handbook.local/',
 });
 
-Object.assign(globalThis, {
+const browserGlobals = {
   window: dom.window,
   document: dom.window.document,
   navigator: dom.window.navigator,
@@ -15,7 +15,18 @@ Object.assign(globalThis, {
   SVGElement: dom.window.SVGElement,
   Node: dom.window.Node,
   DOMParser: dom.window.DOMParser,
-});
+};
+
+// Node.js 24 exposes navigator as a getter-only global. Define the browser-like
+// globals explicitly instead of assigning to them so the validator works on
+// current Node.js releases as well as older supported versions.
+for (const [name, value] of Object.entries(browserGlobals)) {
+  Object.defineProperty(globalThis, name, {
+    value,
+    configurable: true,
+    writable: true,
+  });
+}
 
 // Mermaid and DOMPurify must be imported only after the browser-like globals exist.
 const {default: mermaid} = await import('mermaid');
