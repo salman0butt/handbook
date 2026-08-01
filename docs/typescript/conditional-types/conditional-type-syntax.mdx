@@ -1,0 +1,16 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart TD
+  INPUT["Input T"] --> TEST{"T extends U?"}
+  TEST -->|Yes| TRUE["True branch"]
+  TEST -->|No| FALSE["False branch"]
+```
+
+<DynamicTypeScriptDoc />

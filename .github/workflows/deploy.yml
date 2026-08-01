@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -26,19 +26,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate staged TypeScript handbook
-        shell: bash
-        run: |
-          if compgen -G ".typescript-generator.part-*" > /dev/null; then
-            cat .typescript-generator.part-* > /tmp/generate-typescript-handbook.py
-            echo "42a32626f5414bded7574ea12c5b37672c9030552bd4cb729f5d29608d1254c3  /tmp/generate-typescript-handbook.py" | sha256sum --check -
-            python3 /tmp/generate-typescript-handbook.py
-          fi
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -51,86 +43,6 @@ jobs:
 
       - name: Build handbook
         run: npm run build
-
-      - name: Commit clean generated handbook
-        shell: bash
-        run: |
-          if compgen -G ".typescript-generator.part-*" > /dev/null; then
-            cat > .github/workflows/deploy.yml <<'YAML'
-          name: Deploy handbook to GitHub Pages
-
-          on:
-            push:
-              branches:
-                - main
-            workflow_dispatch:
-
-          permissions:
-            contents: read
-            pages: write
-            id-token: write
-
-          concurrency:
-            group: pages
-            cancel-in-progress: true
-
-          jobs:
-            build:
-              name: Build Docusaurus
-              runs-on: ubuntu-latest
-
-              steps:
-                - name: Checkout
-                  uses: actions/checkout@v4
-                  with:
-                    fetch-depth: 0
-
-                - name: Setup Node
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version: 24
-
-                - name: Install dependencies
-                  run: npm install --no-audit --no-fund
-
-                - name: Validate TypeScript handbook
-                  run: npm run validate:typescript
-
-                - name: Validate Mermaid diagrams
-                  run: npm run validate:mermaid
-
-                - name: Build handbook
-                  run: npm run build
-
-                - name: Upload Pages artifact
-                  uses: actions/upload-pages-artifact@v3
-                  with:
-                    path: build
-
-            deploy:
-              name: Deploy to GitHub Pages
-              needs: build
-              permissions:
-                pages: write
-                id-token: write
-              environment:
-                name: github-pages
-                url: ${{ steps.deployment.outputs.page_url }}
-              runs-on: ubuntu-latest
-
-              steps:
-                - name: Deploy
-                  id: deployment
-                  uses: actions/deploy-pages@v4
-          YAML
-            rm -f package-lock.json
-            rm -f .typescript-generator.part-*
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "docs(ts): rebuild handbook into focused learning system"
-            git push origin HEAD:main
-          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

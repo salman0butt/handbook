@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  SOURCE["Public source"] --> CHECK["Type check"]
+  CHECK --> DTS[".d.ts declarations"]
+  CHECK --> JS["JavaScript"]
+  DTS --> CONSUMER["Consumer checker"]
+```
+
+<DynamicTypeScriptDoc />

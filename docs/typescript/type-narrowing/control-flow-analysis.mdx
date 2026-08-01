@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart TD
+  UNION["string | number | null"] --> CHECK{"Runtime check"}
+  CHECK --> STRING["string"]
+  CHECK --> NUMBER["number"]
+  CHECK --> NULL["null"]
+```
+
+<DynamicTypeScriptDoc />

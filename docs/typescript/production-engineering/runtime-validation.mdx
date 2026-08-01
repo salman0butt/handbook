@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  EXTERNAL["External data"] --> UNKNOWN["unknown"]
+  UNKNOWN --> SCHEMA["Runtime schema"]
+  SCHEMA -->|valid| DOMAIN["Trusted domain value"]
+  SCHEMA -->|invalid| ERROR["Validation error"]
+```
+
+<DynamicTypeScriptDoc />

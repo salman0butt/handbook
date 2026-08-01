@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  ROOT["Solution config"] --> DOMAIN["Domain project"]
+  ROOT --> API["API project"]
+  ROOT --> APP["App project"]
+  DOMAIN --> API --> APP
+```
+
+<DynamicTypeScriptDoc />

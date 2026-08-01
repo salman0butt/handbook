@@ -1,95 +1,40 @@
 ---
-title: TypeScript Handbook
-description: A production-focused TypeScript 7 handbook from JavaScript foundations to staff-level architecture and type-system reasoning.
+title: TypeScript Developer Handbook
+description: A TypeScript 7.0.2 learning system from JavaScript foundations to staff-level architecture, library authoring, and production engineering.
 slug: /typescript/intro
 ---
 
 # TypeScript Developer Handbook
 
-This handbook teaches TypeScript as an engineering system, not as a list of syntax features. It starts from JavaScript, builds a precise mental model of static checking and runtime behavior, then moves through inference, assignability, narrowing, generics, module systems, declaration authoring, architecture, production operations, migrations, performance, testing, compiler reasoning, and interview mastery.
+This handbook teaches TypeScript as an engineering system layered on JavaScript. It begins with runtime fundamentals and static-type mental models, then progresses through application development, advanced type transformations, framework integration, library authoring, architecture, performance, security, production operations, projects, and interviews.
 
-> **Baseline:** ✅ TypeScript 7.0 is the stable baseline for this handbook. TypeScript 7 was released on July 8, 2026. Where 7.0 differs from TypeScript 6.x, the difference is called out explicitly. Experimental, preview, beta, RC, nightly, legacy, or migration-only behavior is labelled rather than taught as stable.
+> **Compatibility baseline checked August 1, 2026:** TypeScript 7.0.2, Node.js 24 LTS for handbook CI, strict checking, explicit runtime-specific module settings, and current React, Vue, Zod, ESLint, Vitest, Jest, Vite, and npm documentation.
 
-## The core mental model
-
-```text
-JavaScript runtime
-    executes values and effects
-              │
-              ▼
-TypeScript static type system
-    models relationships between values
-              │
-              ▼
-TypeScript compiler / checker
-    parses, binds, infers, checks, diagnoses
-              │
-              ▼
-optional JavaScript / declaration emit
+```mermaid
+flowchart TD
+  JS["JavaScript developer"] --> BEGINNER["TypeScript beginner"]
+  BEGINNER --> APP["Type-safe application developer"]
+  APP --> ADVANCED["Advanced TypeScript developer"]
+  ADVANCED --> LIBRARY["Library and framework author"]
+  LIBRARY --> ARCHITECT["Production TypeScript architect"]
+  ARCHITECT --> STAFF["Staff-level TypeScript engineer"]
 ```
 
-TypeScript does **not** replace JavaScript. JavaScript remains the runtime language. Most TypeScript types disappear before code executes.
+## The core distinction
 
-```ts
-type User = { id: number }
-
-const user = JSON.parse(input) as User
+```mermaid
+flowchart LR
+  VALUES["Runtime values and effects"] --> JS["JavaScript runtime"]
+  TYPES["Static type relationships"] --> CHECKER["TypeScript checker"]
+  CHECKER --> DIAGNOSTICS["Diagnostics and editor tooling"]
+  CHECKER --> ERASE["Type-only syntax erased"]
+  ERASE --> JS
 ```
 
-The assertion above does not validate the JSON. It only tells the checker to trust the programmer. A safe boundary looks like this instead:
+TypeScript does not replace JavaScript and does not validate network responses, JSON, environment variables, database records, or user input. External data begins as `unknown`, passes through runtime validation, and only then becomes a trusted domain value.
 
-```text
-untrusted runtime value
-        ↓
-      unknown
-        ↓
-runtime validation
-        ↓
-trusted domain type
-```
+## How the handbook is organized
 
-This distinction appears throughout the handbook because it explains many production bugs: a program can be perfectly type-correct and still fail at runtime when its assumptions about external values are false.
+The sidebar contains focused lessons rather than large numbered chapter ranges. Old bundled routes remain as overview pages so existing links continue to work. Every lesson includes a mental model, runtime and compile-time behavior, examples, an incorrect design, a safer design, diagnostic guidance, production implications, an interview explanation, and exercises.
 
-## What you will become able to reason about
-
-By the end, you should be able to explain why a literal widened, why narrowing disappeared, why a conditional type distributed, how `infer` works, why a callback is assignable, why generic inference failed, when to choose a union vs overload vs generic, when to derive types from runtime schemas, whether frontend and backend should share a type, why code compiles but fails at runtime, where TypeScript is intentionally unsound, why an editor is slow, how project references change large-repo builds, and how to evolve a public generic API without destroying inference ergonomics.
-
-## Layer map
-
-| Layer | Responsibility | Typical failure |
-|---|---|---|
-| JavaScript runtime | values, objects, prototypes, promises, I/O | runtime exception or incorrect behavior |
-| TypeScript type system | static relationships between possible values | assignability, inference, narrowing error |
-| TypeScript compiler | parse/check/emit/configuration | diagnostics, resolution or emit issue |
-| Language service / editor | completions, hovers, refactors, incremental diagnostics | stale/mismatched editor state |
-| Node.js / browser | actual runtime module and platform semantics | import/runtime/API mismatch |
-| bundler/framework | transform, graph, chunking, environment rules | code works in checker but fails after build |
-
-## Status legend
-
-- ✅ stable and recommended where appropriate
-- ⚠️ deprecated, legacy, or migration-only
-- 🧪 experimental or version-sensitive
-- ⛔ intentionally excluded from stable guidance
-
-## Learning path
-
-```text
-JavaScript developer
-        ↓
-TypeScript beginner
-        ↓
-productive application developer
-        ↓
-advanced TypeScript developer
-        ↓
-senior TypeScript engineer
-        ↓
-library/framework author
-        ↓
-staff-level architecture and type-system reasoning
-        ↓
-production + interview mastery
-```
-
-Use the handbook sequentially for learning, or jump directly to TSConfig, modules, runtime validation, architecture, debugging, compiler reasoning, projects, or interviews when using it as a professional reference.
+Start with **Version Baseline**, **Learning Path**, and **Prerequisites**, then work sequentially or use the reference and audit section for targeted lookup.

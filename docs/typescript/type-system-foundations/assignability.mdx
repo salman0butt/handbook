@@ -1,0 +1,16 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  SOURCE["Source type"] --> COMPARE{"Satisfies target?"}
+  COMPARE -->|Yes| OK["Assignable"]
+  COMPARE -->|No| ERROR["Diagnostic"]
+```
+
+<DynamicTypeScriptDoc />

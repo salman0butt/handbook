@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  REQUEST["Typed request"] --> HTTP["HTTP"]
+  HTTP --> UNKNOWN["unknown response"]
+  UNKNOWN --> VALIDATE["Runtime validation"]
+  VALIDATE --> RESULT["Typed result"]
+```
+
+<DynamicTypeScriptDoc />

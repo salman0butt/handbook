@@ -1,0 +1,18 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  IMPORT["Import specifier"] --> MODE["Resolution mode"]
+  MODE --> PACKAGE["exports and types"]
+  MODE --> FILES["File candidates"]
+  PACKAGE --> RESULT["Resolved module"]
+  FILES --> RESULT
+```
+
+<DynamicTypeScriptDoc />

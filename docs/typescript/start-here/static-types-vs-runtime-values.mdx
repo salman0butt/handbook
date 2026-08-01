@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  TYPES["Static types"] --> CHECKER["TypeScript checker"]
+  CHECKER --> ERASE["Types erased"]
+  VALUES["Runtime values"] --> JS["JavaScript runtime"]
+  ERASE --> JS
+```
+
+<DynamicTypeScriptDoc />

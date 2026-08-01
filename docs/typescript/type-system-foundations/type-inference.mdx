@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  DECL["Declaration"] --> CONTEXT["Context"]
+  CONTEXT --> INFER["Inference"]
+  FLOW["Control flow"] --> INFER
+  INFER --> TYPE["Useful static type"]
+```
+
+<DynamicTypeScriptDoc />

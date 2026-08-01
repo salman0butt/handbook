@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  DB["Database row"] --> MAP1["Mapper"]
+  MAP1 --> DOMAIN["Domain model"]
+  DOMAIN --> MAP2["Presenter"]
+  MAP2 --> DTO["Public DTO"]
+```
+
+<DynamicTypeScriptDoc />

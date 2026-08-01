@@ -1,0 +1,21 @@
+name: Validate TypeScript handbook
+on:
+  pull_request:
+    paths: ['docs/typescript/**','sidebars.typescript.js','sidebars.final.js','scripts/validate-typescript-handbook.mjs','scripts/typescript-curriculum-manifest.json','package.json','.github/workflows/typescript-handbook.yml']
+  push:
+    branches: [main]
+    paths: ['docs/typescript/**','sidebars.typescript.js','sidebars.final.js','scripts/validate-typescript-handbook.mjs','scripts/typescript-curriculum-manifest.json','package.json']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 24}
+      - run: npm install --no-audit --no-fund
+      - run: npm run validate:typescript
+      - run: npm run validate:mermaid
+      - run: npm run build

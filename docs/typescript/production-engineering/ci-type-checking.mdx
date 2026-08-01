@@ -1,0 +1,17 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  COMMIT["Commit"] --> TYPES["tsc --noEmit"]
+  TYPES --> TEST["Runtime tests"]
+  TEST --> BUILD["Production build"]
+  BUILD --> DEPLOY["Deploy"]
+```
+
+<DynamicTypeScriptDoc />

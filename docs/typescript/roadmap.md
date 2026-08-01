@@ -1,69 +1,44 @@
 ---
-title: Learning Roadmap
+title: Learning Path
+description: Beginner-to-staff TypeScript learning path with checkpoints, projects, and production outcomes.
+slug: /typescript/roadmap
 ---
 
-# Learning roadmap
+# Learning Path
 
-The curriculum is organized as a progression rather than a syntax index.
-
-```text
-00 Start Here
-   ↓
-01–10 language foundations + proof-oriented safety
-   ↓
-11–25 generics, type manipulation, inference, compatibility, API design
-   ↓
-26–39 modules, config, declarations, libraries, runtimes, React/Node
-   ↓
-40–49 architecture, domain modeling, type-level work, compiler reasoning, debugging
-   ↓
-50–59 testing, linting, builds, security, production, migration, senior/staff design
-   ↓
-60 projects
-   ↓
-61 interview mastery
-   ↓
-62 300+ question bank
-   ↓
-63 mock interview practice
-   ↓
-Reference + coverage + final audit
+```mermaid
+flowchart TD
+  A["JavaScript runtime foundations"] --> B["Type system foundations"]
+  B --> C["Application TypeScript"]
+  C --> D["Advanced type manipulation"]
+  D --> E["Framework and backend integration"]
+  E --> F["Library authoring and type testing"]
+  F --> G["Architecture, performance, and security"]
+  G --> H["Production and staff-level reasoning"]
 ```
 
-## How to study each concept
+## Foundation checkpoint
 
-For important features, ask the same engineering questions:
+Learn JavaScript values, scope, objects, functions, classes, promises, modules, and the event loop. Then learn inference, annotations, assignability, structural typing, widening, narrowing, primitives, literals, arrays, tuples, objects, and functions.
 
-1. **What is it?** State the type-system feature precisely.
-2. **Why does it exist?** Identify the JavaScript problem or API-design problem it models.
-3. **How does the compiler reason?** Follow inference, contextual typing, control flow, constraints, and assignability.
-4. **What happens at runtime?** Determine whether anything is emitted and which guarantees disappear.
-5. **What is the safe boundary?** Identify where external data must become `unknown` and be validated.
-6. **What are the failure modes?** Look for widening, stale narrowing, `any` propagation, variance, assertion misuse, module mismatch, or inaccurate declarations.
-7. **What is the production implication?** Consider API evolution, build cost, debugging, observability, security, and team ownership.
+**Evidence:** explain the runtime/static distinction and solve basic diagnostics without `any`.
 
-## Recommended passes
+## Application checkpoint
 
-**Beginner pass:** intro → foundations → primitives → objects → interfaces/types → unions → narrowing → functions → special types → assertions → literals.
+Learn unions, discriminated variants, interfaces, generics, `keyof`, indexed access, `typeof`, utility types, null handling, errors, async code, modules, strict TSConfig, Node.js, React, Vue, runtime validation, APIs, and database boundaries.
 
-**Application developer pass:** generics → key/type operators → mapped/conditional/template types → utilities → nullability → arrays/tuples → modules → TSConfig → runtime validation → async → React/Node/API integration.
+**Evidence:** build an application that validates external data and keeps transport, domain, and storage types separate.
 
-**Senior pass:** structural compatibility → variance → inference → declaration/library authoring → architecture/domain modeling → soundness → performance/debugging/testing/security → migrations/upgrades.
+## Advanced checkpoint
 
-**Staff/library pass:** compiler mental models → type-level programming restraint → public API compatibility → monorepo governance → staff architecture → projects → interview/system-design drills.
+Learn mapped, conditional, inferred, and template-literal types; variance; branded and opaque types; type-level recursion; project references; declaration files; type tests; and checker performance.
 
-## Answer framework for interviews and design reviews
+**Evidence:** design a reusable typed API with positive and negative contract tests.
 
-```text
-define
-  ↓
-explain mechanism
-  ↓
-give a concrete example
-  ↓
-state trade-offs
-  ↓
-connect to production implications
-```
+## Production and staff checkpoint
 
-Avoid memorized slogans such as “interfaces are always better” or “TypeScript makes JavaScript type safe.” The handbook repeatedly replaces slogans with conditions, mechanisms, and boundary reasoning.
+Learn package authoring, migration, security, CI, observability, version upgrades, rollback, ownership boundaries, monorepos, multi-tenancy, and system design.
+
+**Evidence:** defend trade-offs, evolve a public type contract safely, diagnose a slow or failing build, and lead a TypeScript migration.
+
+Use the **Projects**, **Exercises**, and **Interview Preparation** sections after each checkpoint rather than waiting until the end.

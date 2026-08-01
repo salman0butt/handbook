@@ -9,6 +9,7 @@
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
     "validate:mermaid": "node scripts/validate-mermaid.mjs",
+    "validate:typescript": "node scripts/validate-typescript-handbook.mjs",
     "validate:react-focused": "node scripts/validate-react-focused.mjs",
     "validate:react-hooks": "node scripts/validate-react-hooks.mjs"
   },
@@ -25,6 +26,6 @@
     "react-dom": "^19.2.8"
   },
   "engines": {
-    "node": ">=20.0"
+    "node": ">=22.0"
   }
 }

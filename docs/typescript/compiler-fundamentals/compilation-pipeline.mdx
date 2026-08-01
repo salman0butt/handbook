@@ -1,0 +1,19 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  SOURCE["TypeScript source"] --> PARSE["Parse"]
+  PARSE --> BIND["Bind symbols"]
+  BIND --> CHECK["Type check"]
+  CHECK --> DIAGNOSTICS["Diagnostics"]
+  CHECK --> EMIT["Optional emit"]
+  EMIT --> RUNTIME["JavaScript runtime"]
+```
+
+<DynamicTypeScriptDoc />

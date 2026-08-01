@@ -1,0 +1,16 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  KEYS["keyof T"] --> MAP["Map each key K"]
+  MAP --> MODIFY["Transform modifiers or values"]
+  MODIFY --> RESULT["New object type"]
+```
+
+<DynamicTypeScriptDoc />

@@ -1,0 +1,19 @@
+---
+hide_title: true
+---
+
+import DynamicTypeScriptDoc from '@site/src/components/TypeScriptLesson/Dynamic';
+
+## Visual model
+
+```mermaid
+flowchart LR
+  SOURCE["Library source"] --> BUILD["Runtime builds"]
+  SOURCE --> DTS["Declarations"]
+  BUILD --> EXPORTS["Package exports"]
+  DTS --> EXPORTS
+  EXPORTS --> TEST["Consumer fixtures"]
+  TEST --> PUBLISH["npm publish"]
+```
+
+<DynamicTypeScriptDoc />
