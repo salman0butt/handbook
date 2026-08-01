@@ -50,6 +50,7 @@ const config = {
           customCss: [
             require.resolve('./src/css/custom.css'),
             require.resolve('./src/css/handbook-ux.css'),
+            require.resolve('./src/css/navbar-fixes.css'),
           ],
         },
       },
