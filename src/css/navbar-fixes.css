@@ -1,0 +1,55 @@
+/* Keep the desktop handbook header readable as the number of sections grows. */
+.navbar__title,
+.navbar__item,
+.navbar__link {
+  white-space: nowrap;
+}
+
+.navbar__title {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+@media (min-width: 997px) {
+  .navbar__inner {
+    flex-wrap: nowrap;
+  }
+
+  .navbar__brand {
+    flex: 0 0 auto;
+    min-width: max-content;
+    margin-right: 1rem;
+  }
+
+  .navbar__items--left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .navbar__items--right {
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+
+  .navbar__search,
+  .navbar .aa-Autocomplete {
+    width: clamp(220px, 21vw, 340px);
+    min-width: 0;
+  }
+}
+
+@media (min-width: 997px) and (max-width: 1200px) {
+  .navbar__brand {
+    margin-right: 0.45rem;
+  }
+
+  .navbar__item {
+    padding-inline: 0.55rem;
+  }
+
+  .navbar__search,
+  .navbar .aa-Autocomplete {
+    width: 210px;
+  }
+}
