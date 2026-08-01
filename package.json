@@ -9,7 +9,8 @@
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
     "validate:mermaid": "node scripts/validate-mermaid.mjs",
-    "validate:react-focused": "node scripts/validate-react-focused.mjs"
+    "validate:react-focused": "node scripts/validate-react-focused.mjs",
+    "validate:react-hooks": "node scripts/validate-react-hooks.mjs"
   },
   "dependencies": {
     "@cmfcmf/docusaurus-search-local": "^2.0.1",

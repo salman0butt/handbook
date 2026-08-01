@@ -3,6 +3,7 @@ const sidebars = require('./sidebars.ai-engineering.js');
 
 const category = (label, items, extra = {}) => ({type: 'category', label, items, ...extra});
 const doc = (id, label) => ({type: 'doc', id: `react/${id}`, label});
+const ref = (id, label) => ({type: 'ref', id: `react/${id}`, label});
 
 const existingReact = sidebars.reactSidebar;
 const startHere = existingReact.slice(0, 3);
@@ -52,6 +53,45 @@ sidebars.reactSidebar = [
     ]),
     category('Coverage and Sources', [
       doc('reference/focused-foundations-audit', 'Focused Foundations Audit'),
+    ]),
+  ], {collapsed: false}),
+  category('Built-in Hooks Reference', [
+    doc('hooks/built-in-hooks-reference', 'Complete Hooks Map'),
+    category('State Hooks', [
+      ref('hooks/use-state', 'useState'),
+      ref('reducers/use-reducer-and-reducer-design', 'useReducer'),
+    ]),
+    category('Context Hook', [
+      ref('context/context-and-use-context', 'useContext'),
+    ]),
+    category('Ref Hooks', [
+      ref('refs/use-ref', 'useRef'),
+      doc('hooks/use-imperative-handle', 'useImperativeHandle'),
+    ]),
+    category('Effect Hooks', [
+      ref('effects/use-effect', 'useEffect'),
+      doc('hooks/use-layout-effect', 'useLayoutEffect'),
+      doc('hooks/use-insertion-effect', 'useInsertionEffect'),
+      ref('effects/use-effect-event', 'useEffectEvent'),
+    ]),
+    category('Performance and Scheduling Hooks', [
+      doc('hooks/use-memo', 'useMemo'),
+      doc('hooks/use-callback', 'useCallback'),
+      ref('concurrency/use-transition-and-start-transition', 'useTransition'),
+      ref('concurrency/use-deferred-value', 'useDeferredValue'),
+    ]),
+    category('Other and Library Hooks', [
+      doc('hooks/use-debug-value', 'useDebugValue'),
+      doc('hooks/use-id', 'useId'),
+      ref('state-architecture/use-sync-external-store', 'useSyncExternalStore'),
+    ]),
+    category('Action and Form Hooks', [
+      ref('modern-react/use-action-state', 'useActionState'),
+      ref('modern-react/use-optimistic', 'useOptimistic'),
+      doc('hooks/use-form-status', 'useFormStatus (react-dom)'),
+    ]),
+    category('Related API', [
+      ref('modern-react/use-api-and-resources', 'use(resource) — React API'),
     ]),
   ], {collapsed: false}),
   ...advancedReact,

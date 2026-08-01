@@ -1,0 +1,83 @@
+/* Mobile dark-mode support for the Docusaurus navbar, sidebar, search, and docs surfaces. */
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+@media screen and (max-width: 996px) {
+  /* Docusaurus uses CSS-module class names for the built-in color toggle.
+     The prefix selector keeps the switch visible without depending on its hash. */
+  .navbar [class*='colorModeToggle'],
+  .navbar-sidebar [class*='colorModeToggle'] {
+    display: flex !important;
+    visibility: visible !important;
+    align-items: center;
+    justify-content: center;
+    opacity: 1 !important;
+  }
+
+  .navbar [class*='colorModeToggle'] button,
+  .navbar-sidebar [class*='colorModeToggle'] button {
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 12px;
+    touch-action: manipulation;
+  }
+
+  [data-theme='dark'] .navbar,
+  [data-theme='dark'] .navbar-sidebar,
+  [data-theme='dark'] .navbar-sidebar__brand,
+  [data-theme='dark'] .navbar-sidebar__items,
+  [data-theme='dark'] .theme-doc-sidebar-container,
+  [data-theme='dark'] .theme-doc-sidebar-menu {
+    color: var(--ifm-font-color-base);
+    background: var(--ifm-background-color);
+  }
+
+  [data-theme='dark'] .navbar-sidebar__backdrop {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(3px);
+  }
+
+  [data-theme='dark'] .menu__link,
+  [data-theme='dark'] .menu__caret,
+  [data-theme='dark'] .navbar-sidebar .navbar__link {
+    color: var(--ifm-color-emphasis-800);
+  }
+
+  [data-theme='dark'] .menu__link:hover,
+  [data-theme='dark'] .menu__link--active,
+  [data-theme='dark'] .navbar-sidebar .navbar__link:hover {
+    color: var(--ifm-color-primary);
+    background: color-mix(in srgb, var(--ifm-color-primary) 12%, transparent);
+  }
+
+  [data-theme='dark'] .navbar__search-input,
+  [data-theme='dark'] .aa-Input,
+  [data-theme='dark'] .DocSearch-Button {
+    border-color: var(--ifm-color-emphasis-300);
+    color: var(--ifm-font-color-base);
+    background: var(--ifm-background-surface-color);
+  }
+
+  [data-theme='dark'] .theme-doc-markdown,
+  [data-theme='dark'] .pagination-nav__link,
+  [data-theme='dark'] .handbook-related-topics__card,
+  [data-theme='dark'] .handbook-study-links {
+    color: var(--ifm-font-color-base);
+  }
+
+  [data-theme='dark'] .theme-code-block,
+  [data-theme='dark'] pre,
+  [data-theme='dark'] table {
+    border-color: var(--ifm-color-emphasis-300);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .navbar [class*='colorModeToggle'] button,
+  .navbar-sidebar [class*='colorModeToggle'] button {
+    min-width: 46px;
+    min-height: 46px;
+  }
+}

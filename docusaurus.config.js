@@ -51,6 +51,7 @@ const config = {
             require.resolve('./src/css/custom.css'),
             require.resolve('./src/css/handbook-ux.css'),
             require.resolve('./src/css/navbar-fixes.css'),
+            require.resolve('./src/css/mobile-dark-mode.css'),
           ],
         },
       },
@@ -58,6 +59,11 @@ const config = {
   ],
 
   themeConfig: {
+    colorMode: {
+      defaultMode: 'light',
+      disableSwitch: false,
+      respectPrefersColorScheme: true,
+    },
     mermaid: {
       theme: {light: 'neutral', dark: 'dark'},
     },
