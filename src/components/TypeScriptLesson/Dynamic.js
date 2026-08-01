@@ -14,10 +14,15 @@ function relativeRoute(pathname) {
   return pathname.slice(index + marker.length).replace(/^\/+|\/+$/g, '');
 }
 
+function categoryRoute(category) {
+  if (category.name === 'Projects') return 'projects/overview';
+  if (category.name === 'Project References') return 'project-references-overview';
+  return category.slug;
+}
+
 function findDocument(route) {
   for (const category of curriculum.categories) {
-    const categoryRoute = category.name === 'Projects' ? 'projects/overview' : category.slug;
-    if (route === categoryRoute) return {kind: 'category', category};
+    if (route === categoryRoute(category)) return {kind: 'category', category};
     const topic = category.topics.find(([, topicRoute]) => topicRoute === route);
     if (topic) return {kind: 'topic', category, topic};
   }
