@@ -1,0 +1,45 @@
+name: Verify focused React Pages deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke-test deployed React lessons
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify live homepage and focused lessons
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          verify_page() {
+            local url="$1"
+            local expected="$2"
+            local body
+
+            for attempt in $(seq 1 24); do
+              echo "Attempt ${attempt}: ${url}"
+              if body=$(curl --fail --silent --show-error --location --max-time 30 "$url"); then
+                if [[ -z "$expected" ]] || grep --fixed-strings --quiet "$expected" <<<"$body"; then
+                  echo "PASS ${url}"
+                  return 0
+                fi
+              fi
+              sleep 15
+            done
+
+            echo "FAIL ${url} did not expose expected content: ${expected}" >&2
+            return 1
+          }
+
+          verify_page "https://salman0butt.github.io/handbook/" ""
+          verify_page "https://salman0butt.github.io/handbook/react/focused-foundations/state-as-a-snapshot" "State as a Snapshot"
+          verify_page "https://salman0butt.github.io/handbook/react/focused-foundations/keys-and-identity" "Keys and Identity"
