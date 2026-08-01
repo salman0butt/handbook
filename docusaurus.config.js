@@ -58,6 +58,11 @@ const config = {
   ],
 
   themeConfig: {
+    colorMode: {
+      defaultMode: 'light',
+      disableSwitch: false,
+      respectPrefersColorScheme: true,
+    },
     mermaid: {
       theme: {light: 'neutral', dark: 'dark'},
     },
