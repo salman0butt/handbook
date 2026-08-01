@@ -40,7 +40,7 @@ const config = {
       'classic',
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.ai-engineering.js'),
+          sidebarPath: require.resolve('./sidebars.final.js'),
           editUrl: 'https://github.com/salman0butt/handbook/edit/main/',
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
