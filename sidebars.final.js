@@ -42,6 +42,7 @@ sidebars.reactSidebar = [
       doc('focused-foundations/form-validation-and-accessibility', 'Form Validation and Accessibility'),
     ]),
     category('State Foundations', [
+      doc('hooks/use-state', 'useState'),
       doc('focused-foundations/state-as-a-snapshot', 'State as a Snapshot'),
       doc('focused-foundations/batching-and-functional-updates', 'Batching and Functional State Updates'),
       doc('focused-foundations/updating-objects-and-arrays', 'Updating Objects and Arrays in State'),
