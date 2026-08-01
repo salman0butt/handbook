@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - react-focused-bootstrap-20260801
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -11,6 +14,7 @@ permissions:
 
 jobs:
   apply:
+    if: github.event_name != 'pull_request' || github.head_ref == 'react-focused-bootstrap-20260801'
     name: Expand, validate, and publish focused React lessons
     runs-on: ubuntu-latest
 
