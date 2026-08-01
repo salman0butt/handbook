@@ -1,0 +1,71 @@
+idebars.typescriptSidebar = ["]
+for section in CURRICULUM:
+    category=section["name"]; cslug=slugify(category); sidebar.append(f"  category({q(category)}, [")
+    for topic in section["topics"]:
+        if category=="Start Here" and topic=="Introduction": did="intro"
+        elif category=="Start Here" and topic=="Version Baseline": did="version"
+        elif category=="Start Here" and topic=="Learning Path": did="roadmap"
+        else: did=f"{cslug}/{slugify(topic)}"
+        sidebar.append(f"    doc({q(did)}, {q(topic)}),")
+    sidebar.append(f"  ], {{collapsed: {'false' if category=='Start Here' else 'true'}, link: {{type: 'doc', id: {q('typescript/'+cslug+'/index')}}}}}),")
+sidebar+=["];","","module.exports = sidebars;",""]
+write(ROOT/"sidebars.typescript.js","\n".join(sidebar))
+
+final=Path("sidebars.final.js").read_text()
+if "typescriptSidebars" not in final:
+    needle="const sidebars = require('./sidebars.ai-engineering.js');"
+    final=final.replace(needle,needle+"\nconst typescriptSidebars = require('./sidebars.typescript.js');\nsidebars.typescriptSidebar = typescriptSidebars.typescriptSidebar;",1)
+    Path("sidebars.final.js").write_text(final)
+
+package=json.loads(Path("package.json").read_text())
+package["scripts"]["validate:typescript"]="node scripts/validate-typescript-handbook.mjs"
+package["engines"]["node"]=">=22.0"
+Path("package.json").write_text(json.dumps(package,indent=2)+"\n")
+
+validator="""import {readFile, readdir} from 'node:fs/promises';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url), root=process.cwd();
+const manifest=JSON.parse(await readFile(path.join(root,'scripts/typescript-curriculum-manifest.json'),'utf8')), failures=[];
+const numeric=/^(?:chapter\s+)?\d+(?:[A-Za-z])?(?:\s*[–-]\s*\d+)?(?:[.\s:—–-]|$)/i, placeholder=/\b(?:TODO|TBD|coming soon)\b/i;
+const required=['## What the concept is','## Why the concept exists','## Beginner mental model','## JavaScript runtime behavior','## TypeScript compile-time behavior','## Basic TypeScript example','## Practical application','## Incorrect design','## Safer design','## Inference and compiler diagnostics','## Common mistakes','## Debugging guidance','## Performance implications','## API and library design implications','## Production considerations','## Interview explanation','## Summary','## Practice exercises'];
+async function collect(dir){const out=[];for(const e of await readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())out.push(...await collect(p));else if(/\.mdx?$/.test(e.name))out.push(p)}return out}
+function title(md){const fm=md.match(/^---\n([\s\S]*?)\n---/);if(!fm)return null;const line=fm[1].split('\n').find(x=>/^title:\s*/.test(x));if(!line)return null;const raw=line.replace(/^title:\s*/,'').trim();try{return JSON.parse(raw)}catch{return raw.replace(/^['"]|['"]$/g,'')}}
+function scan(items,ids,labels){for(const item of items){if(typeof item==='string'){ids.add(item);continue}if(!item||typeof item!=='object')continue;if(item.label)labels.push(item.label);if((item.type==='doc'||item.type==='ref')&&item.id)ids.add(item.id);if(item.type==='category'){if(item.link?.type==='doc')ids.add(item.link.id);scan(item.items??[],ids,labels)}}}
+const files=await collect(path.join(root,'docs/typescript')), rel=new Set(files.map(f=>path.relative(root,f).replaceAll(path.sep,'/'))), expected=new Set([...manifest.entries.map(x=>x.path),...manifest.legacyPaths]);
+if(manifest.categoryCount!==59)failures.push('Expected 59 categories');if(manifest.topicCount!==661)failures.push('Expected 661 topics');if(expected.size!==734)failures.push('Expected 734 paths');if(rel.size!==expected.size)failures.push(`Expected ${expected.size} files, found ${rel.size}`);for(const p of expected)if(!rel.has(p))failures.push(`Missing ${p}`);
+for(const e of manifest.entries){const md=await readFile(path.join(root,e.path),'utf8'),t=title(md);if(!t)failures.push(`${e.path}: missing title`);else if(numeric.test(t))failures.push(`${e.path}: numeric title`);if((md.match(/^# .+$/gm)??[]).length!==1)failures.push(`${e.path}: H1 count`);if(placeholder.test(md))failures.push(`${e.path}: placeholder`);if(((md.match(/^```/gm)??[]).length%2)!==0)failures.push(`${e.path}: fences`);if(e.kind==='lesson')for(const h of required)if(!md.includes(h))failures.push(`${e.path}: missing ${h}`)}
+const sides=require('../sidebars.typescript.js'),ids=new Set(),labels=[];scan(sides.typescriptSidebar??[],ids,labels);for(const e of manifest.entries)if(!ids.has(e.id))failures.push(`Sidebar missing ${e.id}`);for(const l of labels)if(numeric.test(l))failures.push(`Numeric label ${l}`);if((sides.typescriptSidebar??[]).length!==59)failures.push('Sidebar category count');
+if(failures.length){console.error(failures.join('\n'));process.exit(1)}console.log(`PASS TypeScript handbook: 59 categories, 661 topics, 734 Markdown files, ${ids.size} sidebar links.`);
+"""
+write(ROOT/"scripts/validate-typescript-handbook.mjs",validator)
+
+workflow="""name: Validate TypeScript handbook
+on:
+  pull_request:
+    paths: ['docs/typescript/**','sidebars.typescript.js','sidebars.final.js','scripts/validate-typescript-handbook.mjs','scripts/typescript-curriculum-manifest.json','package.json','.github/workflows/typescript-handbook.yml']
+  push:
+    branches: [main]
+    paths: ['docs/typescript/**','sidebars.typescript.js','sidebars.final.js','scripts/validate-typescript-handbook.mjs','scripts/typescript-curriculum-manifest.json','package.json']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 24}
+      - run: npm install --no-audit --no-fund
+      - run: npm run validate:typescript
+      - run: npm run validate:mermaid
+      - run: npm run build
+"""
+write(ROOT/".github/workflows/typescript-handbook.yml",workflow)
+
+deploy=Path(".github/workflows/deploy.yml").read_text().replace("node-version: 20","node-version: 24")
+if "Validate TypeScript handbook" not in deploy:
+    deploy=deploy.replace("      - name: Build handbook\n        run: npm run build","      - name: Validate TypeScript handbook\n        run: npm run validate:typescript\n\n      - name: Validate Mermaid diagrams\n        run: npm run validate:mermaid\n\n      - name: Build handbook\n        run: npm run build")
+Path(".github/workflows/deploy.yml").write_text(deploy)
+print(f"Generated {len(list(DOCS.rglob('*.md')))} TypeScript Markdown files.")
