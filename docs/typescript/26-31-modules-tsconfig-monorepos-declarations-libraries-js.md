@@ -6,10 +6,10 @@ title: "Focused TypeScript Curriculum Overview"
 
 This preserved route now links to focused lessons:
 
-- [Modules](/typescript/modules)
-- [Declaration Files](/typescript/declaration-files)
-- [Libraries and Type Definitions](/typescript/libraries-and-type-definitions)
-- [tsconfig.json](/typescript/tsconfig)
-- [Strictness Options](/typescript/strictness-options)
-- [Project References](/typescript/project-references)
-- [Migration from JavaScript](/typescript/migration-from-javascript)
+- [Modules](/docs/typescript/modules)
+- [Declaration Files](/docs/typescript/declaration-files)
+- [Libraries and Type Definitions](/docs/typescript/libraries-and-type-definitions)
+- [tsconfig.json](/docs/typescript/tsconfig)
+- [Strictness Options](/docs/typescript/strictness-options)
+- [Project References](/docs/typescript/project-references)
+- [Migration from JavaScript](/docs/typescript/migration-from-javascript)

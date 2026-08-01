@@ -6,8 +6,8 @@ title: "Projects"
 
 This preserved route links to focused lessons:
 
-- [Beginner Projects](/typescript/projects/beginner-projects)
-- [Intermediate Projects](/typescript/projects/intermediate-projects)
-- [Advanced Projects](/typescript/projects/advanced-projects)
-- [Library Authoring Project](/typescript/projects/library-authoring-project)
-- [Production Capstone](/typescript/projects/production-capstone)
+- [Beginner Projects](/docs/typescript/projects/beginner-projects)
+- [Intermediate Projects](/docs/typescript/projects/intermediate-projects)
+- [Advanced Projects](/docs/typescript/projects/advanced-projects)
+- [Library Authoring Project](/docs/typescript/projects/library-authoring-project)
+- [Production Capstone](/docs/typescript/projects/production-capstone)

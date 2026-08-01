@@ -6,10 +6,10 @@ title: "Focused TypeScript Curriculum Overview"
 
 This preserved route now links to focused lessons:
 
-- [API Design](/typescript/api-design)
-- [Database Types](/typescript/database-types)
-- [Architecture](/typescript/architecture)
-- [Advanced Type Patterns](/typescript/advanced-type-patterns)
-- [Type-Level Programming](/typescript/type-level-programming)
-- [Compiler Fundamentals](/typescript/compiler-fundamentals)
-- [Performance](/typescript/performance)
+- [API Design](/docs/typescript/api-design)
+- [Database Types](/docs/typescript/database-types)
+- [Architecture](/docs/typescript/architecture)
+- [Advanced Type Patterns](/docs/typescript/advanced-type-patterns)
+- [Type-Level Programming](/docs/typescript/type-level-programming)
+- [Compiler Fundamentals](/docs/typescript/compiler-fundamentals)
+- [Performance](/docs/typescript/performance)

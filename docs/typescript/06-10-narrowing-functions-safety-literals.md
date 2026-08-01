@@ -6,9 +6,9 @@ title: "Focused TypeScript Curriculum Overview"
 
 This preserved route now links to focused lessons:
 
-- [Type Narrowing](/typescript/type-narrowing)
-- [Functions](/typescript/functions)
-- [Type Assertions](/typescript/type-assertions)
-- [satisfies Operator](/typescript/satisfies-operator)
-- [Null and Undefined](/typescript/null-and-undefined)
-- [Error Handling](/typescript/error-handling)
+- [Type Narrowing](/docs/typescript/type-narrowing)
+- [Functions](/docs/typescript/functions)
+- [Type Assertions](/docs/typescript/type-assertions)
+- [satisfies Operator](/docs/typescript/satisfies-operator)
+- [Null and Undefined](/docs/typescript/null-and-undefined)
+- [Error Handling](/docs/typescript/error-handling)
