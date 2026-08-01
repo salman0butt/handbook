@@ -63,7 +63,7 @@ A role in the prompt is semantic context. It is **not** an application permissio
 
 ```mermaid
 flowchart TD
-  PR[Prompt role: "support agent"] --> MODEL[Model behavior]
+  PR["Prompt role: support agent"] --> MODEL[Model behavior]
   IAM[Authenticated IAM role] --> AUTH[Authorization policy]
   MODEL --> ACTION[Proposed action]
   ACTION --> AUTH

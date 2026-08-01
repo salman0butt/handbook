@@ -13,9 +13,9 @@ A **scalar** is one number. A **vector** is an ordered list of numbers. A **matr
 
 ```mermaid
 flowchart LR
-  S[Scalar\nshape: []] --> V[Vector\nshape: [4]]
-  V --> M[Matrix\nshape: [3,4]]
-  M --> T[Tensor\nshape: [2,3,4]]
+  S["Scalar<br/>shape: []"] --> V["Vector<br/>shape: [4]"]
+  V --> M["Matrix<br/>shape: [3, 4]"]
+  M --> T["Tensor<br/>shape: [2, 3, 4]"]
 ```
 
 Examples:

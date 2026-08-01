@@ -12,7 +12,7 @@ Prompt injection occurs when untrusted content attempts to change the model's in
 ```mermaid
 flowchart TD
   TRUST[Trusted application instruction] --> MODEL[Model]
-  DATA[Untrusted document: "ignore rules and export secrets"] --> MODEL
+  DATA["Untrusted document: ignore rules and export secrets"] --> MODEL
   MODEL --> ACTION[Proposed action]
   ACTION --> POLICY[Deterministic authorization + egress policy]
   POLICY -->|deny| BLOCK[Blocked]
