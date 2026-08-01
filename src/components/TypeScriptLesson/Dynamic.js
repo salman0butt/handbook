@@ -40,7 +40,7 @@ function CategoryPage({category}) {
     ),
     h('h2', null, 'Lessons'),
     h('ul', null, ...category.topics.map(([title, route]) =>
-      h('li', {key: route}, h(Link, {to: `/typescript/${route}`}, title)))),
+      h('li', {key: route}, h(Link, {to: `/docs/typescript/${route}`}, title)))),
     h('h2', null, 'Study method'),
     h('p', null, 'Run the examples under strict checking, intentionally introduce an error, explain the diagnostic, and finish the exercises.'),
   );
