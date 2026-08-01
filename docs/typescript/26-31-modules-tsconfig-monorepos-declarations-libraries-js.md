@@ -11,5 +11,5 @@ This preserved route now links to focused lessons:
 - [Libraries and Type Definitions](/docs/typescript/libraries-and-type-definitions)
 - [tsconfig.json](/docs/typescript/tsconfig)
 - [Strictness Options](/docs/typescript/strictness-options)
-- [Project References](/typescript/project-references-overview)
+- [Project References](/docs/typescript/project-references-overview)
 - [Migration from JavaScript](/docs/typescript/migration-from-javascript)
