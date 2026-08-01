@@ -25,7 +25,7 @@ jobs:
             local expected="$2"
             local body
 
-            for attempt in $(seq 1 24); do
+            for attempt in $(seq 1 8); do
               echo "Attempt ${attempt}: ${url}"
               if body=$(curl --fail --silent --show-error --location --max-time 30 "$url"); then
                 if [[ -z "$expected" ]] || grep --fixed-strings --quiet "$expected" <<<"$body"; then
@@ -33,7 +33,7 @@ jobs:
                   return 0
                 fi
               fi
-              sleep 15
+              sleep 10
             done
 
             echo "FAIL ${url} did not expose expected content: ${expected}" >&2
@@ -41,5 +41,5 @@ jobs:
           }
 
           verify_page "https://salman0butt.github.io/handbook/" ""
-          verify_page "https://salman0butt.github.io/handbook/react/focused-foundations/state-as-a-snapshot" "State as a Snapshot"
-          verify_page "https://salman0butt.github.io/handbook/react/focused-foundations/keys-and-identity" "Keys and Identity"
+          verify_page "https://salman0butt.github.io/handbook/docs/react/focused-foundations/state-as-a-snapshot" "State as a Snapshot"
+          verify_page "https://salman0butt.github.io/handbook/docs/react/focused-foundations/keys-and-identity" "Keys and Identity"
