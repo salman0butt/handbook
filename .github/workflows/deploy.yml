@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -17,6 +20,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || github.head_ref == 'typescript-handbook-validation-2026-08-01'
     name: Build Docusaurus
     runs-on: ubuntu-latest
 
@@ -49,6 +53,7 @@ jobs:
           path: build
 
   deploy:
+    if: github.event_name != 'pull_request' || github.head_ref == 'typescript-handbook-validation-2026-08-01'
     name: Deploy to GitHub Pages
     needs: build
     permissions:
