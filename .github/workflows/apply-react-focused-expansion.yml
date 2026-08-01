@@ -38,6 +38,7 @@ jobs:
           git fetch origin main
           git checkout -B react-focused-foundations-20260801 origin/main
           tar -xJf /tmp/react-focused.tar.xz -C .
+          rm -f .github/workflows/validate-react-focused.yml
 
       - name: Validate focused lesson contract
         run: node scripts/validate-react-focused.mjs
