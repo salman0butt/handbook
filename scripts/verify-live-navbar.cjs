@@ -19,7 +19,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     let lastResult = null;
 
-    for (let attempt = 1; attempt <= 72; attempt += 1) {
+    for (let attempt = 1; attempt <= 36; attempt += 1) {
       try {
         await page.goto(`${url}?release=ed879c6d-${attempt}`, {
           waitUntil: 'networkidle2',
@@ -28,6 +28,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         await sleep(2500);
 
         lastResult = await page.evaluate((requiredLabels) => {
+          const normalize = (value) => (value || '').replace(/\s+/g, ' ').trim();
           const title = document.querySelector('.navbar__title');
           const leftItems = [...document.querySelectorAll('.navbar__items--left > .navbar__item')]
             .filter(element => {
@@ -36,9 +37,13 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
               return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0;
             });
 
-          const primaryTexts = leftItems.map(element =>
-            (element.textContent || '').replace(/\s+/g, ' ').trim(),
-          );
+          const primaryTexts = leftItems.map(element => {
+            const trigger = element.matches('.navbar__link')
+              ? element
+              : element.querySelector(':scope > .navbar__link');
+            return normalize(trigger?.textContent || element.getAttribute('aria-label'));
+          });
+
           const rects = leftItems.map(element => element.getBoundingClientRect());
           const topValues = rects.map(rect => Math.round(rect.top));
           const sameLine = topValues.length > 0 && Math.max(...topValues) - Math.min(...topValues) <= 2;
@@ -50,7 +55,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
           const bodyText = document.body.innerText || '';
 
           return {
-            titleText: (title?.textContent || '').replace(/\s+/g, ' ').trim(),
+            titleText: normalize(title?.textContent),
             titleTruncated: Boolean(title && title.scrollWidth > title.clientWidth + 1),
             primaryTexts,
             hasRequiredPrimaryLabels: requiredLabels.every(label => primaryTexts.includes(label)),
@@ -60,6 +65,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
             diagramRendered,
             viewportWidth: window.innerWidth,
             documentWidth: document.documentElement.scrollWidth,
+            currentUrl: window.location.href,
           };
         }, requiredPrimaryLabels);
 
