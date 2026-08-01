@@ -1,0 +1,65 @@
+name: Verify deployed React hooks and mobile dark mode
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke-test hooks routes and dark CSS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify deployed content
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://salman0butt.github.io/handbook"
+
+          verify_page() {
+            local path="$1"
+            local expected="$2"
+            local body
+
+            for attempt in $(seq 1 24); do
+              echo "Attempt ${attempt}: ${base}${path}"
+              if body=$(curl --fail --silent --show-error --location --max-time 30 "${base}${path}"); then
+                if grep --fixed-strings --quiet "$expected" <<<"$body"; then
+                  echo "PASS ${path}"
+                  return 0
+                fi
+              fi
+              sleep 15
+            done
+
+            echo "FAIL ${path} did not contain ${expected}" >&2
+            return 1
+          }
+
+          verify_page "/docs/react/hooks/built-in-hooks-reference" "Complete Built-in Hooks Reference"
+          verify_page "/docs/react/hooks/use-id" "useId"
+          verify_page "/docs/react/hooks/use-form-status" "useFormStatus"
+
+          homepage=$(curl --fail --silent --show-error --location "${base}/?docusaurus-theme=dark")
+          styles=$(grep -oE 'href="[^"]+\.css"' <<<"$homepage" | cut -d'"' -f2)
+          test -n "$styles"
+
+          : > /tmp/deployed.css
+          while IFS= read -r href; do
+            if [[ "$href" == http* ]]; then
+              css_url="$href"
+            else
+              css_url="https://salman0butt.github.io${href}"
+            fi
+            curl --fail --silent --show-error --location "$css_url" >> /tmp/deployed.css
+          done <<<"$styles"
+
+          grep --fixed-strings --quiet "colorModeToggle" /tmp/deployed.css
+          grep --fixed-strings --quiet "min-width:44px" /tmp/deployed.css
+          grep --fixed-strings --quiet "navbar-sidebar" /tmp/deployed.css
+          echo "PASS deployed CSS contains mobile dark-mode toggle and sidebar rules"
