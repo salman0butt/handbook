@@ -1,6 +1,24 @@
 import {readdir, readFile} from 'node:fs/promises';
 import path from 'node:path';
-import mermaid from 'mermaid';
+import {JSDOM} from 'jsdom';
+
+const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+  url: 'https://handbook.local/',
+});
+
+Object.assign(globalThis, {
+  window: dom.window,
+  document: dom.window.document,
+  navigator: dom.window.navigator,
+  Element: dom.window.Element,
+  HTMLElement: dom.window.HTMLElement,
+  SVGElement: dom.window.SVGElement,
+  Node: dom.window.Node,
+  DOMParser: dom.window.DOMParser,
+});
+
+// Mermaid and DOMPurify must be imported only after the browser-like globals exist.
+const {default: mermaid} = await import('mermaid');
 
 const docsRoot = path.resolve('docs');
 const mermaidFence = /```mermaid[^\n]*\n([\s\S]*?)\n```/g;
