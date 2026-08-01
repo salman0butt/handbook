@@ -36,12 +36,14 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     const result = await page.evaluate((requiredLabels) => {
       const normalize = (value) => (value || '').replace(/\s+/g, ' ').trim();
       const title = document.querySelector('.navbar__title');
-      const leftItems = [...document.querySelectorAll('.navbar__items--left > .navbar__item')]
-        .filter(element => {
-          const style = window.getComputedStyle(element);
-          const rect = element.getBoundingClientRect();
-          return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0;
-        });
+      const leftContainer = document.querySelector('.navbar__items:not(.navbar__items--right)');
+      const leftItems = leftContainer
+        ? [...leftContainer.querySelectorAll(':scope > .navbar__item')].filter(element => {
+            const style = window.getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0;
+          })
+        : [];
 
       const primaryTexts = leftItems.map(element => {
         const trigger = element.matches('.navbar__link')
