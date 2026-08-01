@@ -20,9 +20,20 @@ function categoryRoute(category) {
   return category.slug;
 }
 
+function lessonUrl(category, route) {
+  if (category.name === 'Project References' && route === 'project-references/project-references') {
+    return '/docs/typescript/project-references/topic';
+  }
+  return `/docs/typescript/${route}`;
+}
+
 function findDocument(route) {
   for (const category of curriculum.categories) {
     if (route === categoryRoute(category)) return {kind: 'category', category};
+    if (category.name === 'Project References' && route === 'project-references/topic') {
+      const topic = category.topics.find(([, topicRoute]) => topicRoute === 'project-references/project-references');
+      return topic ? {kind: 'topic', category, topic} : null;
+    }
     const topic = category.topics.find(([, topicRoute]) => topicRoute === route);
     if (topic) return {kind: 'topic', category, topic};
   }
@@ -45,7 +56,7 @@ function CategoryPage({category}) {
     ),
     h('h2', null, 'Lessons'),
     h('ul', null, ...category.topics.map(([title, route]) =>
-      h('li', {key: route}, h(Link, {to: `/docs/typescript/${route}`}, title)))),
+      h('li', {key: route}, h(Link, {to: lessonUrl(category, route)}, title)))),
     h('h2', null, 'Study method'),
     h('p', null, 'Run the examples under strict checking, intentionally introduce an error, explain the diagnostic, and finish the exercises.'),
   );
