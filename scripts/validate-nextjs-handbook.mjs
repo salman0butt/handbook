@@ -1,12 +1,16 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const nextRoot = path.join(repositoryRoot, 'docs', 'nextjs')
 const completionRoot = path.join(nextRoot, 'complete-handbook')
 const sidebarPath = path.join(repositoryRoot, 'sidebars.nextjs.js')
+const finalSidebarPath = path.join(repositoryRoot, 'sidebars.final.js')
+const configPath = path.join(repositoryRoot, 'docusaurus.config.js')
+const packagePath = path.join(repositoryRoot, 'package.json')
 
 const failures = []
 const fail = (message) => failures.push(message)
@@ -16,6 +20,26 @@ function walk(directory) {
     const target = path.join(directory, entry.name)
     return entry.isDirectory() ? walk(target) : [target]
   })
+}
+
+function countSidebarItems(items) {
+  const stats = {categories: 0, links: 0}
+  for (const item of items ?? []) {
+    if (typeof item === 'string') {
+      stats.links += 1
+      continue
+    }
+    if (!item || typeof item !== 'object') continue
+    if (item.type === 'category') {
+      stats.categories += 1
+      const nested = countSidebarItems(item.items)
+      stats.categories += nested.categories
+      stats.links += nested.links
+    } else if (item.type === 'doc' || item.type === 'ref' || item.type === 'link') {
+      stats.links += 1
+    }
+  }
+  return stats
 }
 
 if (!fs.existsSync(nextRoot)) fail('docs/nextjs does not exist')
@@ -58,7 +82,13 @@ for (const relativePath of requiredFiles) {
 const placeholderPattern = /^(?:\s*[-*>#]*\s*)?(?:coming soon|lorem ipsum|todo(?:\b|:)|tbd(?:\b|:)|\[placeholder\])\s*[.!-]*\s*$/im
 const numericTitlePattern = /^(?:title:\s*|#\s+)['"]?\d+(?:[A-F])?(?:\s*[.–-]\s*\d+)?\s*[.·:-]/im
 const slugs = new Map()
-let mermaidCount = 0
+let completionMermaidCount = 0
+let nextjsMermaidCount = 0
+
+for (const file of allDocs) {
+  const source = fs.readFileSync(file, 'utf8')
+  nextjsMermaidCount += source.match(/```mermaid\s*\n/g)?.length ?? 0
+}
 
 for (const file of completionDocs) {
   const relativePath = path.relative(repositoryRoot, file)
@@ -69,7 +99,7 @@ for (const file of completionDocs) {
 
   const fences = source.match(/^```/gm)?.length ?? 0
   if (fences % 2 !== 0) fail(`Unbalanced code fence in ${relativePath}`)
-  mermaidCount += source.match(/```mermaid\s*\n/g)?.length ?? 0
+  completionMermaidCount += source.match(/```mermaid\s*\n/g)?.length ?? 0
 
   const slug = source.match(/^slug:\s*(.+)$/m)?.[1]?.trim()
   if (slug) {
@@ -78,7 +108,9 @@ for (const file of completionDocs) {
   }
 }
 
-if (mermaidCount < 15) fail(`Expected at least 15 completion-layer Mermaid diagrams, found ${mermaidCount}`)
+if (completionMermaidCount < 15) {
+  fail(`Expected at least 15 completion-layer Mermaid diagrams, found ${completionMermaidCount}`)
+}
 
 const baselinePath = path.join(completionRoot, 'version.mdx')
 if (fs.existsSync(baselinePath)) {
@@ -88,11 +120,13 @@ if (fs.existsSync(baselinePath)) {
   }
 }
 
+let completionSidebarLinks = 0
 if (!fs.existsSync(sidebarPath)) {
   fail('sidebars.nextjs.js does not exist')
 } else {
   const sidebar = fs.readFileSync(sidebarPath, 'utf8')
   const docIds = [...sidebar.matchAll(/doc\('([^']+)'/g)].map((match) => match[1])
+  completionSidebarLinks = docIds.length
   if (docIds.length < 47) fail(`Expected at least 47 completion sidebar links, found ${docIds.length}`)
   for (const id of docIds) {
     const md = path.join(completionRoot, `${id}.md`)
@@ -106,13 +140,69 @@ if (!fs.existsSync(sidebarPath)) {
   if (numericLabels.length > 0) fail(`Numeric prefixes found in completion sidebar labels: ${numericLabels.join(', ')}`)
 }
 
+let nextjsSidebarStats = {categories: 0, links: 0}
+if (!fs.existsSync(finalSidebarPath)) {
+  fail('sidebars.final.js does not exist')
+} else {
+  try {
+    const require = createRequire(import.meta.url)
+    const sidebars = require(finalSidebarPath)
+    nextjsSidebarStats = countSidebarItems(sidebars.nextjsSidebar)
+  } catch (error) {
+    fail(`Unable to evaluate final Next.js sidebar: ${error.message}`)
+  }
+}
+
+const compatibilityRoutes = [
+  '/nextjs/intro',
+  '/nextjs/version',
+  '/nextjs/roadmap',
+  '/nextjs/complete-handbook',
+  '/docs/nextjs/app-router/app-directory',
+  '/docs/nextjs/routing/dynamic-routes',
+  '/docs/nextjs/server-components/server-components',
+  '/docs/nextjs/caching/cache-layers',
+  '/docs/nextjs/rendering/static-rendering',
+  '/docs/nextjs/server-functions/server-actions',
+  '/docs/nextjs/route-handlers/route-handlers',
+  '/docs/nextjs/authentication/authentication-overview',
+  '/docs/nextjs/deployment/deployment-overview',
+]
+
+if (!fs.existsSync(configPath)) {
+  fail('docusaurus.config.js does not exist')
+} else {
+  const config = fs.readFileSync(configPath, 'utf8')
+  if (!config.includes('@docusaurus/plugin-client-redirects')) {
+    fail('Docusaurus client redirect plugin is not configured')
+  }
+  for (const route of compatibilityRoutes) {
+    if (!config.includes(`'${route}'`)) fail(`Missing compatibility route: ${route}`)
+  }
+  const navbarTarget = "{to: '/docs/nextjs/intro', label: 'Next.js'"
+  const footerTarget = "{label: 'Next.js', to: '/docs/nextjs/intro'"
+  if (!config.includes(navbarTarget)) fail('Navbar does not use the canonical Next.js entry')
+  if (!config.includes(footerTarget)) fail('Footer does not use the canonical Next.js entry')
+}
+
+if (!fs.existsSync(packagePath)) {
+  fail('package.json does not exist')
+} else {
+  const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'))
+  if (packageJson.dependencies?.['@docusaurus/plugin-client-redirects'] !== '3.10.2') {
+    fail('The Docusaurus redirect plugin must be pinned to 3.10.2')
+  }
+}
+
 const report = {
   nextjsDocuments: allDocs.length,
+  nextjsSidebarCategories: nextjsSidebarStats.categories,
+  nextjsSidebarLinks: nextjsSidebarStats.links,
+  nextjsMermaidDiagrams: nextjsMermaidCount,
   completionDocuments: completionDocs.length,
-  completionSidebarLinks: fs.existsSync(sidebarPath)
-    ? [...fs.readFileSync(sidebarPath, 'utf8').matchAll(/doc\('([^']+)'/g)].length
-    : 0,
-  completionMermaidDiagrams: mermaidCount,
+  completionSidebarLinks,
+  completionMermaidDiagrams: completionMermaidCount,
+  compatibilityRoutes: compatibilityRoutes.length,
   uniqueCompletionSlugs: slugs.size,
   status: failures.length === 0 ? 'passed' : 'failed',
 }
