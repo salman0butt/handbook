@@ -50,11 +50,20 @@ jobs:
           fs.writeFileSync(configPath, config)
 
           const validatorPath = 'scripts/validate-javascript-handbook.mjs'
-          let validator = fs.readFileSync(validatorPath, 'utf8')
-          const oldIdLogic = `  const frontmatterId = source.match(/^id:\\s*(.+)$/m)?.[1]?.trim()\n  const defaultId = relativeToJs.replace(/\\.(md|mdx)$/, '')\n  const id = frontmatterId ?? defaultId`
-          const newIdLogic = `  const frontmatterId = source.match(/^id:\\s*(.+)$/m)?.[1]?.trim()\n  const defaultId = relativeToJs.replace(/\\.(md|mdx)$/, '')\n  const directory = path.posix.dirname(relativeToJs)\n  const id = frontmatterId\n    ? (directory === '.' ? frontmatterId : \\`${directory}/\\${frontmatterId}\\`)\n    : defaultId`
-          if (!validator.includes(oldIdLogic)) throw new Error('Unable to locate document ID validation logic')
-          validator = validator.replace(oldIdLogic, newIdLogic)
+          const validatorLines = fs.readFileSync(validatorPath, 'utf8').split('\n')
+          const idIndex = validatorLines.findIndex(line => line.includes('const frontmatterId = source.match'))
+          if (idIndex === -1) throw new Error('Unable to locate document ID validation logic')
+          validatorLines.splice(
+            idIndex,
+            3,
+            "  const frontmatterId = source.match(/^id:\\s*(.+)$/m)?.[1]?.trim()",
+            "  const defaultId = relativeToJs.replace(/\\.(md|mdx)$/, '')",
+            '  const directory = path.posix.dirname(relativeToJs)',
+            '  const id = frontmatterId',
+            "    ? (directory === '.' ? frontmatterId : `${directory}/${frontmatterId}`)",
+            '    : defaultId',
+          )
+          let validator = validatorLines.join('\n')
 
           validator = validator.replace(
             "if (!fs.existsSync(configPath)) {\n  fail('docusaurus.config.js does not exist')\n} else {",
@@ -65,7 +74,7 @@ jobs:
             "  if (!config.includes(\"{label: 'JavaScript', to: '/docs/javascript/intro'\")) {\n    fail('Footer does not use the canonical JavaScript entry')\n  }\n  if (config.includes(\"from: '/javascript'\") && config.includes(\"to: '/docs/javascript/intro'\")) {\n    compatibilityRedirects += 1\n  } else {\n    fail('Legacy /javascript route does not redirect to the canonical JavaScript introduction')\n  }\n}",
           )
           validator = validator.replace('  compatibilityRedirects: 0,', '  compatibilityRedirects,')
-          fs.writeFileSync(validatorPath, validator)
+          fs.writeFileSync(validatorPath, `${validator}\n`)
           NODE
 
       - name: Commit normalized files
