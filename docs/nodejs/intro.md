@@ -1,79 +1,95 @@
 ---
 title: Node.js Developer Handbook
-description: A production-focused Node.js handbook from JavaScript foundations to runtime internals, distributed systems, platform engineering, and interview mastery.
+description: A production-grade Node.js handbook from JavaScript foundations and runtime internals to secure distributed systems, deployment, capstones and senior interviews.
 slug: /nodejs/intro
 ---
 
 # Node.js Developer Handbook
 
-This handbook teaches Node.js as a **runtime and backend engineering system**, not as a collection of APIs. The goal is to move from JavaScript familiarity to the ability to reason about execution, I/O, concurrency, memory, failure, security, production operations, and architecture.
+This handbook teaches Node.js as a **runtime, backend engineering environment and production operating system for JavaScript applications**. Frameworks are introduced only after the Node.js execution, I/O, process, stream, networking and failure models are clear.
 
-> **Baseline — 30 July 2026:** ✅ Node.js **26.x** is the Current line, ✅ **24.x “Krypton”** is Active LTS, and ✅ **22.x “Jod”** is Maintenance LTS. The Node.js releases page reported v26.5.0 as the latest Current release and v24.18.0 as the latest LTS release when this handbook was finalized. Production services should normally run an LTS line. Version-sensitive behavior is labelled explicitly.
+> **Research baseline — August 2, 2026:** Node.js **24.18.0 Krypton LTS** is the production baseline, Node.js **26.5.0** is the Current line, Node.js **22.23.1 Jod** is Maintenance LTS, npm **11.16.0** is bundled with the selected LTS release, and TypeScript **7.0.2** is the handbook compiler baseline. See [Current Node.js Release and Platform Baseline](./version-baseline.md).
 
-## The core mental model
+## Learning Outcome
 
-```text
-JavaScript source
-        ↓
-Node.js runtime
-        ↓
-V8 parses and executes JavaScript
-        ↓
-Node APIs expose runtime capabilities
-        ↓
-libuv coordinates event loop + selected async work
-        ↓
-OS / kernel handles sockets, files, processes, timers
+```mermaid
+flowchart TD
+  A["JavaScript developer"] --> B["Node.js fundamentals"]
+  B --> C["Runtime event loop and async internals"]
+  C --> D["Modules TypeScript and core APIs"]
+  D --> E["HTTP frameworks data and security"]
+  E --> F["Testing diagnostics and operations"]
+  F --> G["Distributed architecture and capstones"]
+  G --> H["Senior Node.js engineer"]
 ```
 
-Do not collapse these layers into “Node is single-threaded.” JavaScript callbacks normally execute on one main JavaScript thread, while the runtime may also use OS asynchronous facilities, libuv's worker pool, worker threads, child processes, native code, and external services.
+By the end, you should be able to:
 
-```text
-single JavaScript thread
-        ≠
-single-threaded runtime
+- explain what V8, Node core, native bindings, libuv and the operating system each do;
+- diagnose event-loop blocking, thread-pool saturation, memory retention and connection-pool pressure;
+- design safe CommonJS, ESM, npm and TypeScript package boundaries;
+- build streaming, cancellation-aware HTTP and background systems;
+- choose Express, Fastify or NestJS from explicit constraints;
+- model database transactions, caching, queues, idempotency and partial failure;
+- implement authentication, authorization and Node-specific security controls;
+- test behavior with real infrastructure and failure injection;
+- deploy, observe, scale, migrate and recover Node.js services;
+- defend architecture decisions in senior and staff interviews.
+
+## Core Runtime Model
+
+```mermaid
+flowchart LR
+  JS["Application JavaScript"] --> V8["V8 execution and memory"]
+  JS --> CORE["Node core JavaScript APIs"]
+  CORE --> NATIVE["Native bindings"]
+  NATIVE --> UV["libuv event loop and worker pool"]
+  NATIVE --> OS["Operating-system APIs"]
+  JS --> WORKERS["Worker threads or child processes"]
+  JS --> SERVICES["Databases queues and remote services"]
 ```
 
-## What you will learn to reason about
+JavaScript callbacks normally run on one main JavaScript thread. The runtime is not therefore “single-threaded”: operating-system facilities, libuv workers, worker threads, child processes, native code and external systems can operate concurrently. Correct design identifies which layer is doing work, which resource is bounded, and where completion returns to JavaScript.
 
-For each major concept, ask:
+## How to Use the Handbook
 
-1. **What is executing?** JavaScript, native runtime code, a worker, a child process, or another service?
-2. **What resource is involved?** CPU, memory, file descriptors, sockets, DB connections, thread-pool slots?
-3. **What is waiting?** The main thread, a Promise continuation, an OS operation, a queue consumer?
-4. **What can block?** Synchronous APIs, CPU loops, native work, locks, saturated pools, downstream dependencies?
-5. **What can fail?** Inputs, process lifecycle, network, DNS, storage, cancellation, timeouts, retries?
-6. **What changes under load?** Queue depth, latency, memory, backpressure, pool saturation, retry volume, connection count?
+1. Start with [Prerequisites and Runtime Mental Model](./00-start-here.md).
+2. Follow the existing 75-chapter production path for broad progression.
+3. Use the focused sections for exact mechanisms, production patterns and canonical routes.
+4. Build the ten required capstone architectures.
+5. Finish with the 320-question bank and mock interview rounds.
+6. Revisit the version page before using experimental, release-candidate or platform-specific features.
 
-## Status legend
+## Status Legend
 
-- ✅ stable / recommended where appropriate
-- ⚠️ deprecated, legacy, or migration-only
-- 🧪 experimental, release-candidate, or version-sensitive
-- ⛔ intentionally excluded from stable guidance
+- ✅ stable or recommended for the stated baseline
+- 🧪 experimental or version-sensitive
+- ⚠️ deprecated, legacy or migration-only
+- ⛔ intentionally excluded as a safe production recommendation
 
-## Learning path
+## Node.js Core First
+
+The sequence is deliberate:
 
 ```text
-JavaScript developer
-        ↓
-Node.js beginner
-        ↓
-productive backend developer
-        ↓
-advanced Node.js developer
-        ↓
-senior backend engineer
-        ↓
-distributed-systems / platform engineer
-        ↓
-staff-level runtime + architecture reasoning
-        ↓
-production + interview mastery
+runtime → event loop → modules → async → buffers → streams → files
+→ HTTP and networking → frameworks → data → security → reliability
+→ testing and diagnostics → deployment → distributed architecture
 ```
 
-Use the handbook sequentially the first time. Later, jump directly to event-loop reasoning, streams, HTTP, workers, diagnostics, security, resilience, architecture, projects, or interview drills as a professional reference.
+Express, Fastify and NestJS are valuable, but none replaces understanding sockets, request streams, timeouts, errors, cancellation, process lifecycle, memory and backpressure.
 
-## Primary current sources
+## Representative Focused Routes
 
-Version-sensitive statements are checked against the [Node.js release schedule](https://github.com/nodejs/Release), [Node.js API documentation](https://nodejs.org/api/), [npm documentation](https://docs.npmjs.com/), and—where runtime boundaries matter—V8, libuv, WHATWG, TC39, and OpenSSL documentation.
+- [Node.js Architecture](./runtime/nodejs-architecture.md)
+- [Event Loop Phases](./event-loop/event-loop-phases.md)
+- [CommonJS and ES Modules](./modules/commonjs-and-es-modules.md)
+- [Promises and async/await](./async/promises-and-async-await.md)
+- [Stream Backpressure](./streams/stream-backpressure.md)
+- [HTTP Server with Node.js Core](./http/http-server.md)
+- [Node.js Security Overview](./security/security-overview.md)
+- [Testing Overview](./testing/testing-overview.md)
+- [Performance Overview](./performance/performance-overview.md)
+- [Deployment Overview](./deployment/deployment-overview.md)
+- [Modular Monolith](./architecture/modular-monolith.md)
+- [Production Express API Capstone](./capstones/production-api.md)

@@ -40,6 +40,9 @@ jobs:
       - name: Validate Next.js handbook
         run: npm run validate:nextjs
 
+      - name: Validate Node.js handbook
+        run: npm run validate:nodejs
+
       - name: Validate Mermaid diagrams
         run: npm run validate:mermaid
 
