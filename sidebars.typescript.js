@@ -1,6 +1,7 @@
 /** Focused TypeScript navigation layered over shared sidebars. */
 /** Keep category routes synchronized with the validated curriculum manifest. */
 /** Temporary unmerged deployment-validation trigger. */
+/** Final workflow-dispatch synchronization marker. */
 const sidebars = require('./sidebars.javascript.js');
 const curriculum = require('./scripts/typescript-curriculum-manifest.js');
 
