@@ -1,5 +1,5 @@
 ---
-title: Core APIs: Workers, Processes, Diagnostics, Tests, VM, V8 and Module
+title: "Core APIs: Workers, Processes, Diagnostics, Tests, VM, V8 and Module"
 description: Advanced core modules provide parallel execution, subprocess isolation, diagnostics, testing, module hooks, VM contexts, and runtime introspection.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: Core APIs: Events, Buffers, Streams and Crypto
+title: "Core APIs: Events, Buffers, Streams and Crypto"
 description: Events coordinate in-process notifications, Buffers model bytes, Streams move data with backpressure, and Crypto provides cryptographic primitives.
 ---
 
