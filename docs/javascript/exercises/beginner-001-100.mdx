@@ -1,0 +1,15 @@
+---
+title: Beginner JavaScript Problems 1–100
+description: One hundred beginner logic-building exercises covering syntax, arithmetic, strings, arrays, objects, DOM and basic async JavaScript.
+---
+
+import ExerciseProblem from '@site/src/components/ExerciseProblem'
+import {javascriptExercises} from '@site/src/data/javascriptExercises'
+
+# Beginner JavaScript Problems 1–100
+
+Build correct mental models before optimizing. Solve each problem first with explicit readable JavaScript, then compare your implementation with the expandable approach.
+
+{javascriptExercises
+  .filter(problem => problem.difficulty === 'Beginner')
+  .map(problem => <ExerciseProblem key={problem.id} problem={problem} />)}

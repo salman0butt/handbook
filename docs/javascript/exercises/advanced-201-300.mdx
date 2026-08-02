@@ -1,0 +1,15 @@
+---
+title: Advanced JavaScript Problems 201–300
+description: One hundred advanced exercises in concurrency, streams, workers, security, architecture, testing, observability and performance.
+---
+
+import ExerciseProblem from '@site/src/components/ExerciseProblem'
+import {javascriptExercises} from '@site/src/data/javascriptExercises'
+
+# Advanced JavaScript Problems 201–300
+
+Treat each exercise as production design: define ownership, cancellation, retries, backpressure, security boundaries, observability and proof of correctness before implementation.
+
+{javascriptExercises
+  .filter(problem => problem.difficulty === 'Advanced')
+  .map(problem => <ExerciseProblem key={problem.id} problem={problem} />)}
