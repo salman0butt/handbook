@@ -54,7 +54,6 @@ jobs:
     permissions:
       pages: write
       id-token: write
-      issues: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -64,11 +63,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Record one-time deployment verification
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DEPLOYED_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          gh api "repos/${GITHUB_REPOSITORY}/issues/131/comments" \
-            -f body="GitHub Pages deployment succeeded for commit ${GITHUB_SHA}: ${DEPLOYED_URL}"
