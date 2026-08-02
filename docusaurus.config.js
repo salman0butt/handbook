@@ -22,6 +22,64 @@ const config = {
   plugins: [
     require.resolve('./plugins/handbook-ux'),
     [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          {
+            to: '/docs/nextjs/intro',
+            from: ['/nextjs', '/nextjs/intro'],
+          },
+          {
+            to: '/docs/nextjs/complete-handbook/version',
+            from: '/nextjs/version',
+          },
+          {
+            to: '/docs/nextjs/complete-handbook/roadmap',
+            from: '/nextjs/roadmap',
+          },
+          {
+            to: '/docs/nextjs/complete-handbook',
+            from: '/nextjs/complete-handbook',
+          },
+          {
+            to: '/docs/nextjs/app-router-and-layouts/route-tree-pages-and-layouts',
+            from: '/docs/nextjs/app-router/app-directory',
+          },
+          {
+            to: '/docs/nextjs/app-router-and-layouts/dynamic-segments-and-async-params',
+            from: '/docs/nextjs/routing/dynamic-routes',
+          },
+          {
+            to: '/docs/nextjs/server-and-client-components/server-components-default-and-rendering-model',
+            from: '/docs/nextjs/server-components/server-components',
+          },
+          {
+            to: '/docs/nextjs/caching-rendering-and-revalidation/cache-model-and-rendering-decision-tree',
+            from: [
+              '/docs/nextjs/caching/cache-layers',
+              '/docs/nextjs/rendering/static-rendering',
+            ],
+          },
+          {
+            to: '/docs/nextjs/mutations-forms-and-server-functions/server-functions-actions-and-use-server',
+            from: '/docs/nextjs/server-functions/server-actions',
+          },
+          {
+            to: '/docs/nextjs/route-handlers/route-ts-methods-and-http-semantics',
+            from: '/docs/nextjs/route-handlers/route-handlers',
+          },
+          {
+            to: '/docs/nextjs/authentication-authorization-and-security/authentication-session-authorization-mental-model',
+            from: '/docs/nextjs/authentication/authentication-overview',
+          },
+          {
+            to: '/docs/nextjs/deployment-and-production-operations/deployment-model-build-runtime-and-platform-capabilities',
+            from: '/docs/nextjs/deployment/deployment-overview',
+          },
+        ],
+      },
+    ],
+    [
       '@cmfcmf/docusaurus-search-local',
       {
         indexDocs: true,
