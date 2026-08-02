@@ -63,6 +63,12 @@ jobs:
           rm -f .nodejs-handbook.bundle.part-*
           touch .nodejs-handbook.applied
 
+          # GitHub's workflow token cannot modify permanent workflow files.
+          # Keep them out of the generated commit; the repository API applies
+          # those two reviewed files separately after the content commit lands.
+          git checkout origin/main -- .github/workflows/deploy.yml
+          rm -f .github/workflows/nodejs-handbook.yml
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
