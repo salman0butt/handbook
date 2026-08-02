@@ -1,22 +1,21 @@
-name: Generate JavaScript handbook lockfile
+name: Finalize JavaScript handbook branch
 
 on:
-  push:
-    branches:
-      - javascript-complete-handbook-2026-08-02
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
-  generate-lockfile:
-    if: ${{ hashFiles('package-lock.json') == '' }}
+  finalize:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'javascript-complete-handbook-2026-08-02' && hashFiles('package-lock.json') == '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
         uses: actions/checkout@v4
         with:
-          ref: javascript-complete-handbook-2026-08-02
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - name: Setup Node
@@ -24,13 +23,58 @@ jobs:
         with:
           node-version: 24
 
-      - name: Generate lockfile
+      - name: Finalize permanent configuration
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+
+          const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+          packageJson.scripts['validate:javascript'] = 'node scripts/validate-javascript-handbook.mjs'
+          fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`)
+
+          let config = fs.readFileSync('docusaurus.config.js', 'utf8')
+          config = config.replace("{to: '/javascript', label: 'JavaScript'", "{to: '/docs/javascript/intro', label: 'JavaScript'")
+          config = config.replace("{label: 'JavaScript', to: '/javascript'", "{label: 'JavaScript', to: '/docs/javascript/intro'")
+          fs.writeFileSync('docusaurus.config.js', config)
+
+          let deploy = fs.readFileSync('.github/workflows/deploy.yml', 'utf8')
+          deploy = deploy.replace('npm install --no-audit --no-fund', 'npm ci --no-audit --no-fund')
+          if (!deploy.includes('npm run validate:javascript')) {
+            deploy = deploy.replace(
+              '      - name: Validate Node.js handbook\n        run: npm run validate:nodejs\n',
+              '      - name: Validate Node.js handbook\n        run: npm run validate:nodejs\n\n      - name: Validate JavaScript handbook\n        run: npm run validate:javascript\n',
+            )
+          }
+          fs.writeFileSync('.github/workflows/deploy.yml', deploy)
+
+          const validatorPath = 'scripts/validate-javascript-handbook.mjs'
+          const validatorLines = fs.readFileSync(validatorPath, 'utf8').split('\n')
+          const matchIndex = validatorLines.findIndex(line => line.includes('const match = source.match(new RegExp(`const ${name}Rows'))
+          if (matchIndex === -1) throw new Error('Unable to locate exercise-row parser line')
+          validatorLines.splice(
+            matchIndex,
+            1,
+            "  const pattern = 'const ' + name + 'Rows = `([\\\\s\\\\S]*?)`\\\\n'",
+            '  const match = source.match(new RegExp(pattern))',
+          )
+          fs.writeFileSync(validatorPath, `${validatorLines.join('\n')}\n`)
+
+          const introPath = 'docs/javascript/intro.md'
+          let intro = fs.readFileSync(introPath, 'utf8')
+          intro = intro.replaceAll('30 July 2026', 'August 2, 2026')
+          fs.writeFileSync(introPath, intro)
+          NODE
+
+      - name: Generate reproducible lockfile
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 
-      - name: Commit lockfile
+      - name: Remove temporary finalization workflow
+        run: rm .github/workflows/generate-javascript-lockfile.yml
+
+      - name: Commit finalized branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          git commit -m "build: add reproducible npm lockfile"
-          git push origin HEAD:javascript-complete-handbook-2026-08-02
+          git add package.json package-lock.json docusaurus.config.js .github/workflows/deploy.yml scripts/validate-javascript-handbook.mjs docs/javascript/intro.md .github/workflows/generate-javascript-lockfile.yml
+          git commit -m "build(js): finalize reproducible validation and navigation"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
