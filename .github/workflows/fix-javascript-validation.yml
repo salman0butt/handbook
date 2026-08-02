@@ -1,0 +1,81 @@
+name: Normalize JavaScript handbook validation data
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'javascript-complete-handbook-2026-08-02' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Normalize exercise data and validator
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+
+          const exercisePath = 'src/data/javascriptExercises.js'
+          let exerciseSource = fs.readFileSync(exercisePath, 'utf8')
+          for (const name of ['beginner', 'intermediate', 'advanced']) {
+            const marker = 'const ' + name + 'Rows = `'
+            const markerIndex = exerciseSource.indexOf(marker)
+            if (markerIndex === -1) throw new Error(`Missing ${name} exercise block`)
+            const bodyStart = markerIndex + marker.length
+            const bodyEnd = exerciseSource.indexOf('`\n', bodyStart)
+            if (bodyEnd === -1) throw new Error(`Unterminated ${name} exercise block`)
+            const rows = exerciseSource.slice(bodyStart, bodyEnd).trim().split('\n').filter(Boolean)
+            if (rows.length < 100) throw new Error(`${name} has only ${rows.length} rows`)
+            const replacement = `\n${rows.slice(0, 100).join('\n')}\n`
+            exerciseSource = exerciseSource.slice(0, bodyStart) + replacement + exerciseSource.slice(bodyEnd)
+          }
+          fs.writeFileSync(exercisePath, exerciseSource)
+
+          const configPath = 'docusaurus.config.js'
+          let config = fs.readFileSync(configPath, 'utf8')
+          if (!config.includes("from: '/javascript'")) {
+            config = config.replace(
+              '        redirects: [\n',
+              "        redirects: [\n          {\n            to: '/docs/javascript/intro',\n            from: '/javascript',\n          },\n",
+            )
+          }
+          fs.writeFileSync(configPath, config)
+
+          const validatorPath = 'scripts/validate-javascript-handbook.mjs'
+          let validator = fs.readFileSync(validatorPath, 'utf8')
+          const oldIdLogic = `  const frontmatterId = source.match(/^id:\\s*(.+)$/m)?.[1]?.trim()\n  const defaultId = relativeToJs.replace(/\\.(md|mdx)$/, '')\n  const id = frontmatterId ?? defaultId`
+          const newIdLogic = `  const frontmatterId = source.match(/^id:\\s*(.+)$/m)?.[1]?.trim()\n  const defaultId = relativeToJs.replace(/\\.(md|mdx)$/, '')\n  const directory = path.posix.dirname(relativeToJs)\n  const id = frontmatterId\n    ? (directory === '.' ? frontmatterId : \\`${directory}/\\${frontmatterId}\\`)\n    : defaultId`
+          if (!validator.includes(oldIdLogic)) throw new Error('Unable to locate document ID validation logic')
+          validator = validator.replace(oldIdLogic, newIdLogic)
+
+          validator = validator.replace(
+            "if (!fs.existsSync(configPath)) {\n  fail('docusaurus.config.js does not exist')\n} else {",
+            "let compatibilityRedirects = 0\nif (!fs.existsSync(configPath)) {\n  fail('docusaurus.config.js does not exist')\n} else {",
+          )
+          validator = validator.replace(
+            "  if (!config.includes(\"{label: 'JavaScript', to: '/docs/javascript/intro'\")) {\n    fail('Footer does not use the canonical JavaScript entry')\n  }\n}",
+            "  if (!config.includes(\"{label: 'JavaScript', to: '/docs/javascript/intro'\")) {\n    fail('Footer does not use the canonical JavaScript entry')\n  }\n  if (config.includes(\"from: '/javascript'\") && config.includes(\"to: '/docs/javascript/intro'\")) {\n    compatibilityRedirects += 1\n  } else {\n    fail('Legacy /javascript route does not redirect to the canonical JavaScript introduction')\n  }\n}",
+          )
+          validator = validator.replace('  compatibilityRedirects: 0,', '  compatibilityRedirects,')
+          fs.writeFileSync(validatorPath, validator)
+          NODE
+
+      - name: Commit normalized files
+        run: |
+          if git diff --quiet; then
+            echo "No normalization changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/javascriptExercises.js docusaurus.config.js scripts/validate-javascript-handbook.mjs
+          git commit -m "fix(js): enforce exact exercise tracks and compatibility redirect"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
