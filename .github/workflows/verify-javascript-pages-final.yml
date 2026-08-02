@@ -1,0 +1,133 @@
+name: Final JavaScript Pages verification
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    if: ${{ github.event.pull_request.head.ref == 'verify-javascript-pages-2026-08-02' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Verify exact deployment and published routes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const targetSha = '45a7318a9f817778dd4ed56a5a8cbeb61cd7a47c'
+            const base = 'https://salman0butt.github.io/handbook'
+            const workflowName = 'Deploy handbook to GitHub Pages'
+
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: targetSha,
+              event: 'push',
+              per_page: 100,
+            })
+            const deployment = runs.data.workflow_runs.find(run => run.name === workflowName)
+            if (!deployment) throw new Error(`No deployment run found for ${targetSha}`)
+            if (deployment.status !== 'completed' || deployment.conclusion !== 'success') {
+              throw new Error(`Deployment is ${deployment.status}/${deployment.conclusion}`)
+            }
+
+            const jobResponse = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: deployment.id,
+              per_page: 100,
+            })
+            const deploymentSummary = {
+              targetSha,
+              runId: deployment.id,
+              runNumber: deployment.run_number,
+              runAttempt: deployment.run_attempt,
+              runUrl: deployment.html_url,
+              event: deployment.event,
+              status: deployment.status,
+              conclusion: deployment.conclusion,
+              createdAt: deployment.created_at,
+              updatedAt: deployment.updated_at,
+              jobs: jobResponse.data.jobs.map(job => ({
+                name: job.name,
+                conclusion: job.conclusion,
+                url: job.html_url,
+                steps: job.steps?.map(step => ({name: step.name, conclusion: step.conclusion})) ?? [],
+              })),
+            }
+
+            const routes = [
+              ['/docs/javascript/intro', 'JavaScript Developer Handbook'],
+              ['/docs/javascript/version', 'ECMAScript 2026'],
+              ['/docs/javascript/roadmap', 'Learning Roadmap'],
+              ['/docs/javascript/fundamentals/variables-and-values', 'Variables and Values'],
+              ['/docs/javascript/types/type-system', 'JavaScript Type System'],
+              ['/docs/javascript/functions/functions', 'Functions'],
+              ['/docs/javascript/scope/scope-and-closures', 'Scope and Closures'],
+              ['/docs/javascript/objects/objects', 'Objects'],
+              ['/docs/javascript/prototypes/prototypes-and-inheritance', 'Prototypes and Inheritance'],
+              ['/docs/javascript/async/promises-and-async-await', 'Promises and Async/Await'],
+              ['/docs/javascript/event-loop/event-loop', 'JavaScript Event Loop'],
+              ['/docs/javascript/modules/es-modules', 'ES Modules and Package Management'],
+              ['/docs/javascript/dom/dom-fundamentals', 'DOM Fundamentals'],
+              ['/docs/javascript/testing/testing-javascript', 'Testing JavaScript'],
+              ['/docs/javascript/performance/performance-overview', 'JavaScript Performance'],
+              ['/docs/javascript/security/javascript-security', 'JavaScript Security'],
+              ['/docs/javascript/internals/execution-context', 'Execution Contexts and Environments'],
+              ['/docs/javascript/projects/javascript-projects', 'JavaScript Projects'],
+            ]
+
+            const sitemapResponse = await fetch(`${base}/sitemap.xml`)
+            const sitemap = await sitemapResponse.text()
+            if (sitemapResponse.status !== 200) throw new Error(`Sitemap returned ${sitemapResponse.status}`)
+
+            const results = []
+            for (const [path, marker] of routes) {
+              const url = `${base}${path}`
+              const response = await fetch(url, {redirect: 'follow'})
+              const html = await response.text()
+              const canonicalMatch =
+                html.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/i) ??
+                html.match(/<link[^>]*href="([^"]+)"[^>]*rel="canonical"/i)
+              const canonical = canonicalMatch?.[1] ?? ''
+              const result = {
+                path,
+                http: response.status,
+                content: html.includes(marker),
+                not404: !/Page Not Found|404[^0-9].*Docusaurus/i.test(html),
+                sidebar: /theme-doc-sidebar|menu__list-item|Start Here/.test(html),
+                sitemap: sitemap.includes(url) || sitemap.includes(`${url}/`),
+                canonical,
+                canonicalOk: canonical === url || canonical === `${url}/`,
+              }
+              results.push(result)
+            }
+
+            const legacyResponse = await fetch(`${base}/javascript`, {redirect: 'follow'})
+            const legacyHtml = await legacyResponse.text()
+            const legacy = {
+              path: '/javascript',
+              http: legacyResponse.status,
+              content: legacyHtml.includes('JavaScript'),
+            }
+
+            core.info(`DEPLOYMENT_SUMMARY\n${JSON.stringify(deploymentSummary, null, 2)}`)
+            core.info(`ROUTE_SMOKE_SUMMARY\n${JSON.stringify(results, null, 2)}`)
+            core.info(`LEGACY_ROUTE_SUMMARY\n${JSON.stringify(legacy, null, 2)}`)
+
+            const failed = results.filter(result =>
+              result.http !== 200 || !result.content || !result.not404 ||
+              !result.sidebar || !result.sitemap || !result.canonicalOk
+            )
+            if (legacy.http !== 200 || !legacy.content) failed.push(legacy)
+            if (failed.length) throw new Error(`Live verification failed: ${JSON.stringify(failed)}`)
+
+            await core.summary
+              .addHeading('JavaScript Pages verification')
+              .addRaw(`Deployment: ${deployment.html_url}\n`)
+              .addRaw(`Verified ${results.length} canonical routes plus /javascript.\n`)
+              .write()
