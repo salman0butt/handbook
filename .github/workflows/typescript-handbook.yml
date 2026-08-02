@@ -28,6 +28,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   validate:
@@ -43,3 +44,8 @@ jobs:
       - run: npm run validate:typescript
       - run: npm run validate:mermaid
       - run: npm run build
+      - name: Dispatch protected main Pages deployment
+        if: github.event_name == 'pull_request' && github.head_ref == 'typescript-pages-final-deploy-2026-08-02'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
