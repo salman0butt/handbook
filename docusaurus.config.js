@@ -26,6 +26,10 @@ const config = {
       {
         redirects: [
           {
+            to: '/docs/javascript/intro',
+            from: '/javascript',
+          },
+          {
             to: '/docs/nextjs/intro',
             from: '/nextjs/intro',
           },

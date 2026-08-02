@@ -133,7 +133,10 @@ for (const file of allDocs) {
 
   const frontmatterId = source.match(/^id:\s*(.+)$/m)?.[1]?.trim()
   const defaultId = relativeToJs.replace(/\.(md|mdx)$/, '')
-  const id = frontmatterId ?? defaultId
+  const directory = path.posix.dirname(relativeToJs)
+  const id = frontmatterId
+    ? (directory === '.' ? frontmatterId : `${directory}/${frontmatterId}`)
+    : defaultId
   if (ids.has(id)) fail(`Duplicate JavaScript document id ${id}: ${ids.get(id)} and ${relativeToRoot}`)
   ids.set(id, relativeToRoot)
 }
@@ -287,6 +290,7 @@ if (!fs.existsSync(packagePath)) {
 }
 if (!fs.existsSync(lockPath)) fail('package-lock.json is required so npm ci can validate reproducibly')
 
+let compatibilityRedirects = 0
 if (!fs.existsSync(configPath)) {
   fail('docusaurus.config.js does not exist')
 } else {
@@ -296,6 +300,11 @@ if (!fs.existsSync(configPath)) {
   }
   if (!config.includes("{label: 'JavaScript', to: '/docs/javascript/intro'")) {
     fail('Footer does not use the canonical JavaScript entry')
+  }
+  if (config.includes("from: '/javascript'") && config.includes("to: '/docs/javascript/intro'")) {
+    compatibilityRedirects += 1
+  } else {
+    fail('Legacy /javascript route does not redirect to the canonical JavaScript introduction')
   }
 }
 
@@ -323,7 +332,7 @@ const report = {
   intermediateExercises: exerciseCounts.intermediate,
   advancedExercises: exerciseCounts.advanced,
   interviewMockRoundCount,
-  compatibilityRedirects: 0,
+  compatibilityRedirects,
   explicitSlugs: slugs.size,
   validationStatus: failures.length === 0 ? 'passed' : 'failed',
 }
@@ -337,4 +346,5 @@ if (failures.length) {
 }
 
 console.log('\nJavaScript handbook validation passed.')
+
 
