@@ -1,0 +1,142 @@
+name: Verify merged JavaScript Pages deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    if: ${{ github.event.pull_request.head.ref == 'verify-javascript-pages-2026-08-02' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for exact merge deployment
+        id: deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs')
+            const targetSha = '45a7318a9f817778dd4ed56a5a8cbeb61cd7a47c'
+            const workflowName = 'Deploy handbook to GitHub Pages'
+            let selected
+
+            for (let attempt = 1; attempt <= 90; attempt += 1) {
+              const response = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head_sha: targetSha,
+                event: 'push',
+                per_page: 100,
+              })
+              selected = response.data.workflow_runs.find(run => run.name === workflowName)
+              if (selected?.status === 'completed') break
+              core.info(`Attempt ${attempt}: deployment is ${selected?.status ?? 'not created yet'}`)
+              await new Promise(resolve => setTimeout(resolve, 10_000))
+            }
+
+            if (!selected) core.setFailed(`No ${workflowName} run found for ${targetSha}`)
+            if (selected.status !== 'completed') core.setFailed(`Deployment did not complete: ${selected.status}`)
+            if (selected.conclusion !== 'success') core.setFailed(`Deployment concluded ${selected.conclusion}`)
+
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: selected.id,
+              per_page: 100,
+            })
+            const summary = {
+              targetSha,
+              runId: selected.id,
+              runNumber: selected.run_number,
+              runAttempt: selected.run_attempt,
+              runUrl: selected.html_url,
+              event: selected.event,
+              status: selected.status,
+              conclusion: selected.conclusion,
+              createdAt: selected.created_at,
+              updatedAt: selected.updated_at,
+              jobs: jobs.data.jobs.map(job => ({
+                name: job.name,
+                status: job.status,
+                conclusion: job.conclusion,
+                url: job.html_url,
+                steps: job.steps?.map(step => ({name: step.name, conclusion: step.conclusion})) ?? [],
+              })),
+            }
+            fs.writeFileSync('/tmp/deployment-summary.json', JSON.stringify(summary, null, 2))
+            core.setOutput('run-url', selected.html_url)
+            core.info(JSON.stringify(summary, null, 2))
+
+      - name: Smoke-test published JavaScript routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://salman0butt.github.io/handbook'
+          sitemap="$base/sitemap.xml"
+          workdir="$(mktemp -d)"
+          trap 'rm -rf "$workdir"' EXIT
+
+          declare -A expected
+          expected['/docs/javascript/intro']='JavaScript Developer Handbook'
+          expected['/docs/javascript/version']='ECMAScript 2026'
+          expected['/docs/javascript/roadmap']='JavaScript Learning Roadmap'
+          expected['/docs/javascript/fundamentals/variables-and-values']='Variables and Values'
+          expected['/docs/javascript/types/type-system']='JavaScript Type System'
+          expected['/docs/javascript/functions/functions']='Functions'
+          expected['/docs/javascript/scope/scope-and-closures']='Scope and Closures'
+          expected['/docs/javascript/objects/objects']='Objects'
+          expected['/docs/javascript/prototypes/prototypes-and-inheritance']='Prototypes and Inheritance'
+          expected['/docs/javascript/async/promises-and-async-await']='Promises and Async/Await'
+          expected['/docs/javascript/event-loop/event-loop']='JavaScript Event Loop'
+          expected['/docs/javascript/modules/es-modules']='ES Modules and Package Management'
+          expected['/docs/javascript/dom/dom-fundamentals']='DOM Fundamentals'
+          expected['/docs/javascript/testing/testing-javascript']='Testing JavaScript'
+          expected['/docs/javascript/performance/performance-overview']='JavaScript Performance'
+          expected['/docs/javascript/security/javascript-security']='JavaScript Security'
+          expected['/docs/javascript/internals/execution-context']='Execution Contexts and Environments'
+          expected['/docs/javascript/projects/javascript-projects']='JavaScript Projects'
+
+          curl -fsSL --retry 5 --retry-delay 5 "$sitemap" -o "$workdir/sitemap.xml"
+          printf '[\n' > "$workdir/routes.json"
+          first=true
+
+          for path in "${!expected[@]}"; do
+            url="$base$path"
+            file="$workdir/$(echo "$path" | tr '/' '_').html"
+            code=$(curl -sS -L --retry 5 --retry-delay 5 -o "$file" -w '%{http_code}' "$url")
+            test "$code" = '200'
+            grep -Fq "${expected[$path]}" "$file"
+            ! grep -Fqi 'Page Not Found' "$file"
+            grep -Fq 'theme-doc-sidebar-container' "$file"
+            grep -Fq "$url" "$workdir/sitemap.xml"
+            canonical=$(grep -oE '<link rel="canonical" href="[^"]+"' "$file" | head -1 | sed 's/.*href="//;s/"$//')
+            test "$canonical" = "$url"
+
+            if $first; then first=false; else printf ',\n' >> "$workdir/routes.json"; fi
+            printf '  {"path":"%s","http":200,"content":true,"sidebar":true,"sitemap":true,"canonical":"%s"}' "$path" "$canonical" >> "$workdir/routes.json"
+          done
+
+          legacy="$workdir/legacy.html"
+          legacy_code=$(curl -sS -L --retry 5 --retry-delay 5 -o "$legacy" -w '%{http_code}' "$base/javascript")
+          test "$legacy_code" = '200'
+          grep -Fq 'JavaScript' "$legacy"
+
+          printf '\n]\n' >> "$workdir/routes.json"
+          echo 'DEPLOYMENT_SUMMARY'
+          cat /tmp/deployment-summary.json
+          echo 'ROUTE_SMOKE_SUMMARY'
+          cat "$workdir/routes.json"
+          echo 'LEGACY_ROUTE_SUMMARY'
+          printf '{"path":"/javascript","http":200,"content":true}\n'
+
+      - name: Verification links
+        run: |
+          echo "Deployment run: ${{ steps.deployment.outputs.run-url }}"
+          echo "Published handbook: https://salman0butt.github.io/handbook/docs/javascript/intro"
