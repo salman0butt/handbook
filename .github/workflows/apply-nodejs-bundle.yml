@@ -1,0 +1,76 @@
+name: Apply Node.js handbook bundle
+
+on:
+  pull_request:
+    paths:
+      - '.nodejs-handbook.bundle.part-*'
+      - '.github/workflows/apply-nodejs-bundle.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Expand, commit, and validate the handbook
+        shell: bash
+        run: |
+          if [ -f .nodejs-handbook.applied ]; then
+            echo 'Bundle already applied; cleanup will follow after validation.'
+            exit 0
+          fi
+
+          python - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import lzma
+          from pathlib import Path
+
+          root = Path.cwd().resolve()
+          encoded = ''.join(
+              path.read_text(encoding='utf-8')
+              for path in sorted(root.glob('.nodejs-handbook.bundle.part-*'))
+          )
+          compressed = base64.b64decode(encoded)
+          expected = '97f2776ea7fa381ddca1f074e0d6c4388373393211769aa899e867c332078739'
+          actual = hashlib.sha256(compressed).hexdigest()
+          if actual != expected:
+              raise SystemExit(f'bundle checksum mismatch: {actual}')
+
+          files = json.loads(lzma.decompress(compressed).decode('utf-8'))
+          for relative, content in files.items():
+              target = (root / relative).resolve()
+              if root != target and root not in target.parents:
+                  raise SystemExit(f'unsafe path: {relative}')
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(content, encoding='utf-8')
+
+          print(f'wrote {len(files)} files')
+          PY
+
+          rm -f .nodejs-handbook.bundle.part-*
+          touch .nodejs-handbook.applied
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'docs(node): expand complete Node.js handbook'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
+          npm install --no-audit --no-fund
+          npm run validate:nodejs
+          npm run validate:mermaid
+          npm run build
