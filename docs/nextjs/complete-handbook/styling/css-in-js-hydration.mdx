@@ -1,0 +1,45 @@
+---
+title: CSS-in-JS and Hydration
+sidebar_label: CSS-in-JS and Hydration
+---
+
+# CSS-in-JS and Hydration
+
+CSS-in-JS libraries vary significantly. Some extract CSS at build time; others generate styles at runtime. The runtime approach may require a Client Component provider, a registry, deterministic class generation, and special handling for streamed server rendering.
+
+## Evaluation checklist
+
+Before adoption, verify:
+
+- App Router and React Server Component support.
+- Streaming SSR without duplicate or missing styles.
+- Deterministic server/client class names.
+- CSP nonce support when inline styles are emitted.
+- Provider placement that does not make the whole app a client bundle.
+- Static extraction or measurable runtime cost.
+- Compatibility with parallel routes and multiple root layouts.
+
+## Keep the boundary narrow
+
+```tsx title="app/providers.tsx"
+'use client'
+
+import type { ReactNode } from 'react'
+import { ThemeProvider } from 'some-client-theme-library'
+
+export function Providers({ children }: Readonly<{ children: ReactNode }>) {
+  return <ThemeProvider>{children}</ThemeProvider>
+}
+```
+
+The root layout remains a Server Component and renders the provider as a small client boundary. Do not add `'use client'` to the layout merely because one provider is interactive.
+
+## Hydration failures
+
+Common causes include reading `window` during render, time-dependent class names, random values, different locale output on server and client, and a style registry configured only on one side.
+
+Debug by comparing the server HTML with the first client render, reducing providers, and verifying that styles are inserted in the same order.
+
+## When not to use runtime CSS-in-JS
+
+Avoid it when CSS Modules, Tailwind, or extracted CSS meet the requirement. A styling tool should not add client JavaScript, streaming complexity, and hydration risk without a product-level benefit.

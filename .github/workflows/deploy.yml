@@ -37,6 +37,9 @@ jobs:
       - name: Validate TypeScript handbook
         run: npm run validate:typescript
 
+      - name: Validate Next.js handbook
+        run: npm run validate:nextjs
+
       - name: Validate Mermaid diagrams
         run: npm run validate:mermaid
 

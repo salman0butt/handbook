@@ -9,6 +9,7 @@
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
     "validate:mermaid": "node scripts/validate-mermaid.mjs",
+    "validate:nextjs": "node scripts/validate-nextjs-handbook.mjs",
     "validate:typescript": "node scripts/validate-typescript-handbook.mjs",
     "validate:react-focused": "node scripts/validate-react-focused.mjs",
     "validate:react-hooks": "node scripts/validate-react-hooks.mjs"

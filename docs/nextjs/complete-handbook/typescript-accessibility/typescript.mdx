@@ -1,0 +1,55 @@
+---
+title: TypeScript with Next.js
+sidebar_label: TypeScript
+---
+
+# TypeScript with Next.js
+
+## Strict configuration
+
+Use `strict`, keep framework-generated settings, and prefer `unknown` over `any` at trust boundaries. Use `satisfies` to verify configuration while preserving useful inference.
+
+```ts title="lib/navigation.ts"
+type NavItem = { label: string; href: `/${string}` }
+
+export const navigation = [
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Settings', href: '/settings' },
+] satisfies readonly NavItem[]
+```
+
+## Async route props
+
+In current App Router code, route parameters and search parameters are asynchronous where the framework types indicate promises. Await them and validate values before use.
+
+```tsx title="app/projects/[projectId]/page.tsx"
+type PageProps = {
+  params: Promise<{ projectId: string }>
+}
+
+export default async function ProjectPage({ params }: PageProps) {
+  const { projectId } = await params
+  return <h1>Project {projectId}</h1>
+}
+```
+
+## Typed boundaries
+
+- Page and layout props describe framework input.
+- Route Handlers validate method, params, headers, and body.
+- Server Functions validate `FormData` or structured arguments.
+- Database models stay behind DTOs.
+- API responses use discriminated result types.
+- Environment variables use a runtime schema.
+
+## Runtime validation
+
+Static types disappear at runtime. Validate URL parameters, form input, cookies, headers, webhook payloads, external API responses, persisted browser data, and environment variables.
+
+## Avoid unsafe assertions
+
+Prefer narrowing, parsing, exhaustive switches, and generated types. `as SomeType` should not be used to pretend untrusted data has been checked.
+
+## Generated types
+
+Use typed routes and framework-generated route helpers when enabled. Generate database and API types in CI and fail when generated output is stale.

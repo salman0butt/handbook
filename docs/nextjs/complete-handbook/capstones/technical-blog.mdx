@@ -1,0 +1,43 @@
+---
+title: Capstone — Technical Blog
+sidebar_label: Technical Blog
+---
+
+# Capstone: Technical Blog
+
+## Requirements
+
+Publish MDX articles with authors, tags, syntax highlighting, diagrams, RSS, search, draft previews, comments or reactions, and pagination.
+
+## Architecture
+
+Content can live in Git or a CMS. Build a typed content pipeline that validates frontmatter, generates slugs, extracts headings, and rejects duplicate routes. Render articles on the server and keep interactive code demos isolated.
+
+```text
+app/blog/
+  page.tsx
+  [slug]/page.tsx
+  tag/[tag]/page.tsx
+  rss.xml/route.ts
+  opengraph-image.tsx
+```
+
+## Caching and SEO
+
+Prerender published articles, generate static parameters where useful, tag caches by article and tag, and invalidate indexes when content changes. Produce canonical metadata, article JSON-LD, social images, RSS, and paginated archive links.
+
+## Security
+
+Treat MDX and embedded components as executable content. Only build trusted sources or use a restricted renderer. Sanitize any user-authored comments and isolate preview authentication.
+
+## Testing
+
+Validate all internal links, code fences, Mermaid diagrams, heading order, duplicate slugs, frontmatter, RSS XML, metadata, and accessible code-copy controls.
+
+## Deployment and observability
+
+Track build duration, content validation failures, search indexing lag, 404s, feed fetches, and article Web Vitals.
+
+## Extensions
+
+Add versioned documentation, full-text search, reading history stored locally, newsletter subscriptions, and content freshness reports.

@@ -1,0 +1,39 @@
+---
+title: Upgrades, Codemods, and Rollbacks
+sidebar_label: Upgrades and Rollbacks
+---
+
+# Upgrades, Codemods, and Rollbacks
+
+## Upgrade sequence
+
+1. Read the official release notes and upgrade guide.
+2. Confirm supported Node.js and React versions.
+3. Upgrade on a dedicated branch with a clean lockfile diff.
+4. Run official codemods and review every change.
+5. Remove deprecated configuration and APIs.
+6. Run lint, typecheck, unit, integration, end-to-end, accessibility, and build checks.
+7. Compare bundle, Web Vitals, server latency, cache behavior, and memory.
+8. Deploy to preview, then a canary cohort.
+9. Monitor error rate, latency, cache misses, and business flows.
+10. Complete or roll back within a defined decision window.
+
+## Breaking-change risks
+
+Pay special attention to async request APIs, caching defaults, Turbopack behavior, runtime support, `proxy`/middleware terminology, image configuration, Server Function serialization, and removed CLI behavior.
+
+## Codemods
+
+Codemods accelerate syntax changes; they do not prove semantic correctness. Review authorization, caching, dynamic rendering, request data, and error handling after automated edits.
+
+## Version skew
+
+Rolling deployments may run old and new builds simultaneously. Keep database changes backward compatible, understand Server Function encryption/build identifiers, and avoid incompatible message or cache formats.
+
+## Rollback plan
+
+A rollback includes the previous application artifact, compatible database schema, previous environment configuration, cache strategy, queue consumers, and feature flags. Database contraction should happen only after the rollback window closes.
+
+## Evidence
+
+Record upgrade date, versions, migration commands, test results, performance comparison, incidents, and final commit in an architecture or release note.

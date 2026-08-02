@@ -1,0 +1,76 @@
+---
+title: Manual Installation and Tooling
+sidebar_label: Manual Setup and Tooling
+---
+
+# Manual Installation and Tooling
+
+Manual setup is useful for migrations, monorepos, and repositories that already have build conventions.
+
+## Minimal installation
+
+```bash
+npm install next@16.2.11 react@19.2.8 react-dom@19.2.8
+npm install -D typescript @types/node @types/react @types/react-dom eslint eslint-config-next
+```
+
+```json title="package.json"
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  }
+}
+```
+
+Create `app/layout.tsx` and `app/page.tsx`. The root layout must render `<html>` and `<body>`.
+
+```tsx title="app/layout.tsx"
+import type { Metadata } from 'next'
+import type { ReactNode } from 'react'
+import './globals.css'
+
+export const metadata: Metadata = {
+  title: { default: 'Acme', template: '%s | Acme' },
+  description: 'Acme application',
+}
+
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+## TypeScript policy
+
+Enable `strict`, avoid unchecked assertions, model environment variables explicitly, and pair static types with runtime validation at every trust boundary.
+
+## Environment files
+
+Use `.env.local` for uncommitted local secrets. Commit `.env.example` with names and descriptions, never real values. Variables prefixed with `NEXT_PUBLIC_` are intended for browser bundles and must not contain secrets.
+
+## Debugging
+
+Use browser DevTools for client code and the Node inspector for server code. A typical VS Code server configuration launches `next dev` with `--inspect`. Keep production source maps and access controls aligned with the deployment platform.
+
+## Turbopack and Webpack
+
+Turbopack is the default. Reproduce a bundler issue with the smallest project before switching. A temporary Webpack fallback is a compatibility strategy, not a permanent substitute for fixing unsupported configuration.
+
+## CI minimum
+
+```bash
+npm ci --no-audit --no-fund
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Add a production smoke test that starts the built server and checks representative public and protected routes.

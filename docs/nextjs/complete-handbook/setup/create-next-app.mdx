@@ -1,0 +1,60 @@
+---
+title: Creating a Next.js Project
+sidebar_label: create-next-app
+---
+
+# Creating a Next.js Project
+
+## Recommended command
+
+```bash
+npx create-next-app@latest my-app --yes
+```
+
+The default currently selects TypeScript, Tailwind CSS, ESLint, App Router, Turbopack, and `@/*`. Use the interactive flow when the team needs different choices:
+
+```bash
+npx create-next-app@latest
+```
+
+## Production-oriented setup
+
+```bash
+cd my-app
+npm run dev
+npm run build
+npm run start
+```
+
+`dev` optimizes feedback and Fast Refresh. `build` produces the production artifacts and catches route, import, rendering, and type integration failures. `start` serves a Node.js production build; it is not used for static export.
+
+## Package-manager policy
+
+Choose npm, pnpm, Yarn, or Bun once. Commit one lockfile, pin the package-manager version with Corepack or the `packageManager` field, and use frozen/clean installs in CI.
+
+```json title="package.json"
+{
+  "packageManager": "pnpm@10.15.0",
+  "engines": { "node": ">=24 <25" }
+}
+```
+
+## Important options
+
+- **App Router:** yes for the primary architecture.
+- **`src/` directory:** organizational preference; it does not change framework semantics.
+- **Tailwind CSS:** choose it only when the product uses utility-first styling.
+- **Import alias:** keep a stable alias such as `@/*`; avoid deep relative imports.
+- **Turbopack:** default. Use Webpack only for a proven compatibility need and document the blocker.
+
+## Common mistakes
+
+- Running multiple lockfiles.
+- Assuming `next build` performs all linting.
+- Allowing Node.js versions to drift between laptops and CI.
+- Committing secrets to `.env` files.
+- Treating generated defaults as architectural decisions without review.
+
+## Verification checklist
+
+Run a clean install, development server, lint, typecheck, tests, production build, and a production smoke test before adding application features.

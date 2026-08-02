@@ -1,0 +1,46 @@
+---
+title: Completion Matrix
+sidebar_label: Completion Matrix
+---
+
+# Next.js Handbook Completion Matrix
+
+This page maps major specification areas to the existing focused curriculum and the completion layer.
+
+| Area | Primary coverage |
+|---|---|
+| Start Here and version baseline | Existing Start Here plus Version Baseline and Learning Roadmap |
+| Installation and setup | Foundations plus Installation and Project Setup |
+| App Router, routing, layouts, navigation | Existing App Router, Layouts, and Navigation sections |
+| Server and Client Components | Existing Server and Client Components section |
+| Data fetching, caching, rendering | Existing Data Fetching; Caching, Rendering and Revalidation; Rendering, Suspense and Streaming |
+| Loading, error, not found | Existing App Router and Errors sections |
+| Mutations, forms, Server Functions | Existing Mutations, Forms, and Server Functions section |
+| Route Handlers and Proxy | Existing Route Handlers and Request Pipeline sections |
+| Metadata, images, fonts, scripts | Existing Metadata and SEO; Images, Fonts, and Scripts |
+| Styling and state management | Completion layer Styling and State Management |
+| Authentication, authorization, security | Existing Authentication, Authorization, and Security section |
+| Cookies, headers, request data | Completion layer Request Data and Configuration |
+| Environment and configuration | Completion layer Request Data and Configuration plus deployment coverage |
+| Databases and APIs | Completion layer Database and API Integration |
+| TypeScript and accessibility | Completion layer TypeScript and Accessibility plus testing coverage |
+| Performance, testing, observability | Existing Performance; Testing; Errors, Observability, and Debugging |
+| Deployment, self-hosting, runtime | Existing Deployment and Production Operations plus Edge Runtime |
+| i18n, multi-tenancy, monorepos | Completion layer Platform Patterns |
+| Pages Router and migration | Completion layer Compatibility and Migration plus existing Upgrades section |
+| Architecture, production patterns, internals | Existing Architecture and Internals plus Production Patterns |
+| Projects and interviews | Existing project/interview sections plus ten capstones |
+
+## Audit rules
+
+- App Router is the default; Pages Router is labeled compatibility-only.
+- Visible sidebar labels contain no numeric chapter prefixes.
+- External data is validated at runtime.
+- Authorization is enforced on the server at the resource boundary.
+- Caching and invalidation are explained wherever state can become stale.
+- Mermaid diagrams must parse in the repository validator.
+- Docusaurus build and internal links must pass before merge.
+
+## Known boundary
+
+Framework internals are educational models, not guaranteed public contracts. Preview features are isolated from the stable 16.2.x baseline and must be re-verified before production adoption.

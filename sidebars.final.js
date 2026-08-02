@@ -1,7 +1,9 @@
 /** Final handbook sidebars with focused React foundations layered over existing sections. */
 const sidebars = require('./sidebars.ai-engineering.js');
 const typescriptSidebars = require('./sidebars.typescript.js');
+const {appendNextjsSidebar} = require('./sidebars.nextjs.js');
 sidebars.typescriptSidebar = typescriptSidebars.typescriptSidebar;
+sidebars.nextjsSidebar = appendNextjsSidebar(sidebars.nextjsSidebar);
 
 const category = (label, items, extra = {}) => ({type: 'category', label, items, ...extra});
 const doc = (id, label) => ({type: 'doc', id: `react/${id}`, label});

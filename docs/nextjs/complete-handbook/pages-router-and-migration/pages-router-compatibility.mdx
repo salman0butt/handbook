@@ -1,0 +1,40 @@
+---
+title: Pages Router Compatibility
+sidebar_label: Pages Router Compatibility
+---
+
+# Pages Router Compatibility
+
+## Core files
+
+- `pages/_app.tsx`: wraps pages and global providers.
+- `pages/_document.tsx`: customizes the server-rendered document shell.
+- `pages/_error.tsx`: legacy error page.
+- `pages/api/*`: API Routes.
+- `getServerSideProps`: request-time page data.
+- `getStaticProps` and `getStaticPaths`: static generation and dynamic paths.
+
+These APIs are Pages Router concepts. Do not mix their mental model into App Router examples.
+
+## When it remains reasonable
+
+- A stable production application with no business case for migration.
+- A dependency or hosting constraint not yet compatible with App Router.
+- An incremental migration where untouched routes remain in `pages/`.
+- A team that has measured migration risk and chosen maintenance deliberately.
+
+## Limitations compared with the primary path
+
+Pages Router does not use Server Components for page composition and relies on page-level data functions. Layout persistence, streaming, nested routing, and server/client composition differ substantially.
+
+## Security
+
+`getServerSideProps` and API Routes still require server-side authorization and validation. Redirecting unauthenticated users in the UI is not a security boundary.
+
+## Testing
+
+Keep regression tests for route output, status codes, redirects, cookies, API contracts, and cache headers. During migration, run the same behavioral test suite against old and new implementations.
+
+## Compatibility policy
+
+Label Pages Router content as legacy/compatibility. Preserve published URLs where practical, use redirects when route shape changes, and remove duplicated data-fetching logic after the migration stabilizes.

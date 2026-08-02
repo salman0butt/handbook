@@ -1,0 +1,40 @@
+---
+title: Migrating Pages Router to App Router
+sidebar_label: Pages to App Router
+---
+
+# Migrating Pages Router to App Router
+
+## Concept mapping
+
+| Pages Router | App Router direction |
+|---|---|
+| `_app` | Root and nested layouts plus focused providers |
+| `_document` | Root layout and Metadata APIs |
+| `getServerSideProps` | Async Server Component with request-time data |
+| `getStaticProps` | Prerendered Server Component and explicit caching |
+| `getStaticPaths` | `generateStaticParams` |
+| API Route | Route Handler |
+| `next/head` | Metadata API |
+| Page-level loading | `loading.tsx` and Suspense |
+| Page-level error | `error.tsx` / `global-error.tsx` |
+
+## Migrate by route slice
+
+Move one route and its layouts, data access, mutations, tests, and telemetry together. Avoid creating a permanent half-migrated layer that fetches App Router data through legacy internal HTTP endpoints.
+
+## Data ownership
+
+Replace page-level props with direct server data access. Pass minimal serializable props into Client Components. Re-evaluate caching instead of copying old `revalidate` values mechanically.
+
+## Mutations
+
+Choose Server Functions for application-owned form mutations and Route Handlers for HTTP contracts, webhooks, external clients, or streaming APIs. Re-check authorization inside either boundary.
+
+## Shared providers
+
+Move providers as low as possible. A Client Component provider can be rendered by a Server Component layout without making the entire layout client-side.
+
+## Verification
+
+Compare rendered HTML, status codes, redirects, cookies, canonical URLs, metadata, analytics, accessibility, authorization, cache behavior, and production latency. Keep a redirect or rollback route until traffic confirms parity.

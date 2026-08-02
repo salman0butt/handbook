@@ -1,0 +1,46 @@
+---
+title: Internationalization
+sidebar_label: Internationalization
+---
+
+# Internationalization
+
+Internationalization combines locale resolution, route design, translation loading, formatting, metadata, caching, and right-to-left layout.
+
+## Route model
+
+A common App Router structure places the locale in a dynamic segment:
+
+```text
+app/
+└── [locale]/
+    ├── layout.tsx
+    ├── page.tsx
+    └── products/[slug]/page.tsx
+```
+
+Validate the locale against a fixed allowlist. Unknown values should return a not-found response or a controlled redirect.
+
+## Server-first translations
+
+Load dictionaries in Server Components so translation catalogs do not automatically enter the client bundle. Pass only rendered text or the small subset required by an interactive client island.
+
+## Formatting
+
+Use `Intl.DateTimeFormat`, `Intl.NumberFormat`, and `Intl.PluralRules`. Keep the user's locale and time zone distinct; a language preference does not establish a time zone.
+
+## SEO
+
+Generate localized titles, descriptions, canonical URLs, and `hreflang` alternates. Localized sitemaps must include only indexable routes.
+
+## Caching
+
+Locale is part of the cache key. Do not return one language from a cache entry created for another. Tenant and locale dimensions must both be included in multi-tenant systems.
+
+## RTL
+
+Set `dir="rtl"` at the appropriate layout boundary and use logical CSS properties such as `margin-inline-start`. Test mixed-direction content, icons, keyboard flow, and charts.
+
+## Detection
+
+Locale detection in Proxy should use explicit route, saved preference, and accepted language in a documented priority. Avoid redirect loops and preserve deep links.

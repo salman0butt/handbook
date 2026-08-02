@@ -1,0 +1,21 @@
+---
+title: Pages Router Compatibility and Migration
+sidebar_label: Overview
+---
+
+# Pages Router Compatibility and Migration
+
+Pages Router remains relevant for maintenance and incremental migration. New learning and new architecture in this handbook use App Router.
+
+The migration goal is not a mechanical file move. It is a controlled change in routing, data ownership, rendering, caching, mutation, and error-handling models.
+
+```mermaid
+flowchart LR
+  Legacy[Pages Router or React SPA] --> Inventory[Inventory routes and behavior]
+  Inventory --> Slice[Migrate one route slice]
+  Slice --> Verify[Parity, security, performance]
+  Verify --> Rollout[Controlled rollout]
+  Rollout --> Remove[Remove compatibility code]
+```
+
+Keep both routers only as long as the migration requires, and define rollback before changing production traffic.

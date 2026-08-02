@@ -1,0 +1,20 @@
+---
+title: Platform Patterns
+sidebar_label: Overview
+---
+
+# Platform Patterns
+
+Runtime selection, locale routing, tenant resolution, and monorepo boundaries affect every feature. Model them as platform capabilities with explicit contracts rather than scattered conventions.
+
+```mermaid
+flowchart TD
+  Request --> Runtime[Node or Edge runtime]
+  Runtime --> Locale[Resolve locale]
+  Locale --> Tenant[Resolve tenant]
+  Tenant --> Auth[Authenticate and authorize]
+  Auth --> Domain[Domain module]
+  Domain --> Response
+```
+
+The order and trust model must be documented, tested, and observable.

@@ -1,0 +1,23 @@
+---
+title: Capstone Projects
+sidebar_label: Overview
+---
+
+# Capstone Projects
+
+The ten capstones turn isolated APIs into complete architecture decisions. Each guide includes routes, boundaries, data, security, caching, mutations, testing, deployment, observability, and extension work.
+
+```mermaid
+flowchart TD
+  Marketing --> Blog
+  Blog --> Commerce
+  Commerce --> Dashboard[SaaS Dashboard]
+  Dashboard --> Auth[Authentication System]
+  Auth --> Multi[Multi-Tenant SaaS]
+  Multi --> Admin[Admin Dashboard]
+  Admin --> Realtime[Real-Time App]
+  Realtime --> AI[AI-Powered App]
+  AI --> API[Production API Platform]
+```
+
+Build them in order or use the later projects as system-design exercises. For every capstone, produce an ADR for rendering, caching, authorization, and deployment.

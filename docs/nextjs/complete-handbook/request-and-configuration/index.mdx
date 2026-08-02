@@ -1,0 +1,19 @@
+---
+title: Request Data and Configuration
+sidebar_label: Overview
+---
+
+# Request Data and Configuration
+
+Cookies, headers, environment variables, and `next.config` influence rendering, caching, security, and deployment. Treat them as explicit inputs with ownership and validation, not convenient globals.
+
+```mermaid
+flowchart LR
+  Request[Incoming request] --> Proxy[Proxy / routing policy]
+  Proxy --> Route[Page or Route Handler]
+  Env[Server configuration] --> Route
+  Route --> Cache{Cache-safe?}
+  Cache --> Response[Response with controlled headers and cookies]
+```
+
+Reading request-specific data can make work dynamic. Document that consequence where the data is consumed.

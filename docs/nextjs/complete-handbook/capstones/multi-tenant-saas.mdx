@@ -1,0 +1,34 @@
+---
+title: Capstone — Multi-Tenant SaaS
+sidebar_label: Multi-Tenant SaaS
+---
+
+# Capstone: Multi-Tenant SaaS
+
+## Requirements
+
+Support organizations, memberships, roles, invitations, subdomains, custom domains, tenant branding, billing plans, usage limits, and audit logs.
+
+## Request resolution
+
+Resolve a normalized host to a verified tenant, then authenticate the user, verify membership, and authorize the resource. Pass a trusted tenant context into server-only domain services.
+
+## Data model
+
+Core entities include Tenant, Domain, Membership, Role/Permission, Subscription, UsageRecord, Invitation, and AuditEvent. Every tenant-owned object includes a tenant key and indexes that match scoped queries.
+
+## Caching
+
+Tenant ID, locale, plan, and visibility are cache dimensions. Public tenant branding may be cached by domain tag; member data must remain private. Invalidate custom-domain and branding changes precisely.
+
+## Security tests
+
+Build a matrix that attempts every operation with another tenant's object ID, domain, membership, file, search result, job, and export. Include suspended tenants, removed members, stale sessions, and renamed domains.
+
+## Deployment
+
+Use a shared application with horizontally scalable instances, a shared database/cache strategy, durable jobs, verified domain automation, and per-tenant telemetry dimensions that do not expose sensitive names.
+
+## Extensions
+
+Add enterprise SSO, SCIM, regional data residency, per-tenant encryption keys, tenant export/deletion, and noisy-neighbor controls.

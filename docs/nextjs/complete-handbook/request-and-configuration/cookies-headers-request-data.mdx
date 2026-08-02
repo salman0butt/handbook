@@ -1,0 +1,47 @@
+---
+title: Cookies, Headers, and Request Data
+sidebar_label: Cookies and Headers
+---
+
+# Cookies, Headers, and Request Data
+
+## Cookies
+
+Read cookies only where the request needs them. Set or delete cookies in a Server Function, Route Handler, or response-producing boundary.
+
+```ts title="lib/session-cookie.ts"
+import { cookies } from 'next/headers'
+
+const sessionCookie = {
+  name: '__Host-session',
+  options: {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax' as const,
+    path: '/',
+  },
+}
+
+export async function setSessionCookie(value: string) {
+  const store = await cookies()
+  store.set(sessionCookie.name, value, sessionCookie.options)
+}
+```
+
+Use `__Host-` cookies when possible, rotate session identifiers after authentication, and store only opaque identifiers rather than sensitive profile data.
+
+## Headers
+
+`headers()` exposes request metadata such as content negotiation, forwarded host, and user agent. Values from forwarding headers are trustworthy only when a known reverse proxy overwrites them. Never authorize a user from a client-controlled header.
+
+## IP and geolocation
+
+Platform-specific IP or geolocation data may be absent, spoofed, or privacy-sensitive. Use it for coarse routing, fraud signals, or analytics with documented fallbacks—not as a sole identity factor.
+
+## Cache effects
+
+Request-specific cookies or headers can require dynamic rendering. Isolate personalized work behind the narrowest boundary and avoid accidentally making a public catalog dynamic.
+
+## Privacy
+
+Redact authorization headers, cookies, reset tokens, and personal identifiers from logs and traces. Define retention and access controls for request metadata.

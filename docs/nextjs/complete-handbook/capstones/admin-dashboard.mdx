@@ -1,0 +1,38 @@
+---
+title: Capstone — Admin Dashboard
+sidebar_label: Admin Dashboard
+---
+
+# Capstone: Admin Dashboard
+
+## Requirements
+
+Build user and tenant lookup, moderation, support impersonation, feature control, refunds, job inspection, audit search, and operational dashboards.
+
+## Trust boundary
+
+An admin UI is a high-risk application, not a hidden route. Use strong authentication, step-up verification for sensitive actions, short sessions, network or device controls where appropriate, and explicit least-privilege permissions.
+
+## Architecture
+
+Keep admin routes in a separate route group or application with independent authorization and telemetry. Server Components render read models; mutations use commands that require reason codes and create audit events.
+
+## Impersonation
+
+Prefer scoped support sessions over copying a user's session. Show a persistent banner, require a reason and expiry, prohibit high-risk actions, and audit both support actor and represented user.
+
+## Data and performance
+
+All searches are bounded and indexed. Redact secrets and sensitive fields by default. Use cursor pagination for large audit/event tables and background exports for heavy reports.
+
+## Testing
+
+Test permission combinations, stale roles, CSRF, object-level authorization, mass-assignment input, destructive confirmation, audit completeness, keyboard operation, and safe error messages.
+
+## Operations
+
+Alert on unusual admin actions, failed step-up authentication, bulk exports, permission changes, and audit pipeline failures.
+
+## Extensions
+
+Add approval workflows, dual control for destructive operations, break-glass accounts, case management, and immutable audit export.

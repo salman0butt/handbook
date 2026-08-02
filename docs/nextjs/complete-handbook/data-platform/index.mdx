@@ -1,0 +1,20 @@
+---
+title: Database and API Integration
+sidebar_label: Overview
+---
+
+# Database and API Integration
+
+Next.js can access databases and private services directly from server code. That reduces unnecessary HTTP hops, but it also makes connection management, authorization, timeouts, and observability application responsibilities.
+
+```mermaid
+flowchart LR
+  UI[Server or Client UI] --> DAL[Server-only data access layer]
+  DAL --> DB[(Database)]
+  DAL --> API[External API]
+  API --> Circuit[Timeout, retry, circuit policy]
+  DAL --> AuthZ[Resource authorization]
+  DAL --> Trace[Logs and traces]
+```
+
+Keep credentials and privileged clients in `server-only` modules. Validate all external input and return minimal DTOs to the UI.

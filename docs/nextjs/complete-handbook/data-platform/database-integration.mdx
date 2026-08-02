@@ -1,0 +1,52 @@
+---
+title: Database Integration
+sidebar_label: Databases
+---
+
+# Database Integration
+
+## Where database access belongs
+
+Use server-only modules called from Server Components, Server Functions, Route Handlers, or background workers. Centralize query construction, authorization, error normalization, and observability in a data access layer.
+
+```ts title="lib/data/projects.ts"
+import 'server-only'
+import { cache } from 'react'
+import { db } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
+
+export const getProject = cache(async (projectId: string) => {
+  const user = await requireUser()
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: user.organizationId },
+    select: { id: true, name: true, status: true, updatedAt: true },
+  })
+  if (!project) return null
+  return project
+})
+```
+
+The query scopes the object to the caller's organization. A hidden button or protected route is not sufficient authorization.
+
+## Connection management
+
+- Traditional servers can use a bounded pool sized for total replicas.
+- Serverless platforms may need a managed proxy or serverless-native driver.
+- Edge runtimes require HTTP-compatible or edge-supported drivers.
+- Development hot reload can create duplicate clients unless the library's recommended singleton pattern is used.
+
+## Transactions and mutations
+
+Group invariants in a database transaction. Add idempotency keys around retries, payments, webhook processing, and other externally repeated operations.
+
+## Caching
+
+Cache read models, not mutable ORM entities or open connections. Define tags and invalidation alongside mutation paths. User- or tenant-specific data must never share a public cache key.
+
+## Performance
+
+Select only required fields, index real query patterns, avoid N+1 queries, bound result sizes, and trace slow operations. Include query shape and duration in telemetry without logging sensitive values.
+
+## Migrations
+
+Run schema migrations as an explicit release step, not during every request. Prefer backward-compatible expand/migrate/contract sequences so old and new application versions can overlap safely.

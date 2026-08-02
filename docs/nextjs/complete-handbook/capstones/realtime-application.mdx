@@ -1,0 +1,45 @@
+---
+title: Capstone — Real-Time Application
+sidebar_label: Real-Time Application
+---
+
+# Capstone: Real-Time Application
+
+## Requirements
+
+Build a collaborative activity feed or operations board with presence, live updates, optimistic commands, reconnect behavior, and notification preferences.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Browser --> Next[Next.js app]
+  Next --> DB[(Database)]
+  Next --> Realtime[Realtime service]
+  DB --> Outbox[Outbox]
+  Outbox --> Broker[Broker]
+  Broker --> Realtime
+  Realtime --> Browser
+```
+
+Next.js owns pages, authentication, commands, and initial snapshots. A dedicated realtime service or managed provider owns long-lived connections and fan-out.
+
+## Consistency
+
+Every event has an ID, tenant, aggregate version, and timestamp. Clients deduplicate, order where required, and refetch after gaps. Optimistic UI reconciles against authoritative server events.
+
+## Security
+
+Authorize channel subscriptions and each command. Use short-lived connection tokens with tenant/resource claims. Never trust a client-supplied room name without checking membership.
+
+## Failure handling
+
+Design reconnect backoff, offline indication, missed-event recovery, duplicate delivery, provider outage, and degraded polling fallback.
+
+## Testing and observability
+
+Test concurrent edits, reordering, replay, reconnect, stale permissions, and multi-tab behavior. Monitor active connections, publish latency, dropped messages, reconnect rate, authorization failures, and event lag.
+
+## Extensions
+
+Add collaborative cursors, conflict-free data types where justified, presence privacy, mobile push, and regional realtime routing.
