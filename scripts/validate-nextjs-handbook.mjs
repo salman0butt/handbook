@@ -154,7 +154,6 @@ if (!fs.existsSync(finalSidebarPath)) {
 }
 
 const compatibilityRoutes = [
-  '/nextjs',
   '/nextjs/intro',
   '/nextjs/version',
   '/nextjs/roadmap',
@@ -179,6 +178,11 @@ if (!fs.existsSync(configPath)) {
   }
   for (const route of compatibilityRoutes) {
     if (!config.includes(`'${route}'`)) fail(`Missing compatibility route: ${route}`)
+  }
+  const canonicalNavTarget = "{to: '/docs/nextjs/intro', label: 'Next.js'"
+  const navigationTargets = config.split(canonicalNavTarget).length - 1
+  if (navigationTargets !== 2) {
+    fail(`Expected navbar and footer to use the canonical Next.js entry, found ${navigationTargets} matches`)
   }
 }
 
