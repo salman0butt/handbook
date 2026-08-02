@@ -18,12 +18,23 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
+      - name: Check whether finalization is needed
+        id: check
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Node
+        if: steps.check.outputs.needed == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Finalize permanent configuration
+      - name: Finalize permanent non-workflow configuration
+        if: steps.check.outputs.needed == 'true'
         run: |
           node <<'NODE'
           const fs = require('node:fs')
@@ -36,16 +47,6 @@ jobs:
           config = config.replace("{to: '/javascript', label: 'JavaScript'", "{to: '/docs/javascript/intro', label: 'JavaScript'")
           config = config.replace("{label: 'JavaScript', to: '/javascript'", "{label: 'JavaScript', to: '/docs/javascript/intro'")
           fs.writeFileSync('docusaurus.config.js', config)
-
-          let deploy = fs.readFileSync('.github/workflows/deploy.yml', 'utf8')
-          deploy = deploy.replace('npm install --no-audit --no-fund', 'npm ci --no-audit --no-fund')
-          if (!deploy.includes('npm run validate:javascript')) {
-            deploy = deploy.replace(
-              '      - name: Validate Node.js handbook\n        run: npm run validate:nodejs\n',
-              '      - name: Validate Node.js handbook\n        run: npm run validate:nodejs\n\n      - name: Validate JavaScript handbook\n        run: npm run validate:javascript\n',
-            )
-          }
-          fs.writeFileSync('.github/workflows/deploy.yml', deploy)
 
           const validatorPath = 'scripts/validate-javascript-handbook.mjs'
           const validatorLines = fs.readFileSync(validatorPath, 'utf8').split('\n')
@@ -66,15 +67,14 @@ jobs:
           NODE
 
       - name: Generate reproducible lockfile
+        if: steps.check.outputs.needed == 'true'
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 
-      - name: Remove temporary finalization workflow
-        run: rm .github/workflows/generate-javascript-lockfile.yml
-
-      - name: Commit finalized branch
+      - name: Commit finalized non-workflow files
+        if: steps.check.outputs.needed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json docusaurus.config.js .github/workflows/deploy.yml scripts/validate-javascript-handbook.mjs docs/javascript/intro.md .github/workflows/generate-javascript-lockfile.yml
+          git add package.json package-lock.json docusaurus.config.js scripts/validate-javascript-handbook.mjs docs/javascript/intro.md
           git commit -m "build(js): finalize reproducible validation and navigation"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
