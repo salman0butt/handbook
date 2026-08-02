@@ -1,0 +1,42 @@
+---
+title: Choosing Zustand, Redux Toolkit, TanStack Query, or SWR
+sidebar_label: Tool Selection
+---
+
+# Choosing Zustand, Redux Toolkit, TanStack Query, or SWR
+
+## Zustand
+
+Use for compact shared client state with selector-based subscriptions. Define store creation carefully for SSR; avoid a module singleton when request-specific data could leak between users.
+
+## Redux Toolkit
+
+Use when the product needs explicit event-driven transitions, middleware, normalized client entities, devtools history, or organization-wide conventions. Keep server-authoritative data out of Redux unless there is a deliberate synchronization design.
+
+## TanStack Query and SWR
+
+Use for client-side server state: polling, focus revalidation, optimistic mutations, offline behavior, or data that must update without a server navigation. They complement Server Components; they do not replace server-side authorization.
+
+## Decision table
+
+| Need | Default choice |
+|---|---|
+| Shareable filters/pagination | URL state |
+| Database-backed page data | Server Component |
+| Small interactive widget | `useState` / `useReducer` |
+| Stable dependency across subtree | Context |
+| Lightweight shared client state | Zustand |
+| Complex event-driven client domain | Redux Toolkit |
+| Client polling/offline/live cache | TanStack Query or SWR |
+
+## Hydration pattern
+
+Pass only serializable, non-sensitive initial data into a client provider. Treat it as a snapshot, not an authorization proof. Mutations return to the server, re-check identity and permissions, then invalidate the relevant server and client caches.
+
+## Anti-patterns
+
+- Duplicating the same entity in Router Cache, query cache, and global store without an ownership rule.
+- Hydrating secrets or entire database rows into browser state.
+- Creating request-specific stores at module scope on the server.
+- Using optimistic UI without reconciliation and rollback.
+- Invalidating every query after every mutation.

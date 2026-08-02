@@ -1,0 +1,43 @@
+---
+title: Capstone — SaaS Dashboard
+sidebar_label: SaaS Dashboard
+---
+
+# Capstone: SaaS Dashboard
+
+## Requirements
+
+Build authenticated dashboards, onboarding, projects, filters, pagination, billing status, notifications, exports, and role-based actions.
+
+## Architecture and routes
+
+```text
+app/(app)/
+  layout.tsx
+  onboarding/page.tsx
+  dashboard/page.tsx
+  projects/[projectId]/page.tsx
+  settings/billing/page.tsx
+```
+
+The authenticated layout establishes session context but each data query and mutation enforces resource authorization. Server Components own initial data. URL parameters own shareable filters. Small client components own selection, dialogs, and optimistic feedback.
+
+## Data and mutations
+
+Use a server-only DAL returning minimal DTOs. Server Functions validate forms, authorize actions, run transactions, revalidate exact tags, and return typed expected errors. Long exports become queued jobs with signed downloads.
+
+## Performance
+
+Parallelize independent queries, stream slow panels behind Suspense, prevent N+1 queries, paginate all unbounded lists, and keep charts dynamically loaded if they are browser-heavy.
+
+## Testing
+
+Test role and resource matrices, tenant scoping, optimistic rollback, loading/error boundaries, keyboard interactions, billing webhook state, and export authorization.
+
+## Deployment and observability
+
+Monitor request and query latency, failed actions, authorization denials, queue age, billing sync, Web Vitals, and per-tenant error rates.
+
+## Extensions
+
+Add saved views, collaborative comments, audit history, feature flags, and usage-based billing.

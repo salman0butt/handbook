@@ -1,0 +1,29 @@
+---
+title: Installation and Project Setup
+sidebar_label: Overview
+---
+
+# Installation and Project Setup
+
+A reliable Next.js project begins with a reproducible runtime, package-manager policy, strict TypeScript settings, explicit linting, and a build that behaves the same locally and in CI.
+
+## Learning order
+
+1. Create a project with the supported `create-next-app` command.
+2. Understand every generated option.
+3. Learn the manual installation path.
+4. Configure aliases, environment files, linting, formatting, editor tooling, and debugging.
+5. Run the development server, production build, and production server.
+
+## Setup contract
+
+```mermaid
+flowchart LR
+  Runtime[Pin Node.js and package manager] --> Install[Install dependencies]
+  Install --> Dev[Run development server]
+  Dev --> Check[Lint, typecheck, test]
+  Check --> Build[Production build]
+  Build --> Smoke[Production smoke test]
+```
+
+A project is not set up until a clean checkout can install, validate, build, and start without undocumented local state.

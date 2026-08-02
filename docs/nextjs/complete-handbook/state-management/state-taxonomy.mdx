@@ -1,0 +1,41 @@
+---
+title: Server, URL, Local, and Shared State
+sidebar_label: State Taxonomy
+---
+
+# Server, URL, Local, and Shared State
+
+## Server state
+
+Data owned by a database or external service should normally be read on the server. The server enforces authorization and can cache or revalidate the result. Do not copy the same record into a global client store unless offline editing or highly interactive synchronization requires it.
+
+## URL state
+
+Filters, sort order, pagination, tabs, and search terms often belong in `searchParams`. URL state is shareable, reload-safe, browser-navigation-friendly, and visible to Server Components.
+
+```tsx title="app/products/page.tsx"
+type PageProps = {
+  searchParams: Promise<{ q?: string; page?: string }>
+}
+
+export default async function ProductsPage({ searchParams }: PageProps) {
+  const { q = '', page = '1' } = await searchParams
+  const pageNumber = Math.max(1, Number.parseInt(page, 10) || 1)
+  const products = await findProducts({ query: q, page: pageNumber })
+  return <ProductResults products={products} />
+}
+```
+
+Validate and normalize URL input before querying.
+
+## Local state
+
+Use `useState` for independent UI state and `useReducer` when transitions and invariants benefit from an explicit state machine. Keep state near the components that change it.
+
+## Context
+
+Context distributes stable dependencies such as theme, locale, or a small client service. It is not an automatic high-frequency state store; provider updates rerender consumers unless the value architecture limits churn.
+
+## Persistent state
+
+Browser persistence is untrusted input. Version the schema, validate during hydration, and handle server/client mismatch. Never use local storage as the authority for permissions, pricing, subscription status, or tenant membership.

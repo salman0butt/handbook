@@ -1,0 +1,21 @@
+---
+title: Production Patterns
+sidebar_label: Overview
+---
+
+# Production Patterns
+
+Production Next.js systems extend beyond request/response pages. They coordinate durable jobs, third-party side effects, uploads, notifications, payments, search, AI features, flags, experiments, and audit evidence.
+
+```mermaid
+flowchart LR
+  Request[User request] --> Commit[Commit database state]
+  Commit --> Outbox[Outbox / durable event]
+  Outbox --> Queue[Queue]
+  Queue --> Worker[Worker]
+  Worker --> Provider[Email, payment, search, AI]
+  Worker --> Audit[Audit and telemetry]
+  Worker --> Retry[Retry / dead-letter policy]
+```
+
+Do not rely on an in-process promise after returning a response for business-critical work. Durable effects require durable state, idempotency, retries, and observability.

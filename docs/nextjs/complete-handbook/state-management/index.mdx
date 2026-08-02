@@ -1,0 +1,21 @@
+---
+title: State Management
+sidebar_label: Overview
+---
+
+# State Management
+
+State in Next.js belongs to different owners. Choosing a library before classifying the state usually creates duplication and hydration bugs.
+
+```mermaid
+flowchart TD
+  A[State requirement] --> B{Shareable in URL?}
+  B -->|Yes| URL[Path or search parameters]
+  B -->|No| C{Authoritative on server?}
+  C -->|Yes| Server[Server Component data or server-state cache]
+  C -->|No| D{Shared across client subtree?}
+  D -->|No| Local[Local state or reducer]
+  D -->|Yes| Store[Context, Zustand, or Redux Toolkit]
+```
+
+The default is no global store. Prefer server data, URL state, and local component state until a real cross-tree client requirement appears.

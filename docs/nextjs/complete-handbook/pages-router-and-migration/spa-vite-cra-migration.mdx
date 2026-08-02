@@ -1,0 +1,37 @@
+---
+title: Migrating React SPA, Vite, or Create React App
+sidebar_label: SPA, Vite, and CRA Migration
+---
+
+# Migrating React SPA, Vite, or Create React App
+
+## Inventory first
+
+List routes, loaders, API clients, environment variables, asset rules, CSS ownership, authentication, browser-only libraries, tests, and deployment assumptions. Record behavior before changing architecture.
+
+## Incremental strategy
+
+1. Create an App Router shell and root layout.
+2. Move static assets and global CSS.
+3. Recreate routes one vertical slice at a time.
+4. Keep browser-only features in narrow Client Components.
+5. Move privileged data access to server-only modules.
+6. Replace client routing and document metadata with Next.js APIs.
+7. Add server-side authorization, error boundaries, and loading UI.
+8. Compare bundle size, Web Vitals, status codes, and SEO.
+
+## Environment variables
+
+Vite's `VITE_*` and CRA's `REACT_APP_*` variables do not map automatically. Public Next.js variables use `NEXT_PUBLIC_*`; private values remain server-only. Audit every variable before renaming because public prefixes embed values into browser bundles.
+
+## API calls
+
+A SPA often calls a separate backend from the browser. Keep that architecture when appropriate, but move secret-bearing or aggregation calls into Server Components or Route Handlers. Preserve timeouts and error contracts.
+
+## Browser-only dependencies
+
+Do not mark the whole route `'use client'`. Wrap the incompatible component, dynamically load it when necessary, and provide an accessible server-rendered shell.
+
+## Rollout
+
+Use route-level traffic control or a reverse proxy when old and new applications must coexist. Maintain deep-link behavior, cookies, canonical URLs, and analytics identifiers during the transition.

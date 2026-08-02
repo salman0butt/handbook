@@ -1,0 +1,62 @@
+name: Validate Next.js handbook
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/nextjs/**'
+      - 'sidebars.js'
+      - 'sidebars.clean.js'
+      - 'sidebars.final.js'
+      - 'sidebars.nextjs.js'
+      - 'scripts/validate-nextjs-handbook.mjs'
+      - 'scripts/validate-mermaid.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/nextjs-handbook.yml'
+  pull_request:
+    paths:
+      - 'docs/nextjs/**'
+      - 'sidebars.js'
+      - 'sidebars.clean.js'
+      - 'sidebars.final.js'
+      - 'sidebars.nextjs.js'
+      - 'scripts/validate-nextjs-handbook.mjs'
+      - 'scripts/validate-mermaid.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/nextjs-handbook.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate Next.js handbook
+        run: npm run validate:nextjs
+
+      - name: Validate Mermaid diagrams
+        run: npm run validate:mermaid
+
+      - name: Build Docusaurus
+        run: npm run build

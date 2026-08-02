@@ -1,0 +1,21 @@
+---
+title: Styling
+sidebar_label: Overview
+---
+
+# Styling
+
+Next.js supports several styling approaches, but production systems need one ownership model for global rules, component styles, tokens, themes, and third-party CSS.
+
+## Decision model
+
+```mermaid
+flowchart TD
+  A[Does style belong to one component?] -->|Yes| B[CSS Module or utility classes]
+  A -->|No| C[Global layer or design token]
+  C --> D{Needs runtime JavaScript?}
+  D -->|No| E[CSS variables, media queries, server-safe CSS]
+  D -->|Yes| F[Small client boundary; verify SSR and hydration]
+```
+
+Prefer server-compatible CSS. Runtime styling libraries must prove Server Component compatibility, deterministic SSR output, streaming behavior, CSP support, and acceptable client cost.

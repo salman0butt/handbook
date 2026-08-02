@@ -1,0 +1,70 @@
+---
+title: Environment Variables and Next.js Configuration
+sidebar_label: Environment and next.config
+---
+
+# Environment Variables and Next.js Configuration
+
+## Environment validation
+
+Validate server configuration once at startup or module initialization.
+
+```ts title="lib/env.ts"
+import 'server-only'
+import { z } from 'zod'
+
+const schema = z.object({
+  DATABASE_URL: z.string().url(),
+  SESSION_SECRET: z.string().min(32),
+  NEXT_PUBLIC_APP_ORIGIN: z.string().url(),
+})
+
+export const env = schema.parse({
+  DATABASE_URL: process.env.DATABASE_URL,
+  SESSION_SECRET: process.env.SESSION_SECRET,
+  NEXT_PUBLIC_APP_ORIGIN: process.env.NEXT_PUBLIC_APP_ORIGIN,
+})
+```
+
+Only `NEXT_PUBLIC_` variables are available to browser code. They are typically embedded at build time, so changing the deployment environment may not change an already-built asset.
+
+## Configuration ownership
+
+Use `next.config.ts` for framework behavior: redirects, rewrites, response headers, image allowlists, output mode, package transpilation, and controlled bundler customization.
+
+```ts title="next.config.ts"
+import type { NextConfig } from 'next'
+
+const config: NextConfig = {
+  output: 'standalone',
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.example.com', pathname: '/products/**' },
+    ],
+  },
+  async headers() {
+    return [{
+      source: '/(.*)',
+      headers: [
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      ],
+    }]
+  },
+}
+
+export default config
+```
+
+## Important options
+
+Review `basePath`, `assetPrefix`, `trailingSlash`, `output`, `transpilePackages`, external packages, source maps, compression, logging, redirects, rewrites, headers, images, Turbopack, and Webpack overrides separately.
+
+## Safety rules
+
+- Keep secrets in a managed secret store.
+- Never import server configuration from Client Components.
+- Validate redirect and rewrite destinations.
+- Use narrow remote image patterns.
+- Treat experimental flags as temporary architecture decisions with an owner and removal plan.
+- Test configuration in preview and production-like environments.

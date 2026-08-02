@@ -1,0 +1,46 @@
+---
+title: External APIs, Realtime, and AI Integrations
+sidebar_label: APIs, Realtime, and AI
+---
+
+# External APIs, Realtime, and AI Integrations
+
+## Resilient API clients
+
+Create one server-only client per external service. Set an explicit timeout, propagate cancellation, normalize errors, and retry only idempotent operations with backoff and jitter.
+
+```ts title="lib/clients/catalog.ts"
+import 'server-only'
+
+export async function getCatalogItem(id: string, signal?: AbortSignal) {
+  const response = await fetch(`https://catalog.example.com/items/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Bearer ${process.env.CATALOG_TOKEN}` },
+    signal: AbortSignal.any([signal ?? new AbortController().signal, AbortSignal.timeout(5_000)]),
+    cache: 'no-store',
+  })
+  if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`)
+  return response.json() as Promise<unknown>
+}
+```
+
+Parse the response with a runtime schema before use. A TypeScript assertion does not validate an HTTP response.
+
+## REST, GraphQL, and generated clients
+
+Use OpenAPI or GraphQL code generation for transport types, while retaining runtime validation and domain mapping. Do not leak provider-specific error objects or raw payloads across application layers.
+
+## Realtime transports
+
+- **Server-Sent Events:** one-way server updates, simple browser reconnection.
+- **WebSockets:** bidirectional low-latency messaging; usually needs a separate stateful service or platform capability.
+- **Polling:** often the simplest reliable option for low-frequency updates.
+
+Next.js Route Handlers can stream responses, but long-lived connections and connection fan-out must match the deployment platform.
+
+## AI APIs
+
+Treat model output as untrusted data. Use structured output schemas, tool allowlists, authorization at tool execution, token and latency budgets, prompt-injection defenses, redaction, and offline evaluations. Stream user-visible text only after deciding how partial failures, cancellation, and moderation are handled.
+
+## Observability
+
+Record provider, operation, attempt count, status, latency, rate-limit metadata, and correlation ID. Redact credentials, prompts containing secrets, personal data, and webhook signatures.
