@@ -55,7 +55,7 @@ for (const relativePath of requiredFiles) {
   }
 }
 
-const placeholderPattern = /\b(?:coming soon|lorem ipsum|todo|tbd|placeholder text)\b/i
+const placeholderPattern = /^(?:\s*[-*>#]*\s*)?(?:coming soon|lorem ipsum|todo(?:\b|:)|tbd(?:\b|:)|\[placeholder\])\s*[.!-]*\s*$/im
 const numericTitlePattern = /^(?:title:\s*|#\s+)['"]?\d+(?:[A-F])?(?:\s*[.–-]\s*\d+)?\s*[.·:-]/im
 const slugs = new Map()
 let mermaidCount = 0
