@@ -13,7 +13,6 @@ on:
       - 'scripts/validate-nextjs-handbook.mjs'
       - 'scripts/validate-mermaid.mjs'
       - 'package.json'
-      - 'package-lock.json'
       - '.github/workflows/nextjs-handbook.yml'
   pull_request:
     paths:
@@ -25,7 +24,6 @@ on:
       - 'scripts/validate-nextjs-handbook.mjs'
       - 'scripts/validate-mermaid.mjs'
       - 'package.json'
-      - 'package-lock.json'
       - '.github/workflows/nextjs-handbook.yml'
   workflow_dispatch:
 
@@ -47,7 +45,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
