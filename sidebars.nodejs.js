@@ -10,10 +10,11 @@ const doc = (id, label) => ({type: 'doc', id: `nodejs/${id}`, label});
 
 const focusedNodejsCategories = [
   category('Start Here: Decisions', [
+      doc('version', 'Version and Platform Support'),
       doc('start-here/nodejs-vs-browser', 'Node.js vs Browser JavaScript'),
       doc('start-here/nodejs-vs-deno-vs-bun', 'Node.js vs Deno vs Bun'),
       doc('start-here/use-cases-and-decision-guide', 'Use Cases and Decision Guide'),
-  ], 'start-here/nodejs-vs-browser'),
+  ], 'version'),
   category('Runtime and Process', [
       doc('runtime/nodejs-architecture', 'Node.js Architecture'),
       doc('runtime/runtime-lifecycle-process-signals', 'Runtime Lifecycle, Process and Signals'),
