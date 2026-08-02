@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   finalize:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'javascript-complete-handbook-2026-08-02' && hashFiles('package-lock.json') == '' }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'javascript-complete-handbook-2026-08-02' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
