@@ -134,7 +134,7 @@ jobs:
           for route in "${routes[@]}"; do
             url="${SITE_BASE}${route}"
             output="$(mktemp)"
-            code="$(curl --silent --show-error --retry 4 --retry-delay 5 --output "$output" --write-out '%{http_code}' "$url")"
+            code="$(curl --location --silent --show-error --retry 4 --retry-delay 5 --output "$output" --write-out '%{http_code}' "$url")"
             if [[ "$code" != '200' ]] || grep -Eqi 'Page Not Found|404[^0-9]' "$output"; then
               echo "FAIL $code $url"
               failed=1
@@ -148,9 +148,9 @@ jobs:
       - name: Verify redirect destinations and release content
         run: |
           set -euo pipefail
-          curl --silent --show-error --fail --retry 4 \
+          curl --location --silent --show-error --fail --retry 4 \
             "${SITE_BASE}/nextjs/version" | grep -F '/handbook/docs/nextjs/complete-handbook/version'
-          curl --silent --show-error --fail --retry 4 \
+          curl --location --silent --show-error --fail --retry 4 \
             "${SITE_BASE}/docs/nextjs/routing/dynamic-routes" | grep -F '/handbook/docs/nextjs/app-router-and-layouts/dynamic-segments-and-async-params'
           curl --silent --show-error --fail --retry 4 \
             "${SITE_BASE}/docs/nextjs/complete-handbook" | grep -F 'Complete Next.js Handbook Coverage'
