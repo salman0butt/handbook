@@ -148,7 +148,7 @@ const config = {
           label: 'Backend & Data',
           position: 'left',
           items: [
-            {to: '/nodejs', label: 'Node.js', activeBaseRegex: '^/(nodejs|docs/nodejs)'},
+            {to: '/docs/nodejs/intro', label: 'Node.js', activeBaseRegex: '^/(nodejs|docs/nodejs)'},
             {to: '/postgresql', label: 'PostgreSQL', activeBaseRegex: '^/(postgresql|docs/postgresql)'},
             {to: '/databases', label: 'Databases', activeBaseRegex: '^/(databases|docs/databases)'},
           ],
@@ -181,6 +181,7 @@ const config = {
             {label: 'Next.js', to: '/docs/nextjs/intro'},
             {label: 'JavaScript', to: '/javascript'},
             {label: 'TypeScript', to: '/typescript'},
+            {label: 'Node.js', to: '/docs/nodejs/intro'},
             {label: 'PostgreSQL', to: '/postgresql'},
             {label: 'React Native', to: '/react-native'},
           ],
