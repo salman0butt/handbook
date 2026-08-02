@@ -27,7 +27,7 @@ const config = {
         redirects: [
           {
             to: '/docs/nextjs/intro',
-            from: ['/nextjs', '/nextjs/intro'],
+            from: '/nextjs/intro',
           },
           {
             to: '/docs/nextjs/complete-handbook/version',
@@ -139,7 +139,7 @@ const config = {
           position: 'left',
           items: [
             {to: '/react', label: 'React', activeBaseRegex: '^/(react|docs/react)'},
-            {to: '/nextjs', label: 'Next.js', activeBaseRegex: '^/(nextjs|docs/nextjs)'},
+            {to: '/docs/nextjs/intro', label: 'Next.js', activeBaseRegex: '^/(nextjs|docs/nextjs)'},
             {to: '/typescript', label: 'TypeScript', activeBaseRegex: '^/(typescript|docs/typescript)'},
             {to: '/javascript', label: 'JavaScript', activeBaseRegex: '^/(javascript|docs/javascript)'},
           ],
@@ -178,7 +178,7 @@ const config = {
           title: 'Handbooks',
           items: [
             {label: 'React', to: '/react'},
-            {label: 'Next.js', to: '/nextjs'},
+            {label: 'Next.js', to: '/docs/nextjs/intro'},
             {label: 'JavaScript', to: '/javascript'},
             {label: 'TypeScript', to: '/typescript'},
             {label: 'PostgreSQL', to: '/postgresql'},
