@@ -179,11 +179,10 @@ if (!fs.existsSync(configPath)) {
   for (const route of compatibilityRoutes) {
     if (!config.includes(`'${route}'`)) fail(`Missing compatibility route: ${route}`)
   }
-  const canonicalNavTarget = "{to: '/docs/nextjs/intro', label: 'Next.js'"
-  const navigationTargets = config.split(canonicalNavTarget).length - 1
-  if (navigationTargets !== 2) {
-    fail(`Expected navbar and footer to use the canonical Next.js entry, found ${navigationTargets} matches`)
-  }
+  const navbarTarget = "{to: '/docs/nextjs/intro', label: 'Next.js'"
+  const footerTarget = "{label: 'Next.js', to: '/docs/nextjs/intro'"
+  if (!config.includes(navbarTarget)) fail('Navbar does not use the canonical Next.js entry')
+  if (!config.includes(footerTarget)) fail('Footer does not use the canonical Next.js entry')
 }
 
 if (!fs.existsSync(packagePath)) {
