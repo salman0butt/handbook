@@ -24,7 +24,7 @@ Web APIs / Node APIs / other host capabilities
 OS, browser, runtime and external systems
 ```
 
-**Baseline checked: 30 July 2026 (Asia/Karachi).** The published language snapshot is **ECMAScript 2026 / ECMA-262 17th edition**. The TC39 living specification is already the **ECMAScript 2027 draft** and includes finished Stage-4 work after the 2026 annual snapshot. Status labels in this handbook keep those two facts separate.
+**Baseline checked: August 2, 2026 (Asia/Karachi).** The published language snapshot is **ECMAScript 2026 / ECMA-262 17th edition**. The TC39 living specification is already the **ECMAScript 2027 draft** and includes finished Stage-4 work after the 2026 annual snapshot. Status labels in this handbook keep those two facts separate.
 
 ## Status legend
 

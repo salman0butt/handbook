@@ -26,6 +26,10 @@ const config = {
       {
         redirects: [
           {
+            to: '/docs/javascript/intro',
+            from: '/javascript',
+          },
+          {
             to: '/docs/nextjs/intro',
             from: '/nextjs/intro',
           },
@@ -141,7 +145,7 @@ const config = {
             {to: '/react', label: 'React', activeBaseRegex: '^/(react|docs/react)'},
             {to: '/docs/nextjs/intro', label: 'Next.js', activeBaseRegex: '^/(nextjs|docs/nextjs)'},
             {to: '/typescript', label: 'TypeScript', activeBaseRegex: '^/(typescript|docs/typescript)'},
-            {to: '/javascript', label: 'JavaScript', activeBaseRegex: '^/(javascript|docs/javascript)'},
+            {to: '/docs/javascript/intro', label: 'JavaScript', activeBaseRegex: '^/(javascript|docs/javascript)'},
           ],
         },
         {
@@ -179,7 +183,7 @@ const config = {
           items: [
             {label: 'React', to: '/react'},
             {label: 'Next.js', to: '/docs/nextjs/intro'},
-            {label: 'JavaScript', to: '/javascript'},
+            {label: 'JavaScript', to: '/docs/javascript/intro'},
             {label: 'TypeScript', to: '/typescript'},
             {label: 'Node.js', to: '/docs/nodejs/intro'},
             {label: 'PostgreSQL', to: '/postgresql'},
