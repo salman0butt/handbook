@@ -1,0 +1,50 @@
+name: Validate Node.js handbook
+
+on:
+  pull_request:
+    paths:
+      - 'docs/nodejs/**'
+      - 'sidebars.nodejs.js'
+      - 'sidebars.final.js'
+      - 'docusaurus.config.js'
+      - 'scripts/validate-nodejs-handbook.mjs'
+      - 'scripts/validate-mermaid.mjs'
+      - 'package.json'
+      - '.github/workflows/nodejs-handbook.yml'
+      - '.github/workflows/deploy.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/nodejs/**'
+      - 'sidebars.nodejs.js'
+      - 'sidebars.final.js'
+      - 'docusaurus.config.js'
+      - 'scripts/validate-nodejs-handbook.mjs'
+      - 'package.json'
+      - '.github/workflows/nodejs-handbook.yml'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Node.js curriculum and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate Node.js handbook
+        run: npm run validate:nodejs
+      - name: Validate Mermaid diagrams
+        run: npm run validate:mermaid
+      - name: Build handbook
+        run: npm run build
