@@ -13,7 +13,8 @@
     "validate:nextjs": "node scripts/validate-nextjs-handbook.mjs",
     "validate:typescript": "node scripts/validate-typescript-handbook.mjs",
     "validate:react-focused": "node scripts/validate-react-focused.mjs",
-    "validate:react-hooks": "node scripts/validate-react-hooks.mjs"
+    "validate:react-hooks": "node scripts/validate-react-hooks.mjs",
+    "validate:javascript": "node scripts/validate-javascript-handbook.mjs"
   },
   "dependencies": {
     "@cmfcmf/docusaurus-search-local": "^2.0.1",

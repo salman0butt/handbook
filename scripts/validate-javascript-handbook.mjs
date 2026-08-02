@@ -46,7 +46,8 @@ function countSidebar(items, stats = {categories: 0, links: 0, labels: [], ids: 
 }
 
 function extractRows(source, name) {
-  const match = source.match(new RegExp(`const ${name}Rows = \\`([\\s\\S]*?)\\`\\n`))
+  const pattern = 'const ' + name + 'Rows = `([\\s\\S]*?)`\\n'
+  const match = source.match(new RegExp(pattern))
   if (!match) {
     fail(`Exercise data is missing ${name}Rows`)
     return []
@@ -336,3 +337,4 @@ if (failures.length) {
 }
 
 console.log('\nJavaScript handbook validation passed.')
+
