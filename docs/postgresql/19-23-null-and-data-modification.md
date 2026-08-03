@@ -1,6 +1,6 @@
 ---
 id: 19-23-null-and-data-modification
-title: 19–23 — NULL, INSERT, UPDATE, DELETE, UPSERT & MERGE
+title: "19–23 — NULL, INSERT, UPDATE, DELETE, UPSERT & MERGE"
 ---
 
 # 19 — NULL

@@ -1,6 +1,6 @@
 ---
 id: 121-128-application-access-orms-migrations
-title: 121–128 — Application Access, Node.js, ORMs, N+1 & Migrations
+title: "121–128 — Application Access, Node.js, ORMs, N+1 & Migrations"
 ---
 
 # 121 — Application Database Access

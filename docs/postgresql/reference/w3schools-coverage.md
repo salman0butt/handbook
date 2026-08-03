@@ -1,6 +1,6 @@
 ---
 id: reference-w3schools-coverage
-title: W3Schools SQL Curriculum Coverage Audit
+title: "W3Schools SQL Curriculum Coverage Audit"
 ---
 
 # W3Schools SQL Curriculum Coverage Audit

@@ -1,6 +1,6 @@
 ---
 id: interview-questions-beginner
-title: Beginner Interview Questions BQ001–BQ080
+title: "Beginner Interview Questions BQ001–BQ080"
 ---
 
 # Beginner — BQ001–BQ080

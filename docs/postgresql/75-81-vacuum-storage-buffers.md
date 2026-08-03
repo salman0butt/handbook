@@ -1,6 +1,6 @@
 ---
 id: 75-81-vacuum-storage-buffers
-title: 75–81 — VACUUM, Autovacuum, HOT, Bloat, Storage, TOAST & Buffers
+title: "75–81 — VACUUM, Autovacuum, HOT, Bloat, Storage, TOAST & Buffers"
 ---
 
 # 75 — VACUUM

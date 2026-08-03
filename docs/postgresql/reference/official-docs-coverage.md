@@ -1,6 +1,6 @@
 ---
 id: reference-official-docs-coverage
-title: Official PostgreSQL 18 Documentation Coverage Audit
+title: "Official PostgreSQL 18 Documentation Coverage Audit"
 ---
 
 # Official PostgreSQL 18 Documentation Coverage Audit

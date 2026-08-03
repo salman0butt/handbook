@@ -1,6 +1,6 @@
 ---
 id: interview-mastery-overview
-title: SQL & PostgreSQL Interview Mastery
+title: "SQL & PostgreSQL Interview Mastery"
 ---
 
 # SQL & PostgreSQL Interview Mastery

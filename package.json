@@ -15,7 +15,8 @@
     "validate:react-focused": "node scripts/validate-react-focused.mjs",
     "validate:react-hooks": "node scripts/validate-react-hooks.mjs",
     "validate:javascript": "node scripts/validate-javascript-handbook.mjs",
-    "validate:react-native": "node scripts/validate-react-native-handbook.mjs"
+    "validate:react-native": "node scripts/validate-react-native-handbook.mjs",
+    "validate:postgresql": "node scripts/validate-postgresql-handbook.mjs"
   },
   "dependencies": {
     "@cmfcmf/docusaurus-search-local": "^2.0.1",

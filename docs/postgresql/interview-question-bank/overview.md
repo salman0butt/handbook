@@ -1,6 +1,6 @@
 ---
 id: interview-question-bank-overview
-title: PostgreSQL Interview Question Bank — 400 Questions
+title: "PostgreSQL Interview Question Bank — 400 Questions"
 ---
 
 # PostgreSQL Interview Question Bank — 400 Questions

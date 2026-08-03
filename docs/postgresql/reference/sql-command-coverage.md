@@ -1,6 +1,6 @@
 ---
 id: reference-sql-command-coverage
-title: PostgreSQL 18 SQL Command Coverage Audit
+title: "PostgreSQL 18 SQL Command Coverage Audit"
 ---
 
 # PostgreSQL 18 SQL Command Coverage Audit

@@ -1,6 +1,6 @@
 ---
 id: 160-169-production-scaling-copy-and-versions
-title: 160–169 — Incidents, Production Readiness, Scaling, COPY & PostgreSQL Versions
+title: "160–169 — Incidents, Production Readiness, Scaling, COPY & PostgreSQL Versions"
 ---
 
 # 160 — Production Incident Debugging

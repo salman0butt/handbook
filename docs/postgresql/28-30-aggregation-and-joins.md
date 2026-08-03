@@ -1,6 +1,6 @@
 ---
 id: 28-30-aggregation-and-joins
-title: 28–30 — Aggregates, GROUP BY, HAVING & Joins
+title: "28–30 — Aggregates, GROUP BY, HAVING & Joins"
 ---
 
 # 28 — Aggregate Functions

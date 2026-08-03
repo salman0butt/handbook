@@ -1,6 +1,6 @@
 ---
 id: project-10-jsonb-product-catalog
-title: Project 10 — JSONB Product Catalog
+title: "Project 10 — JSONB Product Catalog"
 ---
 
 # Project 10 — JSONB Product Catalog

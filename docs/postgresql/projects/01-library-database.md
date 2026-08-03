@@ -1,6 +1,6 @@
 ---
 id: project-01-library-database
-title: Project 1 — Library Database
+title: "Project 1 — Library Database"
 ---
 
 # Project 1 — Library Database

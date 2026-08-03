@@ -1,6 +1,6 @@
 ---
 id: reference-overview
-title: PostgreSQL Handbook Reference & Audits
+title: "PostgreSQL Handbook Reference & Audits"
 ---
 
 # Reference & Audits

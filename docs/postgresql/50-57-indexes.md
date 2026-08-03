@@ -1,6 +1,6 @@
 ---
 id: 50-57-indexes
-title: 50–57 — PostgreSQL Indexes
+title: "50–57 — PostgreSQL Indexes"
 ---
 
 # 50 — Index Fundamentals

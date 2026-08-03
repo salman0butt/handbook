@@ -1,6 +1,6 @@
 ---
 id: reference-functions-and-operators
-title: PostgreSQL 18 Functions & Operators Coverage Audit
+title: "PostgreSQL 18 Functions & Operators Coverage Audit"
 ---
 
 # PostgreSQL 18 Functions & Operators Coverage Audit

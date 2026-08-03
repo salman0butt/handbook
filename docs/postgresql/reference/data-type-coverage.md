@@ -1,6 +1,6 @@
 ---
 id: reference-data-type-coverage
-title: PostgreSQL 18 Data Type Coverage Audit
+title: "PostgreSQL 18 Data Type Coverage Audit"
 ---
 
 # PostgreSQL 18 Data Type Coverage Audit

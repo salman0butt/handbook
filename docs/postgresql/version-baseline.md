@@ -1,7 +1,7 @@
 ---
 id: version-baseline
-title: Version Baseline
-description: Audited SQL standard and PostgreSQL release baseline for this handbook.
+title: "Version Baseline"
+description: "Audited SQL standard and PostgreSQL release baseline for this handbook."
 sidebar_position: 2
 ---
 

@@ -1,6 +1,6 @@
 ---
 id: interview-questions-senior
-title: Senior Interview Questions SQ001–SQ080
+title: "Senior Interview Questions SQ001–SQ080"
 ---
 
 # Senior — SQ001–SQ080

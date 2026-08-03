@@ -1,6 +1,6 @@
 ---
 id: project-capstone-saas-platform
-title: Capstone — Multi-Tenant SaaS PostgreSQL Platform
+title: "Capstone — Multi-Tenant SaaS PostgreSQL Platform"
 ---
 
 # Capstone — Multi-Tenant SaaS PostgreSQL Platform

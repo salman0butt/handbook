@@ -1,6 +1,6 @@
 ---
 id: 82-90-wal-recovery-replication-ha
-title: 82–90 — WAL, Checkpoints, Recovery, Backups, Replication & HA
+title: "82–90 — WAL, Checkpoints, Recovery, Backups, Replication & HA"
 ---
 
 # 82 — WAL

@@ -1,6 +1,6 @@
 ---
 id: interview-questions-staff-database-architecture
-title: Staff / Database Architecture Questions STQ001–STQ080
+title: "Staff / Database Architecture Questions STQ001–STQ080"
 ---
 
 # Staff / Database Architecture — STQ001–STQ080

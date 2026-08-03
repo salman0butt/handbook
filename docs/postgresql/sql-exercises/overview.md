@@ -1,6 +1,6 @@
 ---
 id: sql-exercises-overview
-title: SQL Exercise Bank — 300 Exercises
+title: "SQL Exercise Bank — 300 Exercises"
 ---
 
 # SQL Exercise Bank — 300 Exercises

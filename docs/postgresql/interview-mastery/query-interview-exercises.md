@@ -1,6 +1,6 @@
 ---
 id: query-interview-exercises
-title: Query Interview Exercises
+title: "Query Interview Exercises"
 ---
 
 # Query Interview Exercises

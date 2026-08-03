@@ -1,6 +1,6 @@
 ---
 id: 05-08-objects-connections-schemas-tables
-title: 05–08 — Databases, Schemas, Connections & Tables
+title: "05–08 — Databases, Schemas, Connections & Tables"
 ---
 
 # 05 — Databases, Schemas, and Objects
