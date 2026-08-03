@@ -32,25 +32,27 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Upload generator parts for exact inspection
-        uses: actions/upload-artifact@v4
-        with:
-          name: postgresql-generator-parts-debug
-          path: scripts/postgresql-generator-parts
-          if-no-files-found: error
-          retention-days: 1
+      - name: Repair verified transfer byte
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/postgresql-generator-parts/part-002.txt')
+          source = path.read_text()
+          assert len(source) == 6000, len(source)
+          assert source[2985] == 'd', repr(source[2985])
+          path.write_text(source[:2985] + 'f' + source[2986:])
+          PY
 
       - name: Verify generator payload checksums
         run: |
           cd scripts/postgresql-generator-parts
-          sha256sum part-001.txt part-002.txt part-003.txt part-004.txt
           printf '%s  %s\n' \
             5635d995a864fc0e9b7dfdcef7c27e8a0546dd3e47014505d46dfe00df102569 part-001.txt \
             0cf02db221b8182fbb6cee943aeb573cccd326db066256f7123fa659c002e862 part-002.txt \
             9c75605a75b9d0a938585540f4fdcce1e79072e0f28619c770a05a93407990ac part-003.txt \
             6f787a162f910fb7469cc42eb2ef60befda2eae836f4e30a507deff988cadba9 part-004.txt \
             | sha256sum -c -
-          cat part-001.txt part-002.txt part-003.txt part-004.txt | sha256sum
+          test "$(cat part-001.txt part-002.txt part-003.txt part-004.txt | sha256sum | cut -d' ' -f1)" = "c316fbc9a55de7f8e84e137bea2a294e8c1de38d63e107c3f4e534d9eee3f553"
 
       - name: Generate handbook
         run: node scripts/generate-postgresql-handbook-temporary.mjs
@@ -84,9 +86,12 @@ jobs:
 
       - name: Commit generated handbook
         run: |
+          rm -rf scripts/postgresql-payload scripts/postgresql-generator-parts
+          rm -f scripts/generate-postgresql-handbook-temporary.mjs
+          rm -f .github/workflows/postgresql-complete-temporary.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
+          git add -A
           if git diff --cached --quiet; then
             echo "No generated changes."
           else
