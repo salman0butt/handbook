@@ -1,0 +1,122 @@
+name: Verify React Native Pages release
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/react-native-pages-verify.yml'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  verify:
+    name: Verify exact deployment and live routes
+    runs-on: ubuntu-latest
+    env:
+      MERGE_SHA: e2a844dd02ee0e44cfcfd337219a2aa5b6f6134b
+      BASE_URL: https://salman0butt.github.io/handbook
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Wait for exact merge deployment
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.request
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          expected = os.environ['MERGE_SHA']
+          url = f'https://api.github.com/repos/{repo}/actions/workflows/deploy.yml/runs?branch=main&event=push&per_page=20'
+          headers = {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': f'Bearer {token}',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'react-native-pages-verifier',
+          }
+
+          for attempt in range(60):
+              request = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+              run = next((item for item in payload['workflow_runs'] if item['head_sha'] == expected), None)
+              if run:
+                  print(f"Exact Pages run: {run['html_url']} status={run['status']} conclusion={run['conclusion']}")
+                  if run['status'] == 'completed':
+                      if run['conclusion'] != 'success':
+                          raise SystemExit(f"Pages deployment failed: {run['html_url']}")
+                      with open('/tmp/pages-run.txt', 'w') as output:
+                          output.write(f"{run['id']}\n{run['html_url']}\n")
+                      break
+              else:
+                  print(f'Attempt {attempt + 1}: exact merge deployment not listed yet')
+              time.sleep(10)
+          else:
+              raise SystemExit('Timed out waiting for the exact merge SHA Pages deployment')
+          PY
+
+      - name: Smoke-test published React Native routes
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/react-native-pages
+
+          check_route() {
+            path="$1"
+            marker="$2"
+            safe="$(printf '%s' "$path" | tr '/.' '__')"
+            file="/tmp/react-native-pages/${safe}.html"
+            url="${BASE_URL}${path}"
+            code="$(curl --retry 5 --retry-delay 5 --retry-all-errors -L -sS -o "$file" -w '%{http_code}' "$url")"
+            test "$code" = '200'
+            ! grep -Eqi 'Page Not Found|This page could not be found|docusaurus\.io/docs/page-not-found' "$file"
+            grep -Fqi "$marker" "$file"
+            echo "PASS $url — $marker"
+          }
+
+          check_route '/react-native' 'React Native'
+          check_route '/docs/react-native/intro' 'React Native + Community CLI Developer Handbook'
+          check_route '/docs/react-native/version' 'React Native Version and Toolchain Baseline'
+          check_route '/docs/react-native/roadmap' 'React Native Learning Roadmap'
+          check_route '/docs/react-native/getting-started/environment-setup' 'Environment Setup'
+          check_route '/docs/react-native/getting-started/community-cli' 'Community CLI'
+          check_route '/docs/react-native/core/components' 'Core Components'
+          check_route '/docs/react-native/styling/layout' 'Styling and Layout'
+          check_route '/docs/react-native/navigation/navigation-fundamentals' 'Navigation'
+          check_route '/docs/react-native/state/state-management' 'State Management'
+          check_route '/docs/react-native/networking/api-architecture' 'Networking and API Architecture'
+          check_route '/docs/react-native/storage/offline-first' 'Persistence and Offline-First Architecture'
+          check_route '/docs/react-native/android/android-fundamentals' 'Native Android Fundamentals'
+          check_route '/docs/react-native/ios/ios-fundamentals' 'Native iOS Fundamentals'
+          check_route '/docs/react-native/native-modules/native-modules' 'Native Modules and Components'
+          check_route '/docs/react-native/architecture/new-architecture' 'React Native New Architecture'
+          check_route '/docs/react-native/testing/testing-react-native' 'Testing React Native Applications'
+          check_route '/docs/react-native/performance/performance' 'Performance Engineering'
+          check_route '/docs/react-native/security/mobile-security' 'Mobile Security'
+          check_route '/docs/react-native/deployment/store-deployment' 'Store Deployment'
+          check_route '/docs/react-native/projects/react-native-projects' 'React Native Production Projects'
+          check_route '/docs/react-native/build/build-configuration' 'Build Configuration'
+
+      - name: Verify canonical URLs, sidebar and sitemap
+        run: |
+          set -euo pipefail
+          intro='/tmp/react-native-pages/_docs_react-native_intro.html'
+          version='/tmp/react-native-pages/_docs_react-native_version.html'
+          sitemap='/tmp/react-native-pages/sitemap.xml'
+
+          grep -Fq 'https://salman0butt.github.io/handbook/docs/react-native/intro' "$intro"
+          grep -Fq 'https://salman0butt.github.io/handbook/docs/react-native/version' "$version"
+          grep -Fq 'Getting Started' "$intro"
+          grep -Fq 'Production Projects' "$intro"
+
+          curl --retry 5 --retry-delay 5 --retry-all-errors -fsSL "${BASE_URL}/sitemap.xml" -o "$sitemap"
+          grep -Fq '/handbook/docs/react-native/intro' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/version' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/build/build-configuration' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/projects/react-native-projects' "$sitemap"
+
+          echo 'Exact deployment:'
+          cat /tmp/pages-run.txt
+          echo 'PASS canonical URLs, rendered sidebar and sitemap entries'
