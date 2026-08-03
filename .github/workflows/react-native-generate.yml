@@ -33,13 +33,30 @@ jobs:
 
       - name: Reconstruct and verify generator
         run: |
-          {
-            head -c 7000 .github/react-native-generator/chunk1.b64
-            head -c 7000 .github/react-native-generator/chunk2.b64
-            head -c 7000 .github/react-native-generator/chunk3.b64
-            head -c 7000 .github/react-native-generator/chunk4.b64
-            cat .github/react-native-generator/chunk5.b64
-          } | tr -d '\r\n' > /tmp/generator.b64
+          python - <<'PY'
+          from pathlib import Path
+          parts = []
+          for path in sorted(Path('.github/react-native-generator').glob('chunk*.b64')):
+              text = ''.join(path.read_text().split())
+              print(f'{path.name}: {len(text)} characters')
+              parts.append(text)
+
+          combined = ''
+          for index, part in enumerate(parts, start=1):
+              if not combined:
+                  combined = part
+                  continue
+              overlap = 0
+              for size in range(min(len(combined), len(part)), 0, -1):
+                  if combined.endswith(part[:size]):
+                      overlap = size
+                      break
+              print(f'chunk {index}: overlap {overlap}')
+              combined += part[overlap:]
+
+          Path('/tmp/generator.b64').write_text(combined)
+          print(f'combined: {len(combined)} characters')
+          PY
           echo 'dadf171424133312221df3f87949acbe8b598ed2c691c0997694c5ce78fd6d1b  /tmp/generator.b64' | sha256sum --check
           base64 --decode /tmp/generator.b64 \
             | gzip --decompress \
