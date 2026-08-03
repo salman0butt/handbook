@@ -32,6 +32,14 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Upload staged payload for exact inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgresql-payload-debug
+          path: scripts/postgresql-payload
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Generate handbook
         run: node scripts/generate-postgresql-handbook-temporary.mjs
 
