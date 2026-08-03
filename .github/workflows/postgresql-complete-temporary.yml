@@ -32,13 +32,16 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Upload staged payload for exact inspection
-        uses: actions/upload-artifact@v4
-        with:
-          name: postgresql-payload-debug
-          path: scripts/postgresql-payload
-          if-no-files-found: error
-          retention-days: 1
+      - name: Verify generator payload checksums
+        run: |
+          cd scripts/postgresql-generator-parts
+          printf '%s  %s\n' \
+            5635d995a864fc0e9b7dfdcef7c27e8a0546dd3e47014505d46dfe00df102569 part-001.txt \
+            0cf02db221b8182fbb6cee943aeb573cccd326db066256f7123fa659c002e862 part-002.txt \
+            9c75605a75b9d0a938585540f4fdcce1e79072e0f28619c770a05a93407990ac part-003.txt \
+            6f787a162f910fb7469cc42eb2ef60befda2eae836f4e30a507deff988cadba9 part-004.txt \
+            | sha256sum -c -
+          cat part-001.txt part-002.txt part-003.txt part-004.txt | sha256sum
 
       - name: Generate handbook
         run: node scripts/generate-postgresql-handbook-temporary.mjs
