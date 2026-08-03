@@ -1,9 +1,9 @@
 name: Generate and validate complete PostgreSQL handbook
 
 on:
-  push:
+  pull_request:
     branches:
-      - postgresql-complete-handbook-2026-08-03
+      - main
 
 permissions:
   contents: write
