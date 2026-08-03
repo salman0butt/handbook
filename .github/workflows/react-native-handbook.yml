@@ -1,0 +1,74 @@
+name: Validate React Native handbook
+
+on:
+  pull_request:
+    paths:
+      - 'docs/react-native/**'
+      - 'src/components/ReactNativeExercise.js'
+      - 'src/data/reactNativeExercises.js'
+      - 'sidebars.react-native.js'
+      - 'sidebars.final.js'
+      - 'docusaurus.config.js'
+      - 'scripts/validate-react-native-handbook.mjs'
+      - 'scripts/validate-mermaid.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/react-native-handbook.yml'
+      - '.github/workflows/deploy.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/react-native/**'
+      - 'src/components/ReactNativeExercise.js'
+      - 'src/data/reactNativeExercises.js'
+      - 'sidebars.react-native.js'
+      - 'sidebars.final.js'
+      - 'docusaurus.config.js'
+      - 'scripts/validate-react-native-handbook.mjs'
+      - 'scripts/validate-mermaid.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/react-native-handbook.yml'
+      - '.github/workflows/deploy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate React Native curriculum and site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies reproducibly
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate React Native handbook
+        run: npm run validate:react-native
+
+      - name: Validate TypeScript handbook regression
+        run: npm run validate:typescript
+
+      - name: Validate JavaScript handbook regression
+        run: npm run validate:javascript
+
+      - name: Validate Node.js handbook regression
+        run: npm run validate:nodejs
+
+      - name: Validate Next.js handbook regression
+        run: npm run validate:nextjs
+
+      - name: Validate Mermaid diagrams
+        run: npm run validate:mermaid
+
+      - name: Build Docusaurus production site
+        run: npm run build
