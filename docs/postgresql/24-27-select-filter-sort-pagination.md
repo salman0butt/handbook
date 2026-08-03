@@ -1,6 +1,6 @@
 ---
 id: 24-27-select-filter-sort-pagination
-title: 24–27 — SELECT, Expressions, Filtering, Ordering & Pagination
+title: "24–27 — SELECT, Expressions, Filtering, Ordering & Pagination"
 ---
 
 # 24 — SELECT Fundamentals

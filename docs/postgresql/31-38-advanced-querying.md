@@ -1,6 +1,6 @@
 ---
 id: 31-38-advanced-querying
-title: 31–38 — Subqueries, LATERAL, Sets, CTEs, CASE & Window Functions
+title: "31–38 — Subqueries, LATERAL, Sets, CTEs, CASE & Window Functions"
 ---
 
 # 31 — Subqueries

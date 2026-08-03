@@ -1,6 +1,6 @@
 ---
 id: 150-159-reliability-patterns-and-failure-modes
-title: 150–159 — Outbox, Idempotency, Data Access Design, Anti-Patterns & Failure Modes
+title: "150–159 — Outbox, Idempotency, Data Access Design, Anti-Patterns & Failure Modes"
 ---
 
 # 150 — Outbox Pattern

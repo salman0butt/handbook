@@ -1,6 +1,6 @@
 ---
 id: project-05-banking-ledger
-title: Project 5 — Banking / Ledger System
+title: "Project 5 — Banking / Ledger System"
 ---
 
 # Project 5 — Banking / Ledger System

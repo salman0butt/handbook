@@ -1,6 +1,6 @@
 ---
 id: 09-13-core-data-types
-title: 09–13 — SQL and PostgreSQL Core Data Types
+title: "09–13 — SQL and PostgreSQL Core Data Types"
 ---
 
 # 09 — SQL Data Types

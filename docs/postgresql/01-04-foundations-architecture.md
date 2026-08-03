@@ -1,6 +1,6 @@
 ---
 id: 01-04-foundations-architecture
-title: 01–04 — Database Foundations, Relational Model, SQL & PostgreSQL Architecture
+title: "01–04 — Database Foundations, Relational Model, SQL & PostgreSQL Architecture"
 ---
 
 # 01 — Database Fundamentals

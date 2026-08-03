@@ -1,6 +1,6 @@
 ---
 id: interview-questions-intermediate
-title: Intermediate Interview Questions IQ001–IQ080
+title: "Intermediate Interview Questions IQ001–IQ080"
 ---
 
 # Intermediate — IQ001–IQ080

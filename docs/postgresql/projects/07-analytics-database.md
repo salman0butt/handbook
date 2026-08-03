@@ -1,6 +1,6 @@
 ---
 id: project-07-analytics-database
-title: Project 7 — Analytics Database
+title: "Project 7 — Analytics Database"
 ---
 
 # Project 7 — Analytics Database

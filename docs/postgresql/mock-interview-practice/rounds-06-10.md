@@ -1,6 +1,6 @@
 ---
 id: mock-interview-rounds-06-10
-title: Mock Interview Rounds 6–10
+title: "Mock Interview Rounds 6–10"
 ---
 
 # Rounds 6–10

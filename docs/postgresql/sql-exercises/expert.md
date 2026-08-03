@@ -1,6 +1,6 @@
 ---
 id: sql-exercises-expert
-title: Expert SQL Exercises E001–E060
+title: "Expert SQL Exercises E001–E060"
 ---
 
 # Expert — E001–E060

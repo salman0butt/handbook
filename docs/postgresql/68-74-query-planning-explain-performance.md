@@ -1,6 +1,6 @@
 ---
 id: 68-74-query-planning-explain-performance
-title: 68–74 — Query Processing, Planner, EXPLAIN & Performance
+title: "68–74 — Query Processing, Planner, EXPLAIN & Performance"
 ---
 
 # 68 — Query Processing

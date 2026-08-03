@@ -1,6 +1,6 @@
 ---
 id: project-03-blog-cms-database
-title: Project 3 — Blog / CMS Database
+title: "Project 3 — Blog / CMS Database"
 ---
 
 # Project 3 — Blog / CMS Database

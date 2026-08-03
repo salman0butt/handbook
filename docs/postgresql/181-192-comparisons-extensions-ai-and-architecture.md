@@ -1,6 +1,6 @@
 ---
 id: 181-192-comparisons-extensions-ai-and-architecture
-title: 181–192 — Comparisons, Extensions, AI, Security, Reliability & Staff Architecture
+title: "181–192 — Comparisons, Extensions, AI, Security, Reliability & Staff Architecture"
 ---
 
 # 181 — PostgreSQL vs MySQL

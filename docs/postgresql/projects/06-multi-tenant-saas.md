@@ -1,6 +1,6 @@
 ---
 id: project-06-multi-tenant-saas
-title: Project 6 — Multi-Tenant SaaS
+title: "Project 6 — Multi-Tenant SaaS"
 ---
 
 # Project 6 — Multi-Tenant SaaS

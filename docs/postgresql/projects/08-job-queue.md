@@ -1,6 +1,6 @@
 ---
 id: project-08-job-queue
-title: Project 8 — Job Queue
+title: "Project 8 — Job Queue"
 ---
 
 # Project 8 — Job Queue

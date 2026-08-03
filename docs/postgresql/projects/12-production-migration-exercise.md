@@ -1,6 +1,6 @@
 ---
 id: project-12-production-migration-exercise
-title: Project 12 — Production Migration Exercise
+title: "Project 12 — Production Migration Exercise"
 ---
 
 # Project 12 — Production Migration Exercise

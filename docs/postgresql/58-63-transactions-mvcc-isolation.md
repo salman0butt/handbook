@@ -1,6 +1,6 @@
 ---
 id: 58-63-transactions-mvcc-isolation
-title: 58–63 — Transactions, ACID, Concurrency, MVCC & Isolation
+title: "58–63 — Transactions, ACID, Concurrency, MVCC & Isolation"
 ---
 
 # 58 — Transactions

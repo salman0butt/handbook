@@ -1,6 +1,6 @@
 ---
 id: project-04-booking-system
-title: Project 4 — Booking System
+title: "Project 4 — Booking System"
 ---
 
 # Project 4 — Booking System

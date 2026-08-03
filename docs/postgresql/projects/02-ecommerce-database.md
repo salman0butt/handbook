@@ -1,6 +1,6 @@
 ---
 id: project-02-ecommerce-database
-title: Project 2 — E-Commerce Database
+title: "Project 2 — E-Commerce Database"
 ---
 
 # Project 2 — E-Commerce Database

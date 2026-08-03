@@ -1,6 +1,6 @@
 ---
 id: 91-97-connections-and-security
-title: 91–97 — Connections, Roles, Authentication, TLS, RLS & SQL Injection
+title: "91–97 — Connections, Roles, Authentication, TLS, RLS & SQL Injection"
 ---
 
 # 91 — Connection Management

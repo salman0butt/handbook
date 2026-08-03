@@ -1,6 +1,6 @@
 ---
 id: project-09-full-text-search
-title: Project 9 — Full-Text Search
+title: "Project 9 — Full-Text Search"
 ---
 
 # Project 9 — Full-Text Search

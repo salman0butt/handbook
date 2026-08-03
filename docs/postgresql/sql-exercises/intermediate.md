@@ -1,6 +1,6 @@
 ---
 id: sql-exercises-intermediate
-title: Intermediate SQL Exercises I001–I060
+title: "Intermediate SQL Exercises I001–I060"
 ---
 
 # Intermediate — I001–I060

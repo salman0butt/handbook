@@ -1,6 +1,6 @@
 ---
 id: sql-exercises-beginner
-title: Beginner SQL Exercises B001–B060
+title: "Beginner SQL Exercises B001–B060"
 ---
 
 # Beginner — B001–B060

@@ -1,6 +1,6 @@
 ---
 id: project-11-high-traffic-api-database
-title: Project 11 — High-Traffic API Database
+title: "Project 11 — High-Traffic API Database"
 ---
 
 # Project 11 — High-Traffic API Database

@@ -1,6 +1,6 @@
 ---
 id: sql-exercises-advanced
-title: Advanced SQL Exercises A001–A060
+title: "Advanced SQL Exercises A001–A060"
 ---
 
 # Advanced — A001–A060

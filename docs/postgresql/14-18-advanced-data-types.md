@@ -1,6 +1,6 @@
 ---
 id: 14-18-advanced-data-types
-title: 14–18 — UUID, Arrays, JSONB, Ranges & Specialized Types
+title: "14–18 — UUID, Arrays, JSONB, Ranges & Specialized Types"
 ---
 
 # 14 — UUID

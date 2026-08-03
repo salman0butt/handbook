@@ -1,6 +1,6 @@
 ---
 id: 170-180-internals-and-sql-standard
-title: 170–180 — PostgreSQL Internals & SQL Standard Compatibility
+title: "170–180 — PostgreSQL Internals & SQL Standard Compatibility"
 ---
 
 # 170 — Database Internals: Query Executor

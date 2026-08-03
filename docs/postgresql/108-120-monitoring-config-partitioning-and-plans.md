@@ -1,6 +1,6 @@
 ---
 id: 108-120-monitoring-config-partitioning-and-plans
-title: 108–120 — Monitoring, Configuration, Partitioning, FDWs, Parallelism, JIT & Prepared Plans
+title: "108–120 — Monitoring, Configuration, Partitioning, FDWs, Parallelism, JIT & Prepared Plans"
 ---
 
 # 108 — Monitoring

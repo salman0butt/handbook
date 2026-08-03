@@ -1,6 +1,6 @@
 ---
 id: 98-107-programming-search-extensions-catalogs
-title: 98–107 — Functions, Procedures, PL/pgSQL, Triggers, Search, Extensions & Catalogs
+title: "98–107 — Functions, Procedures, PL/pgSQL, Triggers, Search, Extensions & Catalogs"
 ---
 
 # 98 — Functions

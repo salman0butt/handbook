@@ -1,6 +1,6 @@
 ---
 id: 45-49-modelling-and-multitenancy
-title: 45–49 — Normalization, Data Modelling, Relationships & Multi-Tenancy
+title: "45–49 — Normalization, Data Modelling, Relationships & Multi-Tenancy"
 ---
 
 # 45 — Normalization

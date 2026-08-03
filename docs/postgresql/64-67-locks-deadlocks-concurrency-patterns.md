@@ -1,6 +1,6 @@
 ---
 id: 64-67-locks-deadlocks-concurrency-patterns
-title: 64–67 — Locking, Deadlocks, Serializable & Concurrency Patterns
+title: "64–67 — Locking, Deadlocks, Serializable & Concurrency Patterns"
 ---
 
 # 64 — Locking

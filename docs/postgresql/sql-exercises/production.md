@@ -1,6 +1,6 @@
 ---
 id: sql-exercises-production
-title: Production SQL Exercises P001–P060
+title: "Production SQL Exercises P001–P060"
 ---
 
 # Production — P001–P060
