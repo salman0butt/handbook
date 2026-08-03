@@ -1,0 +1,74 @@
+name: Generate complete React Native handbook
+
+on:
+  push:
+    branches:
+      - react-native-complete-handbook-2026-08-02
+    paths:
+      - '.github/react-native-generator/**'
+      - '.github/workflows/react-native-generate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify generator
+        run: |
+          cat .github/react-native-generator/chunk*.b64 \
+            | base64 --decode \
+            | gzip --decompress \
+            > /tmp/generate-react-native-completion.mjs
+          node --check /tmp/generate-react-native-completion.mjs
+
+      - name: Generate focused handbook content
+        run: node /tmp/generate-react-native-completion.mjs
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies reproducibly
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate React Native handbook
+        run: npm run validate:react-native
+
+      - name: Validate TypeScript regression
+        run: npm run validate:typescript
+
+      - name: Validate JavaScript regression
+        run: npm run validate:javascript
+
+      - name: Validate Node.js regression
+        run: npm run validate:nodejs
+
+      - name: Validate Next.js regression
+        run: npm run validate:nextjs
+
+      - name: Validate Mermaid diagrams
+        run: npm run validate:mermaid
+
+      - name: Build Docusaurus production site
+        run: npm run build
+
+      - name: Replace temporary generator with validated handbook
+        run: |
+          rm -rf .github/react-native-generator
+          rm -f .github/workflows/react-native-generate.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'docs(react-native): add complete focused handbook'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
