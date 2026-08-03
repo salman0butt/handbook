@@ -27,3 +27,22 @@ const result = spawnSync('python3', ['-'], {
 
 if (result.error) throw result.error
 if (result.status !== 0) process.exit(result.status ?? 1)
+
+function walk(directory) {
+  return fs.readdirSync(directory, {withFileTypes: true}).flatMap(entry => {
+    const target = path.join(directory, entry.name)
+    return entry.isDirectory() ? walk(target) : [target]
+  })
+}
+
+for (const file of walk(path.join(root, 'docs', 'postgresql')).filter(file => /\.(md|mdx)$/.test(file))) {
+  const source = fs.readFileSync(file, 'utf8')
+  if (!source.startsWith('---\n')) continue
+  const end = source.indexOf('\n---\n', 4)
+  if (end < 0) continue
+  const frontMatter = source.slice(4, end).replace(
+    /^(title|description):\s*(.+)$/gm,
+    (_, key, value) => `${key}: ${JSON.stringify(value.trim().replace(/^(["'])(.*)\1$/, '$2'))}`,
+  )
+  fs.writeFileSync(file, `---\n${frontMatter}\n---\n${source.slice(end + 5)}`)
+}
