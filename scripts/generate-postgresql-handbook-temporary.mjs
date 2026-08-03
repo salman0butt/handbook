@@ -4,13 +4,47 @@ import zlib from 'node:zlib'
 
 const root = process.cwd()
 const payloadDir = path.join(root, 'scripts', 'postgresql-payload')
-const chunkNames = fs.readdirSync(payloadDir)
+const allChunkNames = fs.readdirSync(payloadDir)
   .filter(name => /^chunk-\d+[a-z]*\.txt$/.test(name))
-  .sort((a, b) => a.localeCompare(b, 'en', {numeric: true}))
-const encoded = chunkNames
-  .map(name => fs.readFileSync(path.join(payloadDir, name), 'utf8').trim())
-  .join('')
-const mapping = JSON.parse(zlib.gunzipSync(Buffer.from(encoded, 'base64')).toString('utf8'))
+const readChunk = name => fs.readFileSync(path.join(payloadDir, name), 'utf8').trim()
+
+function permutations(values) {
+  if (values.length <= 1) return [values]
+  return values.flatMap((value, index) =>
+    permutations(values.filter((_, candidate) => candidate !== index))
+      .map(rest => [value, ...rest])
+  )
+}
+
+const fixedBefore = ['chunk-001.txt']
+const group002 = allChunkNames.filter(name => /^chunk-002[a-z]*\.txt$/.test(name))
+const fixedMiddle = ['chunk-003.txt']
+const group004 = allChunkNames.filter(name => /^chunk-004[a-z]*\.txt$/.test(name))
+const fixedAfter = ['chunk-005.txt', 'chunk-006.txt', 'chunk-007.txt', 'chunk-008.txt', 'chunk-009.txt']
+
+let mapping = null
+let chunkNames = null
+for (const order002 of permutations(group002)) {
+  for (const order004 of permutations(group004)) {
+    const candidate = [...fixedBefore, ...order002, ...fixedMiddle, ...order004, ...fixedAfter]
+    try {
+      const encoded = candidate.map(readChunk).join('')
+      const parsed = JSON.parse(zlib.gunzipSync(Buffer.from(encoded, 'base64')).toString('utf8'))
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) continue
+      if (!Object.keys(parsed).some(key => key === 'docs/postgresql/version.md')) continue
+      mapping = parsed
+      chunkNames = candidate
+      break
+    } catch {
+      // Try the next candidate ordering.
+    }
+  }
+  if (mapping) break
+}
+
+if (!mapping || !chunkNames) {
+  throw new Error(`Unable to reconstruct PostgreSQL payload from ${allChunkNames.length} chunks`)
+}
 
 for (const [relative, content] of Object.entries(mapping)) {
   const target = path.join(root, relative)
@@ -45,6 +79,7 @@ fs.writeFileSync(dataPath, data)
 console.log(JSON.stringify({
   generatedFiles: Object.keys(mapping).length,
   payloadChunks: chunkNames.length,
+  chunkOrder: chunkNames,
   baseline: 'PostgreSQL 18.4',
   researchDate: 'August 3, 2026'
 }, null, 2))
