@@ -32,9 +32,18 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Upload generator parts for exact inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgresql-generator-parts-debug
+          path: scripts/postgresql-generator-parts
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Verify generator payload checksums
         run: |
           cd scripts/postgresql-generator-parts
+          sha256sum part-001.txt part-002.txt part-003.txt part-004.txt
           printf '%s  %s\n' \
             5635d995a864fc0e9b7dfdcef7c27e8a0546dd3e47014505d46dfe00df102569 part-001.txt \
             0cf02db221b8182fbb6cee943aeb573cccd326db066256f7123fa659c002e862 part-002.txt \
