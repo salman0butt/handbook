@@ -61,9 +61,19 @@ jobs:
             file="/tmp/react-native-pages/${safe}.html"
             url="${BASE_URL}${path}"
             code="$(curl --retry 5 --retry-delay 5 --retry-all-errors -L -sS -o "$file" -w '%{http_code}' "$url")"
-            test "$code" = '200'
-            ! grep -Eqi 'Page Not Found|This page could not be found|docusaurus\.io/docs/page-not-found' "$file"
-            grep -Fqi "$marker" "$file"
+            if [ "$code" != '200' ]; then
+              echo "FAIL $url returned HTTP $code"
+              exit 1
+            fi
+            if grep -Eqi 'Page Not Found|This page could not be found|docusaurus\.io/docs/page-not-found' "$file"; then
+              echo "FAIL $url rendered a Docusaurus not-found page"
+              exit 1
+            fi
+            if ! grep -Fqi "$marker" "$file"; then
+              echo "FAIL $url did not contain marker: $marker"
+              grep -o '<title>[^<]*' "$file" | head -1 || true
+              exit 1
+            fi
             echo "PASS $url — $marker"
           }
 
@@ -81,13 +91,13 @@ jobs:
           check_route '/docs/react-native/storage/offline-first' 'Persistence and Offline-First Architecture'
           check_route '/docs/react-native/android/android-fundamentals' 'Native Android Fundamentals'
           check_route '/docs/react-native/ios/ios-fundamentals' 'Native iOS Fundamentals'
-          check_route '/docs/react-native/native-modules/native-modules' 'Native Modules and Native Components'
-          check_route '/docs/react-native/architecture/new-architecture' 'React Native New Architecture'
-          check_route '/docs/react-native/testing/testing-react-native' 'Testing React Native Applications'
+          check_route '/docs/react-native/native-modules/native-modules' 'Native Modules'
+          check_route '/docs/react-native/architecture/new-architecture' 'New Architecture'
+          check_route '/docs/react-native/testing/testing-react-native' 'Testing React Native'
           check_route '/docs/react-native/performance/performance' 'React Native Performance'
           check_route '/docs/react-native/security/mobile-security' 'Mobile Application Security'
-          check_route '/docs/react-native/deployment/store-deployment' 'Play Store and App Store Deployment'
-          check_route '/docs/react-native/projects/react-native-projects' 'React Native Production Projects'
+          check_route '/docs/react-native/deployment/store-deployment' 'App Store Deployment'
+          check_route '/docs/react-native/projects/react-native-projects' 'Production Projects'
           check_route '/docs/react-native/build/build-configuration' 'Build Configuration'
 
       - name: Verify canonical URLs, sidebar and sitemap
