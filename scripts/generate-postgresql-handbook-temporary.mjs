@@ -10,7 +10,11 @@ const payload = ['part-001.txt', 'part-002.txt', 'part-003.txt', 'part-004.txt']
   .map(name => fs.readFileSync(path.join(partsRoot, name), 'utf8').trim())
   .join('')
 
-const pythonSource = zlib.gunzipSync(Buffer.from(payload, 'base64')).toString('utf8')
+let pythonSource = zlib.gunzipSync(Buffer.from(payload, 'base64')).toString('utf8')
+pythonSource = pythonSource.replace(
+  "def rows(text):return [x.split('|') for x in text.splitlines()]",
+  "def rows(text):return [[y.replace('§','||') for y in x.replace('||','§').split('|')] for x in text.splitlines()]",
+)
 const result = spawnSync('python3', ['-'], {
   cwd: root,
   input: pythonSource,
