@@ -33,8 +33,15 @@ jobs:
 
       - name: Reconstruct and verify generator
         run: |
-          cat .github/react-native-generator/chunk*.b64 \
-            | base64 --decode \
+          {
+            head -c 7000 .github/react-native-generator/chunk1.b64
+            head -c 7000 .github/react-native-generator/chunk2.b64
+            head -c 7000 .github/react-native-generator/chunk3.b64
+            head -c 7000 .github/react-native-generator/chunk4.b64
+            cat .github/react-native-generator/chunk5.b64
+          } | tr -d '\r\n' > /tmp/generator.b64
+          echo 'dadf171424133312221df3f87949acbe8b598ed2c691c0997694c5ce78fd6d1b  /tmp/generator.b64' | sha256sum --check
+          base64 --decode /tmp/generator.b64 \
             | gzip --decompress \
             > /tmp/generate-react-native-completion.mjs
           node --check /tmp/generate-react-native-completion.mjs
