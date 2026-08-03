@@ -35,17 +35,18 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          parts = [
-              ''.join(path.read_text().split())
-              for path in sorted(Path('.github/react-native-generator').glob('chunk*.b64'))
-          ]
-          for index, part in enumerate(parts, start=1):
-              print(f'chunk {index}: {len(part)} characters')
-
-          # Chunk 1 contains the first 10,000 characters. Chunk 2 begins at
-          # offset 7,000, overlaps by 3,000, and is missing its final source
-          # character. The remaining chunks continue without overlap.
-          combined = parts[0] + parts[1][3000:] + 'o' + ''.join(parts[2:])
+          clean = lambda name: ''.join(Path(name).read_text().split())
+          first = clean('.github/react-native-generator/chunk1.b64')
+          bridge = clean('.github/react-native-generator/bridge.b64')
+          third = clean('.github/react-native-generator/chunk3.b64')
+          fourth = clean('.github/react-native-generator/chunk4.b64')
+          fifth = clean('.github/react-native-generator/chunk5.b64')
+          assert len(first) == 10000
+          assert len(bridge) == 4000
+          assert len(third) == 7000
+          assert len(fourth) == 7000
+          assert len(fifth) == 6696
+          combined = first + bridge + third + fourth + fifth
           Path('/tmp/generator.b64').write_text(combined)
           print(f'combined: {len(combined)} characters')
           PY
