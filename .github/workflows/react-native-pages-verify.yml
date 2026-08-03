@@ -1,4 +1,4 @@
-name: Map React Native canonical Pages routes
+name: Verify React Native Pages release
 
 on:
   pull_request:
@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  map-routes:
-    name: Inspect exact deployment sitemap
+  verify:
+    name: Verify exact deployment and live routes
     runs-on: ubuntu-latest
     env:
       MERGE_SHA: e2a844dd02ee0e44cfcfd337219a2aa5b6f6134b
@@ -30,7 +30,7 @@ jobs:
               'Accept': 'application/vnd.github+json',
               'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
               'X-GitHub-Api-Version': '2022-11-28',
-              'User-Agent': 'react-native-pages-route-map',
+              'User-Agent': 'react-native-pages-verifier',
           })
           with urllib.request.urlopen(request, timeout=30) as response:
               payload = json.load(response)
@@ -38,12 +38,75 @@ jobs:
           if not run or run['status'] != 'completed' or run['conclusion'] != 'success':
               raise SystemExit('Exact merge deployment is not successful')
           print(f"Exact Pages run: {run['html_url']}")
+          with open('/tmp/pages-run.txt', 'w') as output:
+              output.write(f"{run['id']}\n{run['html_url']}\n")
           PY
 
-      - name: Print representative canonical sitemap entries
+      - name: Smoke-test published React Native routes
         run: |
           set -euo pipefail
-          curl -fsSL "${BASE_URL}/sitemap.xml" -o /tmp/sitemap.xml
-          grep -o 'https://[^<]*docs/react-native/[^<]*' /tmp/sitemap.xml \
-            | grep -E '/(native-modules|architecture|testing|performance|security|deployment|projects|build)(/|$)' \
-            | sort
+          mkdir -p /tmp/react-native-pages
+
+          check_route() {
+            path="$1"
+            marker="$2"
+            safe="$(printf '%s' "$path" | tr '/.' '__')"
+            file="/tmp/react-native-pages/${safe}.html"
+            url="${BASE_URL}${path}"
+            code="$(curl --retry 5 --retry-delay 5 --retry-all-errors -L -sS -o "$file" -w '%{http_code}' "$url")"
+            test "$code" = '200'
+            ! grep -Eqi 'Page Not Found|This page could not be found|docusaurus\.io/docs/page-not-found' "$file"
+            grep -Fqi "$marker" "$file"
+            echo "PASS $url — $marker"
+          }
+
+          check_route '/react-native' 'React Native'
+          check_route '/docs/react-native/intro' 'React Native Community CLI Developer Handbook'
+          check_route '/docs/react-native/version' 'React Native Version and Toolchain Baseline'
+          check_route '/docs/react-native/roadmap' 'React Native Learning Roadmap'
+          check_route '/docs/react-native/getting-started/environment-setup' 'Environment Setup'
+          check_route '/docs/react-native/getting-started/community-cli' 'Community CLI Application Workflow'
+          check_route '/docs/react-native/core/components' 'Core Components and Rendering'
+          check_route '/docs/react-native/styling/layout' 'Styling, Flexbox and Responsive Layout'
+          check_route '/docs/react-native/navigation/navigation-fundamentals' 'Navigation and Application Flow'
+          check_route '/docs/react-native/state/state-management' 'State Management'
+          check_route '/docs/react-native/networking/api-architecture' 'Networking and API Architecture'
+          check_route '/docs/react-native/storage/offline-first' 'Persistence and Offline-First Architecture'
+          check_route '/docs/react-native/android/android-fundamentals' 'Native Android Fundamentals'
+          check_route '/docs/react-native/ios/ios-fundamentals' 'Native iOS Fundamentals'
+          check_route '/docs/react-native/native-modules' 'Native Modules'
+          check_route '/docs/react-native/architecture/new-architecture' 'New Architecture'
+          check_route '/docs/react-native/testing/testing-react-native' 'Testing React Native'
+          check_route '/docs/react-native/performance' 'React Native Performance'
+          check_route '/docs/react-native/security/mobile-security' 'Mobile Application Security'
+          check_route '/docs/react-native/deployment/store-deployment' 'App Store Deployment'
+          check_route '/docs/react-native/projects/react-native-projects' 'Production Projects'
+          check_route '/docs/react-native/build/build-configuration' 'Build Configuration'
+
+      - name: Verify canonical URLs, sidebar and sitemap
+        run: |
+          set -euo pipefail
+          intro='/tmp/react-native-pages/_docs_react-native_intro.html'
+          version='/tmp/react-native-pages/_docs_react-native_version.html'
+          native='/tmp/react-native-pages/_docs_react-native_native-modules.html'
+          performance='/tmp/react-native-pages/_docs_react-native_performance.html'
+          sitemap='/tmp/react-native-pages/sitemap.xml'
+
+          grep -Fq 'https://salman0butt.github.io/handbook/docs/react-native/intro' "$intro"
+          grep -Fq 'https://salman0butt.github.io/handbook/docs/react-native/version' "$version"
+          grep -Fq 'https://salman0butt.github.io/handbook/docs/react-native/native-modules' "$native"
+          grep -Fq 'https://salman0butt.github.io/handbook/docs/react-native/performance' "$performance"
+          grep -Fq 'Getting Started' "$intro"
+          grep -Fq 'Production Projects' "$intro"
+
+          curl --retry 5 --retry-delay 5 --retry-all-errors -fsSL "${BASE_URL}/sitemap.xml" -o "$sitemap"
+          grep -Fq '/handbook/docs/react-native/intro' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/version' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/native-modules' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/performance' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/build/build-configuration' "$sitemap"
+          grep -Fq '/handbook/docs/react-native/projects/react-native-projects' "$sitemap"
+
+          echo 'Exact deployment:'
+          cat /tmp/pages-run.txt
+          echo 'PASS canonical URLs, rendered sidebar and sitemap entries'
