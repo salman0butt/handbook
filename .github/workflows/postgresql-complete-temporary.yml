@@ -1,0 +1,72 @@
+name: Generate and validate complete PostgreSQL handbook
+
+on:
+  push:
+    branches:
+      - postgresql-complete-handbook-2026-08-03
+
+permissions:
+  contents: write
+
+concurrency:
+  group: postgresql-complete-handbook-generator
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate and validate PostgreSQL handbook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: postgresql-complete-handbook-2026-08-03
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Generate handbook
+        run: node scripts/generate-postgresql-handbook-temporary.mjs
+
+      - name: Install dependencies reproducibly
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate PostgreSQL handbook
+        run: npm run validate:postgresql
+
+      - name: Validate TypeScript handbook regression
+        run: npm run validate:typescript
+
+      - name: Validate JavaScript handbook regression
+        run: npm run validate:javascript
+
+      - name: Validate Node.js handbook regression
+        run: npm run validate:nodejs
+
+      - name: Validate Next.js handbook regression
+        run: npm run validate:nextjs
+
+      - name: Validate React Native handbook regression
+        run: npm run validate:react-native
+
+      - name: Validate Mermaid diagrams
+        run: npm run validate:mermaid
+
+      - name: Build Docusaurus production site
+        run: npm run build
+
+      - name: Commit generated handbook
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No generated changes."
+          else
+            git commit -m "docs(postgresql): complete production handbook"
+            git push origin HEAD:postgresql-complete-handbook-2026-08-03
+          fi
