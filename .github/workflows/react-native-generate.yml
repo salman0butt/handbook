@@ -59,6 +59,19 @@ jobs:
       - name: Generate focused handbook content
         run: node /tmp/generate-react-native-completion.mjs
 
+      - name: Correct explicit document ID validation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          target = Path('scripts/validate-react-native-handbook.mjs')
+          source = target.read_text()
+          old = """    if (!fs.existsSync(path.join(docsRoot, relative + '.md')) && !fs.existsSync(path.join(docsRoot, relative + '.mdx'))) fail(`Sidebar references missing document: ${relative}`)"""
+          new = """    if (!ids.has(relative)) fail(`Sidebar references missing document: ${relative}`)"""
+          if old not in source:
+              raise SystemExit('Expected sidebar validation statement was not found')
+          target.write_text(source.replace(old, new))
+          PY
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
