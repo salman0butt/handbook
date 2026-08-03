@@ -4,9 +4,10 @@ import zlib from 'node:zlib'
 
 const root = process.cwd()
 const payloadDir = path.join(root, 'scripts', 'postgresql-payload')
-const encoded = fs.readdirSync(payloadDir)
-  .filter(name => /^chunk-\d+\.txt$/.test(name))
-  .sort()
+const chunkNames = fs.readdirSync(payloadDir)
+  .filter(name => /^chunk-\d+[a-z]*\.txt$/.test(name))
+  .sort((a, b) => a.localeCompare(b, 'en', {numeric: true}))
+const encoded = chunkNames
   .map(name => fs.readFileSync(path.join(payloadDir, name), 'utf8').trim())
   .join('')
 const mapping = JSON.parse(zlib.gunzipSync(Buffer.from(encoded, 'base64')).toString('utf8'))
@@ -43,7 +44,7 @@ fs.writeFileSync(dataPath, data)
 
 console.log(JSON.stringify({
   generatedFiles: Object.keys(mapping).length,
-  payloadChunks: fs.readdirSync(payloadDir).filter(name => name.endsWith('.txt')).length,
+  payloadChunks: chunkNames.length,
   baseline: 'PostgreSQL 18.4',
   researchDate: 'August 3, 2026'
 }, null, 2))
