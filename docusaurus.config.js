@@ -157,7 +157,7 @@ const config = {
             {to: '/databases', label: 'Databases', activeBaseRegex: '^/(databases|docs/databases)'},
           ],
         },
-        {to: '/react-native', label: 'Mobile', position: 'left', activeBaseRegex: '^/(react-native|docs/react-native)'},
+        {to: '/docs/react-native/intro', label: 'Mobile', position: 'left', activeBaseRegex: '^/(react-native|docs/react-native)'},
         {to: '/ai-engineering', label: 'AI', position: 'left', activeBaseRegex: '^/(ai-engineering|docs/ai-engineering)'},
         {
           label: 'More',
@@ -187,7 +187,7 @@ const config = {
             {label: 'TypeScript', to: '/typescript'},
             {label: 'Node.js', to: '/docs/nodejs/intro'},
             {label: 'PostgreSQL', to: '/postgresql'},
-            {label: 'React Native', to: '/react-native'},
+            {label: 'React Native', to: '/docs/react-native/intro'},
           ],
         },
         {

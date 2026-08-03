@@ -1,80 +1,26 @@
 /** React Native-specific navigation layered over all existing handbook sidebars. */
-const sidebars = require('./sidebars.postgresql.js');
+const sidebars = require('./sidebars.postgresql.js')
 
-const category = (label, items, extra = {}) => ({type: 'category', label, items, ...extra});
-const doc = (id, label) => ({type: 'doc', id: `react-native/${id}`, label});
+const category = (label, items, extra = {}) => ({type: 'category', label, items, ...extra})
+const doc = (id, label) => ({type: 'doc', id: `react-native/${id}`, label})
 
 sidebars.reactNativeSidebar = [
-  category('Start Here', [
-    doc('intro', 'Introduction'),
-    doc('version-baseline', 'Version Baseline'),
-    doc('00-start-here', '00 · Start Here'),
-  ], {collapsed: false}),
-  category('Environment & Community CLI', [
-    doc('chapters/chapters-001-020', '001–020 · Foundations, Environment, CLI & Core Components'),
-  ]),
-  category('Components', [
-    doc('chapters/chapters-021-040', '021–040 · Components, TypeScript, Styling & Layout'),
-  ]),
-  category('State & React', [
-    doc('chapters/chapters-041-060', '041–060 · Events, State, Effects & Navigation'),
-  ]),
-  category('Lists, Forms, Networking & Server State', [
-    doc('chapters/chapters-061-080', '061–080 · Lists, Forms, Networking & Query State'),
-  ]),
-  category('Storage, Auth, Links, Permissions & Device APIs', [
-    doc('chapters/chapters-081-100', '081–100 · Storage, Auth, Deep Links, Permissions & Device APIs'),
-  ]),
-  category('Keyboard, Animations, Gestures & Accessibility', [
-    doc('chapters/chapters-101-120', '101–120 · Keyboard, Animation, Gestures, A11y & Platform Code'),
-  ]),
-  category('Android & iOS', [
-    doc('chapters/chapters-121-140', '121–140 · Android, iOS, Gradle, CocoaPods & Metro'),
-  ]),
-  category('Metro, Hermes & New Architecture', [
-    doc('chapters/chapters-141-160', '141–160 · Hermes, JSI, Fabric, TurboModules & Codegen'),
-  ]),
-  category('Performance, Debugging, Media & Testing', [
-    doc('chapters/chapters-161-180', '161–180 · Debugging, Performance, Media, Background & Testing'),
-  ]),
-  category('Build, Release, Architecture & Internals', [
-    doc('chapters/chapters-181-200', '181–200 · Production, Release, Architecture & Internals'),
-  ]),
-  category('Projects', [
-    doc('projects/projects-01-05', 'Projects 01–05'),
-    doc('projects/projects-06-10', 'Projects 06–10'),
-    doc('projects/projects-11-15', 'Projects 11–15'),
-    doc('projects/capstone-production-mobile-saas', 'Capstone · Production Mobile SaaS'),
-  ]),
-  category('Exercises', [
-    doc('exercises/exercises-beginner-001-060', '001–060 · Beginner'),
-    doc('exercises/exercises-intermediate-061-120', '061–120 · Intermediate'),
-    doc('exercises/exercises-advanced-121-180', '121–180 · Advanced'),
-    doc('exercises/exercises-senior-181-240', '181–240 · Senior'),
-    doc('exercises/exercises-production-241-300', '241–300 · Production'),
-  ]),
-  category('Interview Question Bank', [
-    doc('interview-question-bank/interview-questions-beginner-001-080', 'Q001–Q080 · Beginner'),
-    doc('interview-question-bank/interview-questions-intermediate-081-160', 'Q081–Q160 · Intermediate'),
-    doc('interview-question-bank/interview-questions-advanced-161-240', 'Q161–Q240 · Advanced'),
-    doc('interview-question-bank/interview-questions-senior-241-320', 'Q241–Q320 · Senior'),
-    doc('interview-question-bank/interview-questions-staff-321-400', 'Q321–Q400 · Staff'),
-  ]),
-  category('Interview Mastery', [
-    doc('mock-interview-practice/mock-interviews-01-15', '15 Mock Interview Rounds'),
-    doc('interview-mastery/live-coding-exercises', 'Live Coding Exercises'),
-    doc('interview-mastery/production-incidents', 'Production Incident Exercises'),
-  ]),
-  category('Reference & Coverage', [
-    doc('reference/core-api-coverage', 'Core API Coverage'),
-    doc('reference/hooks-api-coverage', 'Hooks Coverage'),
-    doc('reference/community-cli-coverage', 'Community CLI Coverage'),
-    doc('reference/new-architecture-coverage', 'New Architecture Coverage'),
-    doc('reference/android-coverage', 'Android Coverage'),
-    doc('reference/ios-coverage', 'iOS Coverage'),
-    doc('reference/official-docs-coverage', 'Official Docs Coverage'),
-    doc('reference/final-completeness-audit', 'Final Completeness Audit'),
-  ]),
-];
+  category('Start Here', [doc('intro', 'Introduction'), doc('version', 'Version and Toolchain Baseline'), doc('roadmap', 'Learning Roadmap'), doc('version-baseline', 'Detailed Compatibility Archive')], {collapsed: false}),
+  category('Getting Started', [doc('getting-started/environment-setup', 'Environment Setup'), doc('getting-started/community-cli', 'Community CLI Workflow'), doc('getting-started/project-structure', 'Project Structure and Ownership')]),
+  category('Core React Native Concepts', [doc('core/components', 'Core Components and Rendering'), doc('core/react-hooks', 'React Hooks in React Native'), doc('styling/layout', 'Styling and Responsive Layout'), doc('forms/forms', 'User Input and Forms'), doc('lists/large-data', 'Lists and Large Data')]),
+  category('Navigation and Application Flow', [doc('navigation/navigation-fundamentals', 'Navigation Fundamentals'), doc('authentication/authentication', 'Mobile Authentication'), doc('internationalization/internationalization', 'Internationalization')]),
+  category('State, Networking and Persistence', [doc('state/state-management', 'State Management'), doc('networking/api-architecture', 'Networking and API Architecture'), doc('storage/offline-first', 'Persistence and Offline-First Architecture'), doc('reliability/error-handling', 'Error Handling and Reliability')]),
+  category('Native Device Capabilities', [doc('platform/platform-specific', 'Platform-Specific Development'), doc('permissions/permissions', 'Permissions and Privacy UX'), doc('device/device-apis', 'Device APIs'), doc('notifications/push-notifications', 'Push Notifications'), doc('lifecycle/background-work', 'Lifecycle and Background Work'), doc('media/images-media', 'Images, Media and Assets'), doc('webview/webview', 'Secure WebView Integration')]),
+  category('Animations and Accessibility', [doc('animations/animations-gestures', 'Animations and Gestures'), doc('accessibility/accessibility', 'Accessibility')]),
+  category('Android and iOS Toolchains', [doc('android/android-fundamentals', 'Native Android Fundamentals'), doc('ios/ios-fundamentals', 'Native iOS Fundamentals'), doc('build/build-configuration', 'Build Configuration')]),
+  category('Architecture and Native Integration', [doc('architecture/new-architecture', 'New Architecture'), doc('native-modules/native-modules', 'Native Modules and Components'), doc('metro/metro-bundling', 'Metro and Bundling'), doc('hermes/hermes', 'Hermes Runtime'), doc('application-architecture/application-architecture', 'Application Architecture'), doc('monorepos/monorepos', 'Monorepos and Shared Packages'), doc('library-development/library-development', 'Library Development')]),
+  category('Testing, Debugging and Performance', [doc('testing/testing-react-native', 'Testing React Native'), doc('debugging/debugging', 'Debugging'), doc('performance/performance', 'Performance'), doc('observability/analytics-observability', 'Analytics and Observability')]),
+  category('Security and Production Delivery', [doc('security/mobile-security', 'Mobile Security'), doc('cicd/ci-cd', 'CI/CD'), doc('deployment/store-deployment', 'Store Deployment'), doc('upgrades/upgrading', 'Upgrading React Native')]),
+  category('Production Projects', [doc('projects/react-native-projects', 'Project Track'), doc('projects/community-cli-task-manager', 'Community CLI Task Manager'), doc('projects/authentication-profile-application', 'Authentication and Profile Application'), doc('projects/ecommerce-mobile-application', 'E-Commerce Mobile Application'), doc('projects/offline-first-notes-application', 'Offline-First Notes Application'), doc('projects/realtime-chat-application', 'Realtime Chat Application'), doc('projects/location-maps-application', 'Location and Maps Application'), doc('projects/camera-media-upload-application', 'Camera and Media Upload Application'), doc('projects/push-notification-application', 'Push Notification Application'), doc('projects/native-module-integration-project', 'Native Module Integration Project'), doc('projects/production-mobile-application', 'Production Mobile Application with CI/CD and Store Deployment')]),
+  category('Practical Exercises', [doc('exercises/overview', 'Exercise Overview'), doc('exercises/beginner-001-100', 'Beginner Exercises'), doc('exercises/intermediate-101-200', 'Intermediate Exercises'), doc('exercises/advanced-201-300', 'Advanced Exercises')]),
+  category('Interview Preparation', [doc('interviews/interview-preparation', 'Senior Interview Preparation'), doc('mock-interview-practice/mock-interviews-01-15', 'Mock Interview Rounds'), doc('interview-mastery/live-coding-exercises', 'Live Coding Exercises'), doc('interview-mastery/production-incidents', 'Production Incident Exercises')]),
+  category('Deep Curriculum Archive', [doc('00-start-here', 'Original Start Guide'), doc('chapters/chapters-001-020', 'Foundations, Environment and Core Components'), doc('chapters/chapters-021-040', 'Components, TypeScript, Styling and Layout'), doc('chapters/chapters-041-060', 'Events, State, Effects and Navigation'), doc('chapters/chapters-061-080', 'Lists, Forms, Networking and Server State'), doc('chapters/chapters-081-100', 'Storage, Authentication, Permissions and Devices'), doc('chapters/chapters-101-120', 'Keyboard, Animation, Gestures and Accessibility'), doc('chapters/chapters-121-140', 'Android, iOS, Gradle, CocoaPods and Metro'), doc('chapters/chapters-141-160', 'Hermes, JSI, Fabric, TurboModules and Codegen'), doc('chapters/chapters-161-180', 'Debugging, Performance, Media, Background and Testing'), doc('chapters/chapters-181-200', 'Production, Release, Architecture and Internals')]),
+  category('Reference and Coverage', [doc('reference/core-api-coverage', 'Core API Coverage'), doc('reference/hooks-api-coverage', 'Hooks Coverage'), doc('reference/community-cli-coverage', 'Community CLI Coverage'), doc('reference/new-architecture-coverage', 'New Architecture Coverage'), doc('reference/android-coverage', 'Android Coverage'), doc('reference/ios-coverage', 'iOS Coverage'), doc('reference/official-docs-coverage', 'Official Documentation Coverage'), doc('reference/final-completeness-audit', 'Final Completeness Audit')]),
+]
 
-module.exports = sidebars;
+module.exports = sidebars
