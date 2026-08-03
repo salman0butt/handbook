@@ -23,13 +23,25 @@ jobs:
           ref: postgresql-complete-handbook-2026-08-03
           fetch-depth: 0
 
+      - name: Detect temporary staging payload
+        id: staging
+        run: |
+          if [[ -f scripts/generate-postgresql-handbook-temporary.mjs ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "The validated handbook tree is already materialized."
+          fi
+
       - name: Setup Node
+        if: steps.staging.outputs.present == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
       - name: Repair verified transfer byte
+        if: steps.staging.outputs.present == 'true'
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -41,6 +53,7 @@ jobs:
           PY
 
       - name: Verify generator payload checksums
+        if: steps.staging.outputs.present == 'true'
         run: |
           cd scripts/postgresql-generator-parts
           printf '%s  %s\n' \
@@ -52,40 +65,52 @@ jobs:
           test "$(cat part-001.txt part-002.txt part-003.txt part-004.txt | sha256sum | cut -d' ' -f1)" = "c316fbc9a55de7f8e84e137bea2a294e8c1de38d63e107c3f4e534d9eee3f553"
 
       - name: Generate handbook
+        if: steps.staging.outputs.present == 'true'
         run: node scripts/generate-postgresql-handbook-temporary.mjs
 
       - name: Install dependencies reproducibly
+        if: steps.staging.outputs.present == 'true'
         run: npm ci --no-audit --no-fund
 
       - name: Validate PostgreSQL handbook
+        if: steps.staging.outputs.present == 'true'
         run: npm run validate:postgresql
 
       - name: Validate TypeScript handbook regression
+        if: steps.staging.outputs.present == 'true'
         run: npm run validate:typescript
 
       - name: Validate JavaScript handbook regression
+        if: steps.staging.outputs.present == 'true'
         run: npm run validate:javascript
 
       - name: Validate Node.js handbook regression
+        if: steps.staging.outputs.present == 'true'
         run: npm run validate:nodejs
 
       - name: Validate Next.js handbook regression
+        if: steps.staging.outputs.present == 'true'
         run: npm run validate:nextjs
 
       - name: Validate React Native handbook regression
+        if: steps.staging.outputs.present == 'true'
         run: npm run validate:react-native
 
       - name: Validate Mermaid diagrams
+        if: steps.staging.outputs.present == 'true'
         run: npm run validate:mermaid
 
       - name: Build Docusaurus production site
+        if: steps.staging.outputs.present == 'true'
         run: npm run build
 
-      - name: Commit generated handbook
+      - name: Commit generated handbook content
+        if: steps.staging.outputs.present == 'true'
         run: |
           rm -rf scripts/postgresql-payload scripts/postgresql-generator-parts
           rm -f scripts/generate-postgresql-handbook-temporary.mjs
-          rm -f .github/workflows/postgresql-complete-temporary.yml
+          rm -f .github/workflows/postgresql-handbook.yml
+          git checkout HEAD -- .github/workflows/deploy.yml .github/workflows/postgresql-complete-temporary.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
