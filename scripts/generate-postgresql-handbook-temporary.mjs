@@ -15,6 +15,10 @@ pythonSource = pythonSource.replace(
   "def rows(text):return [x.split('|') for x in text.splitlines()]",
   "def rows(text):return [[y.replace('§','||') for y in x.replace('||','§').split('|')] for x in text.splitlines()]",
 )
+pythonSource = pythonSource.replace(
+  "'PostgreSQL **18.4**'",
+  "'**PostgreSQL 18.4**'",
+)
 const result = spawnSync('python3', ['-'], {
   cwd: root,
   input: pythonSource,
