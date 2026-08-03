@@ -47,6 +47,9 @@ jobs:
       - name: Validate JavaScript handbook
         run: npm run validate:javascript
 
+      - name: Validate React Native handbook
+        run: npm run validate:react-native
+
       - name: Validate Mermaid diagrams
         run: npm run validate:mermaid
 
