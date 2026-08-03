@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - postgresql-complete-handbook-2026-08-03
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
