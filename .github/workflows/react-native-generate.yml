@@ -59,17 +59,26 @@ jobs:
       - name: Generate focused handbook content
         run: node /tmp/generate-react-native-completion.mjs
 
-      - name: Correct explicit document ID validation
+      - name: Correct generated validator and metadata
         run: |
           python - <<'PY'
           from pathlib import Path
-          target = Path('scripts/validate-react-native-handbook.mjs')
-          source = target.read_text()
+
+          validator = Path('scripts/validate-react-native-handbook.mjs')
+          source = validator.read_text()
           old = """    if (!fs.existsSync(path.join(docsRoot, relative + '.md')) && !fs.existsSync(path.join(docsRoot, relative + '.mdx'))) fail(`Sidebar references missing document: ${relative}`)"""
           new = """    if (!ids.has(relative)) fail(`Sidebar references missing document: ${relative}`)"""
           if old not in source:
               raise SystemExit('Expected sidebar validation statement was not found')
-          target.write_text(source.replace(old, new))
+          validator.write_text(source.replace(old, new))
+
+          overview = Path('docs/react-native/exercises/overview.mdx')
+          source = overview.read_text()
+          old = 'description: Exactly 300 Community CLI exercises: 100 beginner, 100 intermediate and 100 advanced.'
+          new = 'description: "Exactly 300 Community CLI exercises: 100 beginner, 100 intermediate and 100 advanced."'
+          if old not in source:
+              raise SystemExit('Expected exercise description was not found')
+          overview.write_text(source.replace(old, new))
           PY
 
       - name: Setup Node
