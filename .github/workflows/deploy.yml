@@ -50,6 +50,9 @@ jobs:
       - name: Validate React Native handbook
         run: npm run validate:react-native
 
+      - name: Validate PostgreSQL handbook
+        run: npm run validate:postgresql
+
       - name: Validate Mermaid diagrams
         run: npm run validate:mermaid
 
