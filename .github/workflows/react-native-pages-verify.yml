@@ -1,4 +1,4 @@
-name: Diagnose React Native native-modules route
+name: Map React Native canonical Pages routes
 
 on:
   pull_request:
@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  diagnose:
-    name: Inspect exact deployment routes
+  map-routes:
+    name: Inspect exact deployment sitemap
     runs-on: ubuntu-latest
     env:
       MERGE_SHA: e2a844dd02ee0e44cfcfd337219a2aa5b6f6134b
@@ -30,7 +30,7 @@ jobs:
               'Accept': 'application/vnd.github+json',
               'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
               'X-GitHub-Api-Version': '2022-11-28',
-              'User-Agent': 'react-native-pages-route-diagnostic',
+              'User-Agent': 'react-native-pages-route-map',
           })
           with urllib.request.urlopen(request, timeout=30) as response:
               payload = json.load(response)
@@ -40,24 +40,10 @@ jobs:
           print(f"Exact Pages run: {run['html_url']}")
           PY
 
-      - name: Inspect sitemap and route candidates
+      - name: Print representative canonical sitemap entries
         run: |
           set -euo pipefail
           curl -fsSL "${BASE_URL}/sitemap.xml" -o /tmp/sitemap.xml
-          echo 'Sitemap entries containing native-modules:'
-          grep -o 'https://[^<]*native-modules[^<]*' /tmp/sitemap.xml || true
-
-          candidates=(
-            '/docs/react-native/native-modules/native-modules'
-            '/docs/react-native/native-modules'
-            '/docs/react-native/native-modules/native-modules-and-native-components'
-            '/docs/react-native/native-modules/native-modules-and-components'
-            '/docs/react-native/native-modules/native-modules-native-components'
-          )
-
-          for path in "${candidates[@]}"; do
-            file="/tmp/$(echo "$path" | tr '/' '_').html"
-            code="$(curl -L -sS -o "$file" -w '%{http_code}' "${BASE_URL}${path}")"
-            title="$(grep -o '<title>[^<]*' "$file" | head -1 || true)"
-            echo "$code ${BASE_URL}${path} ${title}"
-          done
+          grep -o 'https://[^<]*docs/react-native/[^<]*' /tmp/sitemap.xml \
+            | grep -E '/(native-modules|architecture|testing|performance|security|deployment|projects|build)(/|$)' \
+            | sort
