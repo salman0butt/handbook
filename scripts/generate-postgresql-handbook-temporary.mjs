@@ -3,6 +3,7 @@ import path from 'node:path'
 import zlib from 'node:zlib'
 import {spawnSync} from 'node:child_process'
 
+// Temporary, checksum-verified bridge used only to materialize the final handbook tree.
 const root = process.cwd()
 const partsRoot = path.join(root, 'scripts', 'postgresql-generator-parts')
 const payload = ['part-001.txt', 'part-002.txt', 'part-003.txt', 'part-004.txt']
