@@ -5,11 +5,11 @@ title: Zero-to-Hero Gap Closure
 
 # Zero-to-Hero Gap Closure
 
-This audit records the August 2026 expansion created after comparing the handbook with current official LLM, training, inference, agent, MCP and multimodal documentation.
+This audit records the August 2026 expansion created after comparing the handbook with current official LLM, training, inference, agent, MCP, multimodal and secure-production documentation.
 
 ## New focused lessons
 
-The expansion adds **107 focused lessons** under `docs/ai-engineering/zero-to-hero/`. Every lesson includes a Mermaid diagram, TypeScript/application code example and practice section.
+The expansion now contains **108 focused lessons** under `docs/ai-engineering/zero-to-hero/`. Every lesson includes a Mermaid diagram, TypeScript/application code example and practice section.
 
 | Track | Focus |
 |---|---|
@@ -27,6 +27,7 @@ The expansion adds **107 focused lessons** under `docs/ai-engineering/zero-to-he
 | Agent-to-Agent Interoperability | Agent Cards, skills, tasks/messages/artifacts, streaming/push, MCP comparison, security/multi-tenancy |
 | Multimodal Understanding | vision, PDFs/layout/OCR, charts/diagrams, audio, video, security/evals |
 | Privacy & Governance | data-flow maps, ZDR/retention, files/caches/state, tenant/region isolation, redaction, supply-chain governance |
+| Production Application Security & Reliability | validation, AuthN/AuthZ, RBAC/ABAC/scopes, object/tenant policy, CORS/CSRF/session security, secure uploads/webhooks/APIs, secrets/crypto, rate/quotas, retries/backpressure, backups/RPO-RTO, secure CI/CD, canary/rollback |
 
 ## Progression
 
@@ -42,7 +43,8 @@ flowchart TD
   TRAIN --> INF[Self-hosted inference]
   RAG --> AGENT[Agents]
   AGENT --> MCP[MCP / Agent-to-Agent protocols]
-  MCP --> GOV[Security / privacy / governance / production]
+  MCP --> GOV[Security / privacy / governance]
+  GOV --> PROD[Production application security + reliability]
 ```
 
 ```ts
@@ -54,7 +56,8 @@ export type ZeroToHeroStage =
   | 'retrieval'
   | 'inference'
   | 'agents-and-protocols'
-  | 'production-governance';
+  | 'production-governance'
+  | 'production-application-security-reliability';
 ```
 
 ## Practice
