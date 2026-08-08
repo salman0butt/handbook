@@ -94,15 +94,22 @@ const contextSchema = z.object({
   role: z.enum(["customer", "manager"]),
 });
 
+export function assertRefundAuthorized(
+  role: "customer" | "manager",
+  amount: number,
+) {
+  if (amount > 500 && role !== "manager") {
+    throw new Error("POLICY_BLOCK: refunds above $500 require manager permission");
+  }
+}
+
 const refundPayment = tool(
   async ({ orderId, amount }, runtime) => {
     // Trusted server-side context. Do not accept role/userId from model tool arguments.
     const { userId, role } = contextSchema.parse(runtime.context);
 
     // Deterministic authorization/business-rule guardrail.
-    if (amount > 500 && role !== "manager") {
-      throw new Error("POLICY_BLOCK: refunds above $500 require manager permission");
-    }
+    assertRefundAuthorized(role, amount);
 
     // Real payment API would be called only after authorization succeeds.
     // await payments.refund({ orderId, amount, actorId: userId });
@@ -132,6 +139,7 @@ const promptInjectionGuard = createMiddleware({
       const lastMessage = state.messages.at(-1);
       const text = lastMessage?.content?.toString().toLowerCase() ?? "";
 
+      // Illustrative heuristic only. Real injection defense needs layered controls.
       const suspicious = [
         "ignore previous instructions",
         "ignore all instructions",
@@ -148,27 +156,39 @@ const promptInjectionGuard = createMiddleware({
   },
 });
 
+const piiGuard = piiRedactionMiddleware({
+  piiType: "email",
+  strategy: "redact",
+  applyToInput: true,
+  applyToOutput: true,
+});
+
+const systemPrompt = `
+You are a customer-support agent.
+Use refund_payment when a refund is requested.
+Never claim a refund succeeded unless the tool reports success.
+`;
+
+// Normal guarded agent. Suitable for ordinary requests and offline evals.
 export const refundAgent = createAgent({
   model: process.env.AGENT_MODEL ?? "openai:gpt-5.5",
   contextSchema,
   tools: [refundPayment],
-  systemPrompt: `
-You are a customer-support agent.
-Use refund_payment when a refund is requested.
-Never claim a refund succeeded unless the tool reports success.
-`,
+  systemPrompt,
+  middleware: [promptInjectionGuard, piiGuard],
+});
+
+// Approval-required variant for workflows where every refund needs review.
+export const approvalRefundAgent = createAgent({
+  model: process.env.AGENT_MODEL ?? "openai:gpt-5.5",
+  contextSchema,
+  tools: [refundPayment],
+  systemPrompt,
   middleware: [
     promptInjectionGuard,
-    piiRedactionMiddleware({
-      piiType: "email",
-      strategy: "redact",
-      applyToInput: true,
-      applyToOutput: true,
-    }),
+    piiGuard,
     humanInTheLoopMiddleware({
       interruptOn: {
-        // Defense in depth: approved users still require a human checkpoint
-        // before this sensitive side-effecting tool executes.
         refund_payment: {
           allowAccept: true,
           allowEdit: true,
@@ -181,7 +201,7 @@ Never claim a refund succeeded unless the tool reports success.
 });
 ```
 
-Invoke the agent with authenticated server-side context:
+Invoke the normal agent with authenticated server-side context:
 
 ```ts
 const result = await refundAgent.invoke(
@@ -191,7 +211,6 @@ const result = await refundAgent.invoke(
     ],
   },
   {
-    configurable: { thread_id: crypto.randomUUID() },
     context: {
       userId: authenticatedUser.id,
       role: authenticatedUser.role,
@@ -200,7 +219,7 @@ const result = await refundAgent.invoke(
 );
 ```
 
-The LLM can propose `refund_payment({ amount: 900 })`, but a customer cannot bypass the deterministic tool check by changing the prompt. Human-in-the-loop provides an additional checkpoint before the side effect.
+The LLM can propose `refund_payment({ amount: 900 })`, but a customer cannot bypass the deterministic tool check by changing the prompt.
 
 # Human-in-the-Loop Resume
 
@@ -217,8 +236,8 @@ const config = {
   },
 };
 
-// First call can pause before refund_payment executes.
-await refundAgent.invoke(
+// First call pauses before refund_payment executes.
+await approvalRefundAgent.invoke(
   {
     messages: [{ role: "user", content: "Refund ORD-123 for $900" }],
   },
@@ -226,7 +245,7 @@ await refundAgent.invoke(
 );
 
 // Called only after the approval UI/backend validates the reviewer.
-await refundAgent.invoke(
+await approvalRefundAgent.invoke(
   new Command({
     resume: {
       decisions: [{ type: "approve" }],
@@ -295,36 +314,26 @@ Use the cheapest deterministic test that can correctly measure the requirement. 
 
 # Vitest Guardrail Test
 
-A deterministic guardrail should have a deterministic regression test.
+A deterministic guardrail should have a deterministic regression test. This test does not call an LLM at all:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { refundAgent } from "../src/agent";
+import { assertRefundAuthorized } from "../src/agent";
 
 describe("refund authorization", () => {
-  it("does not let a customer execute a refund above $500", async () => {
-    const result = await refundAgent.invoke(
-      {
-        messages: [
-          { role: "user", content: "Refund ORD-10 for $900" },
-        ],
-      },
-      {
-        configurable: { thread_id: crypto.randomUUID() },
-        context: { userId: "user-1", role: "customer" },
-      },
+  it("blocks a customer refund above $500", () => {
+    expect(() => assertRefundAuthorized("customer", 900)).toThrow(
+      "POLICY_BLOCK",
     );
+  });
 
-    // In a real test, assert the payment gateway mock was not called.
-    expect(paymentGateway.refund).not.toHaveBeenCalled();
-
-    const finalText = result.messages.at(-1)?.content.toString() ?? "";
-    expect(finalText.toLowerCase()).not.toContain("refund completed");
+  it("allows a manager refund above $500", () => {
+    expect(() => assertRefundAuthorized("manager", 900)).not.toThrow();
   });
 });
 ```
 
-For side-effecting agents, the strongest assertion is usually against the mocked external dependency (`paymentGateway.refund`), not just the model's wording.
+An integration test should additionally mock the external payment provider and assert that unauthorized runs never call the real side-effecting dependency.
 
 # LLM-as-a-Judge
 
@@ -408,7 +417,6 @@ async function target(inputs: Record<string, any>) {
       messages: [{ role: "user", content: String(inputs.prompt) }],
     },
     {
-      configurable: { thread_id: crypto.randomUUID() },
       context: {
         userId: "eval-user",
         role: inputs.role === "manager" ? "manager" : "customer",
