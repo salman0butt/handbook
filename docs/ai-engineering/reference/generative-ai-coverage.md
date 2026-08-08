@@ -80,7 +80,8 @@ This audit maps the dedicated Generative AI track to the topics a production AI 
 | Multimodal RAG | `generative-ai/multimodal-generation` |
 | Multimodal embeddings | `generative-ai/multimodal-generation` |
 | Long-video reasoning | `generative-ai/multimodal-generation` |
-| UI/computer-use safety boundary | `generative-ai/multimodal-generation` |
+| UI/computer-use safety boundary | `generative-ai/multimodal-generation` + agents chapter |
+| Browser/computer-use agent loop and production controls | agents chapter 156–170 |
 
 ## Adaptation and training
 
@@ -112,6 +113,10 @@ This audit maps the dedicated Generative AI track to the topics a production AI 
 | Pairwise evaluation | `generative-ai/synthetic-data-evaluation` |
 | Text/image/audio/video eval dimensions | `generative-ai/synthetic-data-evaluation` |
 | Cost per accepted generation | `generative-ai/synthetic-data-evaluation` |
+| Guardrails vs evals / Jest-Vitest vs AI eval suites | chapters 181–190 |
+| Offline vs sampled online evaluation | chapters 181–190 |
+| Correctness / relevance / groundedness score interpretation | chapters 181–190 |
+| Adversarial / jailbreak containment evaluation | prompt-injection defense |
 
 ## Serving and optimization
 
@@ -123,22 +128,28 @@ This audit maps the dedicated Generative AI track to the topics a production AI 
 | Distillation | `generative-ai/serving-optimization-safety` |
 | Batching / continuous batching | `generative-ai/serving-optimization-safety` |
 | KV cache / prompt caching | `generative-ai/serving-optimization-safety` |
+| SDPA / FlashAttention-style attention kernels | `zero-to-hero/inference/huggingface-transformers` |
 | Media inference optimization | `generative-ai/serving-optimization-safety` |
 | GPU memory / cold starts | `generative-ai/serving-optimization-safety` |
 | Backpressure / retries / fallbacks | `generative-ai/serving-optimization-safety` |
 | Cost and observability | `generative-ai/serving-optimization-safety` |
+| SLI / SLO / error budgets | `zero-to-hero/inference/capacity-observability` |
+| OpenTelemetry GenAI telemetry | `zero-to-hero/inference/capacity-observability` |
 
 ## Safety and governance
 
 | Topic | Coverage |
 |---|---|
 | Input/output moderation | `generative-ai/serving-optimization-safety` |
-| Prompt injection across modalities | `generative-ai/serving-optimization-safety` |
+| Prompt injection across modalities | `generative-ai/serving-optimization-safety`, prompt-injection defense |
+| Jailbreak vs direct/indirect prompt injection | prompt-injection defense |
+| OWASP LLM / Agentic security threat-model alignment | prompt-injection defense |
 | Likeness / impersonation | image, audio, video, serving guides |
 | Voice cloning consent | audio guide |
 | Private reference assets | image, multimodal, serving guides |
 | Provenance / content credentials concept | image/video/serving guides |
 | Tenant isolation | adaptation, multimodal, serving guides |
+| Browser/computer-use sandbox, origin and egress controls | agents chapter 156–170 |
 | Release / rollback | adaptation and serving guides |
 
 ## Emerging modalities
@@ -154,13 +165,37 @@ This audit maps the dedicated Generative AI track to the topics a production AI 
 | Multi-model media workflows | `generative-ai/advanced-generative-systems` |
 | Creative asset lineage | `generative-ai/advanced-generative-systems` |
 
+## Application-engineering complement
+
+The dedicated media/model-family track is complemented by the rest of AI Engineering. Production Generative AI also requires:
+
+```text
+prompt + context engineering
++ structured output
++ function/tool calling
++ embeddings/RAG
++ agents/computer use
++ MCP/A2A
++ auth/authorization/guardrails
++ evals/red teaming
++ tracing/SLOs
++ queues/retries/caching
++ cost/capacity/deployment/rollback
+```
+
+These topics are deliberately kept in their specialized tracks instead of duplicating full lessons inside `generative-ai/`.
+
 ## Official documentation baseline
 
-The expansion was reviewed against current documentation on July 31, 2026, including:
+The coverage was re-reviewed on **August 8, 2026** against current documentation and security/observability guidance, including:
 
 - Hugging Face Diffusers pipeline, scheduler, adapter, image/video/audio and DiT documentation;
 - Hugging Face PEFT for LoRA and parameter-efficient adaptation;
-- Hugging Face Transformers multimodal processing and quantization documentation;
-- OpenAI current model catalog for modern image/audio/realtime capability examples.
+- Hugging Face Transformers multimodal processing, quantization, distributed inference and attention-backend documentation;
+- PyTorch scaled-dot-product attention documentation;
+- OpenTelemetry semantic conventions and GenAI observability guidance;
+- OWASP GenAI Security Project LLM and Agentic Applications guidance;
+- current LangChain/LangGraph/LangSmith JavaScript guidance for agent guardrails/evaluation patterns;
+- OpenAI current documentation where provider-specific examples are used for modern multimodal/agent capabilities.
 
 Provider-specific examples are used to illustrate current capabilities; the handbook architecture remains provider-neutral.
