@@ -5,14 +5,71 @@ title: Final AI Engineering Handbook Completeness Audit
 
 # Final AI Engineering Handbook Completeness Audit
 
-**Status: COMPLETE AGAINST THE AUGUST 8, 2026 TECHNICAL BASELINE**
+**Status: COMPLETE AGAINST THE AUGUST 9, 2026 PRODUCTION-APPLICATION BASELINE**
 
-**Current certification date:** August 8, 2026  
-**Previous certification:** August 1, 2026
+**Current certification date:** August 9, 2026  
+**Previous certification:** August 8, 2026
 
 This audit records whether the AI Engineering handbook covers the major knowledge areas required to progress from Generative AI fundamentals to advanced and production-grade AI engineering.
 
 “Complete” here does **not** mean every research paper, model release, vendor-specific API option, legal regime, or future technique is permanently documented. Generative AI changes too quickly for that claim to be meaningful. It means the handbook covers the current core concepts, engineering patterns, security boundaries, evaluation methods and production concerns expected of a production AI engineer, with explicit coverage audits that can be updated as the field changes.
+
+## August 9, 2026 production-application audit
+
+A third review deliberately ignored the prior “complete” label and asked a stricter question: **could a learner use this curriculum to reason about a real production AI application, including the ordinary web/API controls around the model?**
+
+That review found that the AI-specific security material was strong but several classic application-security and operational controls were not explicit enough in the AI curriculum. A dedicated production lesson was added to close that gap:
+
+`zero-to-hero/production/production-application-security-reliability`
+
+It now explicitly covers:
+
+- **Authentication vs authorization vs validation:** AuthN identifies the actor; AuthZ decides whether that actor may act on a resource; validation checks structure/semantics; model confidence is never permission.
+- **Authorization depth:** deny-by-default access, RBAC/ABAC/ReBAC concepts, OAuth scopes, object/resource ownership, tenant isolation, property/field-level awareness and executor-time re-authorization.
+- **Runtime validation at every boundary:** HTTP/request limits, runtime schemas, semantic invariants, business rules, model output/tool arguments, queues, webhooks and third-party API responses.
+- **Browser/API security:** TLS, session/token lifecycle, CORS, CSRF, safe rendering/XSS concerns, WebSocket/SSE authorization and redirect allowlists.
+- **Abuse/resource controls:** rate limits, tenant/user/API-key quotas, input/output token budgets, agent-step/tool-call budgets, concurrency limits, bounded queues and denial-of-wallet protection.
+- **Secure RAG/file ingestion:** allowlisted file types, size/page/duration limits, MIME/signature checks, generated storage names, malware/sandbox scanning, archive/parser limits, path safety, tenant-aware storage and indirect prompt-injection treatment.
+- **Network/tool boundaries:** SSRF prevention, URL/destination/redirect validation, private/link-local/metadata network restrictions, egress controls and response-size/time limits.
+- **Webhooks:** raw-body signature verification, freshness/timestamp checks, replay protection and idempotent event handling.
+- **Third-party API/tool consumption:** TLS, endpoint verification, credential scope, response schemas, timeouts/size limits, safe redirects, sanitization/rendering boundaries and circuit breakers.
+- **Secrets and cryptography:** secret managers/KMS, least privilege, rotation/revocation, separate environment credentials, TLS in transit, encryption at rest where required and telemetry redaction.
+- **Data lifecycle:** tenant binding across messages/files/chunks/embeddings/vector metadata/checkpoints/memory/cache/jobs/traces/evals, plus retention, deletion, export, residency and derived-data cleanup.
+- **Secure SDLC/supply chain:** dependency/secret/container scanning, SAST/targeted DAST, lockfiles, SBOM/provenance where required, signed/verified artifacts, model/tokenizer/adapter digests, CI credential least privilege and review of external tools/MCP servers.
+- **Reliability controls:** deadlines, timeouts, bounded retries with jitter, circuit breakers, bulkheads, backpressure, load shedding, durable queues, DLQs, cancellation and idempotent writes.
+- **Disaster recovery:** encrypted/access-controlled backups, restore testing, RPO/RTO, runbooks, rebuildable vector indexes and provider/region failure planning.
+- **Delivery/rollback:** versioned code/model/prompt/schema/index/policy, safe migrations, feature flags, shadow/canary/progressive rollouts, rollback and tool/feature kill switches.
+- **Testing matrix:** unit, integration, API/contract, authorization, browser/web security, tool/agent, deterministic security, AI evals, adversarial, load, failure/chaos, recovery and release tests.
+
+The production architecture chapter and the production/security coverage maps now point to this complete request boundary:
+
+```text
+client
+  ↓
+TLS / gateway / request limits
+  ↓
+authentication
+  ↓
+runtime validation
+  ↓
+authorization + tenant/resource policy
+  ↓
+rate/quota/budget controls
+  ↓
+AI model / RAG / agent
+  ↓
+tool proposal
+  ↓
+re-validation + re-authorization + approval + idempotency
+  ↓
+side effect
+  ↓
+output validation/redaction
+  ↓
+response + trace + audit
+```
+
+This closes the specific concern that a curriculum could teach guardrails/evals while leaving ordinary broken-authentication, broken-access-control, unsafe upload, webhook, recovery or secure-SDLC risks implicit.
 
 ## August 8, 2026 supplemental gap audit
 
@@ -50,6 +107,8 @@ The handbook covers:
 - context engineering, conversation trimming, semantic compression, memory vs state and context poisoning;
 - structured outputs, JSON Schema/Zod, semantic validation and schema evolution;
 - function/tool calling, argument validation, read/write risk, idempotency, approval boundaries and streaming;
+- production application validation, authentication, authorization, RBAC/ABAC/scopes, resource ownership and tenant isolation;
+- browser/API/session security, secure file/RAG ingestion, webhook verification, SSRF/egress and third-party API validation;
 - embeddings, vector search, hybrid search, reranking and advanced RAG;
 - GraphRAG, SQL/code RAG, multimodal RAG, adaptive/corrective/self-reflective RAG and index migration;
 - LangChain TypeScript and LangGraph TypeScript including state, control flow, persistence, interrupts and HITL;
@@ -103,8 +162,10 @@ Coverage includes:
 - traces/spans, LangSmith as one tool option, OpenTelemetry concepts and GenAI semantic conventions;
 - SLIs/SLOs/error budgets, latency/token/cost metrics and feedback loops;
 - prompt injection, jailbreaks, data exfiltration, confused deputy risks, tenant isolation, memory poisoning and malicious external content;
-- OAuth, scopes, deterministic authorization, human approval, SSRF, sandboxing, filesystem/network/egress controls, rate limiting, audit logs and incident kill switches;
-- browser/computer-use isolation and agentic security trust boundaries.
+- authentication/session/token lifecycle, deterministic object-level authorization and runtime input/output/tool validation;
+- OAuth, scopes, human approval, SSRF, sandboxing, filesystem/network/egress controls, rate limiting, audit logs and incident kill switches;
+- browser/computer-use isolation and agentic security trust boundaries;
+- secrets/crypto, secure uploads/webhooks, supply-chain controls and recovery security.
 
 ### Production and staff engineering
 
@@ -112,38 +173,46 @@ Production coverage includes:
 
 ```text
 API/model gateway
-+ auth and multi-tenancy
++ TLS/request limits
++ authentication/session lifecycle
++ authorization/resource/tenant policy
++ runtime validation
++ rate/quota/cost budgets
 + provider abstraction/routing/fallback
 + streaming and async jobs
 + queues/workers/backpressure
 + caching and idempotency
 + RAG/tool/agent orchestration
-+ retries/circuit breakers/DLQs
-+ rate limits and cost budgets
++ retries/circuit breakers/DLQs/bulkheads
++ secrets/encryption/data lifecycle
 + evals/guardrails/security
-+ traces/metrics/SLOs
-+ versioning/canary/rollback
-+ incident response
++ traces/metrics/audit/SLOs
++ backups/restore/RPO/RTO
++ secure CI/CD and supply-chain evidence
++ migrations/versioning/canary/rollback
++ incident response and kill switches
 ```
 
 The production projects, staff/senior interview material and multi-tenant capstone combine these topics into system-design exercises rather than leaving them as isolated definitions.
 
 ## Zero-to-hero expansion retained
 
-The curriculum contains **107 focused lessons** under `docs/ai-engineering/zero-to-hero/`, covering neural-network training, tokenizers/chat internals, transformer internals, language modeling/decoding, context engineering, LLM API integration, multimodal understanding, training/post-training, self-hosted inference, advanced RAG, OpenAI Agents SDK TypeScript, MCP, Agent-to-Agent interoperability and privacy/governance.
+The curriculum now contains **108 focused lessons** under `docs/ai-engineering/zero-to-hero/`, including the production application security/reliability lesson added by the August 9 audit. The focused curriculum covers neural-network training, tokenizers/chat internals, transformer internals, language modeling/decoding, context engineering, LLM API integration, multimodal understanding, training/post-training, self-hosted inference, advanced RAG, OpenAI Agents SDK TypeScript, MCP, Agent-to-Agent interoperability, privacy/governance and production application security/reliability.
 
 Every zero-to-hero lesson contains a Mermaid diagram, a TypeScript/application code example and a Practice section. CI enforces those requirements instead of relying only on a manual content count.
 
-## Current protocol and ecosystem baseline
+## Current protocol, security and ecosystem baseline
 
 MCP **2026-07-28** remains the handbook protocol baseline. The previous 2025-11-25 session-oriented architecture is migration material only.
 
-The August 8 audit also cross-checked current technical areas against:
+The August 8–9 audits cross-checked current technical areas against:
 
 - Hugging Face Transformers/PEFT/Diffusers documentation for inference, attention backends, quantization, adaptation and generative media;
 - PyTorch scaled-dot-product attention documentation for current fused attention backend behavior;
 - OpenTelemetry semantic conventions and current GenAI telemetry guidance;
 - OWASP GenAI Security Project resources, including the LLM Applications Top 10 and Agentic Applications security guidance;
+- OWASP API Security Top 10 and OWASP authentication/session/input-validation/file-upload/web-service security guidance;
+- NIST SP 800-218 Secure Software Development Framework and final NIST SP 800-218A GenAI SSDF Community Profile;
 - current LangChain/LangGraph/LangSmith JavaScript guidance used by the practical eval/guardrail examples.
 
 Provider-specific APIs are examples, not the curriculum boundary. The architecture remains provider-neutral wherever possible.
@@ -163,7 +232,7 @@ Provider-specific APIs are examples, not the curriculum boundary. The architectu
 | Search index | ✅ `15694` generated docs in the smoke build; representative zero-to-hero terms all found |
 | Live routes | ✅ representative routes across every new major track returned expected deployed content |
 
-PR #145 later added the practical production eval/guardrail guide after a separate review found that the earlier high-level eval content was not sufficiently implementation-oriented.
+PR #145 later added the practical production eval/guardrail guide after a separate review found that the earlier high-level eval content was not sufficiently implementation-oriented. PR #146 added the August 8 advanced GenAI production gap closure. The August 9 production-application audit adds the ordinary web/API/security/recovery boundary required to call the curriculum production-ready.
 
 ## Living completeness rule
 
@@ -173,7 +242,7 @@ This page is a **dated baseline**, not a permanent claim. Re-open the gap audit 
 - agent/tool/computer-use capability model;
 - MCP/A2A or related interoperability protocols;
 - major evaluation/observability standards;
-- OWASP/industry GenAI security guidance;
+- OWASP/NIST/industry AI or application-security guidance;
 - production serving architecture or runtime behavior;
 - significant new modality or adaptation method.
 
@@ -195,4 +264,4 @@ new dated baseline
 
 ## Certification gate for this revision
 
-This August 8 certification is externally valid only after the exact revision containing these gap-closure changes passes the repository's production CI and is merged to `main`. If CI finds a broken route, invalid docs build, or curriculum validation failure, the audit is not complete until that failure is fixed.
+This August 9 certification is externally valid only after the exact revision containing these production-application gap-closure changes passes the repository's production CI and is merged to `main`. If CI finds a broken route, invalid docs build, or curriculum validation failure, the audit is not complete until that failure is fixed.
