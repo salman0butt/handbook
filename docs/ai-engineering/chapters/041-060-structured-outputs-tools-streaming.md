@@ -108,6 +108,46 @@ User → Model → tool proposal → Application executor → External system
 
 This distinction is the foundation of secure agent engineering.
 
+# Function Calling vs Tool Calling
+
+The terms are often used interchangeably, but a useful modern distinction is:
+
+```text
+function calling
+    = model proposes a named application function + structured arguments
+
+tool calling
+    = broader model-to-capability interface
+      ├─ application functions
+      ├─ search/retrieval
+      ├─ code execution
+      ├─ MCP capabilities
+      ├─ browser/computer actions
+      └─ other provider/framework tools
+```
+
+Historically many APIs called the mechanism **function calling** because the only available capability was a developer-defined function. Frameworks and newer APIs often use **tool calling** as the broader term.
+
+The security model is the same in both cases: the model emits a proposal; trusted application/runtime code validates and executes it.
+
+```ts
+type FunctionProposal = {
+  name: "get_weather" | "refund_payment";
+  arguments: unknown;
+};
+
+async function executeProposal(proposal: FunctionProposal, ctx: RequestContext) {
+  switch (proposal.name) {
+    case "get_weather":
+      return weatherTool.execute(proposal.arguments, ctx);
+    case "refund_payment":
+      return refundTool.execute(proposal.arguments, ctx);
+  }
+}
+```
+
+Do not define the difference as "function calling executes code while tool calling does not." In safe architectures, **neither model mechanism directly owns the side effect**. Your executor does.
+
 # Tool Schemas
 
 A tool definition should have a precise name, purpose, input schema, and operational contract.
