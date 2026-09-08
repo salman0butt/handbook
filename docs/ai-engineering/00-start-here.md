@@ -33,7 +33,8 @@ The model is probabilistic. Authentication, authorization, tenancy, money moveme
 
 ```mermaid
 flowchart TD
-  F[AI & LLM Foundations] --> NN[Neural Network Training]
+  F[AI & LLM Foundations] --> MATH[Mathematics for AI & Machine Learning]
+  MATH --> NN[Neural Network Training]
   NN --> TOK[Tokenizers & Chat Model Internals]
   TOK --> TR[Transformer Internals]
   TR --> LM[Language Modeling & Decoding]
@@ -59,6 +60,7 @@ flowchart TD
 
 Before moving into frameworks, you should be able to explain:
 
+- the minimum AI/ML math: functions, vectors, matrices, dot products, mean/variance, probability, derivatives, gradients, gradient descent, softmax and cross-entropy;
 - AI vs machine learning vs deep learning vs generative AI;
 - neural networks, forward pass, loss, gradients, backpropagation and optimizer steps;
 - train/validation/test splits, overfitting and checkpoints;

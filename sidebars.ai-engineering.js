@@ -49,6 +49,20 @@ sidebars.aiEngineeringSidebar = [
     ]),
   ], {collapsed: false}),
 
+
+  category('Mathematics for AI & Machine Learning', [
+    doc('mathematics/math-roadmap', 'Math Roadmap'),
+    doc('mathematics/algebra-functions-logarithms', 'Algebra, Functions, Exponents & Logarithms'),
+    doc('mathematics/linear-algebra', 'Linear Algebra for AI'),
+    doc('mathematics/statistics', 'Statistics for Machine Learning'),
+    doc('mathematics/probability', 'Probability for AI'),
+    doc('mathematics/calculus-gradients', 'Calculus, Derivatives & Gradients'),
+    doc('mathematics/optimization-gradient-descent', 'Optimization & Gradient Descent'),
+    doc('mathematics/core-ml-math', 'Core Machine Learning Mathematics'),
+    doc('mathematics/llm-transformer-math', 'LLM & Transformer Mathematics'),
+    doc('mathematics/math-cheat-sheet-exercises', 'Cheat Sheet & Exercises'),
+  ], {collapsed: false}),
+
   category('Neural Network Training', [
     doc('zero-to-hero/neural-networks/forward-pass-loss', 'Forward Pass & Loss Functions'),
     doc('zero-to-hero/neural-networks/gradients-backprop', 'Gradients & Backpropagation'),
