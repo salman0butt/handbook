@@ -517,7 +517,6 @@ Implement stable softmax:
 Then compute:
 
 ```text
--loss = ln?
 cross_entropy = -ln(probability_of_correct_class)
 ```
 

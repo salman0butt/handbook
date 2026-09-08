@@ -177,7 +177,6 @@ P(Paris) = 0.8
 loss:
 
 ```text
--loss = ln?
 cross_entropy = -ln(0.8) ≈ 0.223
 ```
 
